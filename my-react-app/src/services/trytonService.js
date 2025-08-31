@@ -13,6 +13,7 @@ class TrytonService {
     
     const headers = {
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
     };
 
     // Agregar headers de autorización si hay sesión
@@ -28,14 +29,20 @@ class TrytonService {
     };
 
     try {
+      console.log(`Intentando conectar a: ${url}`);
+      
       const response = await fetch(url, {
         method: 'POST',
         headers: headers,
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        mode: 'cors', // Explícitamente habilitar CORS
+        credentials: 'omit' // No enviar cookies para evitar problemas de CORS
       });
 
+      console.log('Response status:', response.status);
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -46,7 +53,21 @@ class TrytonService {
 
       return data.result;
     } catch (error) {
-      console.error('Error en llamada RPC:', error);
+      console.error('Error detallado en llamada RPC:', {
+        url,
+        method,
+        error: error.message
+      });
+      
+      // Proporcionar mensajes de error más específicos
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error(`No se puede conectar al servidor Tryton en ${this.baseURL}. Verifica que el servidor esté ejecutándose.`);
+      }
+      
+      if (error.message.includes('CORS') || error.message.includes('NetworkError')) {
+        throw new Error('Error de CORS. El servidor Tryton no permite peticiones desde este origen. Verifica la configuración de CORS en Tryton.');
+      }
+      
       throw error;
     }
   }
@@ -68,7 +89,7 @@ class TrytonService {
       
       // Verificar si la base de datos existe
       if (!databases.includes(database)) {
-        throw new Error(`Base de datos '${database}' no encontrada`);
+        throw new Error(`Base de datos '${database}' no encontrada. Bases disponibles: ${databases.join(', ')}`);
       }
 
       // Intentar login
@@ -192,17 +213,53 @@ class TrytonService {
   // Verificar conexión al servidor
   async checkConnection() {
     try {
+      console.log('Verificando conexión con Tryton...');
       const databases = await this.makeRpcCall('common.db.list');
+      console.log('Bases de datos encontradas:', databases);
       return {
         connected: true,
-        databases: databases
+        databases: databases,
+        serverUrl: this.baseURL
       };
     } catch (error) {
+      console.error('Error verificando conexión:', error);
       return {
         connected: false,
-        error: error.message
+        error: error.message,
+        serverUrl: this.baseURL,
+        suggestions: this.getConnectionSuggestions(error)
       };
     }
+  }
+
+  // Proporcionar sugerencias de solución
+  getConnectionSuggestions(error) {
+    const suggestions = [];
+    
+    if (error.message.includes('No se puede conectar')) {
+      suggestions.push('Verifica que el servidor Tryton esté ejecutándose');
+      suggestions.push('Comprueba que el puerto 8000 esté disponible');
+      suggestions.push('Ejecuta: gnuhealth-control start');
+    }
+    
+    if (error.message.includes('CORS')) {
+      suggestions.push('🔧 **SOLUCIÓN PARA CORS:**');
+      suggestions.push('1. Verifica que tu archivo de configuración de Tryton tenga:');
+      suggestions.push('   [web_cors]');
+      suggestions.push('   enabled = True');
+      suggestions.push('   origins = *');
+      suggestions.push('   methods = GET,POST,PUT,DELETE,OPTIONS');
+      suggestions.push('   headers = Content-Type,Authorization');
+      suggestions.push('2. Reinicia el servidor Tryton después de cambiar la configuración');
+      suggestions.push('3. Verifica que el servidor esté ejecutándose en el puerto correcto');
+    }
+    
+    if (error.message.includes('HTTP error')) {
+      suggestions.push('El servidor responde pero hay un error en la configuración');
+      suggestions.push('Verifica los logs del servidor Tryton');
+    }
+    
+    return suggestions;
   }
 }
 
