@@ -30,19 +30,35 @@ class TrytonService {
 
     try {
       console.log(`Intentando conectar a: ${url}`);
+      console.log('Payload:', JSON.stringify(payload, null, 2));
       
       const response = await fetch(url, {
         method: 'POST',
         headers: headers,
         body: JSON.stringify(payload),
-        mode: 'cors', // Explícitamente habilitar CORS
-        credentials: 'omit' // No enviar cookies para evitar problemas de CORS
+        mode: 'cors',
+        credentials: 'omit'
       });
 
       console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
       if (response.status === 403) {
         throw new Error('Error 403: Tryton está rechazando las peticiones. Verifica la configuración de CORS en tu archivo trytond.conf');
+      }
+
+      if (response.status === 500) {
+        // Intentar obtener más detalles del error
+        let errorDetails = '';
+        try {
+          const errorResponse = await response.text();
+          errorDetails = errorResponse;
+          console.error('Error 500 details:', errorResponse);
+        } catch (e) {
+          errorDetails = 'No se pudo obtener detalles del error';
+        }
+        
+        throw new Error(`Error 500: Problema interno del servidor Tryton. Detalles: ${errorDetails}`);
       }
 
       if (!response.ok) {
@@ -50,6 +66,7 @@ class TrytonService {
       }
 
       const data = await response.json();
+      console.log('Response data:', data);
       
       if (data.error) {
         throw new Error(data.error.message || 'Error en la llamada RPC');
@@ -60,7 +77,8 @@ class TrytonService {
       console.error('Error detallado en llamada RPC:', {
         url,
         method,
-        error: error.message
+        error: error.message,
+        fullError: error
       });
       
       // Proporcionar mensajes de error más específicos
@@ -70,6 +88,10 @@ class TrytonService {
       
       if (error.message.includes('403')) {
         throw new Error('Error 403: La configuración de CORS en Tryton no está funcionando. Verifica tu archivo trytond.conf y reinicia el servidor.');
+      }
+      
+      if (error.message.includes('500')) {
+        throw new Error('Error 500: Problema interno del servidor Tryton. Verifica los logs del servidor para más detalles.');
       }
       
       if (error.message.includes('CORS') || error.message.includes('NetworkError')) {
@@ -222,8 +244,11 @@ class TrytonService {
   async checkConnection() {
     try {
       console.log('Verificando conexión con Tryton...');
+      
+      // Intentar una llamada simple primero
       const databases = await this.makeRpcCall('common.db.list');
       console.log('Bases de datos encontradas:', databases);
+      
       return {
         connected: true,
         databases: databases,
@@ -260,6 +285,15 @@ class TrytonService {
       suggestions.push('   headers = Content-Type,Authorization');
       suggestions.push('2. Reinicia completamente Tryton después de cambiar la configuración');
       suggestions.push('3. Verifica que no haya errores 403 en los logs del servidor');
+    }
+    
+    if (error.message.includes('500')) {
+      suggestions.push('🔧 **PROBLEMA INTERNO DEL SERVIDOR:**');
+      suggestions.push('1. Verifica los logs del servidor Tryton para más detalles');
+      suggestions.push('2. Comprueba que la base de datos esté funcionando correctamente');
+      suggestions.push('3. Verifica que PostgreSQL esté ejecutándose');
+      suggestions.push('4. Revisa que el usuario de la base de datos tenga permisos');
+      suggestions.push('5. Intenta reiniciar el servidor Tryton');
     }
     
     if (error.message.includes('CORS')) {
