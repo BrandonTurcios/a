@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import trytonService from '../services/trytonService';
 import ConnectionTest from './ConnectionTest';
+import ServerStatus from './ServerStatus';
 
 const Login = ({ onLogin }) => {
   const [formData, setFormData] = useState({
@@ -88,6 +89,9 @@ const Login = ({ onLogin }) => {
           <h1 className="text-3xl font-bold text-gray-800 mb-2">Tryton</h1>
           <p className="text-gray-600">Sistema de Gestión Empresarial</p>
         </div>
+
+        {/* Estado del servidor */}
+        <ServerStatus />
 
         {/* Test de conexión */}
         <ConnectionTest />
