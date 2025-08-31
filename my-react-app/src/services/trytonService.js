@@ -5,11 +5,13 @@ class TrytonService {
   constructor() {
     this.baseURL = trytonConfig.baseURL;
     this.sessionData = null;
+    this.database = null; // Agregar campo para la base de datos
   }
 
   // Método para hacer llamadas JSON-RPC a Tryton
   async makeRpcCall(method, params = []) {
-    const url = `${this.baseURL}/`;
+    // Construir URL como en el SAO original: /database/
+    const url = this.database ? `${this.baseURL}/${this.database}/` : `${this.baseURL}/`;
     
     const headers = {
       'Content-Type': 'application/json',
@@ -83,7 +85,7 @@ class TrytonService {
       
       // Proporcionar mensajes de error más específicos
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        throw new Error(`No se puede conectar al servidor Tryton en ${this.baseURL}. Verifica que el servidor esté ejecutándose.`);
+        throw new Error(`No se puede conectar al servidor Tryton en ${url}. Verifica que el servidor esté ejecutándose.`);
       }
       
       if (error.message.includes('403')) {
@@ -102,7 +104,7 @@ class TrytonService {
     }
   }
 
-  // Generar header de autorización
+  // Generar header de autorización (como en el SAO original)
   getAuthHeader() {
     if (!this.sessionData) return '';
     
@@ -114,6 +116,9 @@ class TrytonService {
   // Login a Tryton usando la API real
   async login(database, username, password) {
     try {
+      // Guardar la base de datos para usar en las URLs
+      this.database = database;
+      
       // Primero obtener la lista de bases de datos disponibles
       const databases = await this.makeRpcCall('common.db.list');
       
@@ -150,7 +155,7 @@ class TrytonService {
     }
   }
 
-  // Logout
+  // Logout (como en el SAO original)
   async logout() {
     if (!this.sessionData) {
       return { success: true };
@@ -159,10 +164,12 @@ class TrytonService {
     try {
       await this.makeRpcCall('common.db.logout', []);
       this.sessionData = null;
+      this.database = null; // Limpiar la base de datos
       return { success: true };
     } catch (error) {
       console.error('Error en logout:', error);
       this.sessionData = null;
+      this.database = null; // Limpiar la base de datos
       return { success: true }; // Forzar logout local
     }
   }
@@ -245,7 +252,7 @@ class TrytonService {
     try {
       console.log('Verificando conexión con Tryton...');
       
-      // Intentar una llamada simple primero
+      // Intentar una llamada simple primero (sin base de datos)
       const databases = await this.makeRpcCall('common.db.list');
       console.log('Bases de datos encontradas:', databases);
       

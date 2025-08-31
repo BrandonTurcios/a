@@ -10,6 +10,7 @@ const ServerStatus = () => {
   const checkTrytonServer = async () => {
     try {
       console.log('Verificando servidor Tryton directamente...');
+      // Usar la misma estructura de URL que el SAO original: /database/
       const response = await fetch('http://localhost:8000/', {
         method: 'POST',
         headers: {
