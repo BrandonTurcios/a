@@ -41,6 +41,10 @@ class TrytonService {
 
       console.log('Response status:', response.status);
 
+      if (response.status === 403) {
+        throw new Error('Error 403: Tryton está rechazando las peticiones. Verifica la configuración de CORS en tu archivo trytond.conf');
+      }
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
       }
@@ -62,6 +66,10 @@ class TrytonService {
       // Proporcionar mensajes de error más específicos
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
         throw new Error(`No se puede conectar al servidor Tryton en ${this.baseURL}. Verifica que el servidor esté ejecutándose.`);
+      }
+      
+      if (error.message.includes('403')) {
+        throw new Error('Error 403: La configuración de CORS en Tryton no está funcionando. Verifica tu archivo trytond.conf y reinicia el servidor.');
       }
       
       if (error.message.includes('CORS') || error.message.includes('NetworkError')) {
@@ -242,16 +250,21 @@ class TrytonService {
       suggestions.push('Ejecuta: gnuhealth-control start');
     }
     
-    if (error.message.includes('CORS')) {
-      suggestions.push('🔧 **SOLUCIÓN PARA CORS:**');
-      suggestions.push('1. Verifica que tu archivo de configuración de Tryton tenga:');
+    if (error.message.includes('403')) {
+      suggestions.push('🔧 **PROBLEMA DE CONFIGURACIÓN CORS:**');
+      suggestions.push('1. Verifica que tu archivo trytond.conf tenga la sección [web_cors]:');
       suggestions.push('   [web_cors]');
       suggestions.push('   enabled = True');
       suggestions.push('   origins = *');
       suggestions.push('   methods = GET,POST,PUT,DELETE,OPTIONS');
       suggestions.push('   headers = Content-Type,Authorization');
-      suggestions.push('2. Reinicia el servidor Tryton después de cambiar la configuración');
-      suggestions.push('3. Verifica que el servidor esté ejecutándose en el puerto correcto');
+      suggestions.push('2. Reinicia completamente Tryton después de cambiar la configuración');
+      suggestions.push('3. Verifica que no haya errores 403 en los logs del servidor');
+    }
+    
+    if (error.message.includes('CORS')) {
+      suggestions.push('Verifica que CORS esté habilitado en la configuración de Tryton');
+      suggestions.push('Asegúrate de que [web_cors] esté configurado correctamente');
     }
     
     if (error.message.includes('HTTP error')) {
