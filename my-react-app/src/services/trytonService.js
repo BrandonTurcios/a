@@ -276,14 +276,53 @@ class TrytonService {
 
     try {
       console.log('Obteniendo preferencias del usuario...');
+      
+      // Crear el contexto completo como lo hace el SAO
+      const context = {
+        client: this.generateClientId(), // Generar un ID de cliente único
+        company: 1, // Por defecto
+        company_filter: "one",
+        language: "en",
+        language_direction: "ltr",
+        locale: {
+          date: "%m/%d/%Y",
+          decimal_point: ".",
+          grouping: [3, 3, 0],
+          mon_decimal_point: ".",
+          mon_grouping: [3, 3, 0],
+          mon_thousands_sep: ",",
+          n_cs_precedes: true,
+          n_sep_by_space: false,
+          n_sign_posn: 1,
+          negative_sign: "-",
+          p_cs_precedes: true,
+          p_sep_by_space: false,
+          p_sign_posn: 1,
+          positive_sign: "",
+          thousands_sep: ","
+        }
+      };
+      
+      console.log('Contexto enviado:', context);
+      
       // El SAO usa true como primer parámetro para obtener el contexto completo
-      const preferences = await this.makeRpcCall('model.res.user.get_preferences', [true, {}]);
+      const preferences = await this.makeRpcCall('model.res.user.get_preferences', [true, context]);
       console.log('Preferencias obtenidas:', preferences);
       return preferences;
     } catch (error) {
       console.error('Error obteniendo preferencias:', error);
       throw error;
     }
+  }
+
+  // Generar ID de cliente único (como en el SAO)
+  generateClientId() {
+    // Generar un UUID v4 simple
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
   }
 
   // Obtener lista de iconos (como en el SAO)
@@ -294,7 +333,34 @@ class TrytonService {
 
     try {
       console.log('Obteniendo lista de iconos...');
-      const icons = await this.makeRpcCall('model.ir.ui.icon.list_icons', [{}]);
+      
+      // Crear el contexto completo como lo hace el SAO
+      const context = {
+        client: this.generateClientId(),
+        company: 1,
+        company_filter: "one",
+        language: "en",
+        language_direction: "ltr",
+        locale: {
+          date: "%m/%d/%Y",
+          decimal_point: ".",
+          grouping: [3, 3, 0],
+          mon_decimal_point: ".",
+          mon_grouping: [3, 3, 0],
+          mon_thousands_sep: ",",
+          n_cs_precedes: true,
+          n_sep_by_space: false,
+          n_sign_posn: 1,
+          negative_sign: "-",
+          p_cs_precedes: true,
+          p_sep_by_space: false,
+          p_sign_posn: 1,
+          positive_sign: "",
+          thousands_sep: ","
+        }
+      };
+      
+      const icons = await this.makeRpcCall('model.ir.ui.icon.list_icons', [context]);
       console.log('Iconos obtenidos:', icons);
       return icons;
     } catch (error) {
@@ -311,7 +377,34 @@ class TrytonService {
 
     try {
       console.log('Obteniendo vistas de búsqueda...');
-      const viewSearch = await this.makeRpcCall('model.ir.ui.view_search.get', [{}]);
+      
+      // Crear el contexto completo como lo hace el SAO
+      const context = {
+        client: this.generateClientId(),
+        company: 1,
+        company_filter: "one",
+        language: "en",
+        language_direction: "ltr",
+        locale: {
+          date: "%m/%d/%Y",
+          decimal_point: ".",
+          grouping: [3, 3, 0],
+          mon_decimal_point: ".",
+          mon_grouping: [3, 3, 0],
+          mon_thousands_sep: ",",
+          n_cs_precedes: true,
+          n_sep_by_space: false,
+          n_sign_posn: 1,
+          negative_sign: "-",
+          p_cs_precedes: true,
+          p_sep_by_space: false,
+          p_sign_posn: 1,
+          positive_sign: "",
+          thousands_sep: ","
+        }
+      };
+      
+      const viewSearch = await this.makeRpcCall('model.ir.ui.view_search.get', [context]);
       console.log('Vistas de búsqueda obtenidas:', viewSearch);
       return viewSearch;
     } catch (error) {
