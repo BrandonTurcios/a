@@ -162,9 +162,9 @@ class TrytonService {
 
       console.log('Intentando login con parámetros:', { database, loginParams, language: 'es' });
       
-      // Para el login, necesitamos usar la URL con la base de datos
-      const loginUrl = `${this.baseURL}/${database}/`;
-      console.log('URL de login:', loginUrl);
+             // Para el login, necesitamos usar la URL directa del servidor Tryton con la base de datos
+       const loginUrl = `http://localhost:8000/${database}/`;
+       console.log('URL de login:', loginUrl);
       
       const headers = {
         'Content-Type': 'application/json',
