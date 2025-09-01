@@ -155,8 +155,8 @@ class TrytonService {
       }
       
       // Ahora hacer login en la base de datos específica
-      // El formato correcto para Tryton es: [database, username, password]
-      console.log('Intentando login con parámetros:', { database, username, password });
+      // El formato correcto para Tryton es: [username, {password}, language]
+      console.log('Intentando login con parámetros:', { username, password, language: 'en' });
       
       // Para el login, necesitamos usar la URL con la base de datos
       const loginUrl = `${this.baseURL}/${database}/`;
@@ -170,7 +170,13 @@ class TrytonService {
       const loginPayload = {
         jsonrpc: '2.0',
         method: 'common.db.login',
-        params: [database, username, password],
+        params: [
+          username,
+          {
+            password: password
+          },
+          'en'
+        ],
         id: Date.now()
       };
 
