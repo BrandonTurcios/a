@@ -15,7 +15,16 @@ class TrytonService {
     let url;
     
     // Solo usar base de datos en métodos que la requieren
-    const methodsWithDatabase = ['common.db.login', 'model.res.user.get_preferences', 'model.ir.module.search_read'];
+    const methodsWithDatabase = [
+      'common.db.login', 
+      'model.res.user.get_preferences', 
+      'model.ir.module.search_read',
+      'model.ir.model.access.get_access',
+      'model.ir.ui.menu.view_toolbar_get',
+      'model.ir.ui.menu.fields_view_get',
+      'model.ir.ui.menu.search_read',
+      'model.ir.ui.icon.list_icons'
+    ];
     
     if (this.database && this.database.trim() !== '' && methodsWithDatabase.includes(method)) {
       // Si hay base de datos y el método la requiere, usar la estructura /database/
@@ -944,6 +953,79 @@ class TrytonService {
       return result;
     } catch (error) {
       console.error('=== ERROR EN PRUEBA DE CONEXIÓN ===');
+      console.error('Error:', error);
+      throw error;
+    }
+  }
+
+  // Prueba específica para getModelAccess
+  async testModelAccessSpecific() {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log('=== PRUEBA ESPECÍFICA getModelAccess ===');
+      console.log('Session data:', this.sessionData);
+      console.log('Base URL:', this.baseURL);
+      console.log('Database:', this.database);
+      
+      // Verificar que la URL se construye correctamente
+      const url = `${this.baseURL}/${this.database}/`;
+      console.log('URL que debería usar:', url);
+      
+      // Hacer la llamada directamente para verificar
+      const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Session ${this.getAuthHeader()}`
+      };
+
+      const payload = {
+        jsonrpc: '2.0',
+        method: 'model.ir.model.access.get_access',
+        params: [
+          ['ir.module'], // Solo un modelo simple para la prueba
+          {
+            client: this.generateClientId(),
+            company: 1,
+            company_filter: "one",
+            language: "en"
+          }
+        ],
+        id: Date.now()
+      };
+
+      console.log('Haciendo llamada directa a:', url);
+      console.log('Payload:', JSON.stringify(payload, null, 2));
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(payload),
+        mode: 'cors',
+        credentials: 'omit'
+      });
+
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}. Details: ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('Response data:', data);
+      
+      if (data.error) {
+        throw new Error(data.error.message || 'Error en la llamada RPC');
+      }
+
+      console.log('=== PRUEBA ESPECÍFICA EXITOSA ===');
+      return data.result || data;
+    } catch (error) {
+      console.error('=== ERROR EN PRUEBA ESPECÍFICA ===');
       console.error('Error:', error);
       throw error;
     }

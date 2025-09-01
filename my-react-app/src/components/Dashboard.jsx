@@ -150,6 +150,20 @@ const Dashboard = ({ sessionData, onLogout }) => {
     }
   };
 
+  // Función para probar getModelAccess específico
+  const testModelAccessSpecific = async () => {
+    try {
+      console.log('=== PRUEBA ESPECÍFICA getModelAccess ===');
+      trytonService.restoreSession(sessionData);
+      const result = await trytonService.testModelAccessSpecific();
+      console.log('Resultado de testModelAccessSpecific:', result);
+      alert('Prueba específica exitosa. Revisa la pestaña Network y la consola.');
+    } catch (error) {
+      console.error('Error en testModelAccessSpecific:', error);
+      alert('Error en prueba específica: ' + error.message);
+    }
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -326,6 +340,15 @@ const Dashboard = ({ sessionData, onLogout }) => {
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </button>
+              <button
+                onClick={testModelAccessSpecific}
+                className="p-2 rounded-md hover:bg-gray-700 transition-colors bg-red-600"
+                title="Probar getModelAccess específico"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                 </svg>
               </button>
               <button
