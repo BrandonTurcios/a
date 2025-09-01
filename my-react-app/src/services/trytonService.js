@@ -289,36 +289,8 @@ class TrytonService {
     try {
       console.log('Obteniendo preferencias del usuario...');
       
-      // Crear el contexto completo como lo hace el SAO
-      const context = {
-        client: this.generateClientId(), // Generar un ID de cliente único
-        company: 1, // Por defecto
-        company_filter: "one",
-        language: "en",
-        language_direction: "ltr",
-        locale: {
-          date: "%m/%d/%Y",
-          decimal_point: ".",
-          grouping: [3, 3, 0],
-          mon_decimal_point: ".",
-          mon_grouping: [3, 3, 0],
-          mon_thousands_sep: ",",
-          n_cs_precedes: true,
-          n_sep_by_space: false,
-          n_sign_posn: 1,
-          negative_sign: "-",
-          p_cs_precedes: true,
-          p_sep_by_space: false,
-          p_sign_posn: 1,
-          positive_sign: "",
-          thousands_sep: ","
-        }
-      };
-      
-      console.log('Contexto enviado:', context);
-      
-      // El SAO usa true como primer parámetro para obtener el contexto completo
-      const preferences = await this.makeRpcCall('model.res.user.get_preferences', [true, context]);
+      // El SAO usa false como primer parámetro (no contexto completo)
+      const preferences = await this.makeRpcCall('model.res.user.get_preferences', [false, {}]);
       console.log('Preferencias obtenidas:', preferences);
       return preferences;
     } catch (error) {
@@ -436,39 +408,61 @@ class TrytonService {
       
       // Obtener las preferencias del usuario (como en el SAO)
       const preferences = await this.getUserPreferences();
-      
-      // Obtener la lista de iconos (como en el SAO)
-      const icons = await this.getIcons();
-      
-      // Obtener las vistas de búsqueda (como en el SAO)
-      const viewSearch = await this.getViewSearch();
+      console.log('Preferencias completas:', preferences);
       
       // El menú principal está en preferences.pyson_menu
-      // Por ahora, vamos a obtener los módulos instalados como alternativa
-      const modules = await this.makeRpcCall('model.ir.module.search_read', [
-        [['state', '=', 'installed']],
-        ['name', 'display_name', 'description', 'icon']
-      ]);
+      if (preferences && preferences.pyson_menu) {
+        console.log('PYSON menu encontrado:', preferences.pyson_menu);
+        
+        // Por ahora, vamos a obtener los módulos instalados como alternativa
+        // ya que decodificar PYSON es complejo
+        const modules = await this.makeRpcCall('model.ir.module.search_read', [
+          [['state', '=', 'installed']],
+          ['name', 'display_name', 'description', 'icon']
+        ]);
 
-      console.log('Módulos encontrados:', modules);
+        console.log('Módulos encontrados:', modules);
 
-      // Convertir los módulos a formato de menú
-      const menuItems = modules.map(module => ({
-        id: module.name,
-        name: module.display_name || module.name,
-        description: module.description || '',
-        icon: this.getModuleIcon(module.name),
-        model: module.name,
-        type: 'module'
-      }));
+        // Convertir los módulos a formato de menú
+        const menuItems = modules.map(module => ({
+          id: module.name,
+          name: module.display_name || module.name,
+          description: module.description || '',
+          icon: this.getModuleIcon(module.name),
+          model: module.name,
+          type: 'module'
+        }));
 
-      return {
-        preferences,
-        icons,
-        viewSearch,
-        menuItems,
-        modules
-      };
+        return {
+          preferences,
+          pysonMenu: preferences.pyson_menu,
+          menuItems,
+          modules
+        };
+      } else {
+        console.log('No se encontró pyson_menu en las preferencias');
+        
+        // Fallback a módulos instalados
+        const modules = await this.makeRpcCall('model.ir.module.search_read', [
+          [['state', '=', 'installed']],
+          ['name', 'display_name', 'description', 'icon']
+        ]);
+
+        const menuItems = modules.map(module => ({
+          id: module.name,
+          name: module.display_name || module.name,
+          description: module.description || '',
+          icon: this.getModuleIcon(module.name),
+          model: module.name,
+          type: 'module'
+        }));
+
+        return {
+          preferences,
+          menuItems,
+          modules
+        };
+      }
     } catch (error) {
       console.error('Error obteniendo menú del sidebar:', error);
       throw error;
