@@ -38,7 +38,11 @@ class TrytonService {
 
     // Agregar headers de autorización si hay sesión
     if (this.sessionData) {
-      headers['Authorization'] = `Session ${this.getAuthHeader()}`;
+      const authHeader = `Session ${this.getAuthHeader()}`;
+      headers['Authorization'] = authHeader;
+      console.log('Headers de autorización agregados:', { Authorization: authHeader });
+    } else {
+      console.log('No hay sesión activa, no se agregan headers de autorización');
     }
 
     const payload = {
@@ -129,13 +133,27 @@ class TrytonService {
     }
   }
 
+  // Restaurar sesión desde datos externos
+  restoreSession(sessionData) {
+    if (sessionData) {
+      this.sessionData = sessionData;
+      this.database = sessionData.database;
+      console.log('Sesión restaurada en el servicio:', this.sessionData);
+    } else {
+      console.log('No hay datos de sesión para restaurar');
+    }
+  }
+
   // Generar header de autorización (como en el SAO original)
   getAuthHeader() {
     if (!this.sessionData) return '';
     
     const { username, userId, sessionId } = this.sessionData;
+    console.log('Generando auth header con:', { username, userId, sessionId });
     const authString = `${username}:${userId}:${sessionId}`;
-    return btoa(unescape(encodeURIComponent(authString)));
+    const encoded = btoa(unescape(encodeURIComponent(authString)));
+    console.log('Auth header generado:', encoded);
+    return encoded;
   }
 
   // Login a Tryton usando la API real

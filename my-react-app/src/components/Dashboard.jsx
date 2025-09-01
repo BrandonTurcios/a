@@ -16,6 +16,14 @@ const Dashboard = ({ sessionData, onLogout }) => {
     try {
       setLoading(true);
       console.log('Cargando menú del sidebar...');
+      
+      // Restaurar la sesión en el servicio
+      console.log('Restaurando sesión en el servicio...');
+      console.log('Datos de sesión disponibles:', sessionData);
+      
+      // Restaurar la sesión en el servicio Tryton
+      trytonService.restoreSession(sessionData);
+      
       const result = await trytonService.getSidebarMenu();
       console.log('Resultado completo del menú:', result);
       
