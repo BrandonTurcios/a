@@ -677,23 +677,45 @@ class TrytonService {
       console.error('Error completo:', error);
       console.error('Mensaje de error:', error.message);
       
-      // Si hay error de CORS, intentar con no-cors para verificar que el servidor responde
+      // Si hay error, intentar con POST para verificar que el servidor responde
       try {
-        console.log('Intentando verificación alternativa con no-cors...');
+        console.log('Intentando verificación alternativa con POST...');
         const response = await fetch(`${this.baseURL}/`, {
-          method: 'GET',
-          mode: 'no-cors'
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            method: 'common.db.list',
+            params: [],
+            id: Date.now()
+          }),
+          mode: 'cors'
         });
         
-        return {
-          connected: true,
-          databases: [],
-          serverUrl: this.baseURL,
-          warning: 'Servidor responde pero hay problemas de CORS. Verifica la configuración de CORS en Tryton.',
-          error: error.message
-        };
-      } catch (corsError) {
-        console.error('Error en verificación alternativa:', corsError);
+        if (response.ok) {
+          return {
+            connected: true,
+            databases: [],
+            serverUrl: this.baseURL,
+            warning: 'Servidor responde a POST pero hay problemas con la llamada RPC. Verifica la configuración de Tryton.',
+            error: error.message
+          };
+        } else {
+          return {
+            connected: false,
+            error: error.message,
+            serverUrl: this.baseURL,
+            suggestions: this.getConnectionSuggestions(error),
+            debugInfo: {
+              originalError: error.message,
+              postResponseStatus: response.status,
+              baseURL: this.baseURL,
+              method: 'common.db.list'
+            }
+          };
+        }
+      } catch (postError) {
+        console.error('Error en verificación alternativa POST:', postError);
         
         return {
           connected: false,
@@ -702,7 +724,7 @@ class TrytonService {
           suggestions: this.getConnectionSuggestions(error),
           debugInfo: {
             originalError: error.message,
-            corsError: corsError.message,
+            postError: postError.message,
             baseURL: this.baseURL,
             method: 'common.db.list'
           }
