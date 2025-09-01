@@ -487,6 +487,42 @@ class TrytonService {
     }
   }
 
+  // Obtener menú simplificado como el SAO
+  async getSimpleMenu() {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log('=== OBTENIENDO MENÚ SIMPLIFICADO ===');
+      
+      // 1. Obtener preferencias del usuario (como el SAO)
+      const preferences = await this.makeRpcCall('model.res.user.get_preferences', [true, {}]);
+      console.log('Preferencias obtenidas:', preferences);
+      
+      // 2. Obtener menús principales
+      const menus = await this.makeRpcCall('model.ir.ui.menu.search_read', [
+        [['parent', '=', null]],
+        ['name', 'icon', 'sequence', 'childs']
+      ]);
+      console.log('Menús principales obtenidos:', menus);
+      
+      // 3. Obtener iconos disponibles
+      const icons = await this.makeRpcCall('model.ir.ui.icon.list_icons', [{}]);
+      console.log('Iconos obtenidos:', icons);
+      
+      return {
+        preferences,
+        menus,
+        icons,
+        pysonMenu: preferences.pyson_menu
+      };
+    } catch (error) {
+      console.error('Error obteniendo menú simplificado:', error);
+      throw error;
+    }
+  }
+
   // Obtener datos del dashboard
   async getDashboardData() {
     if (!this.sessionData) {
@@ -825,6 +861,65 @@ class TrytonService {
     } catch (error) {
       console.error('=== ERROR en getMenuFieldsView ===');
       console.error('Error obteniendo vista de campos del menú:', error);
+      throw error;
+    }
+  }
+
+  }
+
+  // Listar métodos disponibles
+  async listAvailableMethods() {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log('=== LISTANDO MÉTODOS DISPONIBLES ===');
+      
+      // Probar algunos métodos comunes
+      const methods = [
+        'model.ir.module.search_read',
+        'model.ir.model.access.get_access',
+        'model.ir.ui.menu.view_toolbar_get',
+        'model.ir.ui.menu.fields_view_get',
+        'model.res.user.get_preferences',
+        'model.ir.ui.menu.search_read',
+        'model.ir.ui.icon.list_icons'
+      ];
+      
+      const results = {};
+      
+      for (const method of methods) {
+        try {
+          console.log(`Probando método: ${method}`);
+          
+          let params = [];
+          if (method === 'model.ir.module.search_read') {
+            params = [[['state', '=', 'installed']], ['name']];
+          } else if (method === 'model.res.user.get_preferences') {
+            params = [false, {}];
+          } else if (method === 'model.ir.ui.menu.search_read') {
+            params = [[['parent', '=', null]], ['name']];
+          } else if (method === 'model.ir.ui.icon.list_icons') {
+            params = [{}];
+          } else {
+            params = [{}];
+          }
+          
+          const result = await this.makeRpcCall(method, params);
+          results[method] = { success: true, result };
+          console.log(`✅ ${method} - EXITOSO`);
+        } catch (error) {
+          results[method] = { success: false, error: error.message };
+          console.log(`❌ ${method} - FALLÓ: ${error.message}`);
+        }
+      }
+      
+      console.log('=== RESUMEN DE MÉTODOS ===');
+      console.table(results);
+      return results;
+    } catch (error) {
+      console.error('Error listando métodos:', error);
       throw error;
     }
   }

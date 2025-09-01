@@ -108,6 +108,34 @@ const Dashboard = ({ sessionData, onLogout }) => {
     }
   };
 
+  // Función para probar conexión simple
+  const testSimpleConnection = async () => {
+    try {
+      console.log('=== PRUEBA CONEXIÓN SIMPLE ===');
+      trytonService.restoreSession(sessionData);
+      const result = await trytonService.testConnection();
+      console.log('Resultado de testConnection:', result);
+      alert(`Conexión exitosa! ${result.length} módulos encontrados. Revisa la consola.`);
+    } catch (error) {
+      console.error('Error en testSimpleConnection:', error);
+      alert('Error en conexión simple: ' + error.message);
+    }
+  };
+
+  // Función para probar menú simplificado
+  const testSimpleMenu = async () => {
+    try {
+      console.log('=== PRUEBA MENÚ SIMPLIFICADO ===');
+      trytonService.restoreSession(sessionData);
+      const result = await trytonService.getSimpleMenu();
+      console.log('Resultado de getSimpleMenu:', result);
+      alert(`Menú obtenido! ${result.menus?.length || 0} menús encontrados. Revisa la consola.`);
+    } catch (error) {
+      console.error('Error en testSimpleMenu:', error);
+      alert('Error en menú simplificado: ' + error.message);
+    }
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -257,6 +285,24 @@ const Dashboard = ({ sessionData, onLogout }) => {
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </button>
+              <button
+                onClick={testSimpleConnection}
+                className="p-2 rounded-md hover:bg-gray-700 transition-colors bg-green-600"
+                title="Probar conexión simple"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+              </button>
+              <button
+                onClick={testSimpleMenu}
+                className="p-2 rounded-md hover:bg-gray-700 transition-colors bg-purple-600"
+                title="Probar menú simplificado"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
               </button>
               <button
