@@ -197,30 +197,32 @@ class TrytonService {
         throw new Error(`Error en login: ${response.status} - ${response.statusText}`);
       }
 
-      const data = await response.json();
-      console.log('Login response data:', data);
-      
-      if (data.error) {
-        throw new Error(data.error.message || 'Error en el login');
-      }
+             const data = await response.json();
+       console.log('Login response data:', data);
+       
+       if (data.error) {
+         throw new Error(data.error.message || 'Error en el login');
+       }
 
-      const result = data.result;
+       // Tryton puede devolver el resultado directamente o dentro de data.result
+       const result = data.result !== undefined ? data.result : data;
+       console.log('Login result:', result);
 
-      if (result && result.length >= 2) {
-        // Crear sesión como en el SAO original
-        this.sessionData = {
-          sessionId: result[0],
-          userId: result[1],
-          database: database,
-          username: username,
-          loginTime: new Date().toISOString()
-        };
+       if (result && Array.isArray(result) && result.length >= 2) {
+         // Crear sesión como en el SAO original
+         this.sessionData = {
+           sessionId: result[0],
+           userId: result[1],
+           database: database,
+           username: username,
+           loginTime: new Date().toISOString()
+         };
 
-        console.log('Login exitoso, sesión creada:', this.sessionData);
-        return this.sessionData;
-      } else {
-        throw new Error('Credenciales inválidas');
-      }
+         console.log('Login exitoso, sesión creada:', this.sessionData);
+         return this.sessionData;
+       } else {
+         throw new Error('Credenciales inválidas o respuesta inesperada del servidor');
+       }
     } catch (error) {
       console.error('Error en login:', error);
       throw error;
