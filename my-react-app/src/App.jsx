@@ -23,10 +23,14 @@ function App() {
 
   const handleLogin = (session) => {
     setSessionData(session);
+    // Guardar la sesión en localStorage para persistencia
+    localStorage.setItem('tryton_session', JSON.stringify(session));
   };
 
   const handleLogout = () => {
     setSessionData(null);
+    // Limpiar la sesión de localStorage
+    localStorage.removeItem('tryton_session');
   };
 
   if (isLoading) {

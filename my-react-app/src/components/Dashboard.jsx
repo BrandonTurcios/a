@@ -24,10 +24,19 @@ const Dashboard = ({ sessionData, onLogout }) => {
       console.log('Datos de sesión keys:', Object.keys(sessionData || {}));
       
       // Restaurar la sesión en el servicio Tryton
-      trytonService.restoreSession(sessionData);
+      const sessionRestored = trytonService.restoreSession(sessionData);
       
-      // Verificar que la sesión se restauró correctamente
-      console.log('Verificando sesión restaurada...');
+      if (!sessionRestored) {
+        throw new Error('No se pudo restaurar la sesión. Los datos de sesión son inválidos.');
+      }
+      
+      // Validar que la sesión sea válida
+      console.log('Validando sesión restaurada...');
+      const isValid = await trytonService.validateSession();
+      
+      if (!isValid) {
+        throw new Error('La sesión ha expirado. Por favor, inicia sesión nuevamente.');
+      }
       
       const result = await trytonService.getSidebarMenu();
       console.log('Resultado completo del menú:', result);
@@ -68,6 +77,13 @@ const Dashboard = ({ sessionData, onLogout }) => {
     } catch (error) {
       console.error('Error cargando menú del sidebar:', error);
       setError('Error cargando el menú: ' + error.message);
+      
+      // Si la sesión ha expirado, hacer logout automáticamente
+      if (error.message.includes('expirado') || error.message.includes('inválidos')) {
+        console.log('Sesión expirada, haciendo logout automático...');
+        handleLogout();
+        return;
+      }
       
       // Fallback a menú básico
       setMenuItems([
@@ -161,6 +177,48 @@ const Dashboard = ({ sessionData, onLogout }) => {
     } catch (error) {
       console.error('Error en testModelAccessSpecific:', error);
       alert('Error en prueba específica: ' + error.message);
+    }
+  };
+
+  // Función para debug de sesión
+  const debugSession = () => {
+    console.log('=== DEBUG SESSION ===');
+    console.log('Session data from props:', sessionData);
+    trytonService.debugSession();
+    alert('Debug de sesión ejecutado. Revisa la consola para más detalles.');
+  };
+
+  // Función para probar autenticación
+  const testAuthentication = async () => {
+    try {
+      console.log('=== PRUEBA DE AUTENTICACIÓN ===');
+      console.log('Session data from props:', sessionData);
+      
+      // Restaurar sesión
+      const sessionRestored = trytonService.restoreSession(sessionData);
+      console.log('Session restored:', sessionRestored);
+      
+      if (!sessionRestored) {
+        alert('Error: No se pudo restaurar la sesión. Los datos son inválidos.');
+        return;
+      }
+      
+      // Mostrar información de debug
+      trytonService.debugSession();
+      
+      // Intentar una llamada simple
+      console.log('Intentando llamada simple...');
+      const result = await trytonService.makeRpcCall('model.ir.module.search_read', [
+        [['state', '=', 'installed']],
+        ['name']
+      ]);
+      
+      console.log('Llamada exitosa:', result);
+      alert(`Autenticación exitosa! ${result.length} módulos encontrados.`);
+      
+    } catch (error) {
+      console.error('Error en autenticación:', error);
+      alert('Error de autenticación: ' + error.message);
     }
   };
 
@@ -349,6 +407,24 @@ const Dashboard = ({ sessionData, onLogout }) => {
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                </svg>
+              </button>
+              <button
+                onClick={debugSession}
+                className="p-2 rounded-md hover:bg-gray-700 transition-colors bg-gray-600"
+                title="Debug de sesión"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </button>
+              <button
+                onClick={testAuthentication}
+                className="p-2 rounded-md hover:bg-gray-700 transition-colors bg-indigo-600"
+                title="Probar autenticación"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
               </button>
               <button

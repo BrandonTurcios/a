@@ -148,6 +148,15 @@ class TrytonService {
     console.log('RestoreSession llamado con:', sessionData);
     
     if (sessionData && typeof sessionData === 'object') {
+      // Validar que la sesión tenga todos los campos necesarios
+      if (!sessionData.sessionId || !sessionData.userId || !sessionData.username || !sessionData.database) {
+        console.error('Datos de sesión incompletos:', sessionData);
+        console.log('Se requieren: sessionId, userId, username, database');
+        this.sessionData = null;
+        this.database = null;
+        return false;
+      }
+      
       this.sessionData = sessionData;
       this.database = sessionData.database;
       console.log('Sesión restaurada en el servicio:', this.sessionData);
@@ -158,10 +167,47 @@ class TrytonService {
         sessionId: this.sessionData.sessionId,
         database: this.database
       });
+      return true;
     } else {
       console.log('No hay datos de sesión válidos para restaurar');
       console.log('Tipo de sessionData:', typeof sessionData);
       console.log('Valor de sessionData:', sessionData);
+      this.sessionData = null;
+      this.database = null;
+      return false;
+    }
+  }
+
+  // Validar si la sesión actual es válida
+  async validateSession() {
+    if (!this.sessionData) {
+      console.log('No hay sesión para validar');
+      return false;
+    }
+
+    try {
+      console.log('Validando sesión actual...');
+      console.log('Datos de sesión:', this.sessionData);
+      
+      // Intentar hacer una llamada simple para verificar si la sesión es válida
+      const result = await this.makeRpcCall('model.ir.module.search_read', [
+        [['state', '=', 'installed']],
+        ['name']
+      ]);
+      
+      console.log('Sesión válida, módulos encontrados:', result.length);
+      return true;
+    } catch (error) {
+      console.error('Sesión inválida:', error.message);
+      
+      // Si es un error 401, la sesión ha expirado
+      if (error.message.includes('401') || error.message.includes('UNAUTHORIZED')) {
+        console.log('Sesión expirada, limpiando datos...');
+        this.clearSession();
+        return false;
+      }
+      
+      return false;
     }
   }
 
@@ -1052,6 +1098,53 @@ class TrytonService {
       console.error('Error:', error);
       throw error;
     }
+  }
+
+  // Limpiar sesión y localStorage
+  clearSession() {
+    console.log('Limpiando sesión...');
+    this.sessionData = null;
+    this.database = null;
+    
+    // Limpiar también del localStorage
+    try {
+      localStorage.removeItem('tryton_session');
+      console.log('Sesión eliminada del localStorage');
+    } catch (error) {
+      console.error('Error limpiando localStorage:', error);
+    }
+  }
+
+  // Método de debug para verificar el estado de la sesión
+  debugSession() {
+    console.log('=== DEBUG SESSION ===');
+    console.log('Session data:', this.sessionData);
+    console.log('Database:', this.database);
+    console.log('Base URL:', this.baseURL);
+    
+    if (this.sessionData) {
+      console.log('Auth header:', this.getAuthHeader());
+      console.log('Session ID:', this.sessionData.sessionId);
+      console.log('User ID:', this.sessionData.userId);
+      console.log('Username:', this.sessionData.username);
+      console.log('Database:', this.sessionData.database);
+      console.log('Login time:', this.sessionData.loginTime);
+    } else {
+      console.log('No session data available');
+    }
+    
+    // Verificar localStorage
+    try {
+      const storedSession = localStorage.getItem('tryton_session');
+      console.log('Stored session in localStorage:', storedSession);
+      if (storedSession) {
+        console.log('Parsed stored session:', JSON.parse(storedSession));
+      }
+    } catch (error) {
+      console.error('Error reading localStorage:', error);
+    }
+    
+    console.log('=== END DEBUG ===');
   }
 }
 
