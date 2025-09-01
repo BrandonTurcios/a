@@ -410,6 +410,18 @@ class TrytonService {
       const preferences = await this.getUserPreferences();
       console.log('Preferencias completas:', preferences);
       
+      // Obtener permisos de acceso (como en el SAO)
+      const modelAccess = await this.getModelAccess();
+      console.log('Permisos de acceso obtenidos');
+      
+      // Obtener configuración de toolbar del menú (como en el SAO)
+      const menuToolbar = await this.getMenuToolbar();
+      console.log('Toolbar del menú obtenido');
+      
+      // Obtener vista de campos del menú (como en el SAO)
+      const menuFieldsView = await this.getMenuFieldsView();
+      console.log('Vista de campos del menú obtenida');
+      
       // El menú principal está en preferences.pyson_menu
       if (preferences && preferences.pyson_menu) {
         console.log('PYSON menu encontrado:', preferences.pyson_menu);
@@ -436,6 +448,9 @@ class TrytonService {
         return {
           preferences,
           pysonMenu: preferences.pyson_menu,
+          modelAccess,
+          menuToolbar,
+          menuFieldsView,
           menuItems,
           modules
         };
@@ -459,6 +474,9 @@ class TrytonService {
 
         return {
           preferences,
+          modelAccess,
+          menuToolbar,
+          menuFieldsView,
           menuItems,
           modules
         };
@@ -626,6 +644,174 @@ class TrytonService {
     }
     
     return suggestions;
+  }
+
+  // Obtener permisos de acceso (como en el SAO)
+  async getModelAccess() {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log('Obteniendo permisos de acceso...');
+      
+      // Lista de modelos que el SAO verifica
+      const models = [
+        "ir.email.address", "ir.email.template", "ir.email.template-ir.action.report",
+        "ir.error", "ir.export", "ir.export.line", "ir.lang", "ir.lang.config.start",
+        "ir.message", "ir.model", "ir.model.access", "ir.model.button",
+        "ir.model.button-button.reset", "ir.model.button.click", "ir.model.button.rule",
+        "ir.model.data", "ir.model.field", "ir.model.field.access", "ir.model.log",
+        "ir.model.print_model_graph.start", "ir.module", "ir.module.activate_upgrade.done",
+        "ir.module.activate_upgrade.start", "ir.module.config.start",
+        "ir.module.config_wizard.done", "ir.module.config_wizard.first",
+        "ir.module.config_wizard.item", "ir.module.config_wizard.other",
+        "ir.module.dependency", "ir.note", "ir.note.read", "ir.queue", "ir.rule",
+        "ir.rule.group", "ir.sequence", "ir.sequence.strict", "ir.sequence.type",
+        "ir.session", "ir.session.wizard", "ir.translation", "ir.translation.clean.start",
+        "ir.translation.clean.succeed", "ir.translation.export.result",
+        "ir.translation.export.start", "ir.translation.set.start",
+        "ir.translation.set.succeed", "ir.translation.update.start", "ir.trigger",
+        "ir.trigger.log", "ir.ui.icon", "ir.ui.menu", "ir.ui.menu.favorite",
+        "ir.ui.view", "ir.ui.view_search", "ir.ui.view.show.start",
+        "ir.ui.view_tree_optional", "ir.ui.view_tree_state", "ir.ui.view_tree_width",
+        "party.address", "party.address.format", "party.address.subdivision_type",
+        "party.category", "party.check_vies.result", "party.configuration",
+        "party.configuration.party_lang", "party.configuration.party_sequence",
+        "party.contact_mechanism", "party.contact_mechanism.language",
+        "party.erase.ask", "party.identifier", "party.party", "party.party.lang",
+        "party.party-party.category", "party.replace.ask", "product.category",
+        "product.configuration", "product.configuration.default_cost_price_method",
+        "product.cost_price", "product.cost_price_method", "product.identifier",
+        "product.list_price", "product.product", "product.template",
+        "product.template-product.category", "product.template-product.category.all",
+        "product.uom", "product.uom.category", "party.party.customer_code",
+        "party.party.supplier_currency", "party.party.supplier_lead_time",
+        "purchase.configuration", "purchase.configuration.purchase_method",
+        "purchase.configuration.sequence", "purchase.handle.invoice.exception.ask",
+        "purchase.handle.shipment.exception.ask", "purchase.line",
+        "purchase.line-account.tax", "purchase.line-ignored-stock.move",
+        "purchase.line-recreated-stock.move", "purchase.product_supplier"
+      ];
+      
+      const context = {
+        client: this.generateClientId(),
+        company: 1,
+        company_filter: "one",
+        language: "en",
+        language_direction: "ltr",
+        locale: {
+          date: "%m/%d/%Y",
+          decimal_point: ".",
+          grouping: [3, 3, 0],
+          mon_decimal_point: ".",
+          mon_grouping: [3, 3, 0],
+          mon_thousands_sep: ",",
+          n_cs_precedes: true,
+          n_sep_by_space: false,
+          n_sign_posn: 1,
+          negative_sign: "-",
+          p_cs_precedes: true,
+          p_sep_by_space: false,
+          p_sign_posn: 1,
+          positive_sign: "",
+          thousands_sep: ","
+        }
+      };
+      
+      const access = await this.makeRpcCall('model.ir.model.access.get_access', [models, context]);
+      console.log('Permisos de acceso obtenidos:', access);
+      return access;
+    } catch (error) {
+      console.error('Error obteniendo permisos de acceso:', error);
+      throw error;
+    }
+  }
+
+  // Obtener configuración de toolbar del menú (como en el SAO)
+  async getMenuToolbar() {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log('Obteniendo configuración de toolbar del menú...');
+      
+      const context = {
+        client: this.generateClientId(),
+        company: 1,
+        company_filter: "one",
+        language: "en",
+        language_direction: "ltr",
+        locale: {
+          date: "%m/%d/%Y",
+          decimal_point: ".",
+          grouping: [3, 3, 0],
+          mon_decimal_point: ".",
+          mon_grouping: [3, 3, 0],
+          mon_thousands_sep: ",",
+          n_cs_precedes: true,
+          n_sep_by_space: false,
+          n_sign_posn: 1,
+          negative_sign: "-",
+          p_cs_precedes: true,
+          p_sep_by_space: false,
+          p_sign_posn: 1,
+          positive_sign: "",
+          thousands_sep: ","
+        }
+      };
+      
+      const toolbar = await this.makeRpcCall('model.ir.ui.menu.view_toolbar_get', [context]);
+      console.log('Toolbar del menú obtenido:', toolbar);
+      return toolbar;
+    } catch (error) {
+      console.error('Error obteniendo toolbar del menú:', error);
+      throw error;
+    }
+  }
+
+  // Obtener vista de campos del menú (como en el SAO)
+  async getMenuFieldsView() {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log('Obteniendo vista de campos del menú...');
+      
+      const context = {
+        client: this.generateClientId(),
+        company: 1,
+        company_filter: "one",
+        language: "en",
+        language_direction: "ltr",
+        locale: {
+          date: "%m/%d/%Y",
+          decimal_point: ".",
+          grouping: [3, 3, 0],
+          mon_decimal_point: ".",
+          mon_grouping: [3, 3, 0],
+          mon_thousands_sep: ",",
+          n_cs_precedes: true,
+          n_sep_by_space: false,
+          n_sign_posn: 1,
+          negative_sign: "-",
+          p_cs_precedes: true,
+          p_sep_by_space: false,
+          p_sign_posn: 1,
+          positive_sign: "",
+          thousands_sep: ","
+        }
+      };
+      
+      const fieldsView = await this.makeRpcCall('model.ir.ui.menu.fields_view_get', [3, "tree", context]);
+      console.log('Vista de campos del menú obtenida:', fieldsView);
+      return fieldsView;
+    } catch (error) {
+      console.error('Error obteniendo vista de campos del menú:', error);
+      throw error;
+    }
   }
 }
 
