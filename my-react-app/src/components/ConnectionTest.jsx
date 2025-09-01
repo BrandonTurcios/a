@@ -147,13 +147,20 @@ const ConnectionTest = () => {
           return results;
         },
 
-        // Método para probar GET (solo para diagnóstico)
-        async testGetResponse() {
+        // Método para probar POST (solo para diagnóstico)
+        async testPostResponse() {
           try {
-            console.log('=== PROBANDO RESPUESTA GET ===');
+            console.log('=== PROBANDO RESPUESTA POST ===');
             
             const response = await fetch(`${this.baseURL}/`, {
-              method: 'GET',
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                jsonrpc: '2.0',
+                method: 'common.db.list',
+                params: [],
+                id: Date.now()
+              }),
               mode: 'cors'
             });
             
@@ -173,10 +180,10 @@ const ConnectionTest = () => {
       
       // === INICIAR PRUEBAS COMPLETAS ===
       
-      // 1. Probar GET primero (para ver si el servidor responde)
-      console.log('📡 Paso 1: Probando respuesta GET...');
-      const getResult = await tempService.testGetResponse();
-      console.log('Resultado GET:', getResult);
+             // 1. Probar POST primero (para ver si el servidor responde)
+       console.log('📡 Paso 1: Probando respuesta POST...');
+       const postResult = await tempService.testPostResponse();
+       console.log('Resultado POST:', postResult);
       
       // 2. Probar múltiples endpoints
       console.log('📡 Paso 2: Probando múltiples endpoints...');
@@ -192,11 +199,11 @@ const ConnectionTest = () => {
           databases: databases,
           serverUrl: tempService.baseURL,
           message: `Conexión exitosa al puerto ${portToTest}. ${databases.length} bases de datos encontradas.`,
-          debugInfo: {
-            getResult,
-            endpointResults,
-            workingEndpoint: '/'
-          }
+                     debugInfo: {
+             postResult,
+             endpointResults,
+             workingEndpoint: '/'
+           }
         });
       } catch (dbError) {
         console.error('Error en common.db.list:', dbError);
@@ -214,12 +221,12 @@ const ConnectionTest = () => {
             serverUrl: tempService.baseURL,
             message: `Conexión exitosa usando endpoint ${endpoint}`,
             warning: `El endpoint raíz (/) no funciona, pero ${endpoint} sí funciona.`,
-            debugInfo: {
-              getResult,
-              endpointResults,
-              workingEndpoint: endpoint,
-              originalError: dbError.message
-            }
+                         debugInfo: {
+               postResult,
+               endpointResults,
+               workingEndpoint: endpoint,
+               originalError: dbError.message
+             }
           });
         } else {
           // Ningún endpoint funciona
@@ -234,12 +241,12 @@ const ConnectionTest = () => {
               'Verifica la configuración de CORS en Tryton',
               'Revisa los logs del servidor para más detalles'
             ],
-            debugInfo: {
-              getResult,
-              endpointResults,
-              workingEndpoint: null,
-              originalError: dbError.message
-            }
+                         debugInfo: {
+               postResult,
+               endpointResults,
+               workingEndpoint: null,
+               originalError: dbError.message
+             }
           });
         }
       }
