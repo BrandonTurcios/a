@@ -250,6 +250,65 @@ class TrytonService {
     }
   }
 
+  // Obtener preferencias del usuario (como en el SAO)
+  async getUserPreferences() {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log('Obteniendo preferencias del usuario...');
+      const preferences = await this.makeRpcCall('model.res.user.get_preferences', [false, {}]);
+      console.log('Preferencias obtenidas:', preferences);
+      return preferences;
+    } catch (error) {
+      console.error('Error obteniendo preferencias:', error);
+      throw error;
+    }
+  }
+
+  // Obtener menú del sidebar (como en el SAO)
+  async getSidebarMenu() {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log('Obteniendo menú del sidebar...');
+      
+      // Primero obtener las preferencias del usuario
+      const preferences = await this.getUserPreferences();
+      
+      // El menú está en preferences.pyson_menu, pero necesitamos decodificarlo
+      // Por ahora, vamos a obtener los módulos instalados como alternativa
+      const modules = await this.makeRpcCall('model.ir.module.search_read', [
+        [['state', '=', 'installed']],
+        ['name', 'display_name', 'description', 'icon']
+      ]);
+
+      console.log('Módulos encontrados:', modules);
+
+      // Convertir los módulos a formato de menú
+      const menuItems = modules.map(module => ({
+        id: module.name,
+        name: module.display_name || module.name,
+        description: module.description || '',
+        icon: this.getModuleIcon(module.name),
+        model: module.name,
+        type: 'module'
+      }));
+
+      return {
+        preferences,
+        menuItems,
+        modules
+      };
+    } catch (error) {
+      console.error('Error obteniendo menú del sidebar:', error);
+      throw error;
+    }
+  }
+
   // Obtener datos del dashboard
   async getDashboardData() {
     if (!this.sessionData) {

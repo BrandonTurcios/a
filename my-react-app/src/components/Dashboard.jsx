@@ -1,20 +1,63 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import trytonService from '../services/trytonService';
 
 const Dashboard = ({ sessionData, onLogout }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [menuItems, setMenuItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-    { id: 'sales', label: 'Ventas', icon: '💰' },
-    { id: 'purchases', label: 'Compras', icon: '🛒' },
-    { id: 'inventory', label: 'Inventario', icon: '📦' },
-    { id: 'accounting', label: 'Contabilidad', icon: '📋' },
-    { id: 'hr', label: 'Recursos Humanos', icon: '👥' },
-    { id: 'settings', label: 'Configuración', icon: '⚙️' }
-  ];
+  useEffect(() => {
+    loadSidebarMenu();
+  }, []);
 
-  const handleLogout = () => {
+  const loadSidebarMenu = async () => {
+    try {
+      setLoading(true);
+      console.log('Cargando menú del sidebar...');
+      const result = await trytonService.getSidebarMenu();
+      console.log('Resultado del menú:', result);
+      
+      // Convertir los módulos a elementos del menú
+      const sidebarItems = [
+        { id: 'dashboard', label: 'Dashboard', icon: '📊', type: 'dashboard' },
+        ...result.menuItems.map(item => ({
+          id: item.id,
+          label: item.name,
+          icon: item.icon,
+          type: 'module',
+          model: item.model
+        }))
+      ];
+      
+      setMenuItems(sidebarItems);
+      console.log('Elementos del sidebar cargados:', sidebarItems);
+    } catch (error) {
+      console.error('Error cargando menú del sidebar:', error);
+      setError('Error cargando el menú: ' + error.message);
+      
+      // Fallback a menú básico
+      setMenuItems([
+        { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+        { id: 'sales', label: 'Ventas', icon: '💰' },
+        { id: 'purchases', label: 'Compras', icon: '🛒' },
+        { id: 'inventory', label: 'Inventario', icon: '📦' },
+        { id: 'accounting', label: 'Contabilidad', icon: '📋' },
+        { id: 'hr', label: 'Recursos Humanos', icon: '👥' },
+        { id: 'settings', label: 'Configuración', icon: '⚙️' }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await trytonService.logout();
+    } catch (error) {
+      console.error('Error en logout:', error);
+    }
     localStorage.removeItem('tryton_session');
     onLogout();
   };
@@ -137,6 +180,23 @@ const Dashboard = ({ sessionData, onLogout }) => {
         {/* Sidebar */}
         <div className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-white shadow-lg transition-all duration-300 min-h-screen`}>
           <div className="p-4">
+            {loading ? (
+              <div className="flex items-center justify-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                <span className="ml-2 text-gray-600">Cargando menú...</span>
+              </div>
+            ) : error ? (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                <p className="text-sm text-red-600">{error}</p>
+                <button
+                  onClick={loadSidebarMenu}
+                  className="text-sm text-red-800 underline mt-1"
+                >
+                  Reintentar
+                </button>
+              </div>
+            ) : null}
+            
             <nav className="space-y-2">
               {menuItems.map((item) => (
                 <button
@@ -147,12 +207,28 @@ const Dashboard = ({ sessionData, onLogout }) => {
                       ? 'bg-blue-100 text-blue-700'
                       : 'text-gray-700 hover:bg-gray-100'
                   }`}
+                  title={item.description || item.label}
                 >
                   <span className="text-xl mr-3">{item.icon}</span>
-                  {sidebarOpen && <span className="font-medium">{item.label}</span>}
+                  {sidebarOpen && (
+                    <div className="flex flex-col items-start">
+                      <span className="font-medium">{item.label}</span>
+                      {item.type === 'module' && (
+                        <span className="text-xs text-gray-500">{item.model}</span>
+                      )}
+                    </div>
+                  )}
                 </button>
               ))}
             </nav>
+            
+            {sidebarOpen && (
+              <div className="mt-6 pt-4 border-t border-gray-200">
+                <p className="text-xs text-gray-500">
+                  {menuItems.length} elementos cargados
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
