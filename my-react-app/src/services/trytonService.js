@@ -290,7 +290,7 @@ class TrytonService {
       console.log('Obteniendo preferencias del usuario...');
       
       // El SAO usa false como primer parámetro (no contexto completo)
-      const preferences = await this.makeRpcCall('model.res.user.get_preferences', [false, {}]);
+      const preferences = await this.makeRpcCall('model.res.user.get_preferences', [true, {}]);
       console.log('Preferencias obtenidas:', preferences);
       return preferences;
     } catch (error) {
@@ -653,7 +653,10 @@ class TrytonService {
     }
 
     try {
-      console.log('Obteniendo permisos de acceso...');
+      console.log('=== INICIANDO getModelAccess ===');
+      console.log('Session data disponible:', this.sessionData);
+      console.log('Base URL:', this.baseURL);
+      console.log('Database:', this.database);
       
       // Lista de modelos que el SAO verifica
       const models = [
@@ -719,10 +722,16 @@ class TrytonService {
         }
       };
       
+      console.log('Modelos a verificar:', models.length);
+      console.log('Contexto generado:', context);
+      console.log('Haciendo llamada a model.ir.model.access.get_access...');
+      
       const access = await this.makeRpcCall('model.ir.model.access.get_access', [models, context]);
+      console.log('=== getModelAccess EXITOSO ===');
       console.log('Permisos de acceso obtenidos:', access);
       return access;
     } catch (error) {
+      console.error('=== ERROR en getModelAccess ===');
       console.error('Error obteniendo permisos de acceso:', error);
       throw error;
     }
@@ -735,7 +744,7 @@ class TrytonService {
     }
 
     try {
-      console.log('Obteniendo configuración de toolbar del menú...');
+      console.log('=== INICIANDO getMenuToolbar ===');
       
       const context = {
         client: this.generateClientId(),
@@ -762,10 +771,13 @@ class TrytonService {
         }
       };
       
+      console.log('Haciendo llamada a model.ir.ui.menu.view_toolbar_get...');
       const toolbar = await this.makeRpcCall('model.ir.ui.menu.view_toolbar_get', [context]);
+      console.log('=== getMenuToolbar EXITOSO ===');
       console.log('Toolbar del menú obtenido:', toolbar);
       return toolbar;
     } catch (error) {
+      console.error('=== ERROR en getMenuToolbar ===');
       console.error('Error obteniendo toolbar del menú:', error);
       throw error;
     }
@@ -778,7 +790,7 @@ class TrytonService {
     }
 
     try {
-      console.log('Obteniendo vista de campos del menú...');
+      console.log('=== INICIANDO getMenuFieldsView ===');
       
       const context = {
         client: this.generateClientId(),
@@ -805,10 +817,13 @@ class TrytonService {
         }
       };
       
+      console.log('Haciendo llamada a model.ir.ui.menu.fields_view_get...');
       const fieldsView = await this.makeRpcCall('model.ir.ui.menu.fields_view_get', [3, "tree", context]);
+      console.log('=== getMenuFieldsView EXITOSO ===');
       console.log('Vista de campos del menú obtenida:', fieldsView);
       return fieldsView;
     } catch (error) {
+      console.error('=== ERROR en getMenuFieldsView ===');
       console.error('Error obteniendo vista de campos del menú:', error);
       throw error;
     }

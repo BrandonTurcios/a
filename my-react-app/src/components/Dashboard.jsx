@@ -94,6 +94,20 @@ const Dashboard = ({ sessionData, onLogout }) => {
     onLogout();
   };
 
+  // Función para probar getModelAccess manualmente
+  const testModelAccess = async () => {
+    try {
+      console.log('=== PRUEBA MANUAL getModelAccess ===');
+      trytonService.restoreSession(sessionData);
+      const result = await trytonService.getModelAccess();
+      console.log('Resultado de getModelAccess:', result);
+      alert('getModelAccess ejecutado correctamente. Revisa la consola.');
+    } catch (error) {
+      console.error('Error en testModelAccess:', error);
+      alert('Error en getModelAccess: ' + error.message);
+    }
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -236,6 +250,15 @@ const Dashboard = ({ sessionData, onLogout }) => {
                 <p className="text-gray-300">Usuario: {sessionData.username}</p>
                 <p className="text-gray-400">DB: {sessionData.database}</p>
               </div>
+              <button
+                onClick={testModelAccess}
+                className="p-2 rounded-md hover:bg-gray-700 transition-colors bg-blue-600"
+                title="Probar getModelAccess"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </button>
               <button
                 onClick={handleLogout}
                 className="p-2 rounded-md hover:bg-gray-700 transition-colors"
