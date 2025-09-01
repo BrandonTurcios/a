@@ -10,8 +10,26 @@ class TrytonService {
 
   // Método para hacer llamadas JSON-RPC a Tryton
   async makeRpcCall(method, params = []) {
-    // Construir URL como en el SAO original: /database/
-    const url = this.database ? `${this.baseURL}/${this.database}/` : `${this.baseURL}/`;
+    // Construir URL correctamente
+    let url;
+    
+    // Solo usar base de datos en métodos que la requieren
+    const methodsWithDatabase = ['common.db.login', 'model.res.user.get_preferences', 'model.ir.module.search_read'];
+    
+    if (this.database && this.database.trim() !== '' && methodsWithDatabase.includes(method)) {
+      // Si hay base de datos y el método la requiere, usar la estructura /database/
+      url = `${this.baseURL}/${this.database}/`;
+    } else {
+      // Si no hay base de datos o el método no la requiere, usar solo la URL base
+      url = `${this.baseURL}/`;
+    }
+    
+    console.log('Debug info:', {
+      baseURL: this.baseURL,
+      database: this.database,
+      method: method,
+      finalURL: url
+    });
     
     const headers = {
       'Content-Type': 'application/json',
@@ -108,8 +126,8 @@ class TrytonService {
   getAuthHeader() {
     if (!this.sessionData) return '';
     
-    const { username, user_id, session_id } = this.sessionData;
-    const authString = `${username}:${user_id}:${session_id}`;
+    const { username, userId, sessionId } = this.sessionData;
+    const authString = `${username}:${userId}:${sessionId}`;
     return btoa(unescape(encodeURIComponent(authString)));
   }
 
@@ -119,32 +137,79 @@ class TrytonService {
       // Guardar la base de datos para usar en las URLs
       this.database = database;
       
-      // Primero obtener la lista de bases de datos disponibles
+      // Primero obtener la lista de bases de datos disponibles (sin base de datos específica)
+      console.log('Obteniendo lista de bases de datos...');
       const databases = await this.makeRpcCall('common.db.list');
+      console.log('Bases de datos disponibles:', databases);
       
       // Verificar si la base de datos existe
       if (!databases.includes(database)) {
-        throw new Error(`Base de datos '${database}' no encontrada. Bases disponibles: ${databases.join(', ')}`);
+        throw new Error(`La base de datos '${database}' no existe. Bases disponibles: ${databases.join(', ')}`);
       }
-
-      // Intentar login
+      
+      // Ahora hacer login en la base de datos específica
       const loginParams = {
-        login: username,
-        parameters: {
-          password: password
-        }
+        username: username,
+        password: password
       };
 
-      const result = await this.makeRpcCall('common.db.login', [database, loginParams, 'es']);
+      console.log('Intentando login con parámetros:', { database, loginParams, language: 'es' });
+      
+      // Para el login, necesitamos usar la URL con la base de datos
+      const loginUrl = `${this.baseURL}/${database}/`;
+      console.log('URL de login:', loginUrl);
+      
+      const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
+
+      const loginPayload = {
+        jsonrpc: '2.0',
+        method: 'common.db.login',
+        params: [database, loginParams, 'es'],
+        id: Date.now()
+      };
+
+      const response = await fetch(loginUrl, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(loginPayload),
+        mode: 'cors',
+        credentials: 'omit'
+      });
+
+      console.log('Login response status:', response.status);
+      console.log('Login response headers:', Object.fromEntries(response.headers.entries()));
+
+      if (response.status === 401) {
+        throw new Error('Credenciales incorrectas. Verifica usuario y contraseña.');
+      }
+
+      if (!response.ok) {
+        throw new Error(`Error en login: ${response.status} - ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Login response data:', data);
+      
+      if (data.error) {
+        throw new Error(data.error.message || 'Error en el login');
+      }
+
+      const result = data.result;
 
       if (result && result.length >= 2) {
+        // Crear sesión como en el SAO original
         this.sessionData = {
-          user_id: result[0],
-          session_id: result[1],
+          sessionId: result[0],
+          userId: result[1],
           database: database,
-          username: username
+          username: username,
+          loginTime: new Date().toISOString()
         };
 
+        console.log('Login exitoso, sesión creada:', this.sessionData);
         return this.sessionData;
       } else {
         throw new Error('Credenciales inválidas');

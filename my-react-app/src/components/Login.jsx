@@ -21,13 +21,28 @@ const Login = ({ onLogin }) => {
 
   const checkConnection = async () => {
     try {
+      console.log('Verificando conexión con Tryton...');
       const result = await trytonService.checkConnection();
       setConnectionStatus(result);
-      if (result.connected && result.databases) {
+      
+      if (result.connected && result.databases && result.databases.length > 0) {
+        console.log('Bases de datos encontradas:', result.databases);
         setDatabases(result.databases);
+      } else if (result.warning) {
+        console.log('Advertencia de conexión:', result.warning);
+        // Aún así intentar obtener las bases de datos
+        try {
+          const databases = await trytonService.makeRpcCall('common.db.list');
+          if (databases && databases.length > 0) {
+            setDatabases(databases);
+          }
+        } catch (dbError) {
+          console.log('No se pudieron obtener las bases de datos:', dbError.message);
+        }
       }
     } catch (error) {
       console.error('Error checking connection:', error);
+      setDatabases([]);
     }
   };
 
@@ -82,20 +97,61 @@ const Login = ({ onLogin }) => {
               <label htmlFor="database" className="block text-sm font-medium text-gray-700 mb-2">
                 Base de Datos
               </label>
-              <input
-                type="text"
-                id="database"
-                name="database"
-                value={formData.database}
-                onChange={handleInputChange}
-                placeholder="Ej: tryton, his-50, etc."
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                required
-              />
-              {databases.length > 0 && (
-                <p className="text-sm text-gray-500 mt-1">
-                  Bases disponibles: {databases.join(', ')}
-                </p>
+              {databases.length > 0 ? (
+                <div className="space-y-2">
+                  <select
+                    id="database"
+                    name="database"
+                    value={formData.database}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors bg-white"
+                    required
+                  >
+                    <option value="">Selecciona una base de datos</option>
+                    {databases.map((db, index) => (
+                      <option key={index} value={db}>
+                        {db}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-gray-500">
+                      {databases.length} base(s) de datos encontrada(s)
+                    </p>
+                    <button
+                      type="button"
+                      onClick={checkConnection}
+                      className="text-sm text-blue-600 hover:text-blue-800 underline"
+                    >
+                      Actualizar lista
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    id="database"
+                    name="database"
+                    value={formData.database}
+                    onChange={handleInputChange}
+                    placeholder="Ej: tryton, his-50, etc."
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    required
+                  />
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-gray-500">
+                      Cargando bases de datos disponibles...
+                    </p>
+                    <button
+                      type="button"
+                      onClick={checkConnection}
+                      className="text-sm text-blue-600 hover:text-blue-800 underline"
+                    >
+                      Reintentar
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
 
