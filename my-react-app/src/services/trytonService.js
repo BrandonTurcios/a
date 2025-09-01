@@ -323,7 +323,7 @@ class TrytonService {
       
       return {
         connected: true,
-        databases: databases,
+        databases: databases, // databases ya es el array directamente
         serverUrl: this.baseURL
       };
     } catch (error) {

@@ -25,20 +25,22 @@ const Login = ({ onLogin }) => {
       const result = await trytonService.checkConnection();
       setConnectionStatus(result);
       
-      if (result.connected && result.databases && result.databases.length > 0) {
-        console.log('Bases de datos encontradas:', result.databases);
-        setDatabases(result.databases);
-      } else if (result.warning) {
-        console.log('Advertencia de conexión:', result.warning);
-        // Aún así intentar obtener las bases de datos
-        try {
-          const databases = await trytonService.makeRpcCall('common.db.list');
-          if (databases && databases.length > 0) {
-            setDatabases(databases);
-          }
-        } catch (dbError) {
-          console.log('No se pudieron obtener las bases de datos:', dbError.message);
+      console.log('Resultado completo de checkConnection:', result);
+      
+      // Intentar obtener las bases de datos directamente
+      try {
+        const databases = await trytonService.makeRpcCall('common.db.list');
+        console.log('Bases de datos obtenidas directamente:', databases);
+        if (databases && Array.isArray(databases) && databases.length > 0) {
+          console.log('Estableciendo bases de datos en el estado:', databases);
+          setDatabases(databases);
+        } else {
+          console.log('No se encontraron bases de datos o formato incorrecto:', databases);
+          setDatabases([]);
         }
+      } catch (dbError) {
+        console.log('Error obteniendo bases de datos:', dbError.message);
+        setDatabases([]);
       }
     } catch (error) {
       console.error('Error checking connection:', error);
