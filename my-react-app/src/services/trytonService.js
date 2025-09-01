@@ -948,6 +948,29 @@ class TrytonService {
       throw error;
     }
   }
+
+  // Ejecutar getModelAccess después del login (para debugging)
+  async executeModelAccessAfterLogin() {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log('=== EJECUTANDO getModelAccess DESPUÉS DEL LOGIN ===');
+      console.log('Session data:', this.sessionData);
+      console.log('Base URL:', this.baseURL);
+      console.log('Database:', this.database);
+      
+      const result = await this.getModelAccess();
+      console.log('=== getModelAccess EJECUTADO EXITOSAMENTE ===');
+      console.log('Resultado:', result);
+      return result;
+    } catch (error) {
+      console.error('=== ERROR EN getModelAccess DESPUÉS DEL LOGIN ===');
+      console.error('Error:', error);
+      throw error;
+    }
+  }
 }
 
 export default new TrytonService();

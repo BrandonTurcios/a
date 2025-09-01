@@ -136,6 +136,20 @@ const Dashboard = ({ sessionData, onLogout }) => {
     }
   };
 
+  // Función para ejecutar getModelAccess después del login
+  const executeModelAccessAfterLogin = async () => {
+    try {
+      console.log('=== EJECUTANDO getModelAccess DESPUÉS DEL LOGIN ===');
+      trytonService.restoreSession(sessionData);
+      const result = await trytonService.executeModelAccessAfterLogin();
+      console.log('Resultado de executeModelAccessAfterLogin:', result);
+      alert('getModelAccess ejecutado después del login. Revisa la pestaña Network y la consola.');
+    } catch (error) {
+      console.error('Error en executeModelAccessAfterLogin:', error);
+      alert('Error ejecutando getModelAccess: ' + error.message);
+    }
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -303,6 +317,15 @@ const Dashboard = ({ sessionData, onLogout }) => {
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              </button>
+              <button
+                onClick={executeModelAccessAfterLogin}
+                className="p-2 rounded-md hover:bg-gray-700 transition-colors bg-orange-600"
+                title="Ejecutar getModelAccess después del login"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </button>
               <button
