@@ -11,7 +11,7 @@ class TrytonService {
 
   // Método para hacer llamadas JSON-RPC a Tryton
   async makeRpcCall(method, params = []) {
-    // Construir URL correctamente
+    // Construir URL correctamente usando el proxy de Vite
     let url;
     
     // Solo usar base de datos en métodos que la requieren
@@ -677,20 +677,21 @@ class TrytonService {
       console.error('Error completo:', error);
       console.error('Mensaje de error:', error.message);
       
-      // Si hay error, intentar con POST para verificar que el servidor responde
-      try {
-        console.log('Intentando verificación alternativa con POST...');
-        const response = await fetch(`${this.baseURL}/`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            jsonrpc: '2.0',
-            method: 'common.db.list',
-            params: [],
-            id: Date.now()
-          }),
-          mode: 'cors'
-        });
+             // Si hay error, intentar con POST para verificar que el servidor responde
+       try {
+         console.log('Intentando verificación alternativa con POST...');
+         const response = await fetch(`${this.baseURL}/`, {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({
+             jsonrpc: '2.0',
+             method: 'common.db.list',
+             params: [],
+             id: Date.now()
+           }),
+           mode: 'cors',
+           credentials: 'omit'
+         });
         
         if (response.ok) {
           return {
