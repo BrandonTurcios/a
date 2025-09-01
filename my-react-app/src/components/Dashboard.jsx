@@ -20,9 +20,14 @@ const Dashboard = ({ sessionData, onLogout }) => {
       // Restaurar la sesión en el servicio
       console.log('Restaurando sesión en el servicio...');
       console.log('Datos de sesión disponibles:', sessionData);
+      console.log('Datos de sesión tipo:', typeof sessionData);
+      console.log('Datos de sesión keys:', Object.keys(sessionData || {}));
       
       // Restaurar la sesión en el servicio Tryton
       trytonService.restoreSession(sessionData);
+      
+      // Verificar que la sesión se restauró correctamente
+      console.log('Verificando sesión restaurada...');
       
       const result = await trytonService.getSidebarMenu();
       console.log('Resultado completo del menú:', result);

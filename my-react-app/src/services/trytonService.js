@@ -6,6 +6,7 @@ class TrytonService {
     this.baseURL = trytonConfig.baseURL;
     this.sessionData = null;
     this.database = null; // Agregar campo para la base de datos
+    console.log('TrytonService inicializado con baseURL:', this.baseURL);
   }
 
   // Método para hacer llamadas JSON-RPC a Tryton
@@ -135,12 +136,23 @@ class TrytonService {
 
   // Restaurar sesión desde datos externos
   restoreSession(sessionData) {
-    if (sessionData) {
+    console.log('RestoreSession llamado con:', sessionData);
+    
+    if (sessionData && typeof sessionData === 'object') {
       this.sessionData = sessionData;
       this.database = sessionData.database;
       console.log('Sesión restaurada en el servicio:', this.sessionData);
+      console.log('Base de datos restaurada:', this.database);
+      console.log('Verificando datos de sesión:', {
+        username: this.sessionData.username,
+        userId: this.sessionData.userId,
+        sessionId: this.sessionData.sessionId,
+        database: this.database
+      });
     } else {
-      console.log('No hay datos de sesión para restaurar');
+      console.log('No hay datos de sesión válidos para restaurar');
+      console.log('Tipo de sessionData:', typeof sessionData);
+      console.log('Valor de sessionData:', sessionData);
     }
   }
 
