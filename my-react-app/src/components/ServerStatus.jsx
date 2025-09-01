@@ -10,33 +10,49 @@ const ServerStatus = () => {
   const checkTrytonServer = async () => {
     try {
       console.log('Verificando servidor Tryton directamente...');
-      // Usar la misma estructura de URL que el SAO original: /database/
-      const response = await fetch('http://localhost:8000/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          method: 'common.db.list',
-          params: [],
-          id: 1
-        })
+      
+      // Primero intentar una petición GET simple para verificar que el servidor responde
+      const getResponse = await fetch('http://localhost:8000/', {
+        method: 'GET',
+        mode: 'cors'
       });
       
-      console.log('Tryton response status:', response.status);
-      console.log('Tryton response headers:', Object.fromEntries(response.headers.entries()));
+      console.log('GET response status:', getResponse.status);
       
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Tryton response data:', data);
-        return data.error ? 'error' : 'running';
+      if (getResponse.ok) {
+        // Si GET funciona, intentar la petición JSON-RPC
+        const postResponse = await fetch('http://localhost:8000/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            method: 'common.db.list',
+            params: [],
+            id: 1
+          }),
+          mode: 'cors'
+        });
+        
+        console.log('POST response status:', postResponse.status);
+        console.log('POST response headers:', Object.fromEntries(postResponse.headers.entries()));
+        
+        if (postResponse.ok) {
+          const data = await postResponse.json();
+          console.log('POST response data:', data);
+          return data.error ? 'error' : 'running';
+        } else {
+          // Si POST falla pero GET funciona, el servidor está ejecutándose pero hay problemas con la API
+          const errorText = await postResponse.text();
+          setErrorDetails(`API Error - Status: ${postResponse.status}, Response: ${errorText}`);
+          return 'error';
+        }
+      } else {
+        // Si GET falla, el servidor no está ejecutándose
+        setErrorDetails(`Server not responding - Status: ${getResponse.status}`);
+        return 'stopped';
       }
-      
-      // Si no es OK, intentar obtener detalles del error
-      const errorText = await response.text();
-      setErrorDetails(`Status: ${response.status}, Response: ${errorText}`);
-      return 'error';
     } catch (error) {
       console.error('Tryton check error:', error);
       setErrorDetails(error.message);
