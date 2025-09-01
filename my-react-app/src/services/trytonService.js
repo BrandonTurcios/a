@@ -88,11 +88,18 @@ class TrytonService {
       const data = await response.json();
       console.log('Response data:', data);
       
+      // Verificar si es un error JSON-RPC
       if (data.error) {
         throw new Error(data.error.message || 'Error en la llamada RPC');
       }
 
-      return data.result;
+      // Tryton puede devolver el resultado directamente o dentro de data.result
+      if (data.result !== undefined) {
+        return data.result;
+      } else {
+        // Si no hay data.result, asumir que data es el resultado directo
+        return data;
+      }
     } catch (error) {
       console.error('Error detallado en llamada RPC:', {
         url,
