@@ -26,7 +26,10 @@ class TrytonService {
       'model.ir.ui.icon.list_icons'
     ];
     
-    if (this.database && this.database.trim() !== '' && methodsWithDatabase.includes(method)) {
+    // common.db.list NO debe usar base de datos - es para listar las bases disponibles
+    if (method === 'common.db.list') {
+      url = `${this.baseURL}/`;
+    } else if (this.database && this.database.trim() !== '' && methodsWithDatabase.includes(method)) {
       // Si hay base de datos y el método la requiere, usar la estructura /database/
       url = `${this.baseURL}/${this.database}/`;
     } else {
@@ -654,23 +657,29 @@ class TrytonService {
   // Verificar conexión al servidor
   async checkConnection() {
     try {
-      console.log('Verificando conexión con Tryton...');
+      console.log('=== VERIFICANDO CONEXIÓN CON TRYTON ===');
+      console.log('Base URL:', this.baseURL);
+      console.log('Database actual:', this.database);
       
       // Intentar una llamada simple primero (sin base de datos)
+      console.log('Intentando obtener lista de bases de datos...');
       const databases = await this.makeRpcCall('common.db.list');
       console.log('Bases de datos encontradas:', databases);
       
       return {
         connected: true,
         databases: databases, // databases ya es el array directamente
-        serverUrl: this.baseURL
+        serverUrl: this.baseURL,
+        message: `Conexión exitosa. ${databases.length} bases de datos encontradas.`
       };
     } catch (error) {
-      console.error('Error verificando conexión:', error);
+      console.error('=== ERROR VERIFICANDO CONEXIÓN ===');
+      console.error('Error completo:', error);
+      console.error('Mensaje de error:', error.message);
       
       // Si hay error de CORS, intentar con no-cors para verificar que el servidor responde
       try {
-        console.log('Intentando verificación alternativa...');
+        console.log('Intentando verificación alternativa con no-cors...');
         const response = await fetch(`${this.baseURL}/`, {
           method: 'GET',
           mode: 'no-cors'
@@ -680,14 +689,23 @@ class TrytonService {
           connected: true,
           databases: [],
           serverUrl: this.baseURL,
-          warning: 'Servidor responde pero hay problemas de CORS. Verifica la configuración de CORS en Tryton.'
+          warning: 'Servidor responde pero hay problemas de CORS. Verifica la configuración de CORS en Tryton.',
+          error: error.message
         };
       } catch (corsError) {
+        console.error('Error en verificación alternativa:', corsError);
+        
         return {
           connected: false,
           error: error.message,
           serverUrl: this.baseURL,
-          suggestions: this.getConnectionSuggestions(error)
+          suggestions: this.getConnectionSuggestions(error),
+          debugInfo: {
+            originalError: error.message,
+            corsError: corsError.message,
+            baseURL: this.baseURL,
+            method: 'common.db.list'
+          }
         };
       }
     }
@@ -1145,6 +1163,65 @@ class TrytonService {
     }
     
     console.log('=== END DEBUG ===');
+  }
+
+  // Método específico para probar common.db.list
+  async testDbList() {
+    try {
+      console.log('=== PRUEBA ESPECÍFICA common.db.list ===');
+      console.log('Base URL:', this.baseURL);
+      console.log('Database actual:', this.database);
+      
+      // Construir URL manualmente para common.db.list
+      const url = `${this.baseURL}/`;
+      console.log('URL que se usará:', url);
+      
+      const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
+
+      const payload = {
+        jsonrpc: '2.0',
+        method: 'common.db.list',
+        params: [],
+        id: Date.now()
+      };
+
+      console.log('Payload:', JSON.stringify(payload, null, 2));
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(payload),
+        mode: 'cors',
+        credentials: 'omit'
+      });
+
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}. Details: ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('Response data:', data);
+      
+      if (data.error) {
+        throw new Error(data.error.message || 'Error en la llamada RPC');
+      }
+
+      const result = data.result !== undefined ? data.result : data;
+      console.log('=== PRUEBA common.db.list EXITOSA ===');
+      console.log('Resultado:', result);
+      return result;
+    } catch (error) {
+      console.error('=== ERROR EN PRUEBA common.db.list ===');
+      console.error('Error:', error);
+      throw error;
+    }
   }
 }
 

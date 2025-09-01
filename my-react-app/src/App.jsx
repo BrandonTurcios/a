@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import Login from './components/Login'
 import Dashboard from './components/Dashboard'
+import ConnectionTest from './components/ConnectionTest'
 
 function App() {
   const [sessionData, setSessionData] = useState(null);
@@ -49,7 +50,14 @@ function App() {
       {sessionData ? (
         <Dashboard sessionData={sessionData} onLogout={handleLogout} />
       ) : (
-        <Login onLogin={handleLogin} />
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+          <div className="container mx-auto py-8">
+            <ConnectionTest />
+            <div className="mt-8">
+              <Login onLogin={handleLogin} />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
