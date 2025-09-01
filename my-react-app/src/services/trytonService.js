@@ -496,8 +496,8 @@ class TrytonService {
     try {
       console.log('=== OBTENIENDO MENÚ SIMPLIFICADO ===');
       
-      // 1. Obtener preferencias del usuario (como el SAO)
-      const preferences = await this.makeRpcCall('model.res.user.get_preferences', [true, {}]);
+              // 1. Obtener preferencias del usuario (como el SAO)
+        const preferences = await this.makeRpcCall('model.res.user.get_preferences', [false, {}]);
       console.log('Preferencias obtenidas:', preferences);
       
       // 2. Obtener menús principales
@@ -865,8 +865,6 @@ class TrytonService {
     }
   }
 
-  }
-
   // Listar métodos disponibles
   async listAvailableMethods() {
     if (!this.sessionData) {
@@ -920,6 +918,33 @@ class TrytonService {
       return results;
     } catch (error) {
       console.error('Error listando métodos:', error);
+      throw error;
+    }
+  }
+
+  // Método de prueba simple
+  async testConnection() {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log('=== PRUEBA DE CONEXIÓN SIMPLE ===');
+      console.log('Base URL:', this.baseURL);
+      console.log('Database:', this.database);
+      
+      // Probar con un método simple que sabemos que existe
+      const result = await this.makeRpcCall('model.ir.module.search_read', [
+        [['state', '=', 'installed']],
+        ['name', 'display_name']
+      ]);
+      
+      console.log('=== CONEXIÓN EXITOSA ===');
+      console.log('Módulos encontrados:', result.length);
+      return result;
+    } catch (error) {
+      console.error('=== ERROR EN PRUEBA DE CONEXIÓN ===');
+      console.error('Error:', error);
       throw error;
     }
   }
