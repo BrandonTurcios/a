@@ -5,7 +5,7 @@ const ConnectionTest = () => {
   const [connectionStatus, setConnectionStatus] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [testPort, setTestPort] = useState('8000');
+  const [testPort, setTestPort] = useState('5173');
   const [customPort, setCustomPort] = useState('');
 
   const testConnection = async () => {

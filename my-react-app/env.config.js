@@ -1,15 +1,9 @@
 // Configuración de Tryton
 export const trytonConfig = {
-  // IMPORTANTE: Cambia esto según donde esté corriendo tu servidor Tryton
-  baseURL: 'http://localhost:8000', // Puerto estándar de Tryton
-  // Si tu servidor Tryton está corriendo en otro puerto, cámbialo aquí
+  // ✅ CONFIGURACIÓN CORREGIDA - Tryton funciona en puerto 5173
+  baseURL: 'http://localhost:5173', // Puerto donde está corriendo Tryton
+  directURL: 'http://localhost:5173', // Para referencia
   
-  // Alternativas comunes:
-  // baseURL: 'http://localhost:8000',  // Puerto estándar de Tryton
-  // baseURL: 'http://localhost:3000',  // Puerto alternativo
-  // baseURL: 'http://localhost:8080',  // Puerto alternativo
-  
-  directURL: 'http://localhost:8000', // Para referencia
   // Configuración adicional
   timeout: 30000, // 30 segundos
   retries: 3,
