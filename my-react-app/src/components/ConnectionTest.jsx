@@ -5,6 +5,8 @@ const ConnectionTest = () => {
   const [connectionStatus, setConnectionStatus] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [testPort, setTestPort] = useState('8000');
+  const [customPort, setCustomPort] = useState('');
 
   const testConnection = async () => {
     setLoading(true);
@@ -14,27 +16,112 @@ const ConnectionTest = () => {
     try {
       console.log('=== INICIANDO PRUEBA DE CONEXIÓN ===');
       
-      // Primero probar la conexión básica
-      const status = await trytonService.checkConnection();
-      setConnectionStatus(status);
+      // Determinar qué puerto probar
+      let portToTest = testPort;
+      if (testPort === 'custom' && customPort.trim()) {
+        portToTest = customPort.trim();
+      }
       
-      console.log('Estado de conexión:', status);
+      console.log('Probando puerto:', portToTest);
       
-      if (status.connected) {
-        // Si la conexión es exitosa, probar específicamente common.db.list
+      // Crear un servicio temporal con el puerto de prueba
+      const tempService = {
+        baseURL: `http://localhost:${portToTest}`,
+        async testDbList() {
+          try {
+            console.log('=== PRUEBA ESPECÍFICA common.db.list ===');
+            console.log('Base URL:', this.baseURL);
+            
+            const url = `${this.baseURL}/`;
+            console.log('URL que se usará:', url);
+            
+            const headers = {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            };
+
+            const payload = {
+              jsonrpc: '2.0',
+              method: 'common.db.list',
+              params: [],
+              id: Date.now()
+            };
+
+            console.log('Payload:', JSON.stringify(payload, null, 2));
+            
+            const response = await fetch(url, {
+              method: 'POST',
+              headers: headers,
+              body: JSON.stringify(payload),
+              mode: 'cors',
+              credentials: 'omit'
+            });
+
+            console.log('Response status:', response.status);
+            console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+            if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}. Details: ${errorText}`);
+            }
+
+            const data = await response.json();
+            console.log('Response data:', data);
+            
+            if (data.error) {
+              throw new Error(data.error.message || 'Error en la llamada RPC');
+            }
+
+            const result = data.result !== undefined ? data.result : data;
+            console.log('=== PRUEBA common.db.list EXITOSA ===');
+            console.log('Resultado:', result);
+            return result;
+          } catch (error) {
+            console.error('=== ERROR EN PRUEBA common.db.list ===');
+            console.error('Error:', error);
+            throw error;
+          }
+        }
+      };
+      
+      // Probar la conexión
+      try {
+        const databases = await tempService.testDbList();
+        setConnectionStatus({
+          connected: true,
+          databases: databases,
+          serverUrl: tempService.baseURL,
+          message: `Conexión exitosa al puerto ${portToTest}. ${databases.length} bases de datos encontradas.`
+        });
+      } catch (dbError) {
+        console.error('Error en common.db.list:', dbError);
+        
+        // Intentar verificar si el servidor responde
         try {
-          console.log('Probando common.db.list específicamente...');
-          const databases = await trytonService.testDbList();
-          console.log('Bases de datos obtenidas:', databases);
+          const response = await fetch(`${tempService.baseURL}/`, {
+            method: 'GET',
+            mode: 'no-cors'
+          });
           
-          setConnectionStatus(prev => ({
-            ...prev,
-            databases: databases,
-            message: `Conexión exitosa. ${databases.length} bases de datos encontradas.`
-          }));
-        } catch (dbError) {
-          console.error('Error en common.db.list:', dbError);
-          setError(`Error obteniendo bases de datos: ${dbError.message}`);
+          setConnectionStatus({
+            connected: true,
+            databases: [],
+            serverUrl: tempService.baseURL,
+            warning: `Servidor responde en puerto ${portToTest} pero hay problemas con common.db.list. Verifica la configuración de Tryton.`,
+            error: dbError.message
+          });
+        } catch (corsError) {
+          setConnectionStatus({
+            connected: false,
+            error: dbError.message,
+            serverUrl: tempService.baseURL,
+            suggestions: [
+              `No se puede conectar al puerto ${portToTest}`,
+              'Verifica que el servidor Tryton esté ejecutándose',
+              'Comprueba que el puerto esté disponible',
+              'Verifica la configuración de CORS en Tryton'
+            ]
+          });
         }
       }
     } catch (err) {
@@ -56,21 +143,50 @@ const ConnectionTest = () => {
         🔧 Prueba de Conexión Tryton
       </h2>
       
-      <div className="mb-6">
-        <button
-          onClick={testConnection}
-          disabled={loading}
-          className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded mr-4"
-        >
-          {loading ? 'Probando...' : '🔍 Probar Conexión'}
-        </button>
+      <div className="mb-6 space-y-4">
+        {/* Selector de puerto */}
+        <div className="flex items-center space-x-4">
+          <label className="text-sm font-medium text-gray-700">Puerto a probar:</label>
+          <select
+            value={testPort}
+            onChange={(e) => setTestPort(e.target.value)}
+            className="border border-gray-300 rounded px-3 py-2 text-sm"
+          >
+            <option value="8000">8000 (Estándar Tryton)</option>
+            <option value="3000">3000 (Alternativo)</option>
+            <option value="8080">8080 (Alternativo)</option>
+            <option value="5173">5173 (Vite/React)</option>
+            <option value="custom">Personalizado</option>
+          </select>
+          
+          {testPort === 'custom' && (
+            <input
+              type="text"
+              value={customPort}
+              onChange={(e) => setCustomPort(e.target.value)}
+              placeholder="Ej: 9000"
+              className="border border-gray-300 rounded px-3 py-2 text-sm w-24"
+            />
+          )}
+        </div>
         
-        <button
-          onClick={clearResults}
-          className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded"
-        >
-          🗑️ Limpiar
-        </button>
+        {/* Botones */}
+        <div className="flex space-x-4">
+          <button
+            onClick={testConnection}
+            disabled={loading}
+            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-bold py-2 px-4 rounded"
+          >
+            {loading ? 'Probando...' : '🔍 Probar Conexión'}
+          </button>
+          
+          <button
+            onClick={clearResults}
+            className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded"
+          >
+            🗑️ Limpiar
+          </button>
+        </div>
       </div>
 
       {loading && (
