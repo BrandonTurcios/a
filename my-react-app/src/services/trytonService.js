@@ -258,11 +258,46 @@ class TrytonService {
 
     try {
       console.log('Obteniendo preferencias del usuario...');
-      const preferences = await this.makeRpcCall('model.res.user.get_preferences', [false, {}]);
+      // El SAO usa true como primer parámetro para obtener el contexto completo
+      const preferences = await this.makeRpcCall('model.res.user.get_preferences', [true, {}]);
       console.log('Preferencias obtenidas:', preferences);
       return preferences;
     } catch (error) {
       console.error('Error obteniendo preferencias:', error);
+      throw error;
+    }
+  }
+
+  // Obtener lista de iconos (como en el SAO)
+  async getIcons() {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log('Obteniendo lista de iconos...');
+      const icons = await this.makeRpcCall('model.ir.ui.icon.list_icons', [{}]);
+      console.log('Iconos obtenidos:', icons);
+      return icons;
+    } catch (error) {
+      console.error('Error obteniendo iconos:', error);
+      throw error;
+    }
+  }
+
+  // Obtener vistas de búsqueda (como en el SAO)
+  async getViewSearch() {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log('Obteniendo vistas de búsqueda...');
+      const viewSearch = await this.makeRpcCall('model.ir.ui.view_search.get', [{}]);
+      console.log('Vistas de búsqueda obtenidas:', viewSearch);
+      return viewSearch;
+    } catch (error) {
+      console.error('Error obteniendo vistas de búsqueda:', error);
       throw error;
     }
   }
@@ -276,10 +311,16 @@ class TrytonService {
     try {
       console.log('Obteniendo menú del sidebar...');
       
-      // Primero obtener las preferencias del usuario
+      // Obtener las preferencias del usuario (como en el SAO)
       const preferences = await this.getUserPreferences();
       
-      // El menú está en preferences.pyson_menu, pero necesitamos decodificarlo
+      // Obtener la lista de iconos (como en el SAO)
+      const icons = await this.getIcons();
+      
+      // Obtener las vistas de búsqueda (como en el SAO)
+      const viewSearch = await this.getViewSearch();
+      
+      // El menú principal está en preferences.pyson_menu
       // Por ahora, vamos a obtener los módulos instalados como alternativa
       const modules = await this.makeRpcCall('model.ir.module.search_read', [
         [['state', '=', 'installed']],
@@ -300,6 +341,8 @@ class TrytonService {
 
       return {
         preferences,
+        icons,
+        viewSearch,
         menuItems,
         modules
       };

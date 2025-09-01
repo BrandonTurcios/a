@@ -17,7 +17,25 @@ const Dashboard = ({ sessionData, onLogout }) => {
       setLoading(true);
       console.log('Cargando menú del sidebar...');
       const result = await trytonService.getSidebarMenu();
-      console.log('Resultado del menú:', result);
+      console.log('Resultado completo del menú:', result);
+      
+      // Mostrar información de las preferencias
+      if (result.preferences) {
+        console.log('Usuario:', result.preferences.user_name);
+        console.log('Compañía:', result.preferences.company_rec_name);
+        console.log('Idioma:', result.preferences.language);
+        console.log('Grupos:', result.preferences.groups?.length || 0);
+      }
+      
+      // Mostrar información de iconos
+      if (result.icons) {
+        console.log('Iconos disponibles:', result.icons.length || 0);
+      }
+      
+      // Mostrar información de vistas
+      if (result.viewSearch) {
+        console.log('Vistas de búsqueda:', result.viewSearch.length || 0);
+      }
       
       // Convertir los módulos a elementos del menú
       const sidebarItems = [
@@ -27,7 +45,8 @@ const Dashboard = ({ sessionData, onLogout }) => {
           label: item.name,
           icon: item.icon,
           type: 'module',
-          model: item.model
+          model: item.model,
+          description: item.description
         }))
       ];
       
@@ -68,48 +87,73 @@ const Dashboard = ({ sessionData, onLogout }) => {
         return (
           <div className="p-6">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Dashboard</h2>
+            
+            {/* Información de la sesión */}
+            <div className="bg-white rounded-lg shadow p-6 mb-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Información de Sesión</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600">Usuario</p>
+                  <p className="font-medium">{sessionData.username}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Base de Datos</p>
+                  <p className="font-medium">{sessionData.database}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">ID de Usuario</p>
+                  <p className="font-medium">{sessionData.userId}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">ID de Sesión</p>
+                  <p className="font-medium">{sessionData.sessionId}</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Estadísticas */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="bg-white rounded-lg shadow p-6">
                 <div className="flex items-center">
                   <div className="p-2 bg-blue-100 rounded-lg">
-                    <span className="text-2xl">💰</span>
+                    <span className="text-2xl">📊</span>
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm text-gray-600">Ventas del Mes</p>
-                    <p className="text-2xl font-bold text-gray-800">$45,678</p>
+                    <p className="text-sm text-gray-600">Módulos</p>
+                    <p className="text-2xl font-bold text-gray-800">{menuItems.filter(item => item.type === 'module').length}</p>
                   </div>
                 </div>
               </div>
               <div className="bg-white rounded-lg shadow p-6">
                 <div className="flex items-center">
                   <div className="p-2 bg-green-100 rounded-lg">
-                    <span className="text-2xl">📦</span>
+                    <span className="text-2xl">👤</span>
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm text-gray-600">Productos</p>
-                    <p className="text-2xl font-bold text-gray-800">1,234</p>
+                    <p className="text-sm text-gray-600">Usuario</p>
+                    <p className="text-2xl font-bold text-gray-800">{sessionData.username}</p>
                   </div>
                 </div>
               </div>
               <div className="bg-white rounded-lg shadow p-6">
                 <div className="flex items-center">
                   <div className="p-2 bg-yellow-100 rounded-lg">
-                    <span className="text-2xl">👥</span>
+                    <span className="text-2xl">🏢</span>
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm text-gray-600">Empleados</p>
-                    <p className="text-2xl font-bold text-gray-800">89</p>
+                    <p className="text-sm text-gray-600">Base de Datos</p>
+                    <p className="text-2xl font-bold text-gray-800">{sessionData.database}</p>
                   </div>
                 </div>
               </div>
               <div className="bg-white rounded-lg shadow p-6">
                 <div className="flex items-center">
                   <div className="p-2 bg-purple-100 rounded-lg">
-                    <span className="text-2xl">📋</span>
+                    <span className="text-2xl">⚙️</span>
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm text-gray-600">Órdenes</p>
-                    <p className="text-2xl font-bold text-gray-800">567</p>
+                    <p className="text-sm text-gray-600">Estado</p>
+                    <p className="text-2xl font-bold text-gray-800">Activo</p>
                   </div>
                 </div>
               </div>
@@ -117,15 +161,32 @@ const Dashboard = ({ sessionData, onLogout }) => {
           </div>
         );
       default:
+        const selectedItem = menuItems.find(item => item.id === activeTab);
         return (
           <div className="p-6">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">
-              {menuItems.find(item => item.id === activeTab)?.label}
+              {selectedItem?.label || 'Módulo'}
             </h2>
             <div className="bg-white rounded-lg shadow p-6">
-              <p className="text-gray-600">
-                Módulo {menuItems.find(item => item.id === activeTab)?.label} en desarrollo...
-              </p>
+              {selectedItem?.type === 'module' ? (
+                <div>
+                  <p className="text-gray-600 mb-4">
+                    <strong>Modelo:</strong> {selectedItem.model}
+                  </p>
+                  {selectedItem.description && (
+                    <p className="text-gray-600 mb-4">
+                      <strong>Descripción:</strong> {selectedItem.description}
+                    </p>
+                  )}
+                  <p className="text-gray-600">
+                    Módulo {selectedItem.label} en desarrollo...
+                  </p>
+                </div>
+              ) : (
+                <p className="text-gray-600">
+                  Módulo {selectedItem?.label} en desarrollo...
+                </p>
+              )}
             </div>
           </div>
         );
