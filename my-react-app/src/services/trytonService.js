@@ -263,12 +263,29 @@ class TrytonService {
       };
     } catch (error) {
       console.error('Error verificando conexión:', error);
-      return {
-        connected: false,
-        error: error.message,
-        serverUrl: this.baseURL,
-        suggestions: this.getConnectionSuggestions(error)
-      };
+      
+      // Si hay error de CORS, intentar con no-cors para verificar que el servidor responde
+      try {
+        console.log('Intentando verificación alternativa...');
+        const response = await fetch(`${this.baseURL}/`, {
+          method: 'GET',
+          mode: 'no-cors'
+        });
+        
+        return {
+          connected: true,
+          databases: [],
+          serverUrl: this.baseURL,
+          warning: 'Servidor responde pero hay problemas de CORS. Verifica la configuración de CORS en Tryton.'
+        };
+      } catch (corsError) {
+        return {
+          connected: false,
+          error: error.message,
+          serverUrl: this.baseURL,
+          suggestions: this.getConnectionSuggestions(error)
+        };
+      }
     }
   }
 
