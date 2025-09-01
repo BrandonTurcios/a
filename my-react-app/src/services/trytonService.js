@@ -155,16 +155,12 @@ class TrytonService {
       }
       
       // Ahora hacer login en la base de datos específica
-      const loginParams = {
-        username: username,
-        password: password
-      };
-
-      console.log('Intentando login con parámetros:', { database, loginParams, language: 'es' });
+      // El formato correcto para Tryton es: [database, username, password, language]
+      console.log('Intentando login con parámetros:', { database, username, password, language: 'es' });
       
-             // Para el login, necesitamos usar la URL directa del servidor Tryton con la base de datos
-       const loginUrl = `http://localhost:8000/${database}/`;
-       console.log('URL de login:', loginUrl);
+      // Para el login, necesitamos usar la URL con la base de datos
+      const loginUrl = `${this.baseURL}/${database}/`;
+      console.log('URL de login:', loginUrl);
       
       const headers = {
         'Content-Type': 'application/json',
@@ -174,7 +170,7 @@ class TrytonService {
       const loginPayload = {
         jsonrpc: '2.0',
         method: 'common.db.login',
-        params: [database, loginParams, 'es'],
+        params: [database, username, password, 'es'],
         id: Date.now()
       };
 
@@ -197,32 +193,32 @@ class TrytonService {
         throw new Error(`Error en login: ${response.status} - ${response.statusText}`);
       }
 
-             const data = await response.json();
-       console.log('Login response data:', data);
-       
-       if (data.error) {
-         throw new Error(data.error.message || 'Error en el login');
-       }
+      const data = await response.json();
+      console.log('Login response data:', data);
+      
+      if (data.error) {
+        throw new Error(data.error.message || 'Error en el login');
+      }
 
-       // Tryton puede devolver el resultado directamente o dentro de data.result
-       const result = data.result !== undefined ? data.result : data;
-       console.log('Login result:', result);
+      // Tryton puede devolver el resultado directamente o dentro de data.result
+      const result = data.result !== undefined ? data.result : data;
+      console.log('Login result:', result);
 
-       if (result && Array.isArray(result) && result.length >= 2) {
-         // Crear sesión como en el SAO original
-         this.sessionData = {
-           sessionId: result[0],
-           userId: result[1],
-           database: database,
-           username: username,
-           loginTime: new Date().toISOString()
-         };
+      if (result && result.length >= 2) {
+        // Crear sesión como en el SAO original
+        this.sessionData = {
+          sessionId: result[0],
+          userId: result[1],
+          database: database,
+          username: username,
+          loginTime: new Date().toISOString()
+        };
 
-         console.log('Login exitoso, sesión creada:', this.sessionData);
-         return this.sessionData;
-       } else {
-         throw new Error('Credenciales inválidas o respuesta inesperada del servidor');
-       }
+        console.log('Login exitoso, sesión creada:', this.sessionData);
+        return this.sessionData;
+      } else {
+        throw new Error('Credenciales inválidas');
+      }
     } catch (error) {
       console.error('Error en login:', error);
       throw error;
