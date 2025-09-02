@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { trytonConfig } from '../../env.config.js';
+import trytonService from '../services/trytonService.js';
 
 const ServerStatus = () => {
   const [serverStatus, setServerStatus] = useState({
@@ -12,18 +13,17 @@ const ServerStatus = () => {
     try {
       console.log('Verificando servidor Tryton...');
       
-      // Hacer una petición simple para verificar que el servidor responde
-      const response = await fetch(`${trytonConfig.baseURL}/`, {
-        method: 'GET',
-        mode: 'no-cors' // Usar no-cors para evitar problemas de CORS en la verificación
-      });
+      // Usar el servicio TrytonService en lugar de peticiones GET directas
+      const connectionResult = await trytonService.checkConnection();
       
-      console.log('Tryton response status:', response.status);
-      console.log('Tryton response type:', response.type);
-      
-      // Si llegamos aquí, el servidor está ejecutándose
-      // (no-cors siempre devuelve status 0, pero si no hay error, el servidor responde)
-      return 'running';
+      if (connectionResult.connected) {
+        console.log('Tryton está funcionando correctamente');
+        return 'running';
+      } else {
+        console.error('Tryton no está disponible:', connectionResult.error);
+        setErrorDetails(connectionResult.error);
+        return 'stopped';
+      }
       
     } catch (error) {
       console.error('Tryton check error:', error);

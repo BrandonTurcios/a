@@ -1,37 +1,21 @@
-import React, { useState } from 'react';
-import trytonServiceSAO from '../services/trytonServiceSAO.js';
+import { useState } from 'react';
 import { trytonConfig } from '../../env.config.js';
+import trytonService from '../services/trytonService.js';
 
 const ConnectionTest = () => {
-  const [testResult, setTestResult] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [testResult, setTestResult] = useState('');
 
   const testDirectConnection = async () => {
     setIsLoading(true);
-    setTestResult('Probando conexión directa a Tryton...');
+    setTestResult('Probando conexión a través del servicio TrytonService...');
     
     try {
-          // Test directo usando fetch a Tryton
-    const response = await fetch(`${trytonConfig.baseURL}/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          method: 'common.db.list',
-          params: [],
-          id: Date.now()
-        })
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setTestResult(`✅ Conexión directa exitosa: ${JSON.stringify(data)}`);
+      const result = await trytonService.checkConnection();
+      if (result.connected) {
+        setTestResult(`✅ Conexión exitosa: ${result.message}`);
       } else {
-        const errorText = await response.text();
-        setTestResult(`❌ Error HTTP ${response.status}: ${errorText}`);
+        setTestResult(`❌ Conexión falló: ${result.error}`);
       }
     } catch (error) {
       setTestResult(`❌ Error de conexión: ${error.message}`);
@@ -42,13 +26,13 @@ const ConnectionTest = () => {
 
   const testServiceConnection = async () => {
     setIsLoading(true);
-    setTestResult('Probando conexión a través del servicio SAO...');
+    setTestResult('Probando conexión a través del servicio...');
     
     try {
-      const result = await trytonServiceSAO.checkConnection();
-      setTestResult(`✅ Servicio SAO funcionando: ${JSON.stringify(result)}`);
+      const result = await trytonService.checkConnection();
+      setTestResult(`✅ Servicio funcionando: ${JSON.stringify(result)}`);
     } catch (error) {
-      setTestResult(`❌ Error en servicio SAO: ${error.message}`);
+      setTestResult(`❌ Error en servicio: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -56,13 +40,13 @@ const ConnectionTest = () => {
 
   const testDbList = async () => {
     setIsLoading(true);
-    setTestResult('Probando common.db.list con servicio SAO...');
+    setTestResult('Probando common.db.list...');
     
     try {
-      const result = await trytonServiceSAO.testDbList();
-      setTestResult(`✅ common.db.list SAO exitoso: ${JSON.stringify(result)}`);
-      } catch (error) {
-      setTestResult(`❌ Error en common.db.list SAO: ${error.message}`);
+      const result = await trytonService.testDbList();
+      setTestResult(`✅ common.db.list exitoso: ${JSON.stringify(result)}`);
+    } catch (error) {
+      setTestResult(`❌ Error en common.db.list: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -70,14 +54,14 @@ const ConnectionTest = () => {
 
   const testLogin = async () => {
     setIsLoading(true);
-    setTestResult('Probando login con servicio SAO...');
+    setTestResult('Probando login...');
     
     try {
       // Usar credenciales de prueba (ajusta según tu configuración)
-      const result = await trytonServiceSAO.login('health50', 'admin', 'admin');
-      setTestResult(`✅ Login SAO exitoso: ${JSON.stringify(result)}`);
+      const result = await trytonService.login('health50', 'admin', 'admin');
+      setTestResult(`✅ Login exitoso: ${JSON.stringify(result)}`);
     } catch (error) {
-      setTestResult(`❌ Error en login SAO: ${error.message}`);
+      setTestResult(`❌ Error en login: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -136,19 +120,19 @@ const ConnectionTest = () => {
         <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded">
           <h3 className="font-semibold text-yellow-800">ℹ️ Información de Debug SAO:</h3>
           <ul className="text-sm text-yellow-700 mt-2 space-y-1">
-            <li>• Base URL configurada: <code>{trytonServiceSAO.baseURL}</code></li>
+            <li>• Base URL configurada: <code>{trytonService.baseURL}</code></li>
             <li>• Conexión: <code>Directa (sin proxy)</code></li>
             <li>• Puerto React: <code>5173</code></li>
             <li>• Puerto Tryton: <code>{trytonConfig.baseURL.split(':').pop()}</code></li>
-            <li>• Base de datos: <code>{trytonServiceSAO.database || 'No establecida'}</code></li>
-            <li>• Sesión activa: <code>{trytonServiceSAO.sessionData ? 'Sí' : 'No'}</code></li>
+            <li>• Base de datos: <code>{trytonService.database || 'No establecida'}</code></li>
+            <li>• Sesión activa: <code>{trytonService.sessionData ? 'Sí' : 'No'}</code></li>
           </ul>
         </div>
 
         <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded">
           <h3 className="font-semibold text-blue-800">🔍 Implementación SAO:</h3>
           <ul className="text-sm text-blue-700 mt-2 space-y-1">
-            <li>• URLs: <code>/</code> para common.db.list, <code>/{trytonServiceSAO.database || 'database'}/</code> para otros métodos</li>
+            <li>• URLs: <code>/</code> para common.db.list, <code>/{trytonService.database || 'database'}/</code> para otros métodos</li>
             <li>• Headers: <code>Authorization: Session base64(username:userid:sessionid)</code></li>
             <li>• Contexto: Se incluye automáticamente en cada petición</li>
             <li>• Manejo de errores: 401 para sesión expirada, JSON-RPC para errores de aplicación</li>
