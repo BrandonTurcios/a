@@ -29,24 +29,53 @@ class TrytonService {
   }
 
   // Construir URL usando el proxy de Vite
-  buildURL(method) {
+  buildURL(method, useDirect = false) {
+    const baseURL = useDirect ? this.directURL : this.baseURL;
+    
     // common.db.list NO usa base de datos - es para listar las bases disponibles
     if (method === 'common.db.list') {
-      return `${this.baseURL}/`;
+      return `${baseURL}/`;
     }
     
     // Si hay base de datos, usar la estructura /database/
     if (this.database && this.database.trim() !== '') {
-      return `${this.baseURL}/${this.database}/`;
+      return `${baseURL}/${this.database}/`;
     }
     
     // Fallback a URL base del proxy
-    return `${this.baseURL}/`;
+    return `${baseURL}/`;
   }
 
   // Método RPC principal replicando exactamente el SAO
   async makeRpcCall(method, params = []) {
-    const url = this.buildURL(method);
+    // Intentar primero con proxy, luego con URL directa si falla
+    return this._makeRpcCallWithFallback(method, params);
+  }
+
+  // Método RPC con fallback automático
+  async _makeRpcCallWithFallback(method, params = []) {
+    // Primera intento: con proxy
+    try {
+      return await this._makeSingleRpcCall(method, params, false);
+    } catch (error) {
+      console.log('🔄 Proxy falló, intentando con URL directa...');
+      
+      // Segundo intento: con URL directa
+      try {
+        return await this._makeSingleRpcCall(method, params, true);
+      } catch (directError) {
+        console.error('💥 Ambas opciones fallaron:', {
+          proxyError: error.message,
+          directError: directError.message
+        });
+        throw new Error(`Proxy falló: ${error.message}. URL directa falló: ${directError.message}`);
+      }
+    }
+  }
+
+  // Método RPC individual
+  async _makeSingleRpcCall(method, params = [], useDirect = false) {
+    const url = this.buildURL(method, useDirect);
     
     // Construir parámetros exactamente como el SAO
     const rpcParams = [...params];
@@ -73,7 +102,7 @@ class TrytonService {
       headers['Authorization'] = `Session ${this.getAuthHeader()}`;
     }
 
-    console.log('🔍 Llamada RPC SAO (via proxy):', {
+    console.log(`🔍 Llamada RPC SAO (${useDirect ? 'directa' : 'via proxy'}):`, {
       url,
       method,
       params: rpcParams,
@@ -87,8 +116,7 @@ class TrytonService {
         method: 'POST',
         headers: headers,
         body: JSON.stringify(payload),
-        mode: 'cors',
-        credentials: 'include' // Cambiar a 'include' para el proxy
+        credentials: useDirect ? 'omit' : 'same-origin'
       });
 
       console.log('📡 Respuesta RPC:', {
@@ -105,31 +133,7 @@ class TrytonService {
       }
 
       if (response.status === 403) {
-        // Manejar error 403 específicamente
-        console.error('🚫 Error 403: Acceso prohibido');
-        console.error('🔍 Verificando configuración del proxy y CORS...');
-        
-        // Intentar con URL directa como fallback
-        if (url.includes(this.baseURL)) {
-          const directUrl = url.replace(this.baseURL, this.directURL);
-          console.log('🔄 Intentando con URL directa como fallback:', directUrl);
-          
-          const directResponse = await fetch(directUrl, {
-            method: 'POST',
-            headers: headers,
-            body: JSON.stringify(payload),
-            mode: 'cors',
-            credentials: 'omit'
-          });
-          
-          if (directResponse.ok) {
-            console.log('✅ Llamada directa exitosa');
-            const data = await directResponse.json();
-            return this.processResponse(data);
-          }
-        }
-        
-        throw new Error('Acceso prohibido (403). Verifica la configuración de CORS en Tryton y el proxy de Vite.');
+        throw new Error('Acceso prohibido (403). Verifica la configuración de CORS en Tryton.');
       }
 
       if (!response.ok) {
@@ -143,6 +147,7 @@ class TrytonService {
       console.error('💥 Error en llamada RPC:', {
         url,
         method,
+        useDirect,
         error: error.message,
         fullError: error
       });
