@@ -1,14 +1,14 @@
 import trytonConfig from '../../env.config.js';
 
 // Servicio para conectar con la API de Tryton - REPLICANDO EXACTAMENTE EL SAO
-class TrytonService {
+class TrytonServiceSAO {
   constructor() {
     this.baseURL = trytonConfig.baseURL;
     this.sessionData = null;
     this.database = null;
     this.context = {};
     this.rpcId = 0;
-    console.log('TrytonService inicializado con baseURL:', this.baseURL);
+    console.log('TrytonServiceSAO inicializado con baseURL:', this.baseURL);
   }
 
   // Función utoa exactamente como en el SAO
@@ -88,8 +88,7 @@ class TrytonService {
 
       console.log('📡 Respuesta RPC:', {
         status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries())
+        statusText: response.statusText
       });
 
       if (response.status === 401) {
@@ -120,8 +119,7 @@ class TrytonService {
       console.error('💥 Error en llamada RPC:', {
         url,
         method,
-        error: error.message,
-        fullError: error
+        error: error.message
       });
       throw error;
     }
@@ -196,69 +194,6 @@ class TrytonService {
     }
   }
 
-  // Logout exactamente como el SAO
-  async logout() {
-    if (!this.sessionData) {
-      return { success: true };
-    }
-
-    try {
-      console.log('🚪 Cerrando sesión SAO...');
-      
-      await this.makeRpcCall('common.db.logout', []);
-      
-      this.clearSession();
-      return { success: true };
-    } catch (error) {
-      console.error('💥 Error en logout:', error);
-      // Forzar logout local incluso si falla
-      this.clearSession();
-      return { success: true };
-    }
-  }
-
-  // Limpiar sesión
-  clearSession() {
-    console.log('🧹 Limpiando sesión...');
-    this.sessionData = null;
-    this.database = null;
-    this.context = {};
-    
-    // Limpiar localStorage como hace el SAO
-    try {
-      localStorage.removeItem('tryton_session');
-      console.log('🗑️ Sesión eliminada del localStorage');
-    } catch (error) {
-      console.error('⚠️ Error limpiando localStorage:', error);
-    }
-  }
-
-  // Restaurar sesión desde datos externos
-  restoreSession(sessionData) {
-    console.log('🔄 Restaurando sesión SAO...');
-    
-    if (sessionData && typeof sessionData === 'object') {
-      if (!sessionData.sessionId || !sessionData.userId || !sessionData.username || !sessionData.database) {
-        console.error('❌ Datos de sesión incompletos:', sessionData);
-        this.clearSession();
-        return false;
-      }
-      
-      this.sessionData = sessionData;
-      this.database = sessionData.database;
-      
-      // Cargar contexto del usuario
-      this.loadUserContext();
-      
-      console.log('✅ Sesión SAO restaurada:', this.sessionData);
-      return true;
-    } else {
-      console.log('❌ No hay datos de sesión válidos para restaurar');
-      this.clearSession();
-      return false;
-    }
-  }
-
   // Verificar conexión exactamente como el SAO
   async checkConnection() {
     try {
@@ -289,58 +224,6 @@ class TrytonService {
     }
   }
 
-  // Obtener preferencias del usuario como el SAO
-  async getUserPreferences() {
-    if (!this.sessionData) {
-      throw new Error('No hay sesión activa');
-    }
-
-    try {
-      console.log('⚙️ Obteniendo preferencias del usuario...');
-      
-      // El SAO usa true como primer parámetro (contexto completo)
-      const preferences = await this.makeRpcCall('model.res.user.get_preferences', [true, {}]);
-      console.log('📋 Preferencias obtenidas:', preferences);
-      return preferences;
-    } catch (error) {
-      console.error('💥 Error obteniendo preferencias:', error);
-      throw error;
-    }
-  }
-
-  // Obtener menú del sidebar como el SAO
-  async getSidebarMenu() {
-    if (!this.sessionData) {
-      throw new Error('No hay sesión activa');
-    }
-
-    try {
-      console.log('📱 Obteniendo menú del sidebar...');
-      
-      // Obtener preferencias del usuario (como el SAO)
-      const preferences = await this.getUserPreferences();
-      
-      // Obtener menús principales
-      const menus = await this.makeRpcCall('model.ir.ui.menu.search_read', [
-        [['parent', '=', null]],
-        ['name', 'icon', 'sequence', 'childs']
-      ]);
-      
-      // Obtener iconos disponibles
-      const icons = await this.makeRpcCall('model.ir.ui.icon.list_icons', [{}]);
-      
-      return {
-        preferences,
-        menus,
-        icons,
-        pysonMenu: preferences.pyson_menu
-      };
-    } catch (error) {
-      console.error('💥 Error obteniendo menú del sidebar:', error);
-      throw error;
-    }
-  }
-
   // Método de prueba específico para common.db.list
   async testDbList() {
     try {
@@ -355,27 +238,21 @@ class TrytonService {
     }
   }
 
-  // Debug de sesión
-  debugSession() {
-    console.log('🐛 === DEBUG SESSION SAO ===');
-    console.log('Session data:', this.sessionData);
-    console.log('Database:', this.database);
-    console.log('Base URL:', this.baseURL);
-    console.log('Context:', this.context);
+  // Limpiar sesión
+  clearSession() {
+    console.log('🧹 Limpiando sesión...');
+    this.sessionData = null;
+    this.database = null;
+    this.context = {};
     
-    if (this.sessionData) {
-      console.log('Auth header:', this.getAuthHeader());
-      console.log('Session ID:', this.sessionData.sessionId);
-      console.log('User ID:', this.sessionData.userId);
-      console.log('Username:', this.sessionData.username);
-      console.log('Database:', this.sessionData.database);
-      console.log('Login time:', this.sessionData.loginTime);
-    } else {
-      console.log('❌ No session data available');
+    // Limpiar localStorage como hace el SAO
+    try {
+      localStorage.removeItem('tryton_session');
+      console.log('🗑️ Sesión eliminada del localStorage');
+    } catch (error) {
+      console.error('⚠️ Error limpiando localStorage:', error);
     }
-    
-    console.log('🐛 === END DEBUG ===');
   }
 }
 
-export default new TrytonService();
+export default new TrytonServiceSAO();

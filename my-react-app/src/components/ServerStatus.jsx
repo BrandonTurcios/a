@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { trytonConfig } from '../../env.config.js';
 
 const ServerStatus = () => {
   const [serverStatus, setServerStatus] = useState({
@@ -12,7 +13,7 @@ const ServerStatus = () => {
       console.log('Verificando servidor Tryton...');
       
       // Hacer una petición simple para verificar que el servidor responde
-      const response = await fetch('http://localhost:8000/', {
+      const response = await fetch(`${trytonConfig.baseURL}/`, {
         method: 'GET',
         mode: 'no-cors' // Usar no-cors para evitar problemas de CORS en la verificación
       });
@@ -97,7 +98,7 @@ const ServerStatus = () => {
               <div className={`w-3 h-3 rounded-full mr-3 ${getStatusColor(serverStatus.tryton)}`}></div>
               <div>
                 <p className="font-medium text-gray-800">Servidor Tryton</p>
-                <p className="text-sm text-gray-600">http://localhost:8000</p>
+                <p className="text-sm text-gray-600">{trytonConfig.baseURL}</p>
               </div>
             </div>
             <span className="text-sm font-medium text-gray-700">

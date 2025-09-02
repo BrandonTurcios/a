@@ -1,8 +1,7 @@
 // Configuración de Tryton
 export const trytonConfig = {
-  // ✅ CONFIGURACIÓN CORREGIDA - Tryton funciona en puerto 5173
-  baseURL: 'http://localhost:5173', // Puerto donde está corriendo Tryton
-  directURL: 'http://localhost:5173', // Para referencia
+  baseURL: 'http://localhost:5173', 
+  directURL: 'http://localhost:5173', // URL directa de Tryton (para referencia)
   
   // Configuración adicional
   timeout: 30000, // 30 segundos
