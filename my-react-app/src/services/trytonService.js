@@ -3,12 +3,15 @@ import trytonConfig from '../../env.config.js';
 // Servicio para conectar con la API de Tryton - REPLICANDO EXACTAMENTE EL SAO
 class TrytonService {
   constructor() {
+    // Usar la URL del proxy de Vite
     this.baseURL = trytonConfig.baseURL;
+    this.directURL = trytonConfig.directURL;
     this.sessionData = null;
     this.database = null;
     this.context = {};
     this.rpcId = 0;
-    console.log('TrytonService inicializado con baseURL:', this.baseURL);
+    console.log('TrytonService inicializado con baseURL (proxy):', this.baseURL);
+    console.log('TrytonService URL directa:', this.directURL);
   }
 
   // Función utoa exactamente como en el SAO
@@ -25,7 +28,7 @@ class TrytonService {
     return this.utoa(authString);
   }
 
-  // Construir URL exactamente como el SAO
+  // Construir URL usando el proxy de Vite
   buildURL(method) {
     // common.db.list NO usa base de datos - es para listar las bases disponibles
     if (method === 'common.db.list') {
@@ -37,7 +40,7 @@ class TrytonService {
       return `${this.baseURL}/${this.database}/`;
     }
     
-    // Fallback a URL base
+    // Fallback a URL base del proxy
     return `${this.baseURL}/`;
   }
 
@@ -70,7 +73,7 @@ class TrytonService {
       headers['Authorization'] = `Session ${this.getAuthHeader()}`;
     }
 
-    console.log('🔍 Llamada RPC SAO:', {
+    console.log('🔍 Llamada RPC SAO (via proxy):', {
       url,
       method,
       params: rpcParams,
@@ -85,7 +88,7 @@ class TrytonService {
         headers: headers,
         body: JSON.stringify(payload),
         mode: 'cors',
-        credentials: 'omit'
+        credentials: 'include' // Cambiar a 'include' para el proxy
       });
 
       console.log('📡 Respuesta RPC:', {
@@ -101,39 +104,41 @@ class TrytonService {
         throw new Error('Sesión expirada. Por favor, inicie sesión nuevamente.');
       }
 
+      if (response.status === 403) {
+        // Manejar error 403 específicamente
+        console.error('🚫 Error 403: Acceso prohibido');
+        console.error('🔍 Verificando configuración del proxy y CORS...');
+        
+        // Intentar con URL directa como fallback
+        if (url.includes(this.baseURL)) {
+          const directUrl = url.replace(this.baseURL, this.directURL);
+          console.log('🔄 Intentando con URL directa como fallback:', directUrl);
+          
+          const directResponse = await fetch(directUrl, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(payload),
+            mode: 'cors',
+            credentials: 'omit'
+          });
+          
+          if (directResponse.ok) {
+            console.log('✅ Llamada directa exitosa');
+            const data = await directResponse.json();
+            return this.processResponse(data);
+          }
+        }
+        
+        throw new Error('Acceso prohibido (403). Verifica la configuración de CORS en Tryton y el proxy de Vite.');
+      }
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}. Details: ${errorText}`);
       }
 
       const data = await response.json();
-      console.log('📦 Datos RPC recibidos:', data);
-      console.log('🔍 Tipo de datos:', typeof data);
-      console.log('🔍 Estructura de datos:', JSON.stringify(data, null, 2));
-
-      // Manejar respuestas directas de Tryton (como ["health50"])
-      if (Array.isArray(data)) {
-        console.log('✅ Respuesta directa de Tryton (array):', data);
-        return data;
-      }
-
-      // Manejar respuestas JSON-RPC estándar
-      if (data && typeof data === 'object') {
-        // Manejar errores JSON-RPC como el SAO
-        if (data.error) {
-          const [errorType, errorMessage] = data.error;
-          console.error('❌ Error RPC:', errorType, errorMessage);
-          throw new Error(`${errorType}: ${errorMessage}`);
-        }
-
-        // Retornar resultado como el SAO
-        console.log('✅ Resultado JSON-RPC a retornar:', data.result);
-        return data.result;
-      }
-
-      // Fallback para otros tipos de respuesta
-      console.log('⚠️ Tipo de respuesta inesperado, retornando datos tal como están:', data);
-      return data;
+      return this.processResponse(data);
     } catch (error) {
       console.error('💥 Error en llamada RPC:', {
         url,
@@ -143,6 +148,37 @@ class TrytonService {
       });
       throw error;
     }
+  }
+
+  // Procesar respuesta de manera consistente
+  processResponse(data) {
+    console.log('📦 Datos RPC recibidos:', data);
+    console.log('🔍 Tipo de datos:', typeof data);
+    console.log('🔍 Estructura de datos:', JSON.stringify(data, null, 2));
+
+    // Manejar respuestas directas de Tryton (como ["health50"])
+    if (Array.isArray(data)) {
+      console.log('✅ Respuesta directa de Tryton (array):', data);
+      return data;
+    }
+
+    // Manejar respuestas JSON-RPC estándar
+    if (data && typeof data === 'object') {
+      // Manejar errores JSON-RPC como el SAO
+      if (data.error) {
+        const [errorType, errorMessage] = data.error;
+        console.error('❌ Error RPC:', errorType, errorMessage);
+        throw new Error(`${errorType}: ${errorMessage}`);
+      }
+
+      // Retornar resultado como el SAO
+      console.log('✅ Resultado JSON-RPC a retornar:', data.result);
+      return data.result;
+    }
+
+    // Fallback para otros tipos de respuesta
+    console.log('⚠️ Tipo de respuesta inesperado, retornando datos tal como están:', data);
+    return data;
   }
 
   // Login exactamente como el SAO
