@@ -25,6 +25,55 @@ class TrytonService {
     return this.utoa(authString);
   }
 
+  // Método para probar diferentes endpoints de Tryton
+  async testEndpoints() {
+    const endpoints = [
+      '/',
+      '/jsonrpc',
+      '/rpc',
+      '/api',
+      '/tryton',
+      '/common/db/list'
+    ];
+    
+    console.log('🧪 Probando endpoints de Tryton...');
+    
+    for (const endpoint of endpoints) {
+      try {
+        const url = `${this.baseURL}${endpoint}`;
+        console.log(`🔍 Probando: ${url}`);
+        
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'common.db.list',
+            params: []
+          }),
+          mode: 'cors',
+          credentials: 'omit'
+        });
+        
+        console.log(`✅ ${endpoint}: ${response.status} ${response.statusText}`);
+        
+        if (response.ok) {
+          console.log(`🎯 Endpoint funcional encontrado: ${endpoint}`);
+          return endpoint;
+        }
+      } catch (error) {
+        console.log(`❌ ${endpoint}: ${error.message}`);
+      }
+    }
+    
+    console.log('🚨 No se encontró ningún endpoint funcional');
+    return null;
+  }
+
   // Construir URL usando directamente Tryton
   buildURL(method) {
     // common.db.list NO usa base de datos - es para listar las bases disponibles
@@ -291,6 +340,13 @@ class TrytonService {
     try {
       console.log('🔍 Verificando conexión SAO...');
       
+      // Primero probar diferentes endpoints para encontrar cuál funciona
+      const workingEndpoint = await this.testEndpoints();
+      
+      if (!workingEndpoint) {
+        throw new Error('No se encontró ningún endpoint funcional en Tryton');
+      }
+      
       // Probar common.db.list (sin base de datos)
       const databases = await this.makeRpcCall('common.db.list');
       
@@ -298,7 +354,8 @@ class TrytonService {
         connected: true,
         databases: databases,
         serverUrl: this.baseURL,
-        message: `Conexión exitosa. ${databases.length} bases de datos encontradas.`
+        workingEndpoint: workingEndpoint,
+        message: `Conexión exitosa. ${databases.length} bases de datos encontradas. Endpoint: ${workingEndpoint}`
       };
     } catch (error) {
       console.error('💥 Error verificando conexión:', error);
@@ -310,7 +367,8 @@ class TrytonService {
         suggestions: [
           'Verifica que el servidor Tryton esté ejecutándose',
           'Comprueba que el puerto esté disponible',
-          'Verifica la configuración de CORS en Tryton'
+          'Verifica la configuración de CORS en Tryton',
+          'Revisa la configuración de endpoints en Tryton'
         ]
       };
     }
