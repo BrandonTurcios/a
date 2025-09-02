@@ -3,15 +3,12 @@ import trytonConfig from '../../env.config.js';
 // Servicio para conectar con la API de Tryton - REPLICANDO EXACTAMENTE EL SAO
 class TrytonService {
   constructor() {
-    // Usar la URL del proxy de Vite
     this.baseURL = trytonConfig.baseURL;
-    this.directURL = trytonConfig.directURL;
     this.sessionData = null;
     this.database = null;
     this.context = {};
     this.rpcId = 0;
-    console.log('TrytonService inicializado con baseURL (proxy):', this.baseURL);
-    console.log('TrytonService URL directa:', this.directURL);
+    console.log('TrytonService inicializado con baseURL:', this.baseURL);
   }
 
   // Función utoa exactamente como en el SAO
@@ -28,54 +25,25 @@ class TrytonService {
     return this.utoa(authString);
   }
 
-  // Construir URL usando el proxy de Vite
-  buildURL(method, useDirect = false) {
-    const baseURL = useDirect ? this.directURL : this.baseURL;
-    
+  // Construir URL usando directamente Tryton
+  buildURL(method) {
     // common.db.list NO usa base de datos - es para listar las bases disponibles
     if (method === 'common.db.list') {
-      return `${baseURL}/`;
+      return `${this.baseURL}/`;
     }
     
     // Si hay base de datos, usar la estructura /database/
     if (this.database && this.database.trim() !== '') {
-      return `${baseURL}/${this.database}/`;
+      return `${this.baseURL}/${this.database}/`;
     }
     
-    // Fallback a URL base del proxy
-    return `${baseURL}/`;
+    // Fallback a URL base
+    return `${this.baseURL}/`;
   }
 
-  // Método RPC principal replicando exactamente el SAO
+  // Método RPC principal simplificado
   async makeRpcCall(method, params = []) {
-    // Intentar primero con proxy, luego con URL directa si falla
-    return this._makeRpcCallWithFallback(method, params);
-  }
-
-  // Método RPC con fallback automático
-  async _makeRpcCallWithFallback(method, params = []) {
-    // Primera intento: con proxy
-    try {
-      return await this._makeSingleRpcCall(method, params, false);
-    } catch (error) {
-      console.log('🔄 Proxy falló, intentando con URL directa...');
-      
-      // Segundo intento: con URL directa
-      try {
-        return await this._makeSingleRpcCall(method, params, true);
-      } catch (directError) {
-        console.error('💥 Ambas opciones fallaron:', {
-          proxyError: error.message,
-          directError: directError.message
-        });
-        throw new Error(`Proxy falló: ${error.message}. URL directa falló: ${directError.message}`);
-      }
-    }
-  }
-
-  // Método RPC individual
-  async _makeSingleRpcCall(method, params = [], useDirect = false) {
-    const url = this.buildURL(method, useDirect);
+    const url = this.buildURL(method);
     
     // Construir parámetros exactamente como el SAO
     const rpcParams = [...params];
@@ -102,7 +70,7 @@ class TrytonService {
       headers['Authorization'] = `Session ${this.getAuthHeader()}`;
     }
 
-    console.log(`🔍 Llamada RPC SAO (${useDirect ? 'directa' : 'via proxy'}):`, {
+    console.log('🔍 Llamada RPC directa a Tryton:', {
       url,
       method,
       params: rpcParams,
@@ -116,7 +84,8 @@ class TrytonService {
         method: 'POST',
         headers: headers,
         body: JSON.stringify(payload),
-        credentials: useDirect ? 'omit' : 'same-origin'
+        mode: 'cors',
+        credentials: 'omit'
       });
 
       console.log('📡 Respuesta RPC:', {
@@ -147,7 +116,6 @@ class TrytonService {
       console.error('💥 Error en llamada RPC:', {
         url,
         method,
-        useDirect,
         error: error.message,
         fullError: error
       });
@@ -414,10 +382,10 @@ class TrytonService {
     }
   }
 
-  // Método específico para obtener bases de datos disponibles (con manejo robusto de errores)
+  // Método específico para obtener bases de datos disponibles
   async getAvailableDatabases() {
     try {
-      console.log('🔍 Intentando obtener bases de datos con common.db.list...');
+      console.log('🔍 Obteniendo bases de datos con common.db.list...');
       const databases = await this.makeRpcCall('common.db.list');
       
       if (databases && Array.isArray(databases) && databases.length > 0) {
@@ -429,13 +397,7 @@ class TrytonService {
       }
     } catch (error) {
       console.error('💥 Error obteniendo bases de datos:', error.message);
-      
-      // Si falla common.db.list, intentar con una lista predefinida común
-      console.log('🔄 Intentando con lista predefinida de bases de datos comunes...');
-      const commonDatabases = ['tryton', 'his-50', 'demo', 'test'];
-      console.log('📋 Lista predefinida:', commonDatabases);
-      
-      return commonDatabases;
+      throw error;
     }
   }
 
