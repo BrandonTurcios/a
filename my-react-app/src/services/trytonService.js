@@ -8,7 +8,7 @@ class TrytonService {
     this.database = null;
     this.context = {};
     this.rpcId = 0;
-    console.log('TrytonService inicializado con baseURL:', this.baseURL);
+    console.log('TrytonService inicializado con URL directa:', this.baseURL);
   }
 
   // Función utoa exactamente como en el SAO
@@ -74,7 +74,7 @@ class TrytonService {
     return null;
   }
 
-  // Construir URL usando directamente Tryton
+  // Construir URL para Tryton
   buildURL(method) {
     // common.db.list NO usa base de datos - es para listar las bases disponibles
     if (method === 'common.db.list') {
@@ -119,7 +119,7 @@ class TrytonService {
       headers['Authorization'] = `Session ${this.getAuthHeader()}`;
     }
 
-    console.log('🔍 Llamada RPC directa a Tryton:', {
+    console.log('🔍 Llamada RPC a Tryton:', {
       url,
       method,
       params: rpcParams,

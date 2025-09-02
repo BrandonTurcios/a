@@ -1,8 +1,7 @@
 // Configuración de Tryton
 export const trytonConfig = {
-  // Usar directamente la URL de Tryton (sin proxy)
-  baseURL: 'http://localhost:8000', 
-  directURL: 'http://localhost:8000', // URL directa de Tryton
+  // URL directa de Tryton
+  baseURL: 'http://localhost:8000',
   
   // Configuración adicional
   timeout: 30000, // 30 segundos
