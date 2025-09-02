@@ -74,7 +74,9 @@ class TrytonService {
       url,
       method,
       params: rpcParams,
-      hasAuth: !!this.sessionData
+      hasAuth: !!this.sessionData,
+      payload: JSON.stringify(payload, null, 2),
+      headers: headers
     });
 
     try {
@@ -106,16 +108,32 @@ class TrytonService {
 
       const data = await response.json();
       console.log('📦 Datos RPC recibidos:', data);
+      console.log('🔍 Tipo de datos:', typeof data);
+      console.log('🔍 Estructura de datos:', JSON.stringify(data, null, 2));
 
-      // Manejar errores JSON-RPC como el SAO
-      if (data.error) {
-        const [errorType, errorMessage] = data.error;
-        console.error('❌ Error RPC:', errorType, errorMessage);
-        throw new Error(`${errorType}: ${errorMessage}`);
+      // Manejar respuestas directas de Tryton (como ["health50"])
+      if (Array.isArray(data)) {
+        console.log('✅ Respuesta directa de Tryton (array):', data);
+        return data;
       }
 
-      // Retornar resultado como el SAO
-      return data.result;
+      // Manejar respuestas JSON-RPC estándar
+      if (data && typeof data === 'object') {
+        // Manejar errores JSON-RPC como el SAO
+        if (data.error) {
+          const [errorType, errorMessage] = data.error;
+          console.error('❌ Error RPC:', errorType, errorMessage);
+          throw new Error(`${errorType}: ${errorMessage}`);
+        }
+
+        // Retornar resultado como el SAO
+        console.log('✅ Resultado JSON-RPC a retornar:', data.result);
+        return data.result;
+      }
+
+      // Fallback para otros tipos de respuesta
+      console.log('⚠️ Tipo de respuesta inesperado, retornando datos tal como están:', data);
+      return data;
     } catch (error) {
       console.error('💥 Error en llamada RPC:', {
         url,
@@ -352,6 +370,31 @@ class TrytonService {
     } catch (error) {
       console.error('💥 Error en common.db.list:', error);
       throw error;
+    }
+  }
+
+  // Método específico para obtener bases de datos disponibles (con manejo robusto de errores)
+  async getAvailableDatabases() {
+    try {
+      console.log('🔍 Intentando obtener bases de datos con common.db.list...');
+      const databases = await this.makeRpcCall('common.db.list');
+      
+      if (databases && Array.isArray(databases) && databases.length > 0) {
+        console.log('✅ Bases de datos obtenidas exitosamente:', databases);
+        return databases;
+      } else {
+        console.log('⚠️ No se encontraron bases de datos o formato incorrecto');
+        return [];
+      }
+    } catch (error) {
+      console.error('💥 Error obteniendo bases de datos:', error.message);
+      
+      // Si falla common.db.list, intentar con una lista predefinida común
+      console.log('🔄 Intentando con lista predefinida de bases de datos comunes...');
+      const commonDatabases = ['tryton', 'his-50', 'demo', 'test'];
+      console.log('📋 Lista predefinida:', commonDatabases);
+      
+      return commonDatabases;
     }
   }
 

@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import trytonService from '../services/trytonService';
-import ConnectionTest from './ConnectionTest';
-import ServerStatus from './ServerStatus';
 
 const Login = ({ onLogin }) => {
   const [formData, setFormData] = useState({
@@ -12,39 +10,33 @@ const Login = ({ onLogin }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [databases, setDatabases] = useState([]);
-  const [connectionStatus, setConnectionStatus] = useState(null);
+  const [loadingDatabases, setLoadingDatabases] = useState(true);
 
   useEffect(() => {
-    // Verificar conexión al cargar el componente
-    checkConnection();
+    // Obtener las bases de datos disponibles al cargar el componente (como hace el SAO)
+    fetchDatabases();
   }, []);
 
-  const checkConnection = async () => {
+  const fetchDatabases = async () => {
     try {
-      console.log('Verificando conexión con Tryton...');
-      const result = await trytonService.checkConnection();
-      setConnectionStatus(result);
+      setLoadingDatabases(true);
+      console.log('🔍 Obteniendo bases de datos disponibles...');
       
-      console.log('Resultado completo de checkConnection:', result);
+      // Usar el método robusto del servicio que maneja errores
+      const databases = await trytonService.getAvailableDatabases();
+      console.log('✅ Bases de datos obtenidas:', databases);
       
-      // Intentar obtener las bases de datos directamente
-      try {
-        const databases = await trytonService.makeRpcCall('common.db.list');
-        console.log('Bases de datos obtenidas directamente:', databases);
-        if (databases && Array.isArray(databases) && databases.length > 0) {
-          console.log('Estableciendo bases de datos en el estado:', databases);
-          setDatabases(databases);
-        } else {
-          console.log('No se encontraron bases de datos o formato incorrecto:', databases);
-          setDatabases([]);
-        }
-      } catch (dbError) {
-        console.log('Error obteniendo bases de datos:', dbError.message);
+      if (databases && Array.isArray(databases) && databases.length > 0) {
+        setDatabases(databases);
+      } else {
+        console.log('No se encontraron bases de datos');
         setDatabases([]);
       }
     } catch (error) {
-      console.error('Error checking connection:', error);
+      console.error('Error obteniendo bases de datos:', error);
       setDatabases([]);
+    } finally {
+      setLoadingDatabases(false);
     }
   };
 
@@ -80,9 +72,6 @@ const Login = ({ onLogin }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
-        <ServerStatus />
-        <ConnectionTest />
-        
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-gray-800 mb-2">
@@ -99,7 +88,12 @@ const Login = ({ onLogin }) => {
               <label htmlFor="database" className="block text-sm font-medium text-gray-700 mb-2">
                 Base de Datos
               </label>
-              {databases.length > 0 ? (
+              {loadingDatabases ? (
+                <div className="flex items-center justify-center py-3 border border-gray-300 rounded-lg bg-gray-50">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-2"></div>
+                  <span className="text-gray-500">Cargando bases de datos...</span>
+                </div>
+              ) : databases.length > 0 ? (
                 <div className="space-y-2">
                   <select
                     id="database"
@@ -122,7 +116,7 @@ const Login = ({ onLogin }) => {
                     </p>
                     <button
                       type="button"
-                      onClick={checkConnection}
+                      onClick={fetchDatabases}
                       className="text-sm text-blue-600 hover:text-blue-800 underline"
                     >
                       Actualizar lista
@@ -143,11 +137,11 @@ const Login = ({ onLogin }) => {
                   />
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-gray-500">
-                      Cargando bases de datos disponibles...
+                      No se pudieron cargar las bases de datos
                     </p>
                     <button
                       type="button"
-                      onClick={checkConnection}
+                      onClick={fetchDatabases}
                       className="text-sm text-blue-600 hover:text-blue-800 underline"
                     >
                       Reintentar
@@ -206,7 +200,7 @@ const Login = ({ onLogin }) => {
             {/* Botón de Login */}
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || loadingDatabases}
               className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (

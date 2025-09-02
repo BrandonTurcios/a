@@ -1,7 +1,8 @@
 // Configuración de Tryton
 export const trytonConfig = {
-  baseURL: 'http://localhost:5173', 
-  directURL: 'http://localhost:5173', // URL directa de Tryton (para referencia)
+  // Usar proxy de Vite para evitar problemas de CORS
+  baseURL: 'http://localhost:5173/tryton', 
+  directURL: 'http://localhost:8000', // URL directa de Tryton (para referencia)
   
   // Configuración adicional
   timeout: 30000, // 30 segundos
