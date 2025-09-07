@@ -21,8 +21,18 @@ class TrytonService {
     if (!this.sessionData) return '';
     
     const { username, userId, sessionId } = this.sessionData;
+    // El SAO usa: this.login + ':' + this.user_id + ':' + this.session
+    // Donde: login = username, user_id = userId, session = sessionId
     const authString = `${username}:${userId}:${sessionId}`;
-    return this.utoa(authString);
+    const encoded = this.utoa(authString);
+    console.log('🔐 Generando auth header (formato SAO):', {
+      login: username,        // this.login
+      user_id: userId,        // this.user_id  
+      session: sessionId,     // this.session
+      authString,
+      encoded
+    });
+    return encoded;
   }
 
   // Método para probar diferentes endpoints de Tryton
@@ -68,19 +78,20 @@ class TrytonService {
     return null;
   }
 
-  // Construir URL para Tryton
+  // Construir URL para Tryton exactamente como el SAO
   buildURL(method) {
     // common.db.list NO usa base de datos - es para listar las bases disponibles
     if (method === 'common.db.list') {
       return `${this.baseURL}/`;
     }
     
+    // El SAO usa: '/' + (session.database || '') + '/'
     // Si hay base de datos, usar la estructura /database/
     if (this.database && this.database.trim() !== '') {
       return `${this.baseURL}/${this.database}/`;
     }
     
-    // Fallback a URL base
+    // Fallback a URL base (sin base de datos)
     return `${this.baseURL}/`;
   }
 
@@ -96,29 +107,27 @@ class TrytonService {
     console.log('🔍 ======================================');
     
     // Construir parámetros exactamente como el SAO
+    // El SAO hace: params.push(jQuery.extend({}, session.context, params.pop()));
     const rpcParams = [...params];
     
     // Agregar contexto si hay sesión (como hace el SAO)
     if (this.sessionData && Object.keys(this.context).length > 0) {
-      rpcParams.push({ ...this.context, ...rpcParams.pop() });
+      const lastParam = rpcParams.pop() || {};
+      rpcParams.push({ ...this.context, ...lastParam });
     }
 
+    // Payload exactamente como el SAO
     const payload = {
-      jsonrpc: '2.0',
       id: ++this.rpcId,
       method: method,
       params: rpcParams
     };
 
+    // Headers exactamente como el SAO
     const headers = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
+      'Authorization': this.sessionData ? `Session ${this.getAuthHeader()}` : '',
+      'Content-Type': 'application/json'
     };
-
-    // Agregar header de autorización si hay sesión (exactamente como el SAO)
-    if (this.sessionData) {
-      headers['Authorization'] = `Session ${this.getAuthHeader()}`;
-    }
 
     console.log('🔍 Llamada RPC a Tryton:', {
       url,
@@ -134,6 +143,7 @@ class TrytonService {
       console.log('📡 Headers:', headers);
       console.log('📡 Payload:', JSON.stringify(payload, null, 2));
       
+      // Llamada fetch exactamente como el SAO (pero usando fetch en lugar de jQuery.ajax)
       const response = await fetch(url, {
         method: 'POST',
         headers: headers,
@@ -254,9 +264,10 @@ class TrytonService {
 
       if (result && result.length >= 2) {
         // Crear sesión exactamente como el SAO
+        // result[0] = user_id, result[1] = session (según el SAO)
         this.sessionData = {
-          sessionId: result[0],
-          userId: result[1],
+          userId: result[0],      // user_id viene primero
+          sessionId: result[1],   // session viene segundo
           database: database,
           username: username,
           loginTime: new Date().toISOString()
@@ -335,10 +346,15 @@ class TrytonService {
   // Restaurar sesión desde datos externos
   restoreSession(sessionData) {
     console.log('🔄 Restaurando sesión SAO...');
+    console.log('🔄 Datos recibidos:', sessionData);
     
     if (sessionData && typeof sessionData === 'object') {
       if (!sessionData.sessionId || !sessionData.userId || !sessionData.username || !sessionData.database) {
         console.error('❌ Datos de sesión incompletos:', sessionData);
+        console.error('❌ sessionId:', sessionData.sessionId);
+        console.error('❌ userId:', sessionData.userId);
+        console.error('❌ username:', sessionData.username);
+        console.error('❌ database:', sessionData.database);
         this.clearSession();
         return false;
       }
@@ -346,10 +362,13 @@ class TrytonService {
       this.sessionData = sessionData;
       this.database = sessionData.database;
       
-      // Cargar contexto del usuario
-      this.loadUserContext();
+      console.log('✅ Sesión SAO restaurada:');
+      console.log('✅ sessionData:', this.sessionData);
+      console.log('✅ database:', this.database);
+      console.log('✅ Auth header generado:', this.getAuthHeader());
       
-      console.log('✅ Sesión SAO restaurada:', this.sessionData);
+      // NO cargar contexto automáticamente aquí - se hará en getSidebarMenu
+      
       return true;
     } else {
       console.log('❌ No hay datos de sesión válidos para restaurar');
@@ -405,6 +424,8 @@ class TrytonService {
 
     try {
       console.log('⚙️ Obteniendo preferencias del usuario...');
+      console.log('⚙️ Sesión actual:', this.sessionData);
+      console.log('⚙️ Auth header:', this.getAuthHeader());
       
       // El SAO usa true como primer parámetro (contexto completo)
       const preferences = await this.makeRpcCall('model.res.user.get_preferences', [true, {}]);
@@ -424,6 +445,19 @@ class TrytonService {
 
     try {
       console.log('📱 Obteniendo menú del sidebar...');
+      
+      // PRIMERO: Probar una llamada simple para verificar la autenticación
+      console.log('🧪 Probando autenticación con llamada simple...');
+      try {
+        const testResult = await this.makeRpcCall('model.ir.module.search_read', [
+          [['state', '=', 'installed']],
+          ['name']
+        ]);
+        console.log('✅ Autenticación verificada, módulos encontrados:', testResult.length);
+      } catch (authError) {
+        console.error('❌ Error de autenticación:', authError);
+        throw new Error('Error de autenticación: ' + authError.message);
+      }
       
       // SECUENCIA CORRECTA DEL SAO:
       // 1. Recargar contexto
