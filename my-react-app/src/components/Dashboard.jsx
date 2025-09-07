@@ -208,6 +208,25 @@ const Dashboard = ({ sessionData, onLogout }) => {
     alert('Debug de sesión ejecutado. Revisa la consola para más detalles.');
   };
 
+  // Función para obtener pacientes
+  const getPatients = async () => {
+    try {
+      console.log('=== OBTENIENDO PACIENTES ===');
+      trytonService.restoreSession(sessionData);
+      
+      const patients = await trytonService.getPatientsSafe({
+        limit: 10,
+        computeAge: true
+      });
+      
+      console.log('Pacientes obtenidos:', patients);
+      alert(`Se obtuvieron ${patients.length} pacientes. Revisa la consola para más detalles.`);
+    } catch (error) {
+      console.error('Error obteniendo pacientes:', error);
+      alert('Error obteniendo pacientes: ' + error.message);
+    }
+  };
+
   // Función para probar autenticación
   const testAuthentication = async () => {
     try {
@@ -458,6 +477,15 @@ const Dashboard = ({ sessionData, onLogout }) => {
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </button>
+              <button
+                onClick={getPatients}
+                className="p-2 rounded-md hover:bg-gray-700 transition-colors bg-pink-600"
+                title="Obtener pacientes"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </button>
               <button

@@ -885,6 +885,131 @@ class TrytonService {
     }
   }
 
+  // Obtener campos de un modelo (como hace el SAO)
+  async getModelFields(modelName) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`🔍 Obteniendo campos del modelo: ${modelName}`);
+      
+      // El SAO usa fields_view_get para obtener los campos
+      const result = await this.makeRpcCall(`model.${modelName}.fields_view_get`, [
+        false, // view_id
+        'tree', // view_type
+        false, // view_dom
+        false, // context
+        false  // toolbar
+      ]);
+      
+      console.log(`✅ Campos obtenidos para ${modelName}:`, Object.keys(result.fields || {}));
+      return result.fields || {};
+    } catch (error) {
+      console.error(`💥 Error obteniendo campos de ${modelName}:`, error);
+      throw error;
+    }
+  }
+
+  // Método auxiliar para intersectar campos disponibles con campos deseados
+  _intersectFields(availableFields, wantedFields) {
+    const availableFieldNames = Object.keys(availableFields);
+    const validFields = wantedFields.filter(field => availableFieldNames.includes(field));
+    
+    console.log(`🔍 Campos disponibles: ${availableFieldNames.length}`);
+    console.log(`🔍 Campos deseados: ${wantedFields.length}`);
+    console.log(`🔍 Campos válidos: ${validFields.length}`);
+    console.log(`🔍 Campos válidos:`, validFields);
+    
+    return validFields;
+  }
+
+  // Método auxiliar para calcular edad
+  _computeAge(birthDate) {
+    if (!birthDate) return null;
+    
+    try {
+      const birth = new Date(birthDate);
+      const today = new Date();
+      let age = today.getFullYear() - birth.getFullYear();
+      const monthDiff = today.getMonth() - birth.getMonth();
+      
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+        age--;
+      }
+      
+      return age;
+    } catch (error) {
+      console.warn('⚠️ Error calculando edad:', error);
+      return null;
+    }
+  }
+
+  // Obtener pacientes de GNU Health de forma segura
+  async getPatientsSafe({
+    model = 'gnuhealth.patient',
+    domain = [],
+    wantedFields = [
+      'id',
+      'name',           // nombre del paciente
+      'sex',            // género (M/F/Other en GNU Health)
+      'birth_date',     // a veces es 'birth_date' o 'dob' según versión
+      'dob',            // por si tu build usa 'dob'
+      'puid',           // Patient Unique ID
+      'deceased',       // bool
+      'death_date',     // opcional
+      'identification_code', // documento si lo usan
+      'party',          // relación al partner/party
+    ],
+    offset = 0,
+    limit = 50,
+    order = 'name ASC',
+    computeAge = true    // si true, agrega .age calculada si existe birth_date/dob
+  } = {}) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`🏥 Obteniendo pacientes de ${model}...`);
+      console.log(`🔍 Dominio:`, domain);
+      console.log(`🔍 Campos deseados:`, wantedFields);
+      console.log(`🔍 Offset: ${offset}, Limit: ${limit}, Order: ${order}`);
+
+      // 1) Descubrir campos existentes
+      console.log('📋 Obteniendo campos del modelo...');
+      const modelFields = await this.getModelFields(model);
+      const fields = this._intersectFields(modelFields, wantedFields);
+
+      if (fields.length === 0) {
+        console.warn('⚠️ No se encontraron campos válidos, usando solo ID');
+        fields.push('id');
+      }
+
+      // 2) Hacer la búsqueda segura
+      console.log('🔍 Ejecutando search_read...');
+      const params = [domain, fields, offset, limit, order, {}];
+      const rows = await this.makeRpcCall(`model.${model}.search_read`, params);
+
+      console.log(`✅ ${rows.length} pacientes obtenidos`);
+
+      // 3) Normalizar edad (si procede)
+      if (computeAge && Array.isArray(rows)) {
+        console.log('📊 Calculando edades...');
+        for (const r of rows) {
+          const dateField = r.birth_date || r.dob || null;
+          r.age = this._computeAge(dateField);
+        }
+      }
+
+      console.log('✅ Pacientes procesados exitosamente');
+      return rows;
+    } catch (error) {
+      console.error('💥 Error obteniendo pacientes:', error);
+      throw error;
+    }
+  }
+
   // Debug de sesión
   debugSession() {
     console.log('🐛 === DEBUG SESSION SAO ===');
