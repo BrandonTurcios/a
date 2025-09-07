@@ -414,10 +414,20 @@ class TrytonService {
       // Obtener iconos disponibles
       const icons = await this.makeRpcCall('model.ir.ui.icon.list_icons', [{}]);
       
+      // Convertir menús a formato esperado por el Dashboard
+      const menuItems = menus.map(menu => ({
+        id: menu.id,
+        name: menu.name,
+        icon: menu.icon || '📋',
+        model: menu.model || '',
+        description: menu.description || menu.name
+      }));
+      
       return {
         preferences,
-        menus,
+        menuItems,
         icons,
+        viewSearch: [], // Placeholder para vistas de búsqueda
         pysonMenu: preferences.pyson_menu
       };
     } catch (error) {
@@ -455,6 +465,142 @@ class TrytonService {
       }
     } catch (error) {
       console.error('💥 Error obteniendo bases de datos:', error.message);
+      throw error;
+    }
+  }
+
+  // Validar sesión activa
+  async validateSession() {
+    if (!this.sessionData) {
+      console.log('❌ No hay sesión activa');
+      return false;
+    }
+
+    try {
+      console.log('🔍 Validando sesión activa...');
+      
+      // Intentar una llamada simple para verificar que la sesión sigue siendo válida
+      const result = await this.makeRpcCall('model.res.user.get_preferences', [true, {}]);
+      
+      if (result && typeof result === 'object') {
+        console.log('✅ Sesión válida');
+        return true;
+      } else {
+        console.log('❌ Sesión inválida - respuesta inesperada');
+        return false;
+      }
+    } catch (error) {
+      console.log('❌ Sesión inválida - error:', error.message);
+      return false;
+    }
+  }
+
+  // Obtener acceso a modelos
+  async getModelAccess() {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log('🔍 Obteniendo acceso a modelos...');
+      
+      const result = await this.makeRpcCall('model.ir.model.access.search_read', [
+        [],
+        ['model', 'perm_read', 'perm_write', 'perm_create', 'perm_delete']
+      ]);
+      
+      console.log('✅ Acceso a modelos obtenido:', result);
+      return result;
+    } catch (error) {
+      console.error('💥 Error obteniendo acceso a modelos:', error);
+      throw error;
+    }
+  }
+
+  // Probar conexión simple
+  async testConnection() {
+    try {
+      console.log('🔍 Probando conexión simple...');
+      
+      const result = await this.makeRpcCall('model.ir.module.search_read', [
+        [['state', '=', 'installed']],
+        ['name']
+      ]);
+      
+      console.log('✅ Conexión simple exitosa:', result);
+      return result;
+    } catch (error) {
+      console.error('💥 Error en conexión simple:', error);
+      throw error;
+    }
+  }
+
+  // Obtener menú simplificado
+  async getSimpleMenu() {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log('🔍 Obteniendo menú simplificado...');
+      
+      const menus = await this.makeRpcCall('model.ir.ui.menu.search_read', [
+        [['parent', '=', null]],
+        ['name', 'icon', 'sequence']
+      ]);
+      
+      console.log('✅ Menú simplificado obtenido:', menus);
+      return { menus };
+    } catch (error) {
+      console.error('💥 Error obteniendo menú simplificado:', error);
+      throw error;
+    }
+  }
+
+  // Ejecutar getModelAccess después del login
+  async executeModelAccessAfterLogin() {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log('🔍 Ejecutando getModelAccess después del login...');
+      
+      // Primero obtener acceso a modelos
+      const modelAccess = await this.getModelAccess();
+      
+      // Luego obtener menú
+      const menu = await this.getSidebarMenu();
+      
+      console.log('✅ getModelAccess después del login ejecutado:', { modelAccess, menu });
+      return { modelAccess, menu };
+    } catch (error) {
+      console.error('💥 Error ejecutando getModelAccess después del login:', error);
+      throw error;
+    }
+  }
+
+  // Probar getModelAccess específico
+  async testModelAccessSpecific() {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log('🔍 Probando getModelAccess específico...');
+      
+      // Probar diferentes métodos relacionados con acceso
+      const modelAccess = await this.makeRpcCall('model.ir.model.access.search_read', [
+        [['model', 'like', 'sale']],
+        ['model', 'perm_read', 'perm_write']
+      ]);
+      
+      const userGroups = await this.makeRpcCall('model.res.user.get_preferences', [true, {}]);
+      
+      console.log('✅ Prueba específica exitosa:', { modelAccess, userGroups });
+      return { modelAccess, userGroups };
+    } catch (error) {
+      console.error('💥 Error en prueba específica:', error);
       throw error;
     }
   }
