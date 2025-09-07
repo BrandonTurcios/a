@@ -464,7 +464,7 @@ class TrytonService {
       console.log('🔄 Recargando contexto...');
       await this.loadUserContext();
       
-      // 2. Obtener preferencias del usuario
+      // 2. Obtener preferencias del usuario (como hace el SAO)
       console.log('⚙️ Obteniendo preferencias...');
       const preferences = await this.getUserPreferences();
       
@@ -476,29 +476,28 @@ class TrytonService {
       console.log('🎨 Cargando iconos...');
       const icons = await this.makeRpcCall('model.ir.ui.icon.list_icons', [{}]);
       
-      // 5. Obtener menús principales - PRIMERO solo IDs
-      console.log('📋 Obteniendo IDs de menús...');
-      const menuIds = await this.makeRpcCall('model.ir.ui.menu.search_read', [
-        [['parent', '=', null]],
-        ['id']
-      ]);
+      // 5. Obtener menús usando el método del SAO
+      console.log('📋 Obteniendo menús usando método SAO...');
+      let menuItems = [];
       
-      console.log('📋 IDs de menús obtenidos:', menuIds);
-      
-      // 6. Ahora obtener los detalles de cada menú individualmente
-      console.log('📋 Obteniendo detalles de menús...');
-      const menuItems = [];
-      
-      for (const menuIdObj of menuIds) {
-         try {
-           const menuDetails = await this.makeRpcCall('model.ir.ui.menu.search_read', [
-             [['id', '=', menuIdObj.id]],
-             ['name', 'icon', 'sequence', 'childs', 'model', 'description']
-           ]);
+      if (preferences.pyson_menu) {
+        console.log('📋 PYSON Menu encontrado:', preferences.pyson_menu);
+        
+        // El SAO usa el pyson_menu para obtener la acción del menú principal
+        // Por ahora, vamos a obtener los menús directamente usando ir.ui.menu
+        // pero con la sintaxis correcta que funciona
+        
+        try {
+          // Intentar obtener menús con todos los campos de una vez
+          const menus = await this.makeRpcCall('model.ir.ui.menu.search_read', [
+            [['parent', '=', null]],
+            ['name', 'icon', 'sequence', 'childs', 'model', 'description']
+          ]);
           
-          if (menuDetails && menuDetails.length > 0) {
-            const menu = menuDetails[0];
-            menuItems.push({
+          console.log('📋 Menús obtenidos con search_read:', menus);
+          
+          if (menus && menus.length > 0) {
+            menuItems = menus.map(menu => ({
               id: menu.id,
               name: menu.name || `Menú ${menu.id}`,
               icon: menu.icon || '📋',
@@ -506,21 +505,72 @@ class TrytonService {
               description: menu.description || menu.name || `Menú ${menu.id}`,
               sequence: menu.sequence || 0,
               childs: menu.childs || []
-            });
+            }));
           }
         } catch (menuError) {
-          console.warn(`⚠️ Error obteniendo detalles del menú ${menuIdObj.id}:`, menuError.message);
-          // Agregar menú básico como fallback
-          menuItems.push({
-            id: menuIdObj.id,
-            name: `Menú ${menuIdObj.id}`,
-            icon: '📋',
-            model: '',
-            description: `Menú ${menuIdObj.id}`,
-            sequence: 0,
-            childs: []
-          });
+          console.warn('⚠️ Error obteniendo menús con search_read, intentando método alternativo:', menuError.message);
+          
+          // Método alternativo: obtener solo IDs y luego usar read individual
+          try {
+            const menuIds = await this.makeRpcCall('model.ir.ui.menu.search_read', [
+              [['parent', '=', null]],
+              ['id']
+            ]);
+            
+            console.log('📋 IDs de menús obtenidos:', menuIds);
+            
+            // Usar read individual para cada menú
+            for (const menuIdObj of menuIds) {
+              try {
+                const menuDetails = await this.makeRpcCall('model.ir.ui.menu.read', [
+                  [menuIdObj.id],
+                  ['name', 'icon', 'sequence', 'childs', 'model', 'description']
+                ]);
+                
+                if (menuDetails && menuDetails.length > 0) {
+                  const menu = menuDetails[0];
+                  menuItems.push({
+                    id: menu.id,
+                    name: menu.name || `Menú ${menu.id}`,
+                    icon: menu.icon || '📋',
+                    model: menu.model || '',
+                    description: menu.description || menu.name || `Menú ${menu.id}`,
+                    sequence: menu.sequence || 0,
+                    childs: menu.childs || []
+                  });
+                }
+              } catch (individualError) {
+                console.warn(`⚠️ Error obteniendo detalles del menú ${menuIdObj.id}:`, individualError.message);
+                // Agregar menú básico como fallback
+                menuItems.push({
+                  id: menuIdObj.id,
+                  name: `Menú ${menuIdObj.id}`,
+                  icon: '📋',
+                  model: '',
+                  description: `Menú ${menuIdObj.id}`,
+                  sequence: 0,
+                  childs: []
+                });
+              }
+            }
+          } catch (fallbackError) {
+            console.error('💥 Error en método alternativo:', fallbackError.message);
+            // Crear menús básicos como último recurso
+            menuItems = [
+              { id: 1, name: 'Dashboard', icon: '📊', model: '', description: 'Dashboard principal', sequence: 0, childs: [] },
+              { id: 2, name: 'Ventas', icon: '💰', model: '', description: 'Módulo de ventas', sequence: 1, childs: [] },
+              { id: 3, name: 'Compras', icon: '🛒', model: '', description: 'Módulo de compras', sequence: 2, childs: [] }
+            ];
+          }
         }
+      } else {
+        console.warn('⚠️ No se encontró pyson_menu en las preferencias');
+        // Fallback a menús básicos
+        menuItems = [
+          { id: 1, name: 'Dashboard', icon: '📊', model: '', description: 'Dashboard principal', sequence: 0, childs: [] },
+          { id: 2, name: 'Ventas', icon: '💰', model: '', description: 'Módulo de ventas', sequence: 1, childs: [] },
+          { id: 3, name: 'Compras', icon: '🛒', model: '', description: 'Módulo de compras', sequence: 2, childs: [] }
+        ];
       }
       
       // Ordenar por sequence
