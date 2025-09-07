@@ -962,7 +962,7 @@ class TrytonService {
     ],
     offset = 0,
     limit = 50,
-    order = [['name', 'ASC']],
+    order = null,
     computeAge = true    // si true, agrega .age calculada si existe birth_date/dob
   } = {}) {
     if (!this.sessionData) {
@@ -992,23 +992,22 @@ class TrytonService {
         fields = ['id', 'name']; // Fallback a campos básicos
       }
 
-      // 2) Hacer la búsqueda segura
-      console.log('🔍 Ejecutando search_read...');
+      // 2) Hacer la búsqueda segura (sintaxis exacta del SAO)
+      console.log('🔍 Ejecutando search_read con sintaxis SAO...');
       
-      // Asegurar que order sea un array
-      let orderArray = order;
-      if (typeof order === 'string') {
-        // Convertir "name ASC" a [['name', 'ASC']]
-        const parts = order.split(' ');
-        orderArray = [[parts[0], parts[1] || 'ASC']];
-      } else if (!Array.isArray(order)) {
-        // Si no es string ni array, usar orden por defecto
-        orderArray = [['name', 'ASC']];
-      }
+      // El SAO usa: [domain, offset, limit, order, fields, context]
+      // Según common.js línea 801: [domain, 0, null, null, fields, context]
+      const params = [domain, offset, limit, order, fields, {}];
       
-      console.log('🔍 Order procesado:', orderArray);
+      console.log('🔍 Parámetros SAO:', {
+        domain,
+        offset,
+        limit,
+        order,
+        fields,
+        context: {}
+      });
       
-      const params = [domain, fields, offset, limit, orderArray, {}];
       const rows = await this.makeRpcCall(`model.${model}.search_read`, params);
 
       console.log(`✅ ${rows.length} pacientes obtenidos`);
