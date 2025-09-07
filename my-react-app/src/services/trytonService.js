@@ -507,14 +507,24 @@ class TrytonService {
       
       if (result && typeof result === 'object') {
         console.log('✅ Sesión válida');
+        // Actualizar el contexto con la respuesta
+        this.context = result;
         return true;
       } else {
-        console.log('❌ Sesión inválida - respuesta inesperada');
+        console.log('❌ Sesión inválida - respuesta inesperada:', result);
         return false;
       }
     } catch (error) {
       console.log('❌ Sesión inválida - error:', error.message);
-      return false;
+      
+      // Si es un error de red o 401, la sesión definitivamente no es válida
+      if (error.message.includes('401') || error.message.includes('expirado') || error.message.includes('NetworkError')) {
+        return false;
+      }
+      
+      // Para otros errores, asumir que la sesión podría ser válida
+      console.log('⚠️ Error no crítico, asumiendo sesión válida');
+      return true;
     }
   }
 

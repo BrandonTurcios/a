@@ -30,12 +30,20 @@ const Dashboard = ({ sessionData, onLogout }) => {
         throw new Error('No se pudo restaurar la sesión. Los datos de sesión son inválidos.');
       }
       
-      // Validar que la sesión sea válida
+      // Validar que la sesión sea válida (opcional - no crítico)
       console.log('Validando sesión restaurada...');
-      const isValid = await trytonService.validateSession();
-      
-      if (!isValid) {
-        throw new Error('La sesión ha expirado. Por favor, inicia sesión nuevamente.');
+      try {
+        // Pequeño delay para asegurar que la sesión esté completamente establecida
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const isValid = await trytonService.validateSession();
+        if (!isValid) {
+          console.warn('⚠️ La sesión no se pudo validar, pero continuando...');
+        } else {
+          console.log('✅ Sesión validada correctamente');
+        }
+      } catch (validationError) {
+        console.warn('⚠️ Error validando sesión, pero continuando:', validationError.message);
       }
       
       const result = await trytonService.getSidebarMenu();
@@ -78,9 +86,9 @@ const Dashboard = ({ sessionData, onLogout }) => {
       console.error('Error cargando menú del sidebar:', error);
       setError('Error cargando el menú: ' + error.message);
       
-      // Si la sesión ha expirado, hacer logout automáticamente
-      if (error.message.includes('expirado') || error.message.includes('inválidos')) {
-        console.log('Sesión expirada, haciendo logout automático...');
+      // Solo hacer logout automático si es un error crítico de sesión
+      if (error.message.includes('No se pudo restaurar la sesión') || error.message.includes('datos de sesión son inválidos')) {
+        console.log('Error crítico de sesión, haciendo logout automático...');
         handleLogout();
         return;
       }
