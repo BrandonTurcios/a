@@ -76,17 +76,8 @@ class TrytonService {
 
   // Construir URL para Tryton
   buildURL(method) {
-    // common.db.list NO usa base de datos - es para listar las bases disponibles
-    if (method === 'common.db.list') {
-      return `${this.baseURL}/`;
-    }
-    
-    // Si hay base de datos, usar la estructura /database/
-    if (this.database && this.database.trim() !== '') {
-      return `${this.baseURL}/${this.database}/`;
-    }
-    
-    // Fallback a URL base
+    // Para Tryton, todas las llamadas van al mismo endpoint
+    // La base de datos se especifica en los parámetros, no en la URL
     return `${this.baseURL}/`;
   }
 
@@ -162,6 +153,21 @@ class TrytonService {
       const data = await response.json();
       return this.processResponse(data);
     } catch (error) {
+      // Mejorar el manejo de errores de red
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        console.error('🌐 Error de red - Verifica la conectividad:', {
+          url,
+          method,
+          error: error.message,
+          suggestions: [
+            'Verifica que el servidor Tryton esté ejecutándose en ' + this.baseURL,
+            'Comprueba que no haya problemas de CORS',
+            'Revisa la consola del navegador para más detalles'
+          ]
+        });
+        throw new Error(`Error de conexión: No se puede conectar con el servidor Tryton en ${this.baseURL}. Verifica que el servidor esté ejecutándose.`);
+      }
+      
       console.error('💥 Error en llamada RPC:', {
         url,
         method,
@@ -203,10 +209,41 @@ class TrytonService {
     return data;
   }
 
+  // Probar conectividad básica
+  async testBasicConnectivity() {
+    try {
+      console.log('🔍 Probando conectividad básica...');
+      
+      const response = await fetch(`${this.baseURL}/`, {
+        method: 'GET',
+        mode: 'cors',
+        credentials: 'omit'
+      });
+      
+      console.log('📡 Respuesta de conectividad:', {
+        status: response.status,
+        statusText: response.statusText,
+        url: `${this.baseURL}/`
+      });
+      
+      return response.ok;
+    } catch (error) {
+      console.error('❌ Error de conectividad:', error);
+      return false;
+    }
+  }
+
   // Login exactamente como el SAO
   async login(database, username, password) {
     try {
       console.log('🔐 Iniciando login SAO...');
+      
+      // Primero probar conectividad básica
+      console.log('🌐 Probando conectividad...');
+      const isConnected = await this.testBasicConnectivity();
+      if (!isConnected) {
+        throw new Error(`No se puede conectar con el servidor Tryton en ${this.baseURL}. Verifica que el servidor esté ejecutándose.`);
+      }
       
       // Guardar base de datos
       this.database = database;
