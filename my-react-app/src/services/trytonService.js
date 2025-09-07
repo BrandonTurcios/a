@@ -895,12 +895,11 @@ class TrytonService {
       console.log(`🔍 Obteniendo campos del modelo: ${modelName}`);
       
       // El SAO usa fields_view_get para obtener los campos
+      // Sintaxis correcta: fields_view_get(view_id, view_type, view_dom, context)
+      // Probando con menos argumentos primero
       const result = await this.makeRpcCall(`model.${modelName}.fields_view_get`, [
         false, // view_id
-        'tree', // view_type
-        false, // view_dom
-        false, // context
-        false  // toolbar
+        'tree' // view_type
       ]);
       
       console.log(`✅ Campos obtenidos para ${modelName}:`, Object.keys(result.fields || {}));
@@ -978,12 +977,19 @@ class TrytonService {
 
       // 1) Descubrir campos existentes
       console.log('📋 Obteniendo campos del modelo...');
-      const modelFields = await this.getModelFields(model);
-      const fields = this._intersectFields(modelFields, wantedFields);
-
-      if (fields.length === 0) {
-        console.warn('⚠️ No se encontraron campos válidos, usando solo ID');
-        fields.push('id');
+      let fields = wantedFields;
+      
+      try {
+        const modelFields = await this.getModelFields(model);
+        fields = this._intersectFields(modelFields, wantedFields);
+        
+        if (fields.length === 0) {
+          console.warn('⚠️ No se encontraron campos válidos, usando campos por defecto');
+          fields = ['id', 'name']; // Campos básicos que deberían existir
+        }
+      } catch (fieldsError) {
+        console.warn('⚠️ Error obteniendo campos del modelo, usando campos por defecto:', fieldsError.message);
+        fields = ['id', 'name']; // Fallback a campos básicos
       }
 
       // 2) Hacer la búsqueda segura
