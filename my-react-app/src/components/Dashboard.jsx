@@ -57,6 +57,12 @@ const Dashboard = ({ sessionData, onLogout }) => {
         console.log('Grupos:', result.preferences.groups?.length || 0);
       }
       
+      // Mostrar información de acceso a modelos
+      if (result.modelAccess) {
+        console.log('Acceso a modelos cargado:', result.modelAccess.length || 0);
+        console.log('Modelos con acceso:', result.modelAccess.map(ma => ma.model).slice(0, 10));
+      }
+      
       // Mostrar información de iconos
       if (result.icons) {
         console.log('Iconos disponibles:', result.icons.length || 0);
@@ -69,7 +75,13 @@ const Dashboard = ({ sessionData, onLogout }) => {
       
       // Convertir los módulos a elementos del menú
       const sidebarItems = [
-        { id: 'dashboard', label: 'Dashboard', icon: '📊', type: 'dashboard' },
+        { 
+          id: 'dashboard', 
+          label: 'Dashboard', 
+          icon: '📊', 
+          type: 'dashboard',
+          modelAccessCount: result.modelAccess?.length || 0
+        },
         ...result.menuItems.map(item => ({
           id: item.id,
           label: item.name,
@@ -270,6 +282,19 @@ const Dashboard = ({ sessionData, onLogout }) => {
                   <div className="ml-4">
                     <p className="text-sm text-gray-600">Módulos</p>
                     <p className="text-2xl font-bold text-gray-800">{menuItems.filter(item => item.type === 'module').length}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded-lg shadow p-6">
+                <div className="flex items-center">
+                  <div className="p-2 bg-indigo-100 rounded-lg">
+                    <span className="text-2xl">🔐</span>
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm text-gray-600">Modelos Accesibles</p>
+                    <p className="text-2xl font-bold text-gray-800">
+                      {menuItems.find(item => item.id === 'dashboard')?.modelAccessCount || 'N/A'}
+                    </p>
                   </div>
                 </div>
               </div>

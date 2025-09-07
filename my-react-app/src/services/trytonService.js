@@ -425,17 +425,29 @@ class TrytonService {
     try {
       console.log('📱 Obteniendo menú del sidebar...');
       
-      // Obtener preferencias del usuario (como el SAO)
+      // SECUENCIA CORRECTA DEL SAO:
+      // 1. Recargar contexto
+      console.log('🔄 Recargando contexto...');
+      await this.loadUserContext();
+      
+      // 2. Obtener preferencias del usuario
+      console.log('⚙️ Obteniendo preferencias...');
       const preferences = await this.getUserPreferences();
       
-      // Obtener menús principales
+      // 3. Cargar acceso a modelos (como hace el SAO)
+      console.log('🔐 Cargando acceso a modelos...');
+      const modelAccess = await this.getModelAccess();
+      
+      // 4. Cargar iconos disponibles
+      console.log('🎨 Cargando iconos...');
+      const icons = await this.makeRpcCall('model.ir.ui.icon.list_icons', [{}]);
+      
+      // 5. Obtener menús principales
+      console.log('📋 Obteniendo menús...');
       const menus = await this.makeRpcCall('model.ir.ui.menu.search_read', [
         [['parent', '=', null]],
         ['name', 'icon', 'sequence', 'childs']
       ]);
-      
-      // Obtener iconos disponibles
-      const icons = await this.makeRpcCall('model.ir.ui.icon.list_icons', [{}]);
       
       // Convertir menús a formato esperado por el Dashboard
       const menuItems = menus.map(menu => ({
@@ -446,10 +458,13 @@ class TrytonService {
         description: menu.description || menu.name
       }));
       
+      console.log('✅ Menú del sidebar cargado correctamente');
+      
       return {
         preferences,
         menuItems,
         icons,
+        modelAccess,
         viewSearch: [], // Placeholder para vistas de búsqueda
         pysonMenu: preferences.pyson_menu
       };
