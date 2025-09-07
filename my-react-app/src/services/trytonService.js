@@ -476,95 +476,50 @@ class TrytonService {
       console.log('🎨 Cargando iconos...');
       const icons = await this.makeRpcCall('model.ir.ui.icon.list_icons', [{}]);
       
-      // 5. Intentar obtener menús principales con todos los campos de una vez
-      console.log('📋 Obteniendo menús principales...');
-      let menuItems = [];
+      // 5. Obtener menús principales - PRIMERO solo IDs
+      console.log('📋 Obteniendo IDs de menús...');
+      const menuIds = await this.makeRpcCall('model.ir.ui.menu.search_read', [
+        [['parent', '=', null]],
+        ['id']
+      ]);
       
-      try {
-        // Intentar obtener todos los menús principales con sus campos
-        const menus = await this.makeRpcCall('model.ir.ui.menu.search_read', [
-          [['parent', '=', null]],
-          ['id', 'name', 'icon', 'sequence', 'childs', 'model', 'description']
-        ]);
-        
-        console.log('📋 Menús obtenidos:', menus);
-        
-        if (menus && menus.length > 0) {
-          menuItems = menus.map(menu => ({
-            id: menu.id,
-            name: menu.name || `Menú ${menu.id}`,
-            icon: menu.icon || '📋',
-            model: menu.model || '',
-            description: menu.description || menu.name || `Menú ${menu.id}`,
-            sequence: menu.sequence || 0,
-            childs: menu.childs || []
-          }));
-        }
-      } catch (menuError) {
-        console.warn('⚠️ Error obteniendo menús con campos completos, intentando método alternativo:', menuError.message);
-        
-        // Método alternativo: obtener solo IDs y luego detalles individuales
-        try {
-          const menuIds = await this.makeRpcCall('model.ir.ui.menu.search_read', [
-            [['parent', '=', null]],
-            ['id']
-          ]);
+      console.log('📋 IDs de menús obtenidos:', menuIds);
+      
+      // 6. Ahora obtener los detalles de cada menú individualmente
+      console.log('📋 Obteniendo detalles de menús...');
+      const menuItems = [];
+      
+      for (const menuIdObj of menuIds) {
+         try {
+           const menuDetails = await this.makeRpcCall('model.ir.ui.menu.search_read', [
+             [['id', '=', menuIdObj.id]],
+             ['name', 'icon', 'sequence', 'childs', 'model', 'description']
+           ]);
           
-          console.log('📋 IDs de menús obtenidos:', menuIds);
-          
-          // Obtener detalles de cada menú individualmente usando search_read
-          for (const menuIdObj of menuIds) {
-            try {
-              const menuDetails = await this.makeRpcCall('model.ir.ui.menu.search_read', [
-                [['id', '=', menuIdObj.id]],
-                ['name', 'icon', 'sequence', 'childs', 'model', 'description']
-              ]);
-              
-              if (menuDetails && menuDetails.length > 0) {
-                const menu = menuDetails[0];
-                menuItems.push({
-                  id: menu.id,
-                  name: menu.name || `Menú ${menu.id}`,
-                  icon: menu.icon || '📋',
-                  model: menu.model || '',
-                  description: menu.description || menu.name || `Menú ${menu.id}`,
-                  sequence: menu.sequence || 0,
-                  childs: menu.childs || []
-                });
-              } else {
-                // Si no se encontraron detalles, agregar menú básico
-                menuItems.push({
-                  id: menuIdObj.id,
-                  name: `Menú ${menuIdObj.id}`,
-                  icon: '📋',
-                  model: '',
-                  description: `Menú ${menuIdObj.id}`,
-                  sequence: 0,
-                  childs: []
-                });
-              }
-            } catch (individualError) {
-              console.warn(`⚠️ Error obteniendo detalles del menú ${menuIdObj.id}:`, individualError.message);
-              // Agregar menú básico como fallback
-              menuItems.push({
-                id: menuIdObj.id,
-                name: `Menú ${menuIdObj.id}`,
-                icon: '📋',
-                model: '',
-                description: `Menú ${menuIdObj.id}`,
-                sequence: 0,
-                childs: []
-              });
-            }
+          if (menuDetails && menuDetails.length > 0) {
+            const menu = menuDetails[0];
+            menuItems.push({
+              id: menu.id,
+              name: menu.name || `Menú ${menu.id}`,
+              icon: menu.icon || '📋',
+              model: menu.model || '',
+              description: menu.description || menu.name || `Menú ${menu.id}`,
+              sequence: menu.sequence || 0,
+              childs: menu.childs || []
+            });
           }
-        } catch (fallbackError) {
-          console.error('💥 Error en método alternativo:', fallbackError.message);
-          // Crear menús básicos como último recurso
-          menuItems = [
-            { id: 1, name: 'Dashboard', icon: '📊', model: '', description: 'Dashboard principal', sequence: 0, childs: [] },
-            { id: 2, name: 'Ventas', icon: '💰', model: '', description: 'Módulo de ventas', sequence: 1, childs: [] },
-            { id: 3, name: 'Compras', icon: '🛒', model: '', description: 'Módulo de compras', sequence: 2, childs: [] }
-          ];
+        } catch (menuError) {
+          console.warn(`⚠️ Error obteniendo detalles del menú ${menuIdObj.id}:`, menuError.message);
+          // Agregar menú básico como fallback
+          menuItems.push({
+            id: menuIdObj.id,
+            name: `Menú ${menuIdObj.id}`,
+            icon: '📋',
+            model: '',
+            description: `Menú ${menuIdObj.id}`,
+            sequence: 0,
+            childs: []
+          });
         }
       }
       
