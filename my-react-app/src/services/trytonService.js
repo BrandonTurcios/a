@@ -573,7 +573,8 @@ class TrytonService {
         
         // Intentar cargar menús reales cuando no hay pyson_menu
         try {
-          // Intentar obtener menús con todos los campos de una vez
+          // PRIMER INTENTO: Usar search_read con sintaxis correcta
+          console.log('🔄 Intentando search_read con sintaxis correcta...');
           const menus = await this.makeRpcCall('model.ir.ui.menu.search_read', [
             [['parent', '=', null]],
             ['name', 'icon', 'sequence', 'childs', 'model', 'description']
@@ -598,58 +599,89 @@ class TrytonService {
         } catch (directMenuError) {
           console.warn('⚠️ Error cargando menús directamente:', directMenuError.message);
           
-          // Método alternativo: obtener solo IDs y luego usar read individual
+          // SEGUNDO INTENTO: Usar los IDs que ya tenemos del array que mostraste
+          console.log('🔄 Intentando con IDs conocidos...');
+          const knownMenuIds = [59, 51, 132, 49, 118, 350, 69, 354, 260, 1];
+          
           try {
-            const menuIds = await this.makeRpcCall('model.ir.ui.menu.search_read', [
-              [['parent', '=', null]],
-              ['id']
+            // Usar read con múltiples IDs de una vez
+            const menuDetails = await this.makeRpcCall('model.ir.ui.menu.read', [
+              knownMenuIds,
+              ['name', 'icon', 'sequence', 'childs', 'model', 'description']
             ]);
             
-            console.log('📋 IDs de menús obtenidos para método alternativo:', menuIds);
+            console.log('📋 Detalles de menús obtenidos con read múltiple:', menuDetails);
             
-            // Usar read individual para cada menú
-            for (const menuIdObj of menuIds) {
-              try {
-                const menuDetails = await this.makeRpcCall('model.ir.ui.menu.read', [
-                  [menuIdObj.id],
-                  ['name', 'icon', 'sequence', 'childs', 'model', 'description']
-                ]);
-                
-                if (menuDetails && menuDetails.length > 0) {
-                  const menu = menuDetails[0];
+            if (menuDetails && menuDetails.length > 0) {
+              menuItems = menuDetails.map(menu => ({
+                id: menu.id,
+                name: menu.name || `Menú ${menu.id}`,
+                icon: menu.icon || '📋',
+                model: menu.model || '',
+                description: menu.description || menu.name || `Menú ${menu.id}`,
+                sequence: menu.sequence || 0,
+                childs: menu.childs || []
+              }));
+              console.log('✅ Menús cargados con read múltiple:', menuItems.length);
+            } else {
+              throw new Error('No se obtuvieron detalles de menús');
+            }
+          } catch (readMultipleError) {
+            console.warn('⚠️ Error con read múltiple:', readMultipleError.message);
+            
+            // TERCER INTENTO: Obtener solo IDs y luego usar read individual
+            try {
+              const menuIds = await this.makeRpcCall('model.ir.ui.menu.search_read', [
+                [['parent', '=', null]],
+                ['id']
+              ]);
+              
+              console.log('📋 IDs de menús obtenidos para método alternativo:', menuIds);
+              
+              // Usar read individual para cada menú
+              for (const menuIdObj of menuIds) {
+                try {
+                  const menuDetails = await this.makeRpcCall('model.ir.ui.menu.read', [
+                    [menuIdObj.id],
+                    ['name', 'icon', 'sequence', 'childs', 'model', 'description']
+                  ]);
+                  
+                  if (menuDetails && menuDetails.length > 0) {
+                    const menu = menuDetails[0];
+                    menuItems.push({
+                      id: menu.id,
+                      name: menu.name || `Menú ${menu.id}`,
+                      icon: menu.icon || '📋',
+                      model: menu.model || '',
+                      description: menu.description || menu.name || `Menú ${menu.id}`,
+                      sequence: menu.sequence || 0,
+                      childs: menu.childs || []
+                    });
+                  }
+                } catch (individualError) {
+                  console.warn(`⚠️ Error obteniendo detalles del menú ${menuIdObj.id}:`, individualError.message);
+                  // Agregar menú básico como fallback
                   menuItems.push({
-                    id: menu.id,
-                    name: menu.name || `Menú ${menu.id}`,
-                    icon: menu.icon || '📋',
-                    model: menu.model || '',
-                    description: menu.description || menu.name || `Menú ${menu.id}`,
-                    sequence: menu.sequence || 0,
-                    childs: menu.childs || []
+                    id: menuIdObj.id,
+                    name: `Menú ${menuIdObj.id}`,
+                    icon: '📋',
+                    model: '',
+                    description: `Menú ${menuIdObj.id}`,
+                    sequence: 0,
+                    childs: []
                   });
                 }
-              } catch (individualError) {
-                console.warn(`⚠️ Error obteniendo detalles del menú ${menuIdObj.id}:`, individualError.message);
-                // Agregar menú básico como fallback
-                menuItems.push({
-                  id: menuIdObj.id,
-                  name: `Menú ${menuIdObj.id}`,
-                  icon: '📋',
-                  model: '',
-                  description: `Menú ${menuIdObj.id}`,
-                  sequence: 0,
-                  childs: []
-                });
               }
+              console.log('✅ Menús cargados con método alternativo:', menuItems.length);
+            } catch (fallbackError) {
+              console.error('💥 Error en método alternativo:', fallbackError.message);
+              // Fallback a menús básicos como último recurso
+              menuItems = [
+                { id: 1, name: 'Dashboard', icon: '📊', model: '', description: 'Dashboard principal', sequence: 0, childs: [] },
+                { id: 2, name: 'Ventas', icon: '💰', model: '', description: 'Módulo de ventas', sequence: 1, childs: [] },
+                { id: 3, name: 'Compras', icon: '🛒', model: '', description: 'Módulo de compras', sequence: 2, childs: [] }
+              ];
             }
-            console.log('✅ Menús cargados con método alternativo:', menuItems.length);
-          } catch (fallbackError) {
-            console.error('💥 Error en método alternativo:', fallbackError.message);
-            // Fallback a menús básicos como último recurso
-            menuItems = [
-              { id: 1, name: 'Dashboard', icon: '📊', model: '', description: 'Dashboard principal', sequence: 0, childs: [] },
-              { id: 2, name: 'Ventas', icon: '💰', model: '', description: 'Módulo de ventas', sequence: 1, childs: [] },
-              { id: 3, name: 'Compras', icon: '🛒', model: '', description: 'Módulo de compras', sequence: 2, childs: [] }
-            ];
           }
         }
       }
