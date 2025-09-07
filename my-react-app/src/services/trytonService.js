@@ -27,14 +27,8 @@ class TrytonService {
 
   // Método para probar diferentes endpoints de Tryton
   async testEndpoints() {
-    const endpoints = [
-      '/',
-      '/jsonrpc',
-      '/rpc',
-      '/api',
-      '/tryton',
-      '/common/db/list'
-    ];
+    // Solo probar el endpoint raíz para common.db.list
+    const endpoints = ['/'];
     
     console.log('🧪 Probando endpoints de Tryton...');
     
@@ -76,14 +70,30 @@ class TrytonService {
 
   // Construir URL para Tryton
   buildURL(method) {
-    // Para Tryton, todas las llamadas van al mismo endpoint
-    // La base de datos se especifica en los parámetros, no en la URL
+    // common.db.list NO usa base de datos - es para listar las bases disponibles
+    if (method === 'common.db.list') {
+      return `${this.baseURL}/`;
+    }
+    
+    // Si hay base de datos, usar la estructura /database/
+    if (this.database && this.database.trim() !== '') {
+      return `${this.baseURL}/${this.database}/`;
+    }
+    
+    // Fallback a URL base
     return `${this.baseURL}/`;
   }
 
   // Método RPC principal simplificado
   async makeRpcCall(method, params = []) {
     const url = this.buildURL(method);
+    
+    console.log('🔍 === DETALLES DE CONSTRUCCIÓN DE URL ===');
+    console.log('🔍 Método:', method);
+    console.log('🔍 Base URL:', this.baseURL);
+    console.log('🔍 Base de datos:', this.database);
+    console.log('🔍 URL construida:', url);
+    console.log('🔍 ======================================');
     
     // Construir parámetros exactamente como el SAO
     const rpcParams = [...params];
@@ -120,6 +130,10 @@ class TrytonService {
     });
 
     try {
+      console.log('📡 Enviando petición POST a:', url);
+      console.log('📡 Headers:', headers);
+      console.log('📡 Payload:', JSON.stringify(payload, null, 2));
+      
       const response = await fetch(url, {
         method: 'POST',
         headers: headers,
@@ -128,10 +142,11 @@ class TrytonService {
         credentials: 'omit'
       });
 
-      console.log('📡 Respuesta RPC:', {
+      console.log('📡 Respuesta RPC recibida:', {
         status: response.status,
         statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries())
+        headers: Object.fromEntries(response.headers.entries()),
+        url: response.url
       });
 
       if (response.status === 401) {
@@ -147,33 +162,31 @@ class TrytonService {
 
       if (!response.ok) {
         const errorText = await response.text();
+        console.error('❌ Error HTTP:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorText: errorText,
+          url: url
+        });
         throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}. Details: ${errorText}`);
       }
 
       const data = await response.json();
       return this.processResponse(data);
     } catch (error) {
-      // Mejorar el manejo de errores de red
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        console.error('🌐 Error de red - Verifica la conectividad:', {
-          url,
-          method,
-          error: error.message,
-          suggestions: [
-            'Verifica que el servidor Tryton esté ejecutándose en ' + this.baseURL,
-            'Comprueba que no haya problemas de CORS',
-            'Revisa la consola del navegador para más detalles'
-          ]
-        });
-        throw new Error(`Error de conexión: No se puede conectar con el servidor Tryton en ${this.baseURL}. Verifica que el servidor esté ejecutándose.`);
-      }
-      
       console.error('💥 Error en llamada RPC:', {
         url,
         method,
         error: error.message,
+        errorType: error.constructor.name,
         fullError: error
       });
+      
+      // Manejar errores de red específicamente
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error(`Error de red: No se pudo conectar a ${url}. Verifica que el servidor Tryton esté ejecutándose y que la URL sea correcta.`);
+      }
+      
       throw error;
     }
   }
@@ -209,41 +222,10 @@ class TrytonService {
     return data;
   }
 
-  // Probar conectividad básica
-  async testBasicConnectivity() {
-    try {
-      console.log('🔍 Probando conectividad básica...');
-      
-      const response = await fetch(`${this.baseURL}/`, {
-        method: 'GET',
-        mode: 'cors',
-        credentials: 'omit'
-      });
-      
-      console.log('📡 Respuesta de conectividad:', {
-        status: response.status,
-        statusText: response.statusText,
-        url: `${this.baseURL}/`
-      });
-      
-      return response.ok;
-    } catch (error) {
-      console.error('❌ Error de conectividad:', error);
-      return false;
-    }
-  }
-
   // Login exactamente como el SAO
   async login(database, username, password) {
     try {
       console.log('🔐 Iniciando login SAO...');
-      
-      // Primero probar conectividad básica
-      console.log('🌐 Probando conectividad...');
-      const isConnected = await this.testBasicConnectivity();
-      if (!isConnected) {
-        throw new Error(`No se puede conectar con el servidor Tryton en ${this.baseURL}. Verifica que el servidor esté ejecutándose.`);
-      }
       
       // Guardar base de datos
       this.database = database;
@@ -317,13 +299,17 @@ class TrytonService {
 
     try {
       console.log('🚪 Cerrando sesión SAO...');
+      console.log('🔍 Base de datos actual:', this.database);
+      console.log('🔍 URL que se usará:', this.buildURL('common.db.logout'));
       
       await this.makeRpcCall('common.db.logout', []);
       
+      console.log('✅ Logout exitoso en servidor');
       this.clearSession();
       return { success: true };
     } catch (error) {
       console.error('💥 Error en logout:', error);
+      console.log('⚠️ Forzando logout local...');
       // Forzar logout local incluso si falla
       this.clearSession();
       return { success: true };
