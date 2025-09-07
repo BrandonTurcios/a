@@ -476,23 +476,58 @@ class TrytonService {
       console.log('🎨 Cargando iconos...');
       const icons = await this.makeRpcCall('model.ir.ui.icon.list_icons', [{}]);
       
-      // 5. Obtener menús principales
-      console.log('📋 Obteniendo menús...');
-      const menus = await this.makeRpcCall('model.ir.ui.menu.search_read', [
+      // 5. Obtener menús principales - PRIMERO solo IDs
+      console.log('📋 Obteniendo IDs de menús...');
+      const menuIds = await this.makeRpcCall('model.ir.ui.menu.search_read', [
         [['parent', '=', null]],
-        ['name', 'icon', 'sequence', 'childs']
+        ['id']
       ]);
       
-      // Convertir menús a formato esperado por el Dashboard
-      const menuItems = menus.map(menu => ({
-        id: menu.id,
-        name: menu.name,
-        icon: menu.icon || '📋',
-        model: menu.model || '',
-        description: menu.description || menu.name
-      }));
+      console.log('📋 IDs de menús obtenidos:', menuIds);
+      
+      // 6. Ahora obtener los detalles de cada menú individualmente
+      console.log('📋 Obteniendo detalles de menús...');
+      const menuItems = [];
+      
+      for (const menuIdObj of menuIds) {
+        try {
+          const menuDetails = await this.makeRpcCall('model.ir.ui.menu.read', [
+            [menuIdObj.id],
+            ['name', 'icon', 'sequence', 'childs', 'model', 'description']
+          ]);
+          
+          if (menuDetails && menuDetails.length > 0) {
+            const menu = menuDetails[0];
+            menuItems.push({
+              id: menu.id,
+              name: menu.name || `Menú ${menu.id}`,
+              icon: menu.icon || '📋',
+              model: menu.model || '',
+              description: menu.description || menu.name || `Menú ${menu.id}`,
+              sequence: menu.sequence || 0,
+              childs: menu.childs || []
+            });
+          }
+        } catch (menuError) {
+          console.warn(`⚠️ Error obteniendo detalles del menú ${menuIdObj.id}:`, menuError.message);
+          // Agregar menú básico como fallback
+          menuItems.push({
+            id: menuIdObj.id,
+            name: `Menú ${menuIdObj.id}`,
+            icon: '📋',
+            model: '',
+            description: `Menú ${menuIdObj.id}`,
+            sequence: 0,
+            childs: []
+          });
+        }
+      }
+      
+      // Ordenar por sequence
+      menuItems.sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
       
       console.log('✅ Menú del sidebar cargado correctamente');
+      console.log('📋 Menús procesados:', menuItems);
       
       return {
         preferences,
