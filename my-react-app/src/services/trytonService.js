@@ -468,6 +468,10 @@ class TrytonService {
       console.log('⚙️ Obteniendo preferencias...');
       const preferences = await this.getUserPreferences();
       
+      // Debug: Mostrar todas las claves de preferences
+      console.log('🔍 Claves disponibles en preferences:', Object.keys(preferences || {}));
+      console.log('🔍 preferences completo:', preferences);
+      
       // 3. Cargar acceso a modelos (como hace el SAO)
       console.log('🔐 Cargando acceso a modelos...');
       const modelAccess = await this.getModelAccess();
@@ -565,12 +569,89 @@ class TrytonService {
         }
       } else {
         console.warn('⚠️ No se encontró pyson_menu en las preferencias');
-        // Fallback a menús básicos
-        menuItems = [
-          { id: 1, name: 'Dashboard', icon: '📊', model: '', description: 'Dashboard principal', sequence: 0, childs: [] },
-          { id: 2, name: 'Ventas', icon: '💰', model: '', description: 'Módulo de ventas', sequence: 1, childs: [] },
-          { id: 3, name: 'Compras', icon: '🛒', model: '', description: 'Módulo de compras', sequence: 2, childs: [] }
-        ];
+        console.log('🔄 Intentando cargar menús directamente con ir.ui.menu...');
+        
+        // Intentar cargar menús reales cuando no hay pyson_menu
+        try {
+          // Intentar obtener menús con todos los campos de una vez
+          const menus = await this.makeRpcCall('model.ir.ui.menu.search_read', [
+            [['parent', '=', null]],
+            ['name', 'icon', 'sequence', 'childs', 'model', 'description']
+          ]);
+          
+          console.log('📋 Menús obtenidos directamente:', menus);
+          
+          if (menus && menus.length > 0) {
+            menuItems = menus.map(menu => ({
+              id: menu.id,
+              name: menu.name || `Menú ${menu.id}`,
+              icon: menu.icon || '📋',
+              model: menu.model || '',
+              description: menu.description || menu.name || `Menú ${menu.id}`,
+              sequence: menu.sequence || 0,
+              childs: menu.childs || []
+            }));
+            console.log('✅ Menús reales cargados exitosamente:', menuItems.length);
+          } else {
+            throw new Error('No se encontraron menús');
+          }
+        } catch (directMenuError) {
+          console.warn('⚠️ Error cargando menús directamente:', directMenuError.message);
+          
+          // Método alternativo: obtener solo IDs y luego usar read individual
+          try {
+            const menuIds = await this.makeRpcCall('model.ir.ui.menu.search_read', [
+              [['parent', '=', null]],
+              ['id']
+            ]);
+            
+            console.log('📋 IDs de menús obtenidos para método alternativo:', menuIds);
+            
+            // Usar read individual para cada menú
+            for (const menuIdObj of menuIds) {
+              try {
+                const menuDetails = await this.makeRpcCall('model.ir.ui.menu.read', [
+                  [menuIdObj.id],
+                  ['name', 'icon', 'sequence', 'childs', 'model', 'description']
+                ]);
+                
+                if (menuDetails && menuDetails.length > 0) {
+                  const menu = menuDetails[0];
+                  menuItems.push({
+                    id: menu.id,
+                    name: menu.name || `Menú ${menu.id}`,
+                    icon: menu.icon || '📋',
+                    model: menu.model || '',
+                    description: menu.description || menu.name || `Menú ${menu.id}`,
+                    sequence: menu.sequence || 0,
+                    childs: menu.childs || []
+                  });
+                }
+              } catch (individualError) {
+                console.warn(`⚠️ Error obteniendo detalles del menú ${menuIdObj.id}:`, individualError.message);
+                // Agregar menú básico como fallback
+                menuItems.push({
+                  id: menuIdObj.id,
+                  name: `Menú ${menuIdObj.id}`,
+                  icon: '📋',
+                  model: '',
+                  description: `Menú ${menuIdObj.id}`,
+                  sequence: 0,
+                  childs: []
+                });
+              }
+            }
+            console.log('✅ Menús cargados con método alternativo:', menuItems.length);
+          } catch (fallbackError) {
+            console.error('💥 Error en método alternativo:', fallbackError.message);
+            // Fallback a menús básicos como último recurso
+            menuItems = [
+              { id: 1, name: 'Dashboard', icon: '📊', model: '', description: 'Dashboard principal', sequence: 0, childs: [] },
+              { id: 2, name: 'Ventas', icon: '💰', model: '', description: 'Módulo de ventas', sequence: 1, childs: [] },
+              { id: 3, name: 'Compras', icon: '🛒', model: '', description: 'Módulo de compras', sequence: 2, childs: [] }
+            ];
+          }
+        }
       }
       
       // Ordenar por sequence
