@@ -962,7 +962,7 @@ class TrytonService {
     ],
     offset = 0,
     limit = 50,
-    order = 'name ASC',
+    order = [['name', 'ASC']],
     computeAge = true    // si true, agrega .age calculada si existe birth_date/dob
   } = {}) {
     if (!this.sessionData) {
@@ -994,7 +994,21 @@ class TrytonService {
 
       // 2) Hacer la búsqueda segura
       console.log('🔍 Ejecutando search_read...');
-      const params = [domain, fields, offset, limit, order, {}];
+      
+      // Asegurar que order sea un array
+      let orderArray = order;
+      if (typeof order === 'string') {
+        // Convertir "name ASC" a [['name', 'ASC']]
+        const parts = order.split(' ');
+        orderArray = [[parts[0], parts[1] || 'ASC']];
+      } else if (!Array.isArray(order)) {
+        // Si no es string ni array, usar orden por defecto
+        orderArray = [['name', 'ASC']];
+      }
+      
+      console.log('🔍 Order procesado:', orderArray);
+      
+      const params = [domain, fields, offset, limit, orderArray, {}];
       const rows = await this.makeRpcCall(`model.${model}.search_read`, params);
 
       console.log(`✅ ${rows.length} pacientes obtenidos`);
