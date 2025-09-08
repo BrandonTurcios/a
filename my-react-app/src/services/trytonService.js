@@ -480,6 +480,17 @@ class TrytonService {
       console.log('🎨 Cargando iconos...');
       const icons = await this.makeRpcCall('model.ir.ui.icon.list_icons', [{}]);
       
+      // Crear mapa de iconos para mapear IDs con nombres
+      const iconMap = {};
+      if (Array.isArray(icons)) {
+        icons.forEach(icon => {
+          if (Array.isArray(icon) && icon.length >= 2) {
+            iconMap[icon[0]] = icon[1]; // icon[0] = ID, icon[1] = nombre
+          }
+        });
+      }
+      console.log('🎨 Mapa de iconos creado:', iconMap);
+      
       // 5. Obtener menús usando el método del SAO
       console.log('📋 Obteniendo menús usando método SAO...');
       let menuItems = [];
@@ -501,15 +512,19 @@ class TrytonService {
           console.log('📋 Menús obtenidos con search_read:', menus);
           
           if (menus && menus.length > 0) {
-            menuItems = menus.map(menu => ({
-        id: menu.id,
-              name: menu.name || `Menú ${menu.id}`,
-        icon: menu.icon || '📋',
-        model: menu.model || '',
-              description: menu.description || menu.name || `Menú ${menu.id}`,
-              sequence: menu.sequence || 0,
-              childs: menu.childs || []
-            }));
+            menuItems = menus.map(menu => {
+              const iconName = iconMap[menu.icon] || 'tryton-list';
+              return {
+                id: menu.id,
+                name: menu.name || iconName || `Menú ${menu.id}`,
+                icon: menu.icon || '📋',
+                iconName: iconName,
+                model: menu.model || '',
+                description: menu.description || menu.name || iconName || `Menú ${menu.id}`,
+                sequence: menu.sequence || 0,
+                childs: menu.childs || []
+              };
+            });
           }
         } catch (menuError) {
           console.warn('⚠️ Error obteniendo menús con search_read, intentando método alternativo:', menuError.message);
@@ -533,12 +548,14 @@ class TrytonService {
                 
                 if (menuDetails && menuDetails.length > 0) {
                   const menu = menuDetails[0];
+                  const iconName = iconMap[menu.icon] || 'tryton-list';
                   menuItems.push({
                     id: menu.id,
-                    name: menu.name || `Menú ${menu.id}`,
+                    name: menu.name || iconName || `Menú ${menu.id}`,
                     icon: menu.icon || '📋',
+                    iconName: iconName,
                     model: menu.model || '',
-                    description: menu.description || menu.name || `Menú ${menu.id}`,
+                    description: menu.description || menu.name || iconName || `Menú ${menu.id}`,
                     sequence: menu.sequence || 0,
                     childs: menu.childs || []
                   });
@@ -546,12 +563,14 @@ class TrytonService {
               } catch (individualError) {
                 console.warn(`⚠️ Error obteniendo detalles del menú ${menuIdObj.id}:`, individualError.message);
                 // Agregar menú básico como fallback
+                const fallbackIconName = iconMap[menuIdObj.id] || 'tryton-list';
                 menuItems.push({
                   id: menuIdObj.id,
-                  name: `Menú ${menuIdObj.id}`,
-                  icon: '📋',
+                  name: fallbackIconName || `Menú ${menuIdObj.id}`,
+                  icon: menuIdObj.id || '📋',
+                  iconName: fallbackIconName,
                   model: '',
-                  description: `Menú ${menuIdObj.id}`,
+                  description: fallbackIconName || `Menú ${menuIdObj.id}`,
                   sequence: 0,
                   childs: []
                 });
@@ -583,15 +602,19 @@ class TrytonService {
           console.log('📋 Menús obtenidos directamente:', menus);
           
           if (menus && menus.length > 0) {
-            menuItems = menus.map(menu => ({
-              id: menu.id,
-              name: menu.name || `Menú ${menu.id}`,
-              icon: menu.icon || '📋',
-              model: menu.model || '',
-              description: menu.description || menu.name || `Menú ${menu.id}`,
-              sequence: menu.sequence || 0,
-              childs: menu.childs || []
-            }));
+            menuItems = menus.map(menu => {
+              const iconName = iconMap[menu.icon] || 'tryton-list';
+              return {
+                id: menu.id,
+                name: menu.name || iconName || `Menú ${menu.id}`,
+                icon: menu.icon || '📋',
+                iconName: iconName,
+                model: menu.model || '',
+                description: menu.description || menu.name || iconName || `Menú ${menu.id}`,
+                sequence: menu.sequence || 0,
+                childs: menu.childs || []
+              };
+            });
             console.log('✅ Menús reales cargados exitosamente:', menuItems.length);
           } else {
             throw new Error('No se encontraron menús');
@@ -613,15 +636,19 @@ class TrytonService {
             console.log('📋 Detalles de menús obtenidos con read múltiple:', menuDetails);
             
             if (menuDetails && menuDetails.length > 0) {
-              menuItems = menuDetails.map(menu => ({
-                id: menu.id,
-                name: menu.name || `Menú ${menu.id}`,
-                icon: menu.icon || '📋',
-                model: menu.model || '',
-                description: menu.description || menu.name || `Menú ${menu.id}`,
-                sequence: menu.sequence || 0,
-                childs: menu.childs || []
-              }));
+              menuItems = menuDetails.map(menu => {
+                const iconName = iconMap[menu.icon] || 'tryton-list';
+                return {
+                  id: menu.id,
+                  name: menu.name || iconName || `Menú ${menu.id}`,
+                  icon: menu.icon || '📋',
+                  iconName: iconName,
+                  model: menu.model || '',
+                  description: menu.description || menu.name || iconName || `Menú ${menu.id}`,
+                  sequence: menu.sequence || 0,
+                  childs: menu.childs || []
+                };
+              });
               console.log('✅ Menús cargados con read múltiple:', menuItems.length);
             } else {
               throw new Error('No se obtuvieron detalles de menús');
@@ -648,12 +675,14 @@ class TrytonService {
                   
                   if (menuDetails && menuDetails.length > 0) {
                     const menu = menuDetails[0];
+                    const iconName = iconMap[menu.icon] || 'tryton-list';
                     menuItems.push({
                       id: menu.id,
-                      name: menu.name || `Menú ${menu.id}`,
+                      name: menu.name || iconName || `Menú ${menu.id}`,
                       icon: menu.icon || '📋',
+                      iconName: iconName,
                       model: menu.model || '',
-                      description: menu.description || menu.name || `Menú ${menu.id}`,
+                      description: menu.description || menu.name || iconName || `Menú ${menu.id}`,
                       sequence: menu.sequence || 0,
                       childs: menu.childs || []
                     });
@@ -661,12 +690,14 @@ class TrytonService {
                 } catch (individualError) {
                   console.warn(`⚠️ Error obteniendo detalles del menú ${menuIdObj.id}:`, individualError.message);
                   // Agregar menú básico como fallback
+                  const fallbackIconName = iconMap[menuIdObj.id] || 'tryton-list';
                   menuItems.push({
                     id: menuIdObj.id,
-                    name: `Menú ${menuIdObj.id}`,
-                    icon: '📋',
+                    name: fallbackIconName || `Menú ${menuIdObj.id}`,
+                    icon: menuIdObj.id || '📋',
+                    iconName: fallbackIconName,
                     model: '',
-                    description: `Menú ${menuIdObj.id}`,
+                    description: fallbackIconName || `Menú ${menuIdObj.id}`,
                     sequence: 0,
                     childs: []
                   });
