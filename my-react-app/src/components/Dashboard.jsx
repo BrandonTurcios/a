@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import trytonService from '../services/trytonService';
-import PatientsModal from './PatientsModal';
+import PatientsTable from './PatientsTable';
 
 const Dashboard = ({ sessionData, onLogout }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -8,7 +8,6 @@ const Dashboard = ({ sessionData, onLogout }) => {
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [showPatientsModal, setShowPatientsModal] = useState(false);
 
   useEffect(() => {
     loadSidebarMenu();
@@ -210,10 +209,6 @@ const Dashboard = ({ sessionData, onLogout }) => {
     alert('Debug de sesión ejecutado. Revisa la consola para más detalles.');
   };
 
-  // Función para mostrar modal de pacientes
-  const showPatients = () => {
-    setShowPatientsModal(true);
-  };
 
   // Función para probar autenticación
   const testAuthentication = async () => {
@@ -343,10 +338,16 @@ const Dashboard = ({ sessionData, onLogout }) => {
         );
       default:
         const selectedItem = menuItems.find(item => item.id === activeTab);
+        
+        // Si el menú seleccionado es "Health" (ID 69), mostrar la tabla de pacientes
+        if (selectedItem && selectedItem.name === 'Health') {
+          return <PatientsTable sessionData={sessionData} />;
+        }
+        
         return (
           <div className="p-6">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">
-              {selectedItem?.label || 'Módulo'}
+              {selectedItem?.name || selectedItem?.label || 'Módulo'}
             </h2>
             <div className="bg-white rounded-lg shadow p-6">
               {selectedItem?.type === 'module' ? (
@@ -360,12 +361,12 @@ const Dashboard = ({ sessionData, onLogout }) => {
                     </p>
                   )}
                   <p className="text-gray-600">
-                    Módulo {selectedItem.label} en desarrollo...
+                    Módulo {selectedItem.name || selectedItem.label} en desarrollo...
                   </p>
                 </div>
               ) : (
                 <p className="text-gray-600">
-                  Módulo {selectedItem?.label} en desarrollo...
+                  Módulo {selectedItem?.name || selectedItem?.label} en desarrollo...
                 </p>
               )}
             </div>
@@ -468,15 +469,6 @@ const Dashboard = ({ sessionData, onLogout }) => {
                 </svg>
               </button>
               <button
-                onClick={showPatients}
-                className="p-2 rounded-md hover:bg-gray-700 transition-colors bg-pink-600"
-                title="Ver pacientes"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </button>
-              <button
                 onClick={handleLogout}
                 className="p-2 rounded-md hover:bg-gray-700 transition-colors"
                 title="Cerrar sesión"
@@ -521,12 +513,12 @@ const Dashboard = ({ sessionData, onLogout }) => {
                       ? 'bg-blue-100 text-blue-700'
                       : 'text-gray-700 hover:bg-gray-100'
                   }`}
-                  title={item.description || item.label}
+                  title={item.description || item.name || item.label}
                 >
                   <span className="text-xl mr-3">{item.icon}</span>
                   {sidebarOpen && (
                     <div className="flex flex-col items-start">
-                      <span className="font-medium">{item.label}</span>
+                      <span className="font-medium">{item.name || item.label}</span>
                       {item.type === 'module' && (
                         <span className="text-xs text-gray-500">{item.model}</span>
                       )}
@@ -552,12 +544,6 @@ const Dashboard = ({ sessionData, onLogout }) => {
         </div>
       </div>
 
-      {/* Modal de Pacientes */}
-      <PatientsModal
-        isOpen={showPatientsModal}
-        onClose={() => setShowPatientsModal(false)}
-        sessionData={sessionData}
-      />
     </div>
   );
 };
