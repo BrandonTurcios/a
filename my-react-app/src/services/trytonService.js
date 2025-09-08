@@ -490,6 +490,8 @@ class TrytonService {
         });
       }
       console.log('🎨 Mapa de iconos creado:', iconMap);
+      console.log('🎨 Total de iconos mapeados:', Object.keys(iconMap).length);
+      console.log('🎨 Primeros 10 iconos:', Object.entries(iconMap).slice(0, 10));
       
       // 5. Obtener menús usando el método del SAO
       console.log('📋 Obteniendo menús usando método SAO...');
@@ -513,10 +515,14 @@ class TrytonService {
           
           if (menus && menus.length > 0) {
             menuItems = menus.map(menu => {
+              console.log(`🔍 Procesando menú ID: ${menu.id}, icon: ${menu.icon}, name: ${menu.name}`);
               const iconName = iconMap[menu.icon] || 'tryton-list';
+              console.log(`🔍 Icono encontrado: ${iconName} para ID ${menu.icon}`);
+              const finalName = menu.name || iconName || `Menú ${menu.id}`;
+              console.log(`🔍 Nombre final: ${finalName}`);
               return {
                 id: menu.id,
-                name: menu.name || iconName || `Menú ${menu.id}`,
+                name: finalName,
                 icon: menu.icon || '📋',
                 iconName: iconName,
                 model: menu.model || '',
@@ -603,10 +609,14 @@ class TrytonService {
           
           if (menus && menus.length > 0) {
             menuItems = menus.map(menu => {
+              console.log(`🔍 [DIRECTO] Procesando menú ID: ${menu.id}, icon: ${menu.icon}, name: ${menu.name}`);
               const iconName = iconMap[menu.icon] || 'tryton-list';
+              console.log(`🔍 [DIRECTO] Icono encontrado: ${iconName} para ID ${menu.icon}`);
+              const finalName = menu.name || iconName || `Menú ${menu.id}`;
+              console.log(`🔍 [DIRECTO] Nombre final: ${finalName}`);
               return {
                 id: menu.id,
-                name: menu.name || iconName || `Menú ${menu.id}`,
+                name: finalName,
                 icon: menu.icon || '📋',
                 iconName: iconName,
                 model: menu.model || '',
