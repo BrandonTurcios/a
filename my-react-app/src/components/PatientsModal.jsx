@@ -81,10 +81,8 @@ const PatientsModal = ({ isOpen, onClose, sessionData }) => {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Pacientes de GNU Health</DialogTitle>
-          <DialogDescription>
-            Lista de pacientes obtenidos del sistema GNU Health
-          </DialogDescription>
+          <DialogTitle>Pacientes</DialogTitle>
+         
         </DialogHeader>
 
         {loading && (
