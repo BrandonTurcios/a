@@ -493,8 +493,8 @@ class TrytonService {
         
         try {
           // Intentar obtener menús con todos los campos de una vez
-          const menus = await this.makeRpcCall('model.ir.ui.menu.search_read', [
-            [['parent', '=', null]],
+      const menus = await this.makeRpcCall('model.ir.ui.menu.search_read', [
+        [['parent', '=', null]],
             ['name', 'icon', 'sequence', 'childs', 'model', 'description']
           ]);
           
@@ -502,10 +502,10 @@ class TrytonService {
           
           if (menus && menus.length > 0) {
             menuItems = menus.map(menu => ({
-              id: menu.id,
+        id: menu.id,
               name: menu.name || `Menú ${menu.id}`,
-              icon: menu.icon || '📋',
-              model: menu.model || '',
+        icon: menu.icon || '📋',
+        model: menu.model || '',
               description: menu.description || menu.name || `Menú ${menu.id}`,
               sequence: menu.sequence || 0,
               childs: menu.childs || []
@@ -981,8 +981,8 @@ class TrytonService {
       '_delete'
     ],
     offset = 0,
-    limit = 50,
-    order = null,
+    limit = 1000,
+    order = [['party', 'ASC'], ['id', null]],
     computeAge = true    // si true, agrega .age calculada si existe birth_date/dob
   } = {}) {
     if (!this.sessionData) {
@@ -1012,23 +1012,25 @@ class TrytonService {
         fields = ['id', 'name']; // Fallback a campos básicos
       }
 
-      // 2) Hacer la búsqueda segura (sintaxis exacta del SAO)
-      console.log('🔍 Ejecutando search_read con sintaxis SAO...');
+      // 2) Hacer la búsqueda en dos pasos como el SAO
+      console.log('🔍 Ejecutando búsqueda en dos pasos como el SAO...');
       
-      // El SAO usa: [domain, offset, limit, order, fields, context]
-      // Según common.js línea 801: [domain, 0, null, null, fields, context]
-      const params = [domain, offset, limit, order, fields, {}];
+      // PASO 1: Obtener IDs de pacientes con search
+      console.log('📋 Paso 1: Obteniendo IDs de pacientes...');
+      const searchParams = [domain, offset, limit, order, {}];
+      const patientIds = await this.makeRpcCall(`model.${model}.search`, searchParams);
       
-      console.log('🔍 Parámetros SAO:', {
-        domain,
-        offset,
-        limit,
-        order,
-        fields,
-        context: {}
-      });
+      console.log(`📋 ${patientIds.length} IDs de pacientes obtenidos:`, patientIds);
       
-      const rows = await this.makeRpcCall(`model.${model}.search_read`, params);
+      if (patientIds.length === 0) {
+        console.log('📋 No se encontraron pacientes');
+        return [];
+      }
+      
+      // PASO 2: Obtener datos completos con read
+      console.log('📋 Paso 2: Obteniendo datos completos de pacientes...');
+      const readParams = [patientIds, fields];
+      const rows = await this.makeRpcCall(`model.${model}.read`, readParams);
 
       console.log(`✅ ${rows.length} pacientes obtenidos`);
 
