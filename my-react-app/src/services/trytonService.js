@@ -468,9 +468,6 @@ class TrytonService {
       console.log('⚙️ Obteniendo preferencias...');
       const preferences = await this.getUserPreferences();
       
-      // Debug: Mostrar todas las claves de preferences
-      console.log('🔍 Claves disponibles en preferences:', Object.keys(preferences || {}));
-      console.log('🔍 preferences completo:', preferences);
       
       // 3. Cargar acceso a modelos (como hace el SAO)
       console.log('🔐 Cargando acceso a modelos...');
@@ -489,9 +486,7 @@ class TrytonService {
           }
         });
       }
-      console.log('🎨 Mapa de iconos creado:', iconMap);
-      console.log('🎨 Total de iconos mapeados:', Object.keys(iconMap).length);
-      console.log('🎨 Primeros 10 iconos:', Object.entries(iconMap).slice(0, 10));
+      console.log('🎨 Mapa de iconos creado:', Object.keys(iconMap).length, 'iconos');
       
       // 5. Obtener menús usando el método del SAO
       console.log('📋 Obteniendo menús usando método SAO...');
@@ -512,7 +507,6 @@ class TrytonService {
             ['id']
           ]);
           
-          console.log('📋 IDs de menús obtenidos:', menuIds);
           
           if (menuIds && menuIds.length > 0) {
             // SEGUNDO PASO: Obtener detalles completos con read como el SAO
@@ -536,13 +530,10 @@ class TrytonService {
               {} // Contexto
             ]);
             
-            console.log('📋 Detalles de menús obtenidos:', menuDetails);
             
             if (menuDetails && menuDetails.length > 0) {
               menuItems = menuDetails.map(menu => {
-                console.log(`🔍 [PYSON] Procesando menú ID: ${menu.id}, icon: ${menu.icon}, name: ${menu.name}`);
                 const finalName = menu.name || menu.rec_name || `Menú ${menu.id}`;
-                console.log(`🔍 [PYSON] Nombre final: ${finalName}`);
                 return {
                   id: menu.id,
                   name: finalName,
@@ -566,7 +557,6 @@ class TrytonService {
               ['id']
             ]);
             
-            console.log('📋 IDs de menús obtenidos:', menuIds);
             
             // Usar read individual para cada menú
             for (const menuIdObj of menuIds) {
@@ -630,7 +620,6 @@ class TrytonService {
             ['id']
           ]);
           
-          console.log('📋 IDs de menús obtenidos:', menuIds);
           
           if (menuIds && menuIds.length > 0) {
             // SEGUNDO INTENTO: Usar read con todos los campos como el SAO
@@ -654,13 +643,10 @@ class TrytonService {
               {} // Contexto
             ]);
             
-            console.log('📋 Detalles de menús obtenidos:', menuDetails);
             
             if (menuDetails && menuDetails.length > 0) {
               menuItems = menuDetails.map(menu => {
-                console.log(`🔍 [SAO] Procesando menú ID: ${menu.id}, icon: ${menu.icon}, name: ${menu.name}`);
                 const finalName = menu.name || menu.rec_name || `Menú ${menu.id}`;
-                console.log(`🔍 [SAO] Nombre final: ${finalName}`);
                 return {
                   id: menu.id,
                   name: finalName,
@@ -707,13 +693,10 @@ class TrytonService {
               {} // Contexto
             ]);
             
-            console.log('📋 Detalles de menús obtenidos con read múltiple:', menuDetails);
             
             if (menuDetails && menuDetails.length > 0) {
               menuItems = menuDetails.map(menu => {
-                console.log(`🔍 [CONOCIDOS] Procesando menú ID: ${menu.id}, icon: ${menu.icon}, name: ${menu.name}`);
                 const finalName = menu.name || menu.rec_name || `Menú ${menu.id}`;
-                console.log(`🔍 [CONOCIDOS] Nombre final: ${finalName}`);
                 return {
                   id: menu.id,
                   name: finalName,
@@ -739,7 +722,6 @@ class TrytonService {
                 ['id']
               ]);
               
-              console.log('📋 IDs de menús obtenidos para método alternativo:', menuIds);
               
               // Usar read individual para cada menú
               for (const menuIdObj of menuIds) {
@@ -1099,14 +1081,9 @@ class TrytonService {
 
     try {
       console.log(`🏥 Obteniendo pacientes de ${model}...`);
-      console.log(`🔍 Dominio:`, domain);
-      console.log(`🔍 Campos deseados:`, wantedFields);
-      console.log(`🔍 Offset: ${offset}, Limit: ${limit}, Order: ${order}`);
 
       // 1) Usar campos directamente (como el SAO)
-      console.log('📋 Usando campos directamente como el SAO...');
       let fields = wantedFields;
-      console.log('📋 Campos solicitados:', fields);
 
       // 2) Asegurar que el contexto esté cargado
       if (!this.context || Object.keys(this.context).length === 0) {
@@ -1115,14 +1092,11 @@ class TrytonService {
       }
       
       // 3) Hacer la búsqueda en dos pasos como el SAO
-      console.log('🔍 Ejecutando búsqueda en dos pasos como el SAO...');
-      
       // PASO 1: Obtener IDs de pacientes con search (sintaxis exacta del SAO)
-      console.log('📋 Paso 1: Obteniendo IDs de pacientes...');
       const searchParams = [domain, offset, limit, order, {}];
       const patientIds = await this.makeRpcCall(`model.${model}.search`, searchParams);
       
-      console.log(`📋 ${patientIds.length} IDs de pacientes obtenidos:`, patientIds);
+      console.log(`📋 ${patientIds.length} IDs de pacientes obtenidos`);
       
       if (patientIds.length === 0) {
         console.log('📋 No se encontraron pacientes');
@@ -1130,18 +1104,10 @@ class TrytonService {
       }
       
       // PASO 2: Obtener datos completos con read (sintaxis exacta del SAO)
-      console.log('📋 Paso 2: Obteniendo datos completos de pacientes...');
-      console.log('📋 Contexto actual:', this.context);
       const readParams = [patientIds, fields, {}];
       const rows = await this.makeRpcCall(`model.${model}.read`, readParams);
 
       console.log(`✅ ${rows.length} pacientes obtenidos`);
-
-      // 4) La edad ya viene calculada por GNU Health en formato "9y 9m 6d"
-      console.log('📊 Edades ya calculadas por GNU Health');
-
-      // 5) Los nombres ya vienen en la respuesta del SAO
-      console.log('✅ Nombres ya disponibles en la respuesta del SAO');
 
       console.log('✅ Pacientes procesados exitosamente');
       return rows;

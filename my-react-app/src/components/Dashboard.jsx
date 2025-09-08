@@ -131,123 +131,8 @@ const Dashboard = ({ sessionData, onLogout }) => {
     onLogout();
   };
 
-  // Función para probar getModelAccess manualmente
-  const testModelAccess = async () => {
-    try {
-      console.log('=== PRUEBA MANUAL getModelAccess ===');
-      trytonService.restoreSession(sessionData);
-      const result = await trytonService.getModelAccess();
-      console.log('Resultado de getModelAccess:', result);
-      alert('getModelAccess ejecutado correctamente. Revisa la consola.');
-    } catch (error) {
-      console.error('Error en testModelAccess:', error);
-      alert('Error en getModelAccess: ' + error.message);
-    }
-  };
-
-  // Función para probar conexión simple
-  const testSimpleConnection = async () => {
-    try {
-      console.log('=== PRUEBA CONEXIÓN SIMPLE ===');
-      trytonService.restoreSession(sessionData);
-      const result = await trytonService.testConnection();
-      console.log('Resultado de testConnection:', result);
-      alert(`Conexión exitosa! ${result.length} módulos encontrados. Revisa la consola.`);
-    } catch (error) {
-      console.error('Error en testSimpleConnection:', error);
-      alert('Error en conexión simple: ' + error.message);
-    }
-  };
-
-  // Función para probar menú simplificado
-  const testSimpleMenu = async () => {
-    try {
-      console.log('=== PRUEBA MENÚ SIMPLIFICADO ===');
-      trytonService.restoreSession(sessionData);
-      const result = await trytonService.getSimpleMenu();
-      console.log('Resultado de getSimpleMenu:', result);
-      alert(`Menú obtenido! ${result.menus?.length || 0} menús encontrados. Revisa la consola.`);
-    } catch (error) {
-      console.error('Error en testSimpleMenu:', error);
-      alert('Error en menú simplificado: ' + error.message);
-    }
-  };
-
-  // Función para ejecutar getModelAccess después del login
-  const executeModelAccessAfterLogin = async () => {
-    try {
-      console.log('=== EJECUTANDO getModelAccess DESPUÉS DEL LOGIN ===');
-      trytonService.restoreSession(sessionData);
-      const result = await trytonService.executeModelAccessAfterLogin();
-      console.log('Resultado de executeModelAccessAfterLogin:', result);
-      alert('getModelAccess ejecutado después del login. Revisa la pestaña Network y la consola.');
-    } catch (error) {
-      console.error('Error en executeModelAccessAfterLogin:', error);
-      alert('Error ejecutando getModelAccess: ' + error.message);
-    }
-  };
-
-  // Función para probar getModelAccess específico
-  const testModelAccessSpecific = async () => {
-    try {
-      console.log('=== PRUEBA ESPECÍFICA getModelAccess ===');
-      trytonService.restoreSession(sessionData);
-      const result = await trytonService.testModelAccessSpecific();
-      console.log('Resultado de testModelAccessSpecific:', result);
-      alert('Prueba específica exitosa. Revisa la pestaña Network y la consola.');
-    } catch (error) {
-      console.error('Error en testModelAccessSpecific:', error);
-      alert('Error en prueba específica: ' + error.message);
-    }
-  };
-
-  // Función para debug de sesión
-  const debugSession = () => {
-    console.log('=== DEBUG SESSION ===');
-    console.log('Session data from props:', sessionData);
-    trytonService.debugSession();
-    alert('Debug de sesión ejecutado. Revisa la consola para más detalles.');
-  };
-
-
-  // Función para probar autenticación
-  const testAuthentication = async () => {
-    try {
-      console.log('=== PRUEBA DE AUTENTICACIÓN ===');
-      console.log('Session data from props:', sessionData);
-      
-      // Restaurar sesión
-      const sessionRestored = trytonService.restoreSession(sessionData);
-      console.log('Session restored:', sessionRestored);
-      
-      if (!sessionRestored) {
-        alert('Error: No se pudo restaurar la sesión. Los datos son inválidos.');
-        return;
-      }
-      
-      // Mostrar información de debug
-      trytonService.debugSession();
-      
-      // Intentar una llamada simple
-      console.log('Intentando llamada simple...');
-      const result = await trytonService.makeRpcCall('model.ir.module.search_read', [
-        [['state', '=', 'installed']],
-        ['name']
-      ]);
-      
-      console.log('Llamada exitosa:', result);
-      alert(`Autenticación exitosa! ${result.length} módulos encontrados.`);
-      
-    } catch (error) {
-      console.error('Error en autenticación:', error);
-      alert('Error de autenticación: ' + error.message);
-    }
-  };
 
   const renderContent = () => {
-    console.log('🔍 renderContent - activeTab:', activeTab);
-    console.log('🔍 renderContent - menuItems:', menuItems);
-    
     switch (activeTab) {
       case 'dashboard':
         return (
@@ -342,15 +227,8 @@ const Dashboard = ({ sessionData, onLogout }) => {
       default:
         const selectedItem = menuItems.find(item => item.id === activeTab);
         
-        // Debug: Mostrar información del menú seleccionado
-        console.log('🔍 Menú seleccionado:', selectedItem);
-        console.log('🔍 activeTab:', activeTab);
-        console.log('🔍 selectedItem.name:', selectedItem?.name);
-        console.log('🔍 selectedItem.id:', selectedItem?.id);
-        
         // Si el menú seleccionado es "Health" (ID 69), mostrar la tabla de pacientes
         if (selectedItem && (selectedItem.name === 'Health' || selectedItem.id === 69)) {
-          console.log('✅ Mostrando tabla de pacientes para Health');
           return <PatientsTable sessionData={sessionData} />;
         }
         
@@ -401,11 +279,6 @@ const Dashboard = ({ sessionData, onLogout }) => {
                 </svg>
               </button>
               <div className="ml-4 flex items-center">
-                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center mr-3">
-                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-                  </svg>
-                </div>
                 <span className="text-xl font-semibold">Tryton</span>
               </div>
             </div>
@@ -415,69 +288,6 @@ const Dashboard = ({ sessionData, onLogout }) => {
                 <p className="text-gray-300">Usuario: {sessionData.username}</p>
                 <p className="text-gray-400">DB: {sessionData.database}</p>
               </div>
-              <button
-                onClick={testModelAccess}
-                className="p-2 rounded-md hover:bg-gray-700 transition-colors bg-blue-600"
-                title="Probar getModelAccess"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </button>
-              <button
-                onClick={testSimpleConnection}
-                className="p-2 rounded-md hover:bg-gray-700 transition-colors bg-green-600"
-                title="Probar conexión simple"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                </svg>
-              </button>
-              <button
-                onClick={testSimpleMenu}
-                className="p-2 rounded-md hover:bg-gray-700 transition-colors bg-purple-600"
-                title="Probar menú simplificado"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-              </button>
-              <button
-                onClick={executeModelAccessAfterLogin}
-                className="p-2 rounded-md hover:bg-gray-700 transition-colors bg-orange-600"
-                title="Ejecutar getModelAccess después del login"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </button>
-              <button
-                onClick={testModelAccessSpecific}
-                className="p-2 rounded-md hover:bg-gray-700 transition-colors bg-red-600"
-                title="Probar getModelAccess específico"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                </svg>
-              </button>
-              <button
-                onClick={debugSession}
-                className="p-2 rounded-md hover:bg-gray-700 transition-colors bg-gray-600"
-                title="Debug de sesión"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </button>
-              <button
-                onClick={testAuthentication}
-                className="p-2 rounded-md hover:bg-gray-700 transition-colors bg-indigo-600"
-                title="Probar autenticación"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-              </button>
               <button
                 onClick={handleLogout}
                 className="p-2 rounded-md hover:bg-gray-700 transition-colors"
