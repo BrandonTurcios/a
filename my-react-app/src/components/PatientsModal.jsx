@@ -130,16 +130,19 @@ const PatientsModal = ({ isOpen, onClose, sessionData }) => {
                       {patient.lastname && patient.lastname !== patient.rec_name && (
                         <div className="text-xs text-gray-500">Apellido: {patient.lastname}</div>
                       )}
+                      {patient['party.rec_name'] && patient['party.rec_name'] !== patient.rec_name && (
+                        <div className="text-xs text-blue-600">Party: {patient['party.rec_name']}</div>
+                      )}
                     </TableCell>
                     <TableCell className="font-mono text-sm">{patient.puid || 'N/A'}</TableCell>
                     <TableCell>
                       {patient.age || 'N/A'}
                     </TableCell>
                     <TableCell>
-                      <div className="text-sm">
+                      <div className="text-sm font-medium">
                         {formatGender(patient.gender)}
                       </div>
-                      {patient['gender:string'] && patient['gender:string'] !== formatGender(patient.gender) && (
+                      {patient['gender:string'] && (
                         <div className="text-xs text-gray-500">{patient['gender:string']}</div>
                       )}
                     </TableCell>
@@ -156,15 +159,22 @@ const PatientsModal = ({ isOpen, onClose, sessionData }) => {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        patient.patient_status === true
-                          ? 'bg-blue-100 text-blue-800' 
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {patient.patient_status === true ? 'Activo' : 'Inactivo'}
-                      </span>
-                      <div className="text-xs text-gray-500 mt-1">
-                        Party ID: {patient.party}
+                      <div className="space-y-1">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          patient.patient_status === true
+                            ? 'bg-blue-100 text-blue-800' 
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {patient.patient_status === true ? 'Activo' : 'Inactivo'}
+                        </span>
+                        <div className="text-xs text-gray-500">
+                          Party ID: {patient.party}
+                        </div>
+                        {patient.active !== undefined && (
+                          <div className="text-xs text-gray-500">
+                            Active: {patient.active ? 'Sí' : 'No'}
+                          </div>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
