@@ -82,8 +82,13 @@ const PatientsModal = ({ isOpen, onClose, sessionData }) => {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Pacientes</DialogTitle>
-         
+          <DialogTitle className="flex items-center space-x-2">
+            <span className="text-2xl">🏥</span>
+            <span>Pacientes de GNU Health</span>
+          </DialogTitle>
+          <DialogDescription className="text-sm text-gray-600">
+            Lista completa de pacientes del sistema GNU Health con información detallada
+          </DialogDescription>
         </DialogHeader>
 
         {loading && (
@@ -111,12 +116,13 @@ const PatientsModal = ({ isOpen, onClose, sessionData }) => {
               <TableHeader>
                 <TableRow>
                   <TableHead>ID</TableHead>
-                  <TableHead>Nombre</TableHead>
+                  <TableHead>Nombre Completo</TableHead>
                   <TableHead>PUID</TableHead>
                   <TableHead>Edad</TableHead>
                   <TableHead>Género</TableHead>
-                  <TableHead>Estado</TableHead>
+                  <TableHead>Estado Vital</TableHead>
                   <TableHead>Estado del Paciente</TableHead>
+                  <TableHead>Información Adicional</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -124,39 +130,62 @@ const PatientsModal = ({ isOpen, onClose, sessionData }) => {
                   <TableRow key={patient.id}>
                     <TableCell className="font-medium">{patient.id}</TableCell>
                     <TableCell>
-                      <div className="font-medium text-gray-800">
-                        {patient.rec_name || 'Sin nombre'}
+                      <div className="space-y-1">
+                        <div className="font-medium text-gray-800 text-sm">
+                          {patient.rec_name || 'Sin nombre'}
+                        </div>
+                        {patient.lastname && patient.lastname !== patient.rec_name && (
+                          <div className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded">
+                            Apellido: {patient.lastname}
+                          </div>
+                        )}
+                        {patient['party.rec_name'] && patient['party.rec_name'] !== patient.rec_name && (
+                          <div className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                            Party: {patient['party.rec_name']}
+                          </div>
+                        )}
                       </div>
-                      {patient.lastname && patient.lastname !== patient.rec_name && (
-                        <div className="text-xs text-gray-500">Apellido: {patient.lastname}</div>
-                      )}
-                      {patient['party.rec_name'] && patient['party.rec_name'] !== patient.rec_name && (
-                        <div className="text-xs text-blue-600">Party: {patient['party.rec_name']}</div>
-                      )}
                     </TableCell>
-                    <TableCell className="font-mono text-sm">{patient.puid || 'N/A'}</TableCell>
                     <TableCell>
-                      {patient.age || 'N/A'}
+                      <div className="font-mono text-sm bg-gray-50 px-2 py-1 rounded">
+                        {patient.puid || 'N/A'}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm font-medium">
-                        {formatGender(patient.gender)}
+                        {patient.age || 'N/A'}
                       </div>
-                      {patient['gender:string'] && (
-                        <div className="text-xs text-gray-500">{patient['gender:string']}</div>
-                      )}
                     </TableCell>
                     <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        patient.deceased === true
-                          ? 'bg-red-100 text-red-800' 
-                          : patient.deceased === false
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {patient.deceased === true ? 'Fallecido' : 
-                         patient.deceased === false ? 'Vivo' : 'Desconocido'}
-                      </span>
+                      <div className="space-y-1">
+                        <div className="text-sm font-medium">
+                          {formatGender(patient.gender)}
+                        </div>
+                        {patient['gender:string'] && (
+                          <div className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded">
+                            {patient['gender:string']}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col space-y-1">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          patient.deceased === true
+                            ? 'bg-red-100 text-red-800' 
+                            : patient.deceased === false
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {patient.deceased === true ? 'Fallecido' : 
+                           patient.deceased === false ? 'Vivo' : 'Desconocido'}
+                        </span>
+                        {patient.deceased === true && (
+                          <div className="text-xs text-red-600">
+                            ⚠️ Paciente fallecido
+                          </div>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
@@ -177,6 +206,34 @@ const PatientsModal = ({ isOpen, onClose, sessionData }) => {
                         )}
                       </div>
                     </TableCell>
+                    <TableCell>
+                      <div className="space-y-1 text-xs">
+                        <div className="text-gray-600">
+                          <strong>ID:</strong> {patient.id}
+                        </div>
+                        <div className="text-gray-600">
+                          <strong>Party:</strong> {patient.party}
+                        </div>
+                        {patient._timestamp && (
+                          <div className="text-gray-500">
+                            <strong>Última modificación:</strong><br/>
+                            {new Date(parseFloat(patient._timestamp) * 1000).toLocaleString()}
+                          </div>
+                        )}
+                        <div className="flex space-x-1 mt-1">
+                          {patient._write && (
+                            <span className="px-1 py-0.5 bg-green-100 text-green-800 rounded text-xs">
+                              W
+                            </span>
+                          )}
+                          {patient._delete && (
+                            <span className="px-1 py-0.5 bg-red-100 text-red-800 rounded text-xs">
+                              D
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -191,15 +248,30 @@ const PatientsModal = ({ isOpen, onClose, sessionData }) => {
         )}
 
         <div className="flex justify-between items-center pt-4 border-t">
-          <div className="text-sm text-gray-600">
-            {patients.length} pacientes encontrados
+          <div className="text-sm text-gray-600 space-y-1">
+            <div className="font-medium">
+              📊 {patients.length} pacientes encontrados
+            </div>
+            <div className="text-xs text-gray-500">
+              {patients.filter(p => p.deceased === false).length} vivos • 
+              {patients.filter(p => p.deceased === true).length} fallecidos • 
+              {patients.filter(p => p.patient_status === true).length} activos
+            </div>
           </div>
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
-          >
-            Cerrar
-          </button>
+          <div className="flex space-x-2">
+            <button
+              onClick={loadPatients}
+              className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+            >
+              🔄 Actualizar
+            </button>
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+            >
+              Cerrar
+            </button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
