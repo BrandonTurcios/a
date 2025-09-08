@@ -9,7 +9,11 @@ import {
   TableRow,
 } from './ui/table';
 
+console.log('🔍 PatientsTable importado correctamente');
+
 const PatientsTable = ({ sessionData }) => {
+  console.log('🔍 PatientsTable renderizado con sessionData:', sessionData);
+  
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

@@ -245,6 +245,9 @@ const Dashboard = ({ sessionData, onLogout }) => {
   };
 
   const renderContent = () => {
+    console.log('🔍 renderContent - activeTab:', activeTab);
+    console.log('🔍 renderContent - menuItems:', menuItems);
+    
     switch (activeTab) {
       case 'dashboard':
         return (
@@ -339,8 +342,15 @@ const Dashboard = ({ sessionData, onLogout }) => {
       default:
         const selectedItem = menuItems.find(item => item.id === activeTab);
         
+        // Debug: Mostrar información del menú seleccionado
+        console.log('🔍 Menú seleccionado:', selectedItem);
+        console.log('🔍 activeTab:', activeTab);
+        console.log('🔍 selectedItem.name:', selectedItem?.name);
+        console.log('🔍 selectedItem.id:', selectedItem?.id);
+        
         // Si el menú seleccionado es "Health" (ID 69), mostrar la tabla de pacientes
-        if (selectedItem && selectedItem.name === 'Health') {
+        if (selectedItem && (selectedItem.name === 'Health' || selectedItem.id === 69)) {
+          console.log('✅ Mostrando tabla de pacientes para Health');
           return <PatientsTable sessionData={sessionData} />;
         }
         
