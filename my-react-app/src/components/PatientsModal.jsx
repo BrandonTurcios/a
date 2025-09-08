@@ -142,14 +142,25 @@ const PatientsModal = ({ isOpen, onClose, sessionData }) => {
                     </TableCell>
                     <TableCell className="text-xs text-gray-600">
                       <div className="space-y-1">
-                        {(patient.name || patient['party.name'] || patient['party.rec_name']) && (
+                        {(patient.name || 
+                          patient['party.name'] || 
+                          patient['party.rec_name'] || 
+                          patient['party.full_name'] ||
+                          (patient['party.first_name'] && patient['party.last_name'] ? 
+                            `${patient['party.first_name']} ${patient['party.last_name']}` : null)) && (
                           <div className="font-medium text-gray-800">
-                            {patient.name || patient['party.name'] || patient['party.rec_name']}
+                            {patient.name || 
+                             patient['party.name'] || 
+                             patient['party.rec_name'] || 
+                             patient['party.full_name'] ||
+                             (patient['party.first_name'] && patient['party.last_name'] ? 
+                               `${patient['party.first_name']} ${patient['party.last_name']}` : 'Sin nombre')}
                           </div>
                         )}
                         {patient.sex && <div>Género: {formatGender(patient.sex)}</div>}
                         {patient.identification_code && <div>Doc: {patient.identification_code}</div>}
                         {patient.death_date && <div>Fallecimiento: {formatDate(patient.death_date)}</div>}
+                        {patient.party && <div className="text-gray-500">Party ID: {patient.party}</div>}
                       </div>
                     </TableCell>
                   </TableRow>

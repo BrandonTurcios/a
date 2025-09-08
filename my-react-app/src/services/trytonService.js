@@ -976,6 +976,9 @@ class TrytonService {
       'party',          // relación al partner/party
       'party.name',     // nombre del party
       'party.rec_name', // nombre completo del party
+      'party.first_name', // primer nombre
+      'party.last_name',  // apellido
+      'party.full_name',  // nombre completo
     ],
     offset = 0,
     limit = 50,
@@ -1035,6 +1038,44 @@ class TrytonService {
         for (const r of rows) {
           const dateField = r.birth_date || r.dob || null;
           r.age = this._computeAge(dateField);
+        }
+      }
+
+      // 4) Intentar obtener nombres de parties si no están disponibles
+      if (Array.isArray(rows) && rows.length > 0) {
+        console.log('🔍 Verificando nombres de parties...');
+        const partiesNeedingNames = rows.filter(r => r.party && !r['party.name'] && !r['party.rec_name'] && !r['party.full_name']);
+        
+        if (partiesNeedingNames.length > 0) {
+          console.log(`📋 Obteniendo nombres para ${partiesNeedingNames.length} parties...`);
+          try {
+            const partyIds = partiesNeedingNames.map(r => r.party);
+            const partyNames = await this.makeRpcCall('model.party.party.read', [
+              partyIds,
+              ['name', 'rec_name', 'full_name', 'first_name', 'last_name']
+            ]);
+            
+            // Mapear los nombres a los pacientes
+            const partyMap = {};
+            partyNames.forEach(party => {
+              partyMap[party.id] = party;
+            });
+            
+            rows.forEach(patient => {
+              if (patient.party && partyMap[patient.party]) {
+                const party = partyMap[patient.party];
+                patient['party.name'] = party.name;
+                patient['party.rec_name'] = party.rec_name;
+                patient['party.full_name'] = party.full_name;
+                patient['party.first_name'] = party.first_name;
+                patient['party.last_name'] = party.last_name;
+              }
+            });
+            
+            console.log('✅ Nombres de parties obtenidos exitosamente');
+          } catch (partyError) {
+            console.warn('⚠️ Error obteniendo nombres de parties:', partyError.message);
+          }
         }
       }
 
