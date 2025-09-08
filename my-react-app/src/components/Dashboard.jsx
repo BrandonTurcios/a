@@ -386,7 +386,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="h-screen bg-gray-100 flex flex-col">
       {/* Navbar */}
       <nav className="bg-gray-800 text-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4">
@@ -492,9 +492,9 @@ const Dashboard = ({ sessionData, onLogout }) => {
         </div>
       </nav>
 
-      <div className="flex">
+      <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <div className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-white shadow-lg transition-all duration-300 min-h-screen`}>
+        <div className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-white shadow-lg transition-all duration-300 h-full overflow-y-auto`}>
           <div className="p-4">
             {loading ? (
               <div className="flex items-center justify-center py-4">
@@ -549,7 +549,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1">
+        <div className="flex-1 overflow-y-auto">
           {renderContent()}
         </div>
       </div>
