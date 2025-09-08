@@ -134,14 +134,9 @@ const PatientsModal = ({ isOpen, onClose, sessionData }) => {
                         <div className="font-medium text-gray-800 text-sm">
                           {patient.rec_name || 'Sin nombre'}
                         </div>
-                        {patient.lastname && patient.lastname !== patient.rec_name && (
+                        {patient.lastname && patient.lastname !== patient.rec_name && !patient.rec_name?.includes(patient.lastname) && (
                           <div className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded">
                             Apellido: {patient.lastname}
-                          </div>
-                        )}
-                        {patient['party.rec_name'] && patient['party.rec_name'] !== patient.rec_name && (
-                          <div className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                            Party: {patient['party.rec_name']}
                           </div>
                         )}
                       </div>
@@ -157,15 +152,8 @@ const PatientsModal = ({ isOpen, onClose, sessionData }) => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="space-y-1">
-                        <div className="text-sm font-medium">
-                          {formatGender(patient.gender)}
-                        </div>
-                        {patient['gender:string'] && (
-                          <div className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded">
-                            {patient['gender:string']}
-                          </div>
-                        )}
+                      <div className="text-sm font-medium">
+                        {formatGender(patient.gender)}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -196,24 +184,15 @@ const PatientsModal = ({ isOpen, onClose, sessionData }) => {
                         }`}>
                           {patient.patient_status === true ? 'Activo' : 'Inactivo'}
                         </span>
-                        <div className="text-xs text-gray-500">
-                          Party ID: {patient.party}
-                        </div>
-                        {patient.active !== undefined && (
+                        {patient.active !== undefined && !patient.active && (
                           <div className="text-xs text-gray-500">
-                            Active: {patient.active ? 'Sí' : 'No'}
+                            Inactivo
                           </div>
                         )}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1 text-xs">
-                        <div className="text-gray-600">
-                          <strong>ID:</strong> {patient.id}
-                        </div>
-                        <div className="text-gray-600">
-                          <strong>Party:</strong> {patient.party}
-                        </div>
                         {patient._timestamp && (
                           <div className="text-gray-500">
                             <strong>Última modificación:</strong><br/>
