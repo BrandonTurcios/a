@@ -505,32 +505,56 @@ class TrytonService {
         // pero con la sintaxis correcta que funciona
         
         try {
-          // Intentar obtener menús con todos los campos de una vez
-      const menus = await this.makeRpcCall('model.ir.ui.menu.search_read', [
-        [['parent', '=', null]],
-            ['name', 'icon', 'sequence', 'childs', 'model', 'description']
+          // PRIMER PASO: Obtener IDs de menús
+          console.log('🔄 Obteniendo IDs de menús...');
+          const menuIds = await this.makeRpcCall('model.ir.ui.menu.search_read', [
+            [['parent', '=', null]],
+            ['id']
           ]);
           
-          console.log('📋 Menús obtenidos con search_read:', menus);
+          console.log('📋 IDs de menús obtenidos:', menuIds);
           
-          if (menus && menus.length > 0) {
-            menuItems = menus.map(menu => {
-              console.log(`🔍 Procesando menú ID: ${menu.id}, icon: ${menu.icon}, name: ${menu.name}`);
-              const iconName = iconMap[menu.icon] || 'tryton-list';
-              console.log(`🔍 Icono encontrado: ${iconName} para ID ${menu.icon}`);
-              const finalName = menu.name || iconName || `Menú ${menu.id}`;
-              console.log(`🔍 Nombre final: ${finalName}`);
-              return {
-                id: menu.id,
-                name: finalName,
-                icon: menu.icon || '📋',
-                iconName: iconName,
-                model: menu.model || '',
-                description: menu.description || menu.name || iconName || `Menú ${menu.id}`,
-                sequence: menu.sequence || 0,
-                childs: menu.childs || []
-              };
-            });
+          if (menuIds && menuIds.length > 0) {
+            // SEGUNDO PASO: Obtener detalles completos con read como el SAO
+            console.log('🔄 Obteniendo detalles completos con read...');
+            const menuDetails = await this.makeRpcCall('model.ir.ui.menu.read', [
+              menuIds.map(m => m.id), // Array de IDs
+              [
+                'active',
+                'childs',
+                'favorite',
+                'icon',
+                'name',
+                'parent',
+                'icon:string',
+                'parent.rec_name',
+                'rec_name',
+                '_timestamp',
+                '_write',
+                '_delete'
+              ],
+              {} // Contexto
+            ]);
+            
+            console.log('📋 Detalles de menús obtenidos:', menuDetails);
+            
+            if (menuDetails && menuDetails.length > 0) {
+              menuItems = menuDetails.map(menu => {
+                console.log(`🔍 [PYSON] Procesando menú ID: ${menu.id}, icon: ${menu.icon}, name: ${menu.name}`);
+                const finalName = menu.name || menu.rec_name || `Menú ${menu.id}`;
+                console.log(`🔍 [PYSON] Nombre final: ${finalName}`);
+                return {
+                  id: menu.id,
+                  name: finalName,
+                  icon: menu.icon || '📋',
+                  iconName: menu['icon:string'] || menu.icon || 'tryton-list',
+                  model: menu.model || '',
+                  description: menu.description || menu.name || menu.rec_name || `Menú ${menu.id}`,
+                  sequence: menu.sequence || 0,
+                  childs: menu.childs || []
+                };
+              });
+            }
           }
         } catch (menuError) {
           console.warn('⚠️ Error obteniendo menús con search_read, intentando método alternativo:', menuError.message);
@@ -554,11 +578,12 @@ class TrytonService {
                 
                 if (menuDetails && menuDetails.length > 0) {
                   const menu = menuDetails[0];
-                  const iconName = iconMap[menu.icon] || 'tryton-list';
+                  // Usar el ID del menú para buscar en el mapa de iconos
+                  const iconName = iconMap[menu.id] || 'tryton-list';
                   menuItems.push({
                     id: menu.id,
                     name: menu.name || iconName || `Menú ${menu.id}`,
-                    icon: menu.icon || '📋',
+                    icon: menu.id || '📋', // Usar el ID del menú como icono
                     iconName: iconName,
                     model: menu.model || '',
                     description: menu.description || menu.name || iconName || `Menú ${menu.id}`,
@@ -598,34 +623,59 @@ class TrytonService {
         
         // Intentar cargar menús reales cuando no hay pyson_menu
         try {
-          // PRIMER INTENTO: Usar search_read con sintaxis correcta
-          console.log('🔄 Intentando search_read con sintaxis correcta...');
-          const menus = await this.makeRpcCall('model.ir.ui.menu.search_read', [
+          // PRIMER INTENTO: Usar search_read para obtener IDs
+          console.log('🔄 Obteniendo IDs de menús con search_read...');
+          const menuIds = await this.makeRpcCall('model.ir.ui.menu.search_read', [
             [['parent', '=', null]],
-            ['name', 'icon', 'sequence', 'childs', 'model', 'description']
+            ['id']
           ]);
           
-          console.log('📋 Menús obtenidos directamente:', menus);
+          console.log('📋 IDs de menús obtenidos:', menuIds);
           
-          if (menus && menus.length > 0) {
-            menuItems = menus.map(menu => {
-              console.log(`🔍 [DIRECTO] Procesando menú ID: ${menu.id}, icon: ${menu.icon}, name: ${menu.name}`);
-              const iconName = iconMap[menu.icon] || 'tryton-list';
-              console.log(`🔍 [DIRECTO] Icono encontrado: ${iconName} para ID ${menu.icon}`);
-              const finalName = menu.name || iconName || `Menú ${menu.id}`;
-              console.log(`🔍 [DIRECTO] Nombre final: ${finalName}`);
-              return {
-                id: menu.id,
-                name: finalName,
-                icon: menu.icon || '📋',
-                iconName: iconName,
-                model: menu.model || '',
-                description: menu.description || menu.name || iconName || `Menú ${menu.id}`,
-                sequence: menu.sequence || 0,
-                childs: menu.childs || []
-              };
-            });
-            console.log('✅ Menús reales cargados exitosamente:', menuItems.length);
+          if (menuIds && menuIds.length > 0) {
+            // SEGUNDO INTENTO: Usar read con todos los campos como el SAO
+            console.log('🔄 Obteniendo detalles completos con read...');
+            const menuDetails = await this.makeRpcCall('model.ir.ui.menu.read', [
+              menuIds.map(m => m.id), // Array de IDs
+              [
+                'active',
+                'childs',
+                'favorite',
+                'icon',
+                'name',
+                'parent',
+                'icon:string',
+                'parent.rec_name',
+                'rec_name',
+                '_timestamp',
+                '_write',
+                '_delete'
+              ],
+              {} // Contexto
+            ]);
+            
+            console.log('📋 Detalles de menús obtenidos:', menuDetails);
+            
+            if (menuDetails && menuDetails.length > 0) {
+              menuItems = menuDetails.map(menu => {
+                console.log(`🔍 [SAO] Procesando menú ID: ${menu.id}, icon: ${menu.icon}, name: ${menu.name}`);
+                const finalName = menu.name || menu.rec_name || `Menú ${menu.id}`;
+                console.log(`🔍 [SAO] Nombre final: ${finalName}`);
+                return {
+                  id: menu.id,
+                  name: finalName,
+                  icon: menu.icon || '📋',
+                  iconName: menu['icon:string'] || menu.icon || 'tryton-list',
+                  model: menu.model || '',
+                  description: menu.description || menu.name || menu.rec_name || `Menú ${menu.id}`,
+                  sequence: menu.sequence || 0,
+                  childs: menu.childs || []
+                };
+              });
+              console.log('✅ Menús reales cargados exitosamente:', menuItems.length);
+            } else {
+              throw new Error('No se obtuvieron detalles de menús');
+            }
           } else {
             throw new Error('No se encontraron menús');
           }
@@ -637,24 +687,40 @@ class TrytonService {
           const knownMenuIds = [59, 51, 132, 49, 118, 350, 69, 354, 260, 1];
           
           try {
-            // Usar read con múltiples IDs de una vez
+            // Usar read con múltiples IDs de una vez como el SAO
             const menuDetails = await this.makeRpcCall('model.ir.ui.menu.read', [
               knownMenuIds,
-              ['name', 'icon', 'sequence', 'childs', 'model', 'description']
+              [
+                'active',
+                'childs',
+                'favorite',
+                'icon',
+                'name',
+                'parent',
+                'icon:string',
+                'parent.rec_name',
+                'rec_name',
+                '_timestamp',
+                '_write',
+                '_delete'
+              ],
+              {} // Contexto
             ]);
             
             console.log('📋 Detalles de menús obtenidos con read múltiple:', menuDetails);
             
             if (menuDetails && menuDetails.length > 0) {
               menuItems = menuDetails.map(menu => {
-                const iconName = iconMap[menu.icon] || 'tryton-list';
+                console.log(`🔍 [CONOCIDOS] Procesando menú ID: ${menu.id}, icon: ${menu.icon}, name: ${menu.name}`);
+                const finalName = menu.name || menu.rec_name || `Menú ${menu.id}`;
+                console.log(`🔍 [CONOCIDOS] Nombre final: ${finalName}`);
                 return {
                   id: menu.id,
-                  name: menu.name || iconName || `Menú ${menu.id}`,
+                  name: finalName,
                   icon: menu.icon || '📋',
-                  iconName: iconName,
+                  iconName: menu['icon:string'] || menu.icon || 'tryton-list',
                   model: menu.model || '',
-                  description: menu.description || menu.name || iconName || `Menú ${menu.id}`,
+                  description: menu.description || menu.name || menu.rec_name || `Menú ${menu.id}`,
                   sequence: menu.sequence || 0,
                   childs: menu.childs || []
                 };
@@ -685,11 +751,12 @@ class TrytonService {
                   
                   if (menuDetails && menuDetails.length > 0) {
                     const menu = menuDetails[0];
-                    const iconName = iconMap[menu.icon] || 'tryton-list';
+                    // Usar el ID del menú para buscar en el mapa de iconos
+                    const iconName = iconMap[menu.id] || 'tryton-list';
                     menuItems.push({
                       id: menu.id,
                       name: menu.name || iconName || `Menú ${menu.id}`,
-                      icon: menu.icon || '📋',
+                      icon: menu.id || '📋', // Usar el ID del menú como icono
                       iconName: iconName,
                       model: menu.model || '',
                       description: menu.description || menu.name || iconName || `Menú ${menu.id}`,
