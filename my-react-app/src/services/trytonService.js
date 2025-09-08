@@ -1029,7 +1029,7 @@ class TrytonService {
       
       // PASO 2: Obtener datos completos con read
       console.log('📋 Paso 2: Obteniendo datos completos de pacientes...');
-      const readParams = [patientIds, fields];
+      const readParams = [patientIds, fields, {}];
       const rows = await this.makeRpcCall(`model.${model}.read`, readParams);
 
       console.log(`✅ ${rows.length} pacientes obtenidos`);
