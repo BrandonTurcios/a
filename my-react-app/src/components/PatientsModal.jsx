@@ -70,9 +70,10 @@ const PatientsModal = ({ isOpen, onClose, sessionData }) => {
   const formatGender = (gender) => {
     if (!gender) return 'N/A';
     const genderMap = {
-      'M': 'Masculino',
-      'F': 'Femenino',
-      'Other': 'Otro'
+      'm': 'Masculino',
+      'f': 'Femenino',
+      'm-f': 'Masculino -> Femenino',
+      'f-m': 'Femenino -> Masculino'
     };
     return genderMap[gender] || gender;
   };
@@ -110,23 +111,37 @@ const PatientsModal = ({ isOpen, onClose, sessionData }) => {
               <TableHeader>
                 <TableRow>
                   <TableHead>ID</TableHead>
-                  <TableHead>Party ID</TableHead>
+                  <TableHead>Nombre</TableHead>
                   <TableHead>PUID</TableHead>
-                  <TableHead>Fecha de Nacimiento</TableHead>
                   <TableHead>Edad</TableHead>
+                  <TableHead>Género</TableHead>
                   <TableHead>Estado</TableHead>
-                  <TableHead>Datos Adicionales</TableHead>
+                  <TableHead>Estado del Paciente</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {patients.map((patient) => (
                   <TableRow key={patient.id}>
                     <TableCell className="font-medium">{patient.id}</TableCell>
-                    <TableCell>{patient.party || 'N/A'}</TableCell>
-                    <TableCell className="font-mono text-sm">{patient.puid || 'N/A'}</TableCell>
-                    <TableCell>{formatDate(patient.dob)}</TableCell>
                     <TableCell>
-                      {patient.age !== null && patient.age !== undefined ? `${patient.age} años` : 'N/A'}
+                      <div className="font-medium text-gray-800">
+                        {patient.rec_name || 'Sin nombre'}
+                      </div>
+                      {patient.lastname && patient.lastname !== patient.rec_name && (
+                        <div className="text-xs text-gray-500">Apellido: {patient.lastname}</div>
+                      )}
+                    </TableCell>
+                    <TableCell className="font-mono text-sm">{patient.puid || 'N/A'}</TableCell>
+                    <TableCell>
+                      {patient.age || 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        {formatGender(patient.gender)}
+                      </div>
+                      {patient['gender:string'] && patient['gender:string'] !== formatGender(patient.gender) && (
+                        <div className="text-xs text-gray-500">{patient['gender:string']}</div>
+                      )}
                     </TableCell>
                     <TableCell>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -140,25 +155,16 @@ const PatientsModal = ({ isOpen, onClose, sessionData }) => {
                          patient.deceased === false ? 'Vivo' : 'Desconocido'}
                       </span>
                     </TableCell>
-                    <TableCell className="text-xs text-gray-600">
-                      <div className="space-y-1">
-                        {(patient['party.name'] || 
-                          patient['party.rec_name'] || 
-                          patient['party.full_name'] ||
-                          (patient['party.first_name'] && patient['party.last_name'] ? 
-                            `${patient['party.first_name']} ${patient['party.last_name']}` : null)) && (
-                          <div className="font-medium text-gray-800">
-                            {patient['party.name'] || 
-                             patient['party.rec_name'] || 
-                             patient['party.full_name'] ||
-                             (patient['party.first_name'] && patient['party.last_name'] ? 
-                               `${patient['party.first_name']} ${patient['party.last_name']}` : 'Sin nombre')}
-                          </div>
-                        )}
-                        {patient.sex && <div>Género: {formatGender(patient.sex)}</div>}
-                        {patient.identification_code && <div>Doc: {patient.identification_code}</div>}
-                        {patient.death_date && <div>Fallecimiento: {formatDate(patient.death_date)}</div>}
-                        {patient.party && <div className="text-gray-500">Party ID: {patient.party}</div>}
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        patient.patient_status === true
+                          ? 'bg-blue-100 text-blue-800' 
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {patient.patient_status === true ? 'Activo' : 'Inactivo'}
+                      </span>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Party ID: {patient.party}
                       </div>
                     </TableCell>
                   </TableRow>

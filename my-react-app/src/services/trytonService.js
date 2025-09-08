@@ -965,19 +965,20 @@ class TrytonService {
     domain = [],
     wantedFields = [
       'id',
-      'sex',            // género (M/F/Other en GNU Health)
-      'birth_date',     // a veces es 'birth_date' o 'dob' según versión
-      'dob',            // por si tu build usa 'dob'
-      'puid',           // Patient Unique ID
-      'deceased',       // bool
-      'death_date',     // opcional
-      'identification_code', // documento si lo usan
-      'party',          // relación al partner/party
-      'party.name',     // nombre del party
-      'party.rec_name', // nombre completo del party
-      'party.first_name', // primer nombre
-      'party.last_name',  // apellido
-      'party.full_name',  // nombre completo
+      'active',
+      'age',
+      'deceased',
+      'gender',
+      'lastname',
+      'party',
+      'patient_status',
+      'puid',
+      'gender:string',
+      'party.rec_name',
+      'rec_name',
+      '_timestamp',
+      '_write',
+      '_delete'
     ],
     offset = 0,
     limit = 50,
@@ -1031,52 +1032,11 @@ class TrytonService {
 
       console.log(`✅ ${rows.length} pacientes obtenidos`);
 
-      // 3) Normalizar edad (si procede)
-      if (computeAge && Array.isArray(rows)) {
-        console.log('📊 Calculando edades...');
-        for (const r of rows) {
-          const dateField = r.birth_date || r.dob || null;
-          r.age = this._computeAge(dateField);
-        }
-      }
+      // 3) La edad ya viene calculada por GNU Health en formato "9y 9m 6d"
+      console.log('📊 Edades ya calculadas por GNU Health');
 
-      // 4) Intentar obtener nombres de parties si no están disponibles
-      if (Array.isArray(rows) && rows.length > 0) {
-        console.log('🔍 Verificando nombres de parties...');
-        const partiesNeedingNames = rows.filter(r => r.party && !r['party.name'] && !r['party.rec_name'] && !r['party.full_name'] && !(r['party.first_name'] && r['party.last_name']));
-        
-        if (partiesNeedingNames.length > 0) {
-          console.log(`📋 Obteniendo nombres para ${partiesNeedingNames.length} parties...`);
-          try {
-            const partyIds = partiesNeedingNames.map(r => r.party);
-            const partyNames = await this.makeRpcCall('model.party.party.search_read', [
-              [['id', 'in', partyIds]],
-              ['name', 'rec_name', 'full_name', 'first_name', 'last_name']
-            ]);
-            
-            // Mapear los nombres a los pacientes
-            const partyMap = {};
-            partyNames.forEach(party => {
-              partyMap[party.id] = party;
-            });
-            
-            rows.forEach(patient => {
-              if (patient.party && partyMap[patient.party]) {
-                const party = partyMap[patient.party];
-                patient['party.name'] = party.name;
-                patient['party.rec_name'] = party.rec_name;
-                patient['party.full_name'] = party.full_name;
-                patient['party.first_name'] = party.first_name;
-                patient['party.last_name'] = party.last_name;
-              }
-            });
-            
-            console.log('✅ Nombres de parties obtenidos exitosamente');
-          } catch (partyError) {
-            console.warn('⚠️ Error obteniendo nombres de parties:', partyError.message);
-          }
-        }
-      }
+      // 4) Los nombres ya vienen en la respuesta del SAO, no necesitamos consulta adicional
+      console.log('✅ Datos de pacientes procesados exitosamente');
 
       console.log('✅ Pacientes procesados exitosamente');
       return rows;
