@@ -1049,8 +1049,8 @@ class TrytonService {
           console.log(`📋 Obteniendo nombres para ${partiesNeedingNames.length} parties...`);
           try {
             const partyIds = partiesNeedingNames.map(r => r.party);
-            const partyNames = await this.makeRpcCall('model.party.party.read', [
-              partyIds,
+            const partyNames = await this.makeRpcCall('model.party.party.search_read', [
+              [['id', 'in', partyIds]],
               ['name', 'rec_name', 'full_name', 'first_name', 'last_name']
             ]);
             
