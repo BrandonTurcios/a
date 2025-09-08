@@ -928,7 +928,22 @@ class TrytonService {
     if (!birthDate) return null;
     
     try {
-      const birth = new Date(birthDate);
+      let birth;
+      
+      // Manejar fechas que vienen como objetos de Tryton
+      if (typeof birthDate === 'object' && birthDate.__class__ === 'date') {
+        birth = new Date(birthDate.year, birthDate.month - 1, birthDate.day);
+      } else if (typeof birthDate === 'string') {
+        birth = new Date(birthDate);
+      } else {
+        return null;
+      }
+      
+      // Verificar que la fecha es válida
+      if (isNaN(birth.getTime())) {
+        return null;
+      }
+      
       const today = new Date();
       let age = today.getFullYear() - birth.getFullYear();
       const monthDiff = today.getMonth() - birth.getMonth();
@@ -959,6 +974,8 @@ class TrytonService {
       'death_date',     // opcional
       'identification_code', // documento si lo usan
       'party',          // relación al partner/party
+      'party.name',     // nombre del party
+      'party.rec_name', // nombre completo del party
     ],
     offset = 0,
     limit = 50,

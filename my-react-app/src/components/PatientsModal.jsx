@@ -50,10 +50,18 @@ const PatientsModal = ({ isOpen, onClose, sessionData }) => {
     }
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
+  const formatDate = (dateObj) => {
+    if (!dateObj) return 'N/A';
+    
     try {
-      return new Date(dateString).toLocaleDateString();
+      // Manejar fechas que vienen como objetos de Tryton
+      if (typeof dateObj === 'object' && dateObj.__class__ === 'date') {
+        const date = new Date(dateObj.year, dateObj.month - 1, dateObj.day);
+        return date.toLocaleDateString();
+      } else if (typeof dateObj === 'string') {
+        return new Date(dateObj).toLocaleDateString();
+      }
+      return 'N/A';
     } catch {
       return 'N/A';
     }
@@ -99,41 +107,53 @@ const PatientsModal = ({ isOpen, onClose, sessionData }) => {
         )}
 
         {!loading && !error && patients.length > 0 && (
-          <div className="border rounded-lg">
+          <div className="border rounded-lg overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>ID</TableHead>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Género</TableHead>
+                  <TableHead>Party ID</TableHead>
+                  <TableHead>PUID</TableHead>
                   <TableHead>Fecha de Nacimiento</TableHead>
                   <TableHead>Edad</TableHead>
-                  <TableHead>PUID</TableHead>
                   <TableHead>Estado</TableHead>
-                  <TableHead>Documento</TableHead>
+                  <TableHead>Datos Adicionales</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {patients.map((patient) => (
                   <TableRow key={patient.id}>
                     <TableCell className="font-medium">{patient.id}</TableCell>
-                    <TableCell>{patient.name || 'N/A'}</TableCell>
-                    <TableCell>{formatGender(patient.sex)}</TableCell>
-                    <TableCell>{formatDate(patient.birth_date || patient.dob)}</TableCell>
+                    <TableCell>{patient.party || 'N/A'}</TableCell>
+                    <TableCell className="font-mono text-sm">{patient.puid || 'N/A'}</TableCell>
+                    <TableCell>{formatDate(patient.dob)}</TableCell>
                     <TableCell>
-                      {patient.age !== null ? `${patient.age} años` : 'N/A'}
+                      {patient.age !== null && patient.age !== undefined ? `${patient.age} años` : 'N/A'}
                     </TableCell>
-                    <TableCell>{patient.puid || 'N/A'}</TableCell>
                     <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        patient.deceased 
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        patient.deceased === true
                           ? 'bg-red-100 text-red-800' 
-                          : 'bg-green-100 text-green-800'
+                          : patient.deceased === false
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-gray-100 text-gray-800'
                       }`}>
-                        {patient.deceased ? 'Fallecido' : 'Vivo'}
+                        {patient.deceased === true ? 'Fallecido' : 
+                         patient.deceased === false ? 'Vivo' : 'Desconocido'}
                       </span>
                     </TableCell>
-                    <TableCell>{patient.identification_code || 'N/A'}</TableCell>
+                    <TableCell className="text-xs text-gray-600">
+                      <div className="space-y-1">
+                        {(patient.name || patient['party.name'] || patient['party.rec_name']) && (
+                          <div className="font-medium text-gray-800">
+                            {patient.name || patient['party.name'] || patient['party.rec_name']}
+                          </div>
+                        )}
+                        {patient.sex && <div>Género: {formatGender(patient.sex)}</div>}
+                        {patient.identification_code && <div>Doc: {patient.identification_code}</div>}
+                        {patient.death_date && <div>Fallecimiento: {formatDate(patient.death_date)}</div>}
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
