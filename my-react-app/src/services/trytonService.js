@@ -1035,8 +1035,8 @@ class TrytonService {
       // 3) La edad ya viene calculada por GNU Health en formato "9y 9m 6d"
       console.log('📊 Edades ya calculadas por GNU Health');
 
-      // 4) Los nombres ya vienen en la respuesta del SAO, no necesitamos consulta adicional
-      console.log('✅ Datos de pacientes procesados exitosamente');
+      // 4) Los nombres ya vienen en la respuesta del SAO
+      console.log('✅ Nombres ya disponibles en la respuesta del SAO');
 
       console.log('✅ Pacientes procesados exitosamente');
       return rows;
