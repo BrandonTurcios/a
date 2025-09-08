@@ -995,22 +995,10 @@ class TrytonService {
       console.log(`🔍 Campos deseados:`, wantedFields);
       console.log(`🔍 Offset: ${offset}, Limit: ${limit}, Order: ${order}`);
 
-      // 1) Descubrir campos existentes
-      console.log('📋 Obteniendo campos del modelo...');
+      // 1) Usar campos directamente (como el SAO)
+      console.log('📋 Usando campos directamente como el SAO...');
       let fields = wantedFields;
-      
-      try {
-        const modelFields = await this.getModelFields(model);
-        fields = this._intersectFields(modelFields, wantedFields);
-        
-        if (fields.length === 0) {
-          console.warn('⚠️ No se encontraron campos válidos, usando campos por defecto');
-          fields = ['id', 'name']; // Campos básicos que deberían existir
-        }
-      } catch (fieldsError) {
-        console.warn('⚠️ Error obteniendo campos del modelo, usando campos por defecto:', fieldsError.message);
-        fields = ['id', 'name']; // Fallback a campos básicos
-      }
+      console.log('📋 Campos solicitados:', fields);
 
       // 2) Asegurar que el contexto esté cargado
       if (!this.context || Object.keys(this.context).length === 0) {
