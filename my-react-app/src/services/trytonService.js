@@ -1012,10 +1012,16 @@ class TrytonService {
         fields = ['id', 'name']; // Fallback a campos básicos
       }
 
-      // 2) Hacer la búsqueda en dos pasos como el SAO
+      // 2) Asegurar que el contexto esté cargado
+      if (!this.context || Object.keys(this.context).length === 0) {
+        console.log('🔄 Cargando contexto del usuario...');
+        await this.loadUserContext();
+      }
+      
+      // 3) Hacer la búsqueda en dos pasos como el SAO
       console.log('🔍 Ejecutando búsqueda en dos pasos como el SAO...');
       
-      // PASO 1: Obtener IDs de pacientes con search
+      // PASO 1: Obtener IDs de pacientes con search (sintaxis exacta del SAO)
       console.log('📋 Paso 1: Obteniendo IDs de pacientes...');
       const searchParams = [domain, offset, limit, order, {}];
       const patientIds = await this.makeRpcCall(`model.${model}.search`, searchParams);
@@ -1027,17 +1033,18 @@ class TrytonService {
         return [];
       }
       
-      // PASO 2: Obtener datos completos con read
+      // PASO 2: Obtener datos completos con read (sintaxis exacta del SAO)
       console.log('📋 Paso 2: Obteniendo datos completos de pacientes...');
+      console.log('📋 Contexto actual:', this.context);
       const readParams = [patientIds, fields, {}];
       const rows = await this.makeRpcCall(`model.${model}.read`, readParams);
 
       console.log(`✅ ${rows.length} pacientes obtenidos`);
 
-      // 3) La edad ya viene calculada por GNU Health en formato "9y 9m 6d"
+      // 4) La edad ya viene calculada por GNU Health en formato "9y 9m 6d"
       console.log('📊 Edades ya calculadas por GNU Health');
 
-      // 4) Los nombres ya vienen en la respuesta del SAO
+      // 5) Los nombres ya vienen en la respuesta del SAO
       console.log('✅ Nombres ya disponibles en la respuesta del SAO');
 
       console.log('✅ Pacientes procesados exitosamente');
