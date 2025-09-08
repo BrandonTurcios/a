@@ -965,7 +965,6 @@ class TrytonService {
     domain = [],
     wantedFields = [
       'id',
-      'name',           // nombre del paciente
       'sex',            // género (M/F/Other en GNU Health)
       'birth_date',     // a veces es 'birth_date' o 'dob' según versión
       'dob',            // por si tu build usa 'dob'
@@ -1044,7 +1043,7 @@ class TrytonService {
       // 4) Intentar obtener nombres de parties si no están disponibles
       if (Array.isArray(rows) && rows.length > 0) {
         console.log('🔍 Verificando nombres de parties...');
-        const partiesNeedingNames = rows.filter(r => r.party && !r['party.name'] && !r['party.rec_name'] && !r['party.full_name']);
+        const partiesNeedingNames = rows.filter(r => r.party && !r['party.name'] && !r['party.rec_name'] && !r['party.full_name'] && !(r['party.first_name'] && r['party.last_name']));
         
         if (partiesNeedingNames.length > 0) {
           console.log(`📋 Obteniendo nombres para ${partiesNeedingNames.length} parties...`);
