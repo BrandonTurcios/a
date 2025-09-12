@@ -220,7 +220,7 @@ class TrytonService {
 
     try {
       
-      await this.makeRpcCall('common.db.logout', []);
+      await this.makeRpcCall('common.db.logout');
       
       this.clearSession();
       return { success: true };

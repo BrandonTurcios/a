@@ -68,25 +68,16 @@ const Login = ({ onLogin }) => {
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    setError(''); // Limpiar error al escribir
-  };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (values) => {
     setLoading(true);
     setError('');
 
     try {
       const sessionData = await trytonService.login(
-        formData.database,
-        formData.username,
-        formData.password
+        values.database,
+        values.username,
+        values.password
       );
       
       onLogin(sessionData);
@@ -143,16 +134,18 @@ const Login = ({ onLogin }) => {
               layout="vertical"
               onFinish={handleSubmit}
               size="large"
+              initialValues={formData}
             >
               {/* Campo de Base de Datos */}
               <Form.Item
+                name="database"
                 label={
                   <Space>
                     <Database style={{ color: '#667eea' }} />
                     <Text strong>Base de Datos</Text>
                   </Space>
                 }
-                required
+                rules={[{ required: true, message: 'Por favor selecciona una base de datos' }]}
               >
                 {loadingDatabases ? (
                   <div style={{ 
@@ -171,8 +164,6 @@ const Login = ({ onLogin }) => {
                   <Space direction="vertical" style={{ width: '100%' }}>
                     <Select
                       placeholder="Selecciona una base de datos"
-                      value={formData.database}
-                      onChange={(value) => setFormData(prev => ({ ...prev, database: value }))}
                       style={{ width: '100%' }}
                       size="large"
                     >
@@ -208,8 +199,6 @@ const Login = ({ onLogin }) => {
                   <Space direction="vertical" style={{ width: '100%' }}>
                     <Input
                       placeholder="Ej: tryton, his-50, etc."
-                      value={formData.database}
-                      onChange={(e) => setFormData(prev => ({ ...prev, database: e.target.value }))}
                       prefix={<Database style={{ color: '#9ca3af' }} />}
                     />
                     <div style={{ 
@@ -236,36 +225,34 @@ const Login = ({ onLogin }) => {
 
               {/* Campo de Usuario */}
               <Form.Item
+                name="username"
                 label={
                   <Space>
                     <User style={{ color: '#667eea' }} />
                     <Text strong>Usuario</Text>
                   </Space>
                 }
-                required
+                rules={[{ required: true, message: 'Por favor ingresa tu nombre de usuario' }]}
               >
                 <Input
                   placeholder="Tu nombre de usuario"
-                  value={formData.username}
-                  onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
                   prefix={<User style={{ color: '#9ca3af' }} />}
                 />
               </Form.Item>
 
               {/* Campo de Contraseña */}
               <Form.Item
+                name="password"
                 label={
                   <Space>
                     <Lock style={{ color: '#667eea' }} />
                     <Text strong>Contraseña</Text>
                   </Space>
                 }
-                required
+                rules={[{ required: true, message: 'Por favor ingresa tu contraseña' }]}
               >
                 <Input.Password
                   placeholder="Tu contraseña"
-                  value={formData.password}
-                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
                   prefix={<Lock style={{ color: '#9ca3af' }} />}
                 />
               </Form.Item>

@@ -65,6 +65,20 @@ const Dashboard = ({ sessionData, onLogout }) => {
     loadSidebarMenu();
   }, []);
 
+  // Efecto para manejar el responsive del sidebar
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 992) { // breakpoint lg de Ant Design
+        setSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Ejecutar al cargar
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const loadSidebarMenu = async () => {
     try {
       setLoading(true);
@@ -256,7 +270,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
     const isActive = activeTab === item.id;
 
     return (
-      <div key={item.id} style={{ marginLeft: level > 0 ? '24px' : '0' }}>
+      <div key={item.id} style={{ marginLeft: level > 0 && sidebarOpen ? '24px' : '0' }}>
         <Button
           type={isActive ? 'primary' : 'text'}
           onClick={() => {
@@ -269,32 +283,33 @@ const Dashboard = ({ sessionData, onLogout }) => {
           style={{
             width: '100%',
             height: 'auto',
-            padding: '12px 16px',
+            padding: sidebarOpen ? '12px 16px' : '12px 8px',
             marginBottom: '4px',
             textAlign: 'left',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'flex-start',
+            justifyContent: sidebarOpen ? 'flex-start' : 'center',
             background: isActive ? '#1890ff' : 'transparent',
             border: 'none',
             borderRadius: '8px',
-            color: isActive ? 'white' : '#666'
+            color: isActive ? 'white' : '#d9d9d9',
+            minHeight: '40px'
           }}
-          title={item.description || item.name || item.label}
+          title={sidebarOpen ? (item.description || item.name || item.label) : (item.name || item.label)}
         >
-          <Space>
-            {hasChildren && (
-              <span style={{ fontSize: '12px' }}>
-                {isExpanded ? <DownOutlined /> : <RightOutlined />}
-              </span>
-            )}
-            {getIconComponent(item.icon, item.name)}
-            {sidebarOpen && (
+          {sidebarOpen ? (
+            <Space>
+              {hasChildren && (
+                <span style={{ fontSize: '12px' }}>
+                  {isExpanded ? <DownOutlined /> : <RightOutlined />}
+                </span>
+              )}
+              {getIconComponent(item.icon, item.name)}
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                 <Text style={{ 
                   fontSize: '14px', 
                   fontWeight: '500',
-                  color: isActive ? 'white' : '#333'
+                  color: isActive ? 'white' : '#d9d9d9'
                 }}>
                   {item.name || item.label}
                 </Text>
@@ -302,14 +317,18 @@ const Dashboard = ({ sessionData, onLogout }) => {
                   <Text style={{ 
                     fontSize: '12px', 
                     opacity: 0.7,
-                    color: isActive ? 'white' : '#666'
+                    color: isActive ? 'white' : '#8c8c8c'
                   }}>
                     {item.model}
                   </Text>
                 )}
               </div>
-            )}
-          </Space>
+            </Space>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              {getIconComponent(item.icon, item.name)}
+            </div>
+          )}
         </Button>
         
         {hasChildren && isExpanded && sidebarOpen && (
@@ -777,20 +796,36 @@ const Dashboard = ({ sessionData, onLogout }) => {
           trigger={null}
           collapsible
           collapsed={!sidebarOpen}
-          width={256}
-          collapsedWidth={64}
+          width={280}
+          collapsedWidth={80}
+          breakpoint="lg"
+          onBreakpoint={(broken) => {
+            if (broken) {
+              setSidebarOpen(false);
+            }
+          }}
           style={{
             background: '#001529',
-            boxShadow: '2px 0 8px rgba(0,0,0,0.1)'
+            boxShadow: '2px 0 8px rgba(0,0,0,0.1)',
+            position: 'fixed',
+            height: '100vh',
+            left: 0,
+            top: 64,
+            zIndex: 100
           }}
         >
-          <div style={{ padding: '16px' }}>
+          <div style={{ 
+            padding: sidebarOpen ? '16px' : '8px',
+            height: '100%',
+            overflowY: 'auto'
+          }}>
             {loading ? (
               <div style={{ 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center', 
-                padding: '32px 0' 
+                padding: '32px 0',
+                flexDirection: sidebarOpen ? 'row' : 'column'
               }}>
                 <Spin size="large" />
                 {sidebarOpen && (
@@ -801,16 +836,16 @@ const Dashboard = ({ sessionData, onLogout }) => {
               </div>
             ) : error ? (
               <Alert
-                message="Error"
-                description={error}
+                message={sidebarOpen ? "Error" : ""}
+                description={sidebarOpen ? error : ""}
                 type="error"
-                showIcon
+                showIcon={sidebarOpen}
                 style={{ marginBottom: '16px' }}
-                action={
+                action={sidebarOpen ? (
                   <Button size="small" onClick={loadSidebarMenu}>
                     Reintentar
                   </Button>
-                }
+                ) : null}
               />
             ) : null}
             
@@ -844,7 +879,12 @@ const Dashboard = ({ sessionData, onLogout }) => {
         </Sider>
 
         {/* Main Content */}
-        <Content style={{ overflow: 'auto' }}>
+        <Content style={{ 
+          overflow: 'auto',
+          marginLeft: sidebarOpen ? '280px' : '80px',
+          transition: 'margin-left 0.2s',
+          minHeight: 'calc(100vh - 64px)'
+        }}>
           {renderContent()}
         </Content>
       </Layout>
