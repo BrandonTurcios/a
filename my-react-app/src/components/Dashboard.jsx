@@ -8,6 +8,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [expandedMenus, setExpandedMenus] = useState(new Set());
 
   useEffect(() => {
     loadSidebarMenu();
@@ -74,14 +75,15 @@ const Dashboard = ({ sessionData, onLogout }) => {
         console.log('Vistas de búsqueda:', result.viewSearch.length || 0);
       }
       
-      // Convertir los módulos a elementos del menú
+      // Convertir los módulos a elementos del menú con submenús
       const sidebarItems = [
         { 
           id: 'dashboard', 
           label: 'Dashboard', 
           icon: '📊', 
           type: 'dashboard',
-          modelAccessCount: result.modelAccess?.length || 0
+          modelAccessCount: result.modelAccess?.length || 0,
+          childs: []
         },
         ...result.menuItems.map(item => ({
           id: item.id,
@@ -89,7 +91,8 @@ const Dashboard = ({ sessionData, onLogout }) => {
           icon: item.icon,
           type: 'module',
           model: item.model,
-          description: item.description
+          description: item.description,
+          childs: item.childs || []
         }))
       ];
       
@@ -129,6 +132,63 @@ const Dashboard = ({ sessionData, onLogout }) => {
     }
     localStorage.removeItem('tryton_session');
     onLogout();
+  };
+
+  const toggleMenuExpansion = (menuId) => {
+    const newExpandedMenus = new Set(expandedMenus);
+    if (newExpandedMenus.has(menuId)) {
+      newExpandedMenus.delete(menuId);
+    } else {
+      newExpandedMenus.add(menuId);
+    }
+    setExpandedMenus(newExpandedMenus);
+  };
+
+  const renderMenuItem = (item, level = 0) => {
+    const hasChildren = item.childs && item.childs.length > 0;
+    const isExpanded = expandedMenus.has(item.id);
+    const isActive = activeTab === item.id;
+
+    return (
+      <div key={item.id} className={level > 0 ? 'ml-4' : ''}>
+        <button
+          onClick={() => {
+            if (hasChildren) {
+              toggleMenuExpansion(item.id);
+            } else {
+              setActiveTab(item.id);
+            }
+          }}
+          className={`w-full flex items-center px-3 py-2 rounded-lg transition-colors ${
+            isActive
+              ? 'bg-blue-100 text-blue-700'
+              : 'text-gray-700 hover:bg-gray-100'
+          }`}
+          title={item.description || item.name || item.label}
+        >
+          {hasChildren && (
+            <span className="text-sm mr-2">
+              {isExpanded ? '▼' : '▶'}
+            </span>
+          )}
+          <span className="text-xl mr-3">{item.icon}</span>
+          {sidebarOpen && (
+            <div className="flex flex-col items-start">
+              <span className="font-medium">{item.name || item.label}</span>
+              {item.type === 'module' && item.model && (
+                <span className="text-xs text-gray-500">{item.model}</span>
+              )}
+            </div>
+          )}
+        </button>
+        
+        {hasChildren && isExpanded && sidebarOpen && (
+          <div className="mt-1 space-y-1">
+            {item.childs.map(child => renderMenuItem(child, level + 1))}
+          </div>
+        )}
+      </div>
+    );
   };
 
 
@@ -225,7 +285,21 @@ const Dashboard = ({ sessionData, onLogout }) => {
           </div>
         );
       default:
-        const selectedItem = menuItems.find(item => item.id === activeTab);
+        // Buscar el elemento seleccionado en todos los niveles
+        const findSelectedItem = (items, targetId) => {
+          for (const item of items) {
+            if (item.id === targetId) {
+              return item;
+            }
+            if (item.childs && item.childs.length > 0) {
+              const found = findSelectedItem(item.childs, targetId);
+              if (found) return found;
+            }
+          }
+          return null;
+        };
+        
+        const selectedItem = findSelectedItem(menuItems, activeTab);
         
         // Si el menú seleccionado es "Health" (ID 69), mostrar la tabla de pacientes
         if (selectedItem && (selectedItem.name === 'Health' || selectedItem.id === 69)) {
@@ -241,7 +315,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
               {selectedItem?.type === 'module' ? (
                 <div>
                   <p className="text-gray-600 mb-4">
-                    <strong>Modelo:</strong> {selectedItem.model}
+                    <strong>Modelo:</strong> {selectedItem.model || 'N/A'}
                   </p>
                   {selectedItem.description && (
                     <p className="text-gray-600 mb-4">
@@ -253,9 +327,19 @@ const Dashboard = ({ sessionData, onLogout }) => {
                   </p>
                 </div>
               ) : (
-                <p className="text-gray-600">
-                  Módulo {selectedItem?.name || selectedItem?.label} en desarrollo...
-                </p>
+                <div>
+                  <p className="text-gray-600 mb-4">
+                    <strong>ID:</strong> {selectedItem?.id}
+                  </p>
+                  {selectedItem?.description && (
+                    <p className="text-gray-600 mb-4">
+                      <strong>Descripción:</strong> {selectedItem.description}
+                    </p>
+                  )}
+                  <p className="text-gray-600">
+                    {selectedItem?.name || selectedItem?.label} en desarrollo...
+                  </p>
+                </div>
               )}
             </div>
           </div>
@@ -324,34 +408,24 @@ const Dashboard = ({ sessionData, onLogout }) => {
             ) : null}
             
             <nav className="space-y-2">
-              {menuItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center px-3 py-2 rounded-lg transition-colors ${
-                    activeTab === item.id
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
-                  title={item.description || item.name || item.label}
-                >
-                  <span className="text-xl mr-3">{item.icon}</span>
-                  {sidebarOpen && (
-                    <div className="flex flex-col items-start">
-                      <span className="font-medium">{item.name || item.label}</span>
-                      {item.type === 'module' && (
-                        <span className="text-xs text-gray-500">{item.model}</span>
-                      )}
-                    </div>
-                  )}
-                </button>
-              ))}
+              {menuItems.map((item) => renderMenuItem(item))}
             </nav>
             
             {sidebarOpen && (
               <div className="mt-6 pt-4 border-t border-gray-200">
                 <p className="text-xs text-gray-500">
-                  {menuItems.length} elementos cargados
+                  {(() => {
+                    const countTotalItems = (items) => {
+                      let count = items.length;
+                      items.forEach(item => {
+                        if (item.childs && item.childs.length > 0) {
+                          count += countTotalItems(item.childs);
+                        }
+                      });
+                      return count;
+                    };
+                    return `${countTotalItems(menuItems)} elementos cargados`;
+                  })()}
                 </p>
               </div>
             )}

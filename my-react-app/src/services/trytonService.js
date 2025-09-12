@@ -316,6 +316,38 @@ class TrytonService {
     }
   }
 
+  // Función auxiliar para obtener submenús
+  async getSubmenus(childIds) {
+    if (!childIds || childIds.length === 0) {
+      return [];
+    }
+    
+    try {
+      const submenuDetails = await this.makeRpcCall('model.ir.ui.menu.read', [
+        childIds,
+        ['active', 'childs', 'favorite', 'icon', 'name', 'parent', 'icon:string', 'parent.rec_name', 'rec_name', '_timestamp', '_write', '_delete'],
+        {}
+      ]);
+      
+      if (submenuDetails && submenuDetails.length > 0) {
+        return submenuDetails.map(submenu => ({
+          id: submenu.id,
+          name: submenu.name || submenu.rec_name || `Submenú ${submenu.id}`,
+          icon: submenu.icon || '📋',
+          iconName: submenu['icon:string'] || submenu.icon || 'tryton-list',
+          model: submenu.model || '',
+          description: submenu.description || submenu.name || submenu.rec_name || `Submenú ${submenu.id}`,
+          sequence: submenu.sequence || 0,
+          childs: submenu.childs || []
+        }));
+      }
+      return [];
+    } catch (error) {
+      console.warn('Error obteniendo submenús:', error.message);
+      return [];
+    }
+  }
+
   // Obtener menú del sidebar
   async getSidebarMenu() {
     if (!this.sessionData) {
@@ -399,8 +431,12 @@ class TrytonService {
             
             
             if (menuDetails && menuDetails.length > 0) {
-              menuItems = menuDetails.map(menu => {
+              menuItems = await Promise.all(menuDetails.map(async (menu) => {
                 const finalName = menu.name || menu.rec_name || `Menú ${menu.id}`;
+                
+                // Obtener submenús si existen
+                const submenus = await this.getSubmenus(menu.childs);
+                
                 return {
                   id: menu.id,
                   name: finalName,
@@ -409,9 +445,9 @@ class TrytonService {
                   model: menu.model || '',
                   description: menu.description || menu.name || menu.rec_name || `Menú ${menu.id}`,
                   sequence: menu.sequence || 0,
-                  childs: menu.childs || []
+                  childs: submenus
                 };
-              });
+              }));
             }
           }
         } catch (menuError) {
@@ -437,6 +473,10 @@ class TrytonService {
                   const menu = menuDetails[0];
                   // Usar el ID del menú para buscar en el mapa de iconos
                   const iconName = iconMap[menu.id] || 'tryton-list';
+                  
+                  // Obtener submenús si existen
+                  const submenus = await this.getSubmenus(menu.childs);
+                  
                   menuItems.push({
                     id: menu.id,
                     name: menu.name || iconName || `Menú ${menu.id}`,
@@ -445,7 +485,7 @@ class TrytonService {
                     model: menu.model || '',
                     description: menu.description || menu.name || iconName || `Menú ${menu.id}`,
                     sequence: menu.sequence || 0,
-                    childs: menu.childs || []
+                    childs: submenus
                   });
                 }
               } catch (individualError) {
@@ -508,8 +548,12 @@ class TrytonService {
             
             
             if (menuDetails && menuDetails.length > 0) {
-              menuItems = menuDetails.map(menu => {
+              menuItems = await Promise.all(menuDetails.map(async (menu) => {
                 const finalName = menu.name || menu.rec_name || `Menú ${menu.id}`;
+                
+                // Obtener submenús si existen
+                const submenus = await this.getSubmenus(menu.childs);
+                
                 return {
                   id: menu.id,
                   name: finalName,
@@ -518,9 +562,9 @@ class TrytonService {
                   model: menu.model || '',
                   description: menu.description || menu.name || menu.rec_name || `Menú ${menu.id}`,
                   sequence: menu.sequence || 0,
-                  childs: menu.childs || []
+                  childs: submenus
                 };
-              });
+              }));
             } else {
               throw new Error('No se obtuvieron detalles de menús');
             }
@@ -556,8 +600,12 @@ class TrytonService {
             
             
             if (menuDetails && menuDetails.length > 0) {
-              menuItems = menuDetails.map(menu => {
+              menuItems = await Promise.all(menuDetails.map(async (menu) => {
                 const finalName = menu.name || menu.rec_name || `Menú ${menu.id}`;
+                
+                // Obtener submenús si existen
+                const submenus = await this.getSubmenus(menu.childs);
+                
                 return {
                   id: menu.id,
                   name: finalName,
@@ -566,9 +614,9 @@ class TrytonService {
                   model: menu.model || '',
                   description: menu.description || menu.name || menu.rec_name || `Menú ${menu.id}`,
                   sequence: menu.sequence || 0,
-                  childs: menu.childs || []
+                  childs: submenus
                 };
-              });
+              }));
             } else {
               throw new Error('No se obtuvieron detalles de menús');
             }
@@ -595,6 +643,10 @@ class TrytonService {
                     const menu = menuDetails[0];
                     // Usar el ID del menú para buscar en el mapa de iconos
                     const iconName = iconMap[menu.id] || 'tryton-list';
+                    
+                    // Obtener submenús si existen
+                    const submenus = await this.getSubmenus(menu.childs);
+                    
                     menuItems.push({
                       id: menu.id,
                       name: menu.name || iconName || `Menú ${menu.id}`,
@@ -603,7 +655,7 @@ class TrytonService {
                       model: menu.model || '',
                       description: menu.description || menu.name || iconName || `Menú ${menu.id}`,
                       sequence: menu.sequence || 0,
-                      childs: menu.childs || []
+                      childs: submenus
                     });
                   }
                 } catch (individualError) {
