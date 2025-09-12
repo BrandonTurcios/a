@@ -777,6 +777,26 @@ class TrytonService {
 
 
 
+  // Obtener información de acción de menú
+  async getMenuActionInfo(menuId) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      const actionInfo = await this.makeRpcCall('model.ir.action.keyword.get_keyword', [
+        'tree_open',
+        ['ir.ui.menu', menuId],
+        {}
+      ]);
+      
+      return actionInfo;
+    } catch (error) {
+      console.error('Error obteniendo información de acción del menú:', error);
+      throw error;
+    }
+  }
+
   // Obtener pacientes de GNU Health de forma segura
   async getPatientsSafe({
     model = 'gnuhealth.patient',

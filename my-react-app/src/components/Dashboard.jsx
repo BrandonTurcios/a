@@ -60,6 +60,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [expandedMenus, setExpandedMenus] = useState(new Set());
+  const [selectedMenuInfo, setSelectedMenuInfo] = useState(null);
 
   useEffect(() => {
     loadSidebarMenu();
@@ -209,6 +210,39 @@ const Dashboard = ({ sessionData, onLogout }) => {
     setExpandedMenus(newExpandedMenus);
   };
 
+  const handleMenuClick = async (item) => {
+    try {
+      // Si es el dashboard, no hacer llamada RPC
+      if (item.id === 'dashboard') {
+        setActiveTab(item.id);
+        setSelectedMenuInfo(null);
+        return;
+      }
+
+      // Usar el método del servicio para obtener la información del menú
+      const menuInfo = await trytonService.getMenuActionInfo(item.id);
+
+      console.log('Información del menú obtenida:', menuInfo);
+      
+      setSelectedMenuInfo({
+        menuItem: item,
+        actionInfo: menuInfo,
+        timestamp: new Date().toISOString()
+      });
+      
+      setActiveTab(item.id);
+    } catch (error) {
+      console.error('Error obteniendo información del menú:', error);
+      setSelectedMenuInfo({
+        menuItem: item,
+        actionInfo: null,
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
+      setActiveTab(item.id);
+    }
+  };
+
   const getIconComponent = (icon, name) => {
     const iconMap = {
       '📊': BarChart3,
@@ -277,7 +311,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
             if (hasChildren) {
               toggleMenuExpansion(item.id);
             } else {
-              setActiveTab(item.id);
+              handleMenuClick(item);
             }
           }}
           style={{
@@ -583,6 +617,93 @@ const Dashboard = ({ sessionData, onLogout }) => {
         // Si el menú seleccionado es "Health" (ID 69), mostrar la tabla de pacientes
         if (selectedItem && (selectedItem.name === 'Health' || selectedItem.id === 69)) {
           return <PatientsTable sessionData={sessionData} />;
+        }
+        
+        // Si hay información del menú seleccionado, mostrar el JSON
+        if (selectedMenuInfo) {
+          return (
+            <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100%' }}>
+              <div style={{ marginBottom: '32px' }}>
+                <Title level={2} style={{ margin: 0, color: '#1f2937' }}>
+                  Información del Menú
+                </Title>
+                <Paragraph style={{ color: '#6b7280', margin: '8px 0 0 0' }}>
+                  Detalles de la acción del menú seleccionado
+                </Paragraph>
+              </div>
+              
+              <Row gutter={[24, 24]}>
+                <Col xs={24} lg={12}>
+                  <Card 
+                    title="Información del Menú"
+                    style={{ borderRadius: '12px' }}
+                    bodyStyle={{ padding: '24px' }}
+                  >
+                    <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Text type="secondary">ID del Menú</Text>
+                        <Tag color="blue">{selectedMenuInfo.menuItem.id}</Tag>
+                      </div>
+                      <Divider style={{ margin: '8px 0' }} />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Text type="secondary">Nombre</Text>
+                        <Text strong>{selectedMenuInfo.menuItem.name || selectedMenuInfo.menuItem.label}</Text>
+                      </div>
+                      <Divider style={{ margin: '8px 0' }} />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Text type="secondary">Modelo</Text>
+                        <Text strong>{selectedMenuInfo.menuItem.model || 'N/A'}</Text>
+                      </div>
+                      <Divider style={{ margin: '8px 0' }} />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Text type="secondary">Timestamp</Text>
+                        <Text strong>{new Date(selectedMenuInfo.timestamp).toLocaleString()}</Text>
+                      </div>
+                      {selectedMenuInfo.error && (
+                        <>
+                          <Divider style={{ margin: '8px 0' }} />
+                          <Alert
+                            message="Error"
+                            description={selectedMenuInfo.error}
+                            type="error"
+                            showIcon
+                          />
+                        </>
+                      )}
+                    </Space>
+                  </Card>
+                </Col>
+                
+                <Col xs={24} lg={12}>
+                  <Card 
+                    title="Respuesta RPC (JSON)"
+                    style={{ borderRadius: '12px' }}
+                    bodyStyle={{ padding: '24px' }}
+                  >
+                    <div style={{ 
+                      background: '#f8f9fa', 
+                      border: '1px solid #e9ecef', 
+                      borderRadius: '8px',
+                      padding: '16px',
+                      maxHeight: '500px',
+                      overflowY: 'auto'
+                    }}>
+                      <pre style={{ 
+                        margin: 0, 
+                        fontSize: '12px', 
+                        lineHeight: '1.4',
+                        color: '#495057',
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word'
+                      }}>
+                        {JSON.stringify(selectedMenuInfo.actionInfo, null, 2)}
+                      </pre>
+                    </div>
+                  </Card>
+                </Col>
+              </Row>
+            </div>
+          );
         }
         
         return (
