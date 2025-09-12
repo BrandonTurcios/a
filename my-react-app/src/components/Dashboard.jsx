@@ -24,26 +24,28 @@ import {
   SearchOutlined,
   LogoutOutlined,
   DownOutlined,
-  RightOutlined,
-  HeartOutlined,
-  UserOutlined,
-  CalendarOutlined,
-  MedicineBoxOutlined,
-  BankOutlined,
-  BarChartOutlined,
-  SafetyOutlined,
-  DatabaseOutlined,
-  SettingOutlined,
-  FileTextOutlined,
-  ActivityOutlined,
-  TeamOutlined,
-  StethoscopeOutlined,
-  HospitalOutlined,
-  UnorderedListOutlined,
-  DollarOutlined,
-  ShoppingCartOutlined,
-  InboxOutlined
+  RightOutlined
 } from '@ant-design/icons';
+import { 
+  Heart,
+  User,
+  Calendar,
+  Pill,
+  Building2,
+  BarChart3,
+  Shield,
+  Database,
+  Settings,
+  FileText,
+  Activity,
+  Users,
+  Stethoscope,
+  Hospital,
+  ClipboardList,
+  DollarSign,
+  ShoppingCart,
+  Package
+} from 'lucide-react';
 import trytonService from '../services/trytonService';
 import PatientsTable from './PatientsTable';
 
@@ -195,57 +197,57 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
   const getIconComponent = (icon, name) => {
     const iconMap = {
-      '📊': BarChartOutlined,
-      '💰': DollarOutlined,
-      '🛒': ShoppingCartOutlined,
-      '📦': InboxOutlined,
-      '📋': UnorderedListOutlined,
-      '👥': TeamOutlined,
-      '⚙️': SettingOutlined,
-      '❤️': HeartOutlined,
-      '👨‍⚕️': StethoscopeOutlined,
-      '📅': CalendarOutlined,
-      '💊': MedicineBoxOutlined,
-      '🏥': HospitalOutlined,
-      '🔐': SafetyOutlined,
-      '👤': UserOutlined,
-      '🏢': BankOutlined,
-      '📄': FileTextOutlined,
+      '📊': BarChart3,
+      '💰': DollarSign,
+      '🛒': ShoppingCart,
+      '📦': Package,
+      '📋': ClipboardList,
+      '👥': Users,
+      '⚙️': Settings,
+      '❤️': Heart,
+      '👨‍⚕️': Stethoscope,
+      '📅': Calendar,
+      '💊': Pill,
+      '🏥': Hospital,
+      '🔐': Shield,
+      '👤': User,
+      '🏢': Building2,
+      '📄': FileText,
       '🔍': SearchOutlined,
-      '📈': ActivityOutlined
+      '📈': Activity
     };
 
     // Si es un emoji, usar el mapeo
     if (icon && iconMap[icon]) {
       const IconComponent = iconMap[icon];
-      return <IconComponent style={{ fontSize: '16px' }} />;
+      return <IconComponent size={16} />;
     }
 
     // Si es un nombre específico, mapear por nombre
     const nameMap = {
-      'Health': HeartOutlined,
-      'Sales': DollarOutlined,
-      'Purchase': ShoppingCartOutlined,
-      'Inventory': InboxOutlined,
-      'Accounting': FileTextOutlined,
-      'HR': TeamOutlined,
-      'Settings': SettingOutlined,
-      'Dashboard': BarChartOutlined,
-      'Patient': HeartOutlined,
-      'Doctor': StethoscopeOutlined,
-      'Appointment': CalendarOutlined,
-      'Medicine': MedicineBoxOutlined,
-      'Department': BankOutlined,
-      'Report': BarChartOutlined
+      'Health': Heart,
+      'Sales': DollarSign,
+      'Purchase': ShoppingCart,
+      'Inventory': Package,
+      'Accounting': FileText,
+      'HR': Users,
+      'Settings': Settings,
+      'Dashboard': BarChart3,
+      'Patient': Heart,
+      'Doctor': Stethoscope,
+      'Appointment': Calendar,
+      'Medicine': Pill,
+      'Department': Building2,
+      'Report': BarChart3
     };
 
     if (name && nameMap[name]) {
       const IconComponent = nameMap[name];
-      return <IconComponent style={{ fontSize: '16px' }} />;
+      return <IconComponent size={16} />;
     }
 
     // Fallback por defecto
-    return <FileTextOutlined style={{ fontSize: '16px' }} />;
+    return <FileText size={16} />;
   };
 
   const renderMenuItem = (item, level = 0) => {
@@ -352,7 +354,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                     justifyContent: 'center',
                     margin: '0 auto 12px'
                   }}>
-                    <HeartOutlined style={{ fontSize: '24px', color: '#ef4444' }} />
+                    <Heart size={24} color="#ef4444" />
                   </div>
                   <Text strong>Pacientes</Text>
                 </Card>
@@ -373,7 +375,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                     justifyContent: 'center',
                     margin: '0 auto 12px'
                   }}>
-                    <StethoscopeOutlined style={{ fontSize: '24px', color: '#3b82f6' }} />
+                    <Stethoscope size={24} color="#3b82f6" />
                   </div>
                   <Text strong>Doctores</Text>
                 </Card>
@@ -394,7 +396,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                     justifyContent: 'center',
                     margin: '0 auto 12px'
                   }}>
-                    <CalendarOutlined style={{ fontSize: '24px', color: '#10b981' }} />
+                    <Calendar size={24} color="#10b981" />
                   </div>
                   <Text strong>Citas</Text>
                 </Card>
@@ -415,7 +417,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                     justifyContent: 'center',
                     margin: '0 auto 12px'
                   }}>
-                    <MedicineBoxOutlined style={{ fontSize: '24px', color: '#8b5cf6' }} />
+                    <Pill size={24} color="#8b5cf6" />
                   </div>
                   <Text strong>Medicamentos</Text>
                 </Card>
@@ -436,7 +438,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                     justifyContent: 'center',
                     margin: '0 auto 12px'
                   }}>
-                    <HospitalOutlined style={{ fontSize: '24px', color: '#f59e0b' }} />
+                    <Hospital size={24} color="#f59e0b" />
                   </div>
                   <Text strong>Departamentos</Text>
                 </Card>
@@ -457,7 +459,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                     justifyContent: 'center',
                     margin: '0 auto 12px'
                   }}>
-                    <BarChartOutlined style={{ fontSize: '24px', color: '#6366f1' }} />
+                    <BarChart3 size={24} color="#6366f1" />
                   </div>
                   <Text strong>Reportes</Text>
                 </Card>
@@ -477,7 +479,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                       <Statistic
                         title="Módulos"
                         value={menuItems.filter(item => item.type === 'module').length}
-                        prefix={<BarChartOutlined style={{ color: '#1890ff' }} />}
+                        prefix={<BarChart3 size={16} color="#1890ff" />}
                         valueStyle={{ color: '#1890ff' }}
                       />
                     </Col>
@@ -485,7 +487,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                       <Statistic
                         title="Modelos"
                         value={menuItems.find(item => item.id === 'dashboard')?.modelAccessCount || 0}
-                        prefix={<SafetyOutlined style={{ color: '#52c41a' }} />}
+                        prefix={<Shield size={16} color="#52c41a" />}
                         valueStyle={{ color: '#52c41a' }}
                       />
                     </Col>
@@ -493,7 +495,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                       <Statistic
                         title="Usuario"
                         value={sessionData.username}
-                        prefix={<UserOutlined style={{ color: '#722ed1' }} />}
+                        prefix={<User size={16} color="#722ed1" />}
                         valueStyle={{ color: '#722ed1' }}
                       />
                     </Col>
@@ -501,7 +503,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                       <Statistic
                         title="Base de Datos"
                         value={sessionData.database}
-                        prefix={<DatabaseOutlined style={{ color: '#fa8c16' }} />}
+                        prefix={<Database size={16} color="#fa8c16" />}
                         valueStyle={{ color: '#fa8c16' }}
                       />
                     </Col>
@@ -672,10 +674,10 @@ const Dashboard = ({ sessionData, onLogout }) => {
                     bodyStyle={{ padding: '24px' }}
                   >
                     <Space direction="vertical" style={{ width: '100%' }} size="middle">
-                      <Button type="primary" block icon={<SettingOutlined />}>
+                      <Button type="primary" block icon={<Settings size={16} />}>
                         Configurar
                       </Button>
-                      <Button block icon={<FileTextOutlined />}>
+                      <Button block icon={<FileText size={16} />}>
                         Ver documentación
                       </Button>
                     </Space>
