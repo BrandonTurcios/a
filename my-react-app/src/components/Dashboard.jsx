@@ -226,7 +226,9 @@ const Dashboard = ({ sessionData, onLogout }) => {
       
       setSelectedMenuInfo({
         menuItem: item,
-        actionInfo: menuInfo,
+        actionInfo: menuInfo.actionInfo,
+        toolbarInfo: menuInfo.toolbarInfo,
+        resModel: menuInfo.resModel,
         timestamp: new Date().toISOString()
       });
       
@@ -236,6 +238,8 @@ const Dashboard = ({ sessionData, onLogout }) => {
       setSelectedMenuInfo({
         menuItem: item,
         actionInfo: null,
+        toolbarInfo: null,
+        resModel: null,
         error: error.message,
         timestamp: new Date().toISOString()
       });
@@ -633,7 +637,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
               </div>
               
               <Row gutter={[24, 24]}>
-                <Col xs={24} lg={12}>
+                <Col xs={24} lg={8}>
                   <Card 
                     title="Información del Menú"
                     style={{ borderRadius: '12px' }}
@@ -656,6 +660,11 @@ const Dashboard = ({ sessionData, onLogout }) => {
                       </div>
                       <Divider style={{ margin: '8px 0' }} />
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Text type="secondary">Res Model</Text>
+                        <Tag color="green">{selectedMenuInfo.resModel || 'N/A'}</Tag>
+                      </div>
+                      <Divider style={{ margin: '8px 0' }} />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Text type="secondary">Timestamp</Text>
                         <Text strong>{new Date(selectedMenuInfo.timestamp).toLocaleString()}</Text>
                       </div>
@@ -674,7 +683,44 @@ const Dashboard = ({ sessionData, onLogout }) => {
                   </Card>
                 </Col>
                 
-                <Col xs={24} lg={12}>
+                <Col xs={24} lg={8}>
+                  <Card 
+                    title="Información del Toolbar"
+                    style={{ borderRadius: '12px' }}
+                    bodyStyle={{ padding: '24px' }}
+                  >
+                    {selectedMenuInfo.toolbarInfo ? (
+                      <div style={{ 
+                        background: '#f8f9fa', 
+                        border: '1px solid #e9ecef', 
+                        borderRadius: '8px',
+                        padding: '16px',
+                        maxHeight: '300px',
+                        overflowY: 'auto'
+                      }}>
+                        <pre style={{ 
+                          margin: 0, 
+                          fontSize: '12px', 
+                          lineHeight: '1.4',
+                          color: '#495057',
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word'
+                        }}>
+                          {JSON.stringify(selectedMenuInfo.toolbarInfo, null, 2)}
+                        </pre>
+                      </div>
+                    ) : (
+                      <Alert
+                        message="No hay información de toolbar"
+                        description="Este menú no tiene información de toolbar disponible"
+                        type="info"
+                        showIcon
+                      />
+                    )}
+                  </Card>
+                </Col>
+                
+                <Col xs={24} lg={8}>
                   <Card 
                     title="Respuesta RPC (JSON)"
                     style={{ borderRadius: '12px' }}
@@ -866,7 +912,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
               <Text style={{ color: 'white', fontWeight: 'bold', fontSize: '14px' }}>T</Text>
             </div>
             <Title level={4} style={{ color: 'white', margin: 0 }}>
-              Tryton Health Management
+              proyecto brandon
             </Title>
           </div>
         </div>
