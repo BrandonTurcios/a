@@ -14,14 +14,16 @@ import {
   Col
 } from 'antd';
 import { 
-  Database, 
-  User, 
-  Lock, 
   LoginOutlined, 
   ReloadOutlined,
   CheckCircleOutlined,
   ExclamationCircleOutlined
 } from '@ant-design/icons';
+import { 
+  Database, 
+  User, 
+  Lock
+} from 'lucide-react';
 import trytonService from '../services/trytonService';
 
 const { Title, Text, Paragraph } = Typography;
