@@ -45,6 +45,13 @@ const Login = ({ onLogin }) => {
     fetchDatabases();
   }, []);
 
+  // Efecto para auto-seleccionar la base de datos si solo hay una
+  useEffect(() => {
+    if (databases.length === 1 && !formData.database) {
+      setFormData(prev => ({ ...prev, database: databases[0] }));
+    }
+  }, [databases]);
+
   const fetchDatabases = async () => {
     try {
       setLoadingDatabases(true);
@@ -166,6 +173,11 @@ const Login = ({ onLogin }) => {
                       placeholder="Selecciona una base de datos"
                       style={{ width: '100%' }}
                       size="large"
+                      showSearch
+                      optionFilterProp="children"
+                      filterOption={(input, option) =>
+                        option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                      }
                     >
                       {databases.map((db, index) => (
                         <Option key={index} value={db}>
@@ -184,6 +196,11 @@ const Login = ({ onLogin }) => {
                     }}>
                       <Text type="secondary">
                         {databases.length} base(s) de datos encontrada(s)
+                        {formData.database && (
+                          <span style={{ color: '#52c41a', marginLeft: '8px' }}>
+                            ✓ {formData.database} seleccionada
+                          </span>
+                        )}
                       </Text>
                       <Button 
                         type="link" 
