@@ -1,6 +1,55 @@
 import { useState, useEffect } from 'react';
+import { 
+  Layout, 
+  Menu, 
+  Button, 
+  Input, 
+  Avatar, 
+  Card, 
+  Row, 
+  Col, 
+  Statistic, 
+  Typography, 
+  Space, 
+  Badge, 
+  Dropdown, 
+  Spin, 
+  Alert,
+  Tag,
+  Divider,
+  Tooltip
+} from 'antd';
+import { 
+  MenuOutlined,
+  SearchOutlined,
+  LogoutOutlined,
+  DownOutlined,
+  RightOutlined,
+  HeartOutlined,
+  UserOutlined,
+  CalendarOutlined,
+  MedicineBoxOutlined,
+  BankOutlined,
+  BarChartOutlined,
+  SafetyOutlined,
+  DatabaseOutlined,
+  SettingOutlined,
+  FileTextOutlined,
+  ActivityOutlined,
+  TeamOutlined,
+  StethoscopeOutlined,
+  HospitalOutlined,
+  UnorderedListOutlined,
+  DollarOutlined,
+  ShoppingCartOutlined,
+  InboxOutlined
+} from '@ant-design/icons';
 import trytonService from '../services/trytonService';
 import PatientsTable from './PatientsTable';
+
+const { Header, Sider, Content } = Layout;
+const { Title, Text, Paragraph } = Typography;
+const { Search } = Input;
 
 const Dashboard = ({ sessionData, onLogout }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -144,14 +193,70 @@ const Dashboard = ({ sessionData, onLogout }) => {
     setExpandedMenus(newExpandedMenus);
   };
 
+  const getIconComponent = (icon, name) => {
+    const iconMap = {
+      '📊': BarChartOutlined,
+      '💰': DollarOutlined,
+      '🛒': ShoppingCartOutlined,
+      '📦': InboxOutlined,
+      '📋': UnorderedListOutlined,
+      '👥': TeamOutlined,
+      '⚙️': SettingOutlined,
+      '❤️': HeartOutlined,
+      '👨‍⚕️': StethoscopeOutlined,
+      '📅': CalendarOutlined,
+      '💊': MedicineBoxOutlined,
+      '🏥': HospitalOutlined,
+      '🔐': SafetyOutlined,
+      '👤': UserOutlined,
+      '🏢': BankOutlined,
+      '📄': FileTextOutlined,
+      '🔍': SearchOutlined,
+      '📈': ActivityOutlined
+    };
+
+    // Si es un emoji, usar el mapeo
+    if (icon && iconMap[icon]) {
+      const IconComponent = iconMap[icon];
+      return <IconComponent style={{ fontSize: '16px' }} />;
+    }
+
+    // Si es un nombre específico, mapear por nombre
+    const nameMap = {
+      'Health': HeartOutlined,
+      'Sales': DollarOutlined,
+      'Purchase': ShoppingCartOutlined,
+      'Inventory': InboxOutlined,
+      'Accounting': FileTextOutlined,
+      'HR': TeamOutlined,
+      'Settings': SettingOutlined,
+      'Dashboard': BarChartOutlined,
+      'Patient': HeartOutlined,
+      'Doctor': StethoscopeOutlined,
+      'Appointment': CalendarOutlined,
+      'Medicine': MedicineBoxOutlined,
+      'Department': BankOutlined,
+      'Report': BarChartOutlined
+    };
+
+    if (name && nameMap[name]) {
+      const IconComponent = nameMap[name];
+      return <IconComponent style={{ fontSize: '16px' }} />;
+    }
+
+    // Fallback por defecto
+    return <FileTextOutlined style={{ fontSize: '16px' }} />;
+  };
+
   const renderMenuItem = (item, level = 0) => {
     const hasChildren = item.childs && item.childs.length > 0;
     const isExpanded = expandedMenus.has(item.id);
     const isActive = activeTab === item.id;
 
     return (
-      <div key={item.id} className={level > 0 ? 'ml-4' : ''}>
-        <button
+      <div key={item.id} style={{ marginLeft: level > 0 ? '24px' : '0' }}>
+        <Button
+          type={isActive ? 'primary' : 'text'}
           onClick={() => {
             if (hasChildren) {
               toggleMenuExpansion(item.id);
@@ -159,31 +264,54 @@ const Dashboard = ({ sessionData, onLogout }) => {
               setActiveTab(item.id);
             }
           }}
-          className={`w-full flex items-center px-3 py-2 rounded-lg transition-colors ${
-            isActive
-              ? 'bg-blue-100 text-blue-700'
-              : 'text-gray-700 hover:bg-gray-100'
-          }`}
+          style={{
+            width: '100%',
+            height: 'auto',
+            padding: '12px 16px',
+            marginBottom: '4px',
+            textAlign: 'left',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            background: isActive ? '#1890ff' : 'transparent',
+            border: 'none',
+            borderRadius: '8px',
+            color: isActive ? 'white' : '#666'
+          }}
           title={item.description || item.name || item.label}
         >
-          {hasChildren && (
-            <span className="text-sm mr-2">
-              {isExpanded ? '▼' : '▶'}
-            </span>
-          )}
-          <span className="text-xl mr-3">{item.icon}</span>
-          {sidebarOpen && (
-            <div className="flex flex-col items-start">
-              <span className="font-medium">{item.name || item.label}</span>
-              {item.type === 'module' && item.model && (
-                <span className="text-xs text-gray-500">{item.model}</span>
-              )}
-            </div>
-          )}
-        </button>
+          <Space>
+            {hasChildren && (
+              <span style={{ fontSize: '12px' }}>
+                {isExpanded ? <DownOutlined /> : <RightOutlined />}
+              </span>
+            )}
+            {getIconComponent(item.icon, item.name)}
+            {sidebarOpen && (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                <Text style={{ 
+                  fontSize: '14px', 
+                  fontWeight: '500',
+                  color: isActive ? 'white' : '#333'
+                }}>
+                  {item.name || item.label}
+                </Text>
+                {item.type === 'module' && item.model && (
+                  <Text style={{ 
+                    fontSize: '12px', 
+                    opacity: 0.7,
+                    color: isActive ? 'white' : '#666'
+                  }}>
+                    {item.model}
+                  </Text>
+                )}
+              </div>
+            )}
+          </Space>
+        </Button>
         
         {hasChildren && isExpanded && sidebarOpen && (
-          <div className="mt-1 space-y-1">
+          <div style={{ marginTop: '4px' }}>
             {item.childs.map(child => renderMenuItem(child, level + 1))}
           </div>
         )}
@@ -196,92 +324,222 @@ const Dashboard = ({ sessionData, onLogout }) => {
     switch (activeTab) {
       case 'dashboard':
         return (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Dashboard</h2>
-            
-            {/* Información de la sesión */}
-            <div className="bg-white rounded-lg shadow p-6 mb-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Información de Sesión</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-600">Usuario</p>
-                  <p className="font-medium">{sessionData.username}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Base de Datos</p>
-                  <p className="font-medium">{sessionData.database}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">ID de Usuario</p>
-                  <p className="font-medium">{sessionData.userId}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">ID de Sesión</p>
-                  <p className="font-medium">{sessionData.sessionId}</p>
-                </div>
-              </div>
+          <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100%' }}>
+            <div style={{ marginBottom: '32px' }}>
+              <Title level={2} style={{ margin: 0, color: '#1f2937' }}>
+                Hospital Management
+              </Title>
+              <Paragraph style={{ color: '#6b7280', margin: '8px 0 0 0' }}>
+                Panel de control del sistema Tryton Health
+              </Paragraph>
             </div>
             
-            {/* Estadísticas */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <span className="text-2xl">📊</span>
+            {/* Quick Access Cards */}
+            <Row gutter={[16, 16]} style={{ marginBottom: '32px' }}>
+              <Col xs={12} sm={8} md={4}>
+                <Card 
+                  hoverable
+                  style={{ textAlign: 'center', borderRadius: '12px' }}
+                  bodyStyle={{ padding: '16px' }}
+                >
+                  <div style={{ 
+                    width: '48px', 
+                    height: '48px', 
+                    background: '#fef2f2',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 12px'
+                  }}>
+                    <HeartOutlined style={{ fontSize: '24px', color: '#ef4444' }} />
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm text-gray-600">Módulos</p>
-                    <p className="text-2xl font-bold text-gray-800">{menuItems.filter(item => item.type === 'module').length}</p>
+                  <Text strong>Pacientes</Text>
+                </Card>
+              </Col>
+              <Col xs={12} sm={8} md={4}>
+                <Card 
+                  hoverable
+                  style={{ textAlign: 'center', borderRadius: '12px' }}
+                  bodyStyle={{ padding: '16px' }}
+                >
+                  <div style={{ 
+                    width: '48px', 
+                    height: '48px', 
+                    background: '#eff6ff',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 12px'
+                  }}>
+                    <StethoscopeOutlined style={{ fontSize: '24px', color: '#3b82f6' }} />
                   </div>
-                </div>
-              </div>
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-indigo-100 rounded-lg">
-                    <span className="text-2xl">🔐</span>
+                  <Text strong>Doctores</Text>
+                </Card>
+              </Col>
+              <Col xs={12} sm={8} md={4}>
+                <Card 
+                  hoverable
+                  style={{ textAlign: 'center', borderRadius: '12px' }}
+                  bodyStyle={{ padding: '16px' }}
+                >
+                  <div style={{ 
+                    width: '48px', 
+                    height: '48px', 
+                    background: '#f0fdf4',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 12px'
+                  }}>
+                    <CalendarOutlined style={{ fontSize: '24px', color: '#10b981' }} />
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm text-gray-600">Modelos Accesibles</p>
-                    <p className="text-2xl font-bold text-gray-800">
-                      {menuItems.find(item => item.id === 'dashboard')?.modelAccessCount || 'N/A'}
-                    </p>
+                  <Text strong>Citas</Text>
+                </Card>
+              </Col>
+              <Col xs={12} sm={8} md={4}>
+                <Card 
+                  hoverable
+                  style={{ textAlign: 'center', borderRadius: '12px' }}
+                  bodyStyle={{ padding: '16px' }}
+                >
+                  <div style={{ 
+                    width: '48px', 
+                    height: '48px', 
+                    background: '#faf5ff',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 12px'
+                  }}>
+                    <MedicineBoxOutlined style={{ fontSize: '24px', color: '#8b5cf6' }} />
                   </div>
-                </div>
-              </div>
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <span className="text-2xl">👤</span>
+                  <Text strong>Medicamentos</Text>
+                </Card>
+              </Col>
+              <Col xs={12} sm={8} md={4}>
+                <Card 
+                  hoverable
+                  style={{ textAlign: 'center', borderRadius: '12px' }}
+                  bodyStyle={{ padding: '16px' }}
+                >
+                  <div style={{ 
+                    width: '48px', 
+                    height: '48px', 
+                    background: '#fffbeb',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 12px'
+                  }}>
+                    <HospitalOutlined style={{ fontSize: '24px', color: '#f59e0b' }} />
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm text-gray-600">Usuario</p>
-                    <p className="text-2xl font-bold text-gray-800">{sessionData.username}</p>
+                  <Text strong>Departamentos</Text>
+                </Card>
+              </Col>
+              <Col xs={12} sm={8} md={4}>
+                <Card 
+                  hoverable
+                  style={{ textAlign: 'center', borderRadius: '12px' }}
+                  bodyStyle={{ padding: '16px' }}
+                >
+                  <div style={{ 
+                    width: '48px', 
+                    height: '48px', 
+                    background: '#eef2ff',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 12px'
+                  }}>
+                    <BarChartOutlined style={{ fontSize: '24px', color: '#6366f1' }} />
                   </div>
-                </div>
-              </div>
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-yellow-100 rounded-lg">
-                    <span className="text-2xl">🏢</span>
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm text-gray-600">Base de Datos</p>
-                    <p className="text-2xl font-bold text-gray-800">{sessionData.database}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <span className="text-2xl">⚙️</span>
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm text-gray-600">Estado</p>
-                    <p className="text-2xl font-bold text-gray-800">Activo</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+                  <Text strong>Reportes</Text>
+                </Card>
+              </Col>
+            </Row>
+
+            <Row gutter={[24, 24]}>
+              {/* Estadísticas principales */}
+              <Col xs={24} lg={16}>
+                <Card 
+                  title="Estadísticas del Sistema"
+                  style={{ borderRadius: '12px' }}
+                  bodyStyle={{ padding: '24px' }}
+                >
+                  <Row gutter={[16, 16]}>
+                    <Col xs={12} sm={6}>
+                      <Statistic
+                        title="Módulos"
+                        value={menuItems.filter(item => item.type === 'module').length}
+                        prefix={<BarChartOutlined style={{ color: '#1890ff' }} />}
+                        valueStyle={{ color: '#1890ff' }}
+                      />
+                    </Col>
+                    <Col xs={12} sm={6}>
+                      <Statistic
+                        title="Modelos"
+                        value={menuItems.find(item => item.id === 'dashboard')?.modelAccessCount || 0}
+                        prefix={<SafetyOutlined style={{ color: '#52c41a' }} />}
+                        valueStyle={{ color: '#52c41a' }}
+                      />
+                    </Col>
+                    <Col xs={12} sm={6}>
+                      <Statistic
+                        title="Usuario"
+                        value={sessionData.username}
+                        prefix={<UserOutlined style={{ color: '#722ed1' }} />}
+                        valueStyle={{ color: '#722ed1' }}
+                      />
+                    </Col>
+                    <Col xs={12} sm={6}>
+                      <Statistic
+                        title="Base de Datos"
+                        value={sessionData.database}
+                        prefix={<DatabaseOutlined style={{ color: '#fa8c16' }} />}
+                        valueStyle={{ color: '#fa8c16' }}
+                      />
+                    </Col>
+                  </Row>
+                </Card>
+              </Col>
+
+              {/* Información de sesión */}
+              <Col xs={24} lg={8}>
+                <Card 
+                  title="Información de Sesión"
+                  style={{ borderRadius: '12px' }}
+                  bodyStyle={{ padding: '24px' }}
+                >
+                  <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text type="secondary">Usuario</Text>
+                      <Text strong>{sessionData.username}</Text>
+                    </div>
+                    <Divider style={{ margin: '8px 0' }} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text type="secondary">Base de Datos</Text>
+                      <Text strong>{sessionData.database}</Text>
+                    </div>
+                    <Divider style={{ margin: '8px 0' }} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text type="secondary">ID Usuario</Text>
+                      <Text strong>{sessionData.userId}</Text>
+                    </div>
+                    <Divider style={{ margin: '8px 0' }} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text type="secondary">Estado</Text>
+                      <Tag color="green">Activo</Tag>
+                    </div>
+                  </Space>
+                </Card>
+              </Col>
+            </Row>
           </div>
         );
       default:
@@ -307,113 +565,264 @@ const Dashboard = ({ sessionData, onLogout }) => {
         }
         
         return (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">
-              {selectedItem?.name || selectedItem?.label || 'Módulo'}
-            </h2>
-            <div className="bg-white rounded-lg shadow p-6">
-              {selectedItem?.type === 'module' ? (
-                <div>
-                  <p className="text-gray-600 mb-4">
-                    <strong>Modelo:</strong> {selectedItem.model || 'N/A'}
-                  </p>
-                  {selectedItem.description && (
-                    <p className="text-gray-600 mb-4">
-                      <strong>Descripción:</strong> {selectedItem.description}
-                    </p>
-                  )}
-                  <p className="text-gray-600">
-                    Módulo {selectedItem.name || selectedItem.label} en desarrollo...
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  <p className="text-gray-600 mb-4">
-                    <strong>ID:</strong> {selectedItem?.id}
-                  </p>
-                  {selectedItem?.description && (
-                    <p className="text-gray-600 mb-4">
-                      <strong>Descripción:</strong> {selectedItem.description}
-                    </p>
-                  )}
-                  <p className="text-gray-600">
-                    {selectedItem?.name || selectedItem?.label} en desarrollo...
-                  </p>
-                </div>
-              )}
+          <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100%' }}>
+            <div style={{ marginBottom: '32px' }}>
+              <Title level={2} style={{ margin: 0, color: '#1f2937' }}>
+                {selectedItem?.name || selectedItem?.label || 'Módulo'}
+              </Title>
+              <Paragraph style={{ color: '#6b7280', margin: '8px 0 0 0' }}>
+                Gestión de {selectedItem?.name || selectedItem?.label}
+              </Paragraph>
             </div>
+            
+            <Row gutter={[24, 24]}>
+              <Col xs={24} lg={16}>
+                <Card 
+                  style={{ borderRadius: '12px' }}
+                  bodyStyle={{ padding: '24px' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '24px' }}>
+                    <div style={{ 
+                      width: '48px', 
+                      height: '48px', 
+                      background: '#eff6ff',
+                      borderRadius: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginRight: '16px'
+                    }}>
+                      {getIconComponent(selectedItem?.icon, selectedItem?.name)}
+                    </div>
+                    <div>
+                      <Title level={4} style={{ margin: 0 }}>
+                        {selectedItem?.name || selectedItem?.label}
+                      </Title>
+                      <Text type="secondary">
+                        {selectedItem?.type === 'module' ? 'Módulo del sistema' : 'Funcionalidad del sistema'}
+                      </Text>
+                    </div>
+                  </div>
+                  
+                  <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                    {selectedItem?.type === 'module' && (
+                      <>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Text type="secondary">Modelo</Text>
+                          <Tag color="blue">{selectedItem.model || 'N/A'}</Tag>
+                        </div>
+                        <Divider style={{ margin: '8px 0' }} />
+                      </>
+                    )}
+                    
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text type="secondary">ID</Text>
+                      <Tag color="default">{selectedItem?.id}</Tag>
+                    </div>
+                    
+                    {selectedItem?.description && (
+                      <>
+                        <Divider style={{ margin: '8px 0' }} />
+                        <div>
+                          <Text type="secondary" style={{ display: 'block', marginBottom: '8px' }}>
+                            Descripción
+                          </Text>
+                          <Card 
+                            size="small" 
+                            style={{ background: '#fafafa' }}
+                            bodyStyle={{ padding: '12px' }}
+                          >
+                            <Text>{selectedItem.description}</Text>
+                          </Card>
+                        </div>
+                      </>
+                    )}
+                  </Space>
+                </Card>
+              </Col>
+              
+              <Col xs={24} lg={8}>
+                <Space direction="vertical" style={{ width: '100%' }} size="large">
+                  <Card 
+                    title="Estado del Módulo"
+                    style={{ borderRadius: '12px' }}
+                    bodyStyle={{ padding: '24px' }}
+                  >
+                    <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Text type="secondary">Estado</Text>
+                        <Tag color="orange">En desarrollo</Tag>
+                      </div>
+                      <Divider style={{ margin: '8px 0' }} />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Text type="secondary">Versión</Text>
+                        <Text strong>1.0.0</Text>
+                      </div>
+                      <Divider style={{ margin: '8px 0' }} />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Text type="secondary">Última actualización</Text>
+                        <Text strong>Hoy</Text>
+                      </div>
+                    </Space>
+                  </Card>
+                  
+                  <Card 
+                    title="Acciones"
+                    style={{ borderRadius: '12px' }}
+                    bodyStyle={{ padding: '24px' }}
+                  >
+                    <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                      <Button type="primary" block icon={<SettingOutlined />}>
+                        Configurar
+                      </Button>
+                      <Button block icon={<FileTextOutlined />}>
+                        Ver documentación
+                      </Button>
+                    </Space>
+                  </Card>
+                </Space>
+              </Col>
+            </Row>
           </div>
         );
     }
   };
 
   return (
-    <div className="h-screen bg-gray-100 flex flex-col">
-      {/* Navbar */}
-      <nav className="bg-gray-800 text-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 rounded-md hover:bg-gray-700 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
-              <div className="ml-4 flex items-center">
-                <span className="text-xl font-semibold">Tryton</span>
-              </div>
+    <Layout style={{ minHeight: '100vh' }}>
+      {/* Header */}
+      <Header style={{ 
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        padding: '0 24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <Button
+            type="text"
+            icon={<MenuOutlined />}
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            style={{ 
+              color: 'white', 
+              marginRight: '16px',
+              fontSize: '18px'
+            }}
+          />
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <div style={{
+              width: '32px',
+              height: '32px',
+              background: 'linear-gradient(135deg, #ff6b6b 0%, #feca57 100%)',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: '12px'
+            }}>
+              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: '14px' }}>T</Text>
             </div>
-            
-            <div className="flex items-center space-x-4">
-              <div className="text-sm">
-                <p className="text-gray-300">Usuario: {sessionData.username}</p>
-                <p className="text-gray-400">DB: {sessionData.database}</p>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="p-2 rounded-md hover:bg-gray-700 transition-colors"
-                title="Cerrar sesión"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-              </button>
-            </div>
+            <Title level={4} style={{ color: 'white', margin: 0 }}>
+              Tryton Health Management
+            </Title>
           </div>
         </div>
-      </nav>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <Search
+            placeholder="Buscar..."
+            prefix={<SearchOutlined style={{ color: 'rgba(255,255,255,0.6)' }} />}
+            style={{
+              width: 300,
+              background: 'rgba(255,255,255,0.1)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              color: 'white'
+            }}
+          />
+          <Space>
+            <div style={{ textAlign: 'right' }}>
+              <Text style={{ color: 'white', display: 'block', fontSize: '14px' }}>
+                {sessionData.username}
+              </Text>
+              <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px' }}>
+                {sessionData.database}
+              </Text>
+            </div>
+            <Avatar 
+              style={{ 
+                background: 'rgba(255,255,255,0.2)',
+                color: 'white'
+              }}
+            >
+              {sessionData.username.charAt(0).toUpperCase()}
+            </Avatar>
+            <Tooltip title="Cerrar sesión">
+              <Button
+                type="text"
+                icon={<LogoutOutlined />}
+                onClick={handleLogout}
+                style={{ color: 'white' }}
+              />
+            </Tooltip>
+          </Space>
+        </div>
+      </Header>
 
-      <div className="flex flex-1 overflow-hidden">
+      <Layout>
         {/* Sidebar */}
-        <div className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-white shadow-lg transition-all duration-300 h-full overflow-y-auto`}>
-          <div className="p-4">
+        <Sider
+          trigger={null}
+          collapsible
+          collapsed={!sidebarOpen}
+          width={256}
+          collapsedWidth={64}
+          style={{
+            background: '#001529',
+            boxShadow: '2px 0 8px rgba(0,0,0,0.1)'
+          }}
+        >
+          <div style={{ padding: '16px' }}>
             {loading ? (
-              <div className="flex items-center justify-center py-4">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                <span className="ml-2 text-gray-600">Cargando menú...</span>
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                padding: '32px 0' 
+              }}>
+                <Spin size="large" />
+                {sidebarOpen && (
+                  <Text style={{ color: '#fff', marginLeft: '12px' }}>
+                    Cargando menú...
+                  </Text>
+                )}
               </div>
             ) : error ? (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-                <p className="text-sm text-red-600">{error}</p>
-                <button
-                  onClick={loadSidebarMenu}
-                  className="text-sm text-red-800 underline mt-1"
-                >
-                  Reintentar
-                </button>
-              </div>
+              <Alert
+                message="Error"
+                description={error}
+                type="error"
+                showIcon
+                style={{ marginBottom: '16px' }}
+                action={
+                  <Button size="small" onClick={loadSidebarMenu}>
+                    Reintentar
+                  </Button>
+                }
+              />
             ) : null}
             
-            <nav className="space-y-2">
+            <div style={{ marginTop: '16px' }}>
               {menuItems.map((item) => renderMenuItem(item))}
-            </nav>
+            </div>
             
             {sidebarOpen && (
-              <div className="mt-6 pt-4 border-t border-gray-200">
-                <p className="text-xs text-gray-500">
+              <div style={{ 
+                marginTop: '32px', 
+                paddingTop: '16px', 
+                borderTop: '1px solid #303030' 
+              }}>
+                <Text style={{ color: '#8c8c8c', fontSize: '12px' }}>
                   {(() => {
                     const countTotalItems = (items) => {
                       let count = items.length;
@@ -426,19 +835,18 @@ const Dashboard = ({ sessionData, onLogout }) => {
                     };
                     return `${countTotalItems(menuItems)} elementos cargados`;
                   })()}
-                </p>
+                </Text>
               </div>
             )}
           </div>
-        </div>
+        </Sider>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-y-auto">
+        <Content style={{ overflow: 'auto' }}>
           {renderContent()}
-        </div>
-      </div>
-
-    </div>
+        </Content>
+      </Layout>
+    </Layout>
   );
 };
 
