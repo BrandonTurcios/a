@@ -30,15 +30,12 @@ const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
 
 const Login = ({ onLogin }) => {
-  const [formData, setFormData] = useState({
-    database: '',
-    username: '',
-    password: ''
-  });
+  const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [databases, setDatabases] = useState([]);
   const [loadingDatabases, setLoadingDatabases] = useState(true);
+  const [selectedDatabase, setSelectedDatabase] = useState('');
 
   useEffect(() => {
     // Obtener las bases de datos disponibles al cargar el componente (como hace el SAO)
@@ -47,10 +44,14 @@ const Login = ({ onLogin }) => {
 
   // Efecto para auto-seleccionar la base de datos si solo hay una
   useEffect(() => {
-    if (databases.length === 1 && !formData.database) {
-      setFormData(prev => ({ ...prev, database: databases[0] }));
+    if (databases.length === 1) {
+      const currentDatabase = form.getFieldValue('database');
+      if (!currentDatabase) {
+        form.setFieldsValue({ database: databases[0] });
+        setSelectedDatabase(databases[0]);
+      }
     }
-  }, [databases]);
+  }, [databases, form]);
 
   const fetchDatabases = async () => {
     try {
@@ -138,10 +139,10 @@ const Login = ({ onLogin }) => {
             </div>
 
             <Form
+              form={form}
               layout="vertical"
               onFinish={handleSubmit}
               size="large"
-              initialValues={formData}
             >
               {/* Campo de Base de Datos */}
               <Form.Item
@@ -178,6 +179,7 @@ const Login = ({ onLogin }) => {
                       filterOption={(input, option) =>
                         option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
                       }
+                      onChange={(value) => setSelectedDatabase(value)}
                     >
                       {databases.map((db, index) => (
                         <Option key={index} value={db}>
@@ -196,9 +198,9 @@ const Login = ({ onLogin }) => {
                     }}>
                       <Text type="secondary">
                         {databases.length} base(s) de datos encontrada(s)
-                        {formData.database && (
+                        {selectedDatabase && (
                           <span style={{ color: '#52c41a', marginLeft: '8px' }}>
-                            ✓ {formData.database} seleccionada
+                            ✓ {selectedDatabase} seleccionada
                           </span>
                         )}
                       </Text>
