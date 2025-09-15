@@ -85,9 +85,10 @@ const TrytonTable = ({
         cols.push({
           accessorKey: fieldName,
           header: fieldDef.string || fieldName,
-          cell: ({ getValue }) => {
+          cell: ({ getValue, row }) => {
             const value = getValue();
-            return formatCellValue(value, fieldDef);
+            const record = row.original;
+            return formatCellValue(value, fieldDef, record);
           },
           meta: {
             fieldDef,
@@ -108,15 +109,19 @@ const TrytonTable = ({
     
     // Campos básicos que siempre incluir
     const basicFields = ['id', 'name', 'code', 'rec_name'];
-    return basicFields.includes(fieldName);
+    
+    // Campos relacionados importantes que mostrar
+    const relatedFields = ['party', 'template', 'product', 'company', 'supplier'];
+    
+    return basicFields.includes(fieldName) || relatedFields.includes(fieldName);
   };
 
-  const formatCellValue = (value, fieldDef) => {
+  const formatCellValue = (value, fieldDef, record = null) => {
     if (value === null || value === undefined) {
       return '-';
     }
     
-    // Manejar objetos complejos (relaciones)
+    // Manejar objetos complejos (relaciones con rec_name)
     if (typeof value === 'object' && value.rec_name) {
       return value.rec_name;
     }
@@ -139,6 +144,19 @@ const TrytonTable = ({
     // Manejar fechas
     if (fieldDef.type === 'date' || fieldDef.type === 'timestamp') {
       return new Date(value).toLocaleDateString();
+    }
+    
+    // Manejar IDs que tienen objetos relacionados
+    if (typeof value === 'number' && record) {
+      const fieldName = fieldDef.name || '';
+      
+      // Buscar el objeto relacionado con el mismo nombre pero terminado en "."
+      const relatedFieldName = fieldName + '.';
+      const relatedObject = record[relatedFieldName];
+      
+      if (relatedObject && typeof relatedObject === 'object' && relatedObject.rec_name) {
+        return relatedObject.rec_name;
+      }
     }
     
     return String(value);
