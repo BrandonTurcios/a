@@ -224,11 +224,35 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
       console.log('Información del menú obtenida:', menuInfo);
       
+      // Actualizar el nombre del menú si se obtuvo un actionName
+      let updatedItem = { ...item };
+      if (menuInfo.actionName) {
+        updatedItem.name = menuInfo.actionName;
+        console.log(`🔄 Actualizando nombre del menú ${item.id} de "${item.name}" a "${menuInfo.actionName}"`);
+        
+        // Actualizar el estado del menú con el nuevo nombre
+        setMenuItems(prevItems => {
+          const updateMenuItems = (items) => {
+            return items.map(menuItem => {
+              if (menuItem.id === item.id) {
+                return { ...menuItem, name: menuInfo.actionName };
+              }
+              if (menuItem.childs && menuItem.childs.length > 0) {
+                return { ...menuItem, childs: updateMenuItems(menuItem.childs) };
+              }
+              return menuItem;
+            });
+          };
+          return updateMenuItems(prevItems);
+        });
+      }
+      
       setSelectedMenuInfo({
-        menuItem: item,
+        menuItem: updatedItem,
         actionInfo: menuInfo.actionInfo,
         toolbarInfo: menuInfo.toolbarInfo,
         resModel: menuInfo.resModel,
+        actionName: menuInfo.actionName,
         timestamp: new Date().toISOString()
       });
       
@@ -240,6 +264,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
         actionInfo: null,
         toolbarInfo: null,
         resModel: null,
+        actionName: null,
         error: error.message,
         timestamp: new Date().toISOString()
       });
@@ -651,7 +676,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                       <Divider style={{ margin: '8px 0' }} />
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Text type="secondary">Nombre</Text>
-                        <Text strong>{selectedMenuInfo.menuItem.name}</Text>
+                        <Text strong>{selectedMenuInfo.actionName || selectedMenuInfo.menuItem.name}</Text>
                       </div>
                       <Divider style={{ margin: '8px 0' }} />
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

@@ -797,8 +797,12 @@ class TrytonService {
       
       // PASO 2: Si hay resultado, extraer el modelo y hacer la segunda llamada
       if (actionInfo && actionInfo.length > 0 && actionInfo[0].res_model) {
-        const resModel = actionInfo[0].res_model;
+        const actionData = actionInfo[0];
+        const resModel = actionData.res_model;
+        const actionName = actionData.name || `Menú ${menuId}`;
+        
         console.log(`🎯 Modelo encontrado: ${resModel}`);
+        console.log(`📝 Nombre de acción: ${actionName}`);
         
         // PASO 3: Hacer la llamada view_toolbar_get con el modelo obtenido
         console.log(`🔧 Ejecutando view_toolbar_get para modelo: ${resModel}`);
@@ -809,14 +813,16 @@ class TrytonService {
         return {
           actionInfo: actionInfo,
           toolbarInfo: toolbarInfo,
-          resModel: resModel
+          resModel: resModel,
+          actionName: actionName
         };
       } else {
         console.warn('⚠️ No se encontró res_model en la respuesta de acción:', actionInfo);
         return {
           actionInfo: actionInfo,
           toolbarInfo: null,
-          resModel: null
+          resModel: null,
+          actionName: null
         };
       }
     } catch (error) {
