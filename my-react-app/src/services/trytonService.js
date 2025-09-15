@@ -316,13 +316,18 @@ class TrytonService {
     }
   }
 
-  // Función auxiliar para obtener submenús
-  async getSubmenus(childIds) {
-    if (!childIds || childIds.length === 0) {
+  // Función auxiliar para obtener submenús (recursiva)
+  async getSubmenus(childIds, level = 0, maxDepth = 5) {
+    if (!childIds || childIds.length === 0 || level >= maxDepth) {
+      if (level >= maxDepth) {
+        console.warn(`⚠️ Máxima profundidad alcanzada (${maxDepth}) para IDs:`, childIds);
+      }
       return [];
     }
     
     try {
+      console.log(`📁 Obteniendo submenús nivel ${level} para IDs:`, childIds);
+      
       const submenuDetails = await this.makeRpcCall('model.ir.ui.menu.read', [
         childIds,
         ['active', 'childs', 'favorite', 'icon', 'name', 'parent', 'icon:string', 'parent.rec_name', 'rec_name', '_timestamp', '_write', '_delete'],
@@ -330,20 +335,39 @@ class TrytonService {
       ]);
       
       if (submenuDetails && submenuDetails.length > 0) {
-        return submenuDetails.map(submenu => ({
-          id: submenu.id,
-          name: submenu.name || submenu.rec_name || `Submenú ${submenu.id}`,
-          icon: submenu.icon || '📋',
-          iconName: submenu['icon:string'] || submenu.icon || 'tryton-list',
-          model: submenu.model || '',
-          description: submenu.description || submenu.name || submenu.rec_name || `Submenú ${submenu.id}`,
-          sequence: submenu.sequence || 0,
-          childs: submenu.childs || []
+        console.log(`✅ Obtenidos ${submenuDetails.length} submenús en nivel ${level}`);
+        
+        // Procesar cada submenú y obtener sus hijos recursivamente
+        const processedSubmenus = await Promise.all(submenuDetails.map(async (submenu) => {
+          console.log(`🔍 Procesando submenú: ${submenu.name} (ID: ${submenu.id})`);
+          
+          // Si tiene hijos, obtenerlos recursivamente
+          let childSubmenus = [];
+          if (submenu.childs && submenu.childs.length > 0) {
+            console.log(`📂 Submenú ${submenu.name} tiene ${submenu.childs.length} hijos:`, submenu.childs);
+            childSubmenus = await this.getSubmenus(submenu.childs, level + 1, maxDepth);
+          }
+          
+          return {
+            id: submenu.id,
+            name: submenu.name || submenu.rec_name || `Submenú ${submenu.id}`,
+            icon: submenu.icon || '📋',
+            iconName: submenu['icon:string'] || submenu.icon || 'tryton-list',
+            model: submenu.model || '',
+            description: submenu.description || submenu.name || submenu.rec_name || `Submenú ${submenu.id}`,
+            sequence: submenu.sequence || 0,
+            childs: childSubmenus,
+            parent: submenu.parent || null,
+            parentName: submenu['parent.']?.rec_name || null
+          };
         }));
+        
+        console.log(`✅ Completado nivel ${level} con ${processedSubmenus.length} submenús`);
+        return processedSubmenus;
       }
       return [];
     } catch (error) {
-      console.warn('Error obteniendo submenús:', error.message);
+      console.warn(`❌ Error obteniendo submenús nivel ${level}:`, error.message);
       return [];
     }
   }
