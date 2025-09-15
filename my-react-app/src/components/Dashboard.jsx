@@ -738,7 +738,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                   {selectedMenuInfo.actionName || selectedItem?.name || 'Tabla'}
                 </Title>
                 <Paragraph style={{ color: '#6b7280', margin: '8px 0 0 0' }}>
-                  {selectedMenuInfo.resModel} - Vista de datos
+                  {selectedMenuInfo.resModel}
                 </Paragraph>
               </div>
               

@@ -231,9 +231,7 @@ const TrytonTable = ({
             <Title level={4} style={{ margin: 0 }}>
               {title || `Tabla: ${model}`}
             </Title>
-            <Text type="secondary">
-              {data.length} registro(s) encontrado(s)
-            </Text>
+           
           </div>
           
           <Space>
@@ -278,7 +276,7 @@ const TrytonTable = ({
       {process.env.NODE_ENV === 'development' && (
         <details style={{ marginTop: '16px' }}>
           <summary style={{ cursor: 'pointer', color: '#666' }}>
-            Información de depuración
+            JSON
           </summary>
           <pre style={{ 
             background: '#f5f5f5', 
