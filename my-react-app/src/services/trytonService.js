@@ -915,14 +915,10 @@ class TrytonService {
         const firstRecord = data[0];
         console.log('🔍 Campos disponibles en el primer registro:', Object.keys(firstRecord));
         
-        // Verificar campos relacionados específicos
-        const relatedChecks = ['party.', 'template.', 'company.', 'product.'];
-        relatedChecks.forEach(field => {
-          if (firstRecord[field]) {
-            console.log(`✅ Campo relacionado "${field}" encontrado:`, firstRecord[field]);
-          } else {
-            console.log(`❌ Campo relacionado "${field}" NO encontrado`);
-          }
+        // Verificar campos relacionados que terminan en "."
+        const relatedFields = Object.keys(firstRecord).filter(key => key.endsWith('.'));
+        relatedFields.forEach(field => {
+          console.log(`✅ Campo relacionado "${field}" encontrado:`, firstRecord[field]);
         });
       }
       
@@ -948,12 +944,22 @@ class TrytonService {
       // PASO 2: Extraer campos de la vista y agregar campos relacionados
       const fields = fieldsView.fields ? Object.keys(fieldsView.fields) : [];
       
-      // Agregar campos relacionados importantes que terminan en "."
-      const relatedFields = ['party.', 'template.', 'product.', 'company.', 'supplier.'];
+      // Identificar campos relacionados basándose en los campos que existen
+      const relatedFields = [];
+      fields.forEach(field => {
+        // Si el campo es una relación (many2one, many2many, etc.), agregar el campo relacionado
+        if (fieldsView.fields[field] && 
+            (fieldsView.fields[field].type === 'many2one' || 
+             fieldsView.fields[field].type === 'many2many' ||
+             fieldsView.fields[field].type === 'one2many')) {
+          relatedFields.push(field + '.');
+        }
+      });
+      
       const allFields = [...fields, ...relatedFields];
       
       console.log('🔍 Campos originales:', fields);
-      console.log('🔍 Campos relacionados agregados:', relatedFields);
+      console.log('🔍 Campos relacionados identificados:', relatedFields);
       console.log('🔍 Todos los campos:', allFields);
       
       // PASO 3: Obtener datos
