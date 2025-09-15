@@ -1018,7 +1018,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
   };
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout style={{ minHeight: '100vh', paddingTop: '64px' }}>
       {/* Header */}
       <Header style={{ 
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -1026,7 +1026,13 @@ const Dashboard = ({ sessionData, onLogout }) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1000,
+        height: '64px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <Button
@@ -1192,7 +1198,9 @@ const Dashboard = ({ sessionData, onLogout }) => {
           marginLeft: sidebarOpen ? '280px' : '80px',
           transition: 'margin-left 0.2s',
           minHeight: 'calc(100vh - 64px)',
-          background: '#f5f5f5'
+          background: '#f5f5f5',
+          marginTop: '-64px',
+          paddingTop: '64px'
         }}>
           {renderContent()}
         </Content>
