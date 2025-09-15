@@ -784,6 +784,8 @@ class TrytonService {
     }
 
     try {
+      console.log(`🔍 Obteniendo información de acción para menú ID: ${menuId}`);
+      
       // PASO 1: Obtener la información de la acción del menú
       const actionInfo = await this.makeRpcCall('model.ir.action.keyword.get_keyword', [
         'tree_open',
@@ -791,17 +793,18 @@ class TrytonService {
         {}
       ]);
       
-      console.log('Información de acción obtenida:', actionInfo);
+      console.log('✅ Información de acción obtenida:', actionInfo);
       
       // PASO 2: Si hay resultado, extraer el modelo y hacer la segunda llamada
       if (actionInfo && actionInfo.length > 0 && actionInfo[0].res_model) {
         const resModel = actionInfo[0].res_model;
-        console.log('Modelo encontrado:', resModel);
+        console.log(`🎯 Modelo encontrado: ${resModel}`);
         
         // PASO 3: Hacer la llamada view_toolbar_get con el modelo obtenido
+        console.log(`🔧 Ejecutando view_toolbar_get para modelo: ${resModel}`);
         const toolbarInfo = await this.makeRpcCall(`model.${resModel}.view_toolbar_get`, [{}]);
         
-        console.log('Información de toolbar obtenida:', toolbarInfo);
+        console.log('✅ Información de toolbar obtenida:', toolbarInfo);
         
         return {
           actionInfo: actionInfo,
@@ -809,7 +812,7 @@ class TrytonService {
           resModel: resModel
         };
       } else {
-        console.warn('No se encontró res_model en la respuesta de acción');
+        console.warn('⚠️ No se encontró res_model en la respuesta de acción:', actionInfo);
         return {
           actionInfo: actionInfo,
           toolbarInfo: null,
@@ -817,7 +820,12 @@ class TrytonService {
         };
       }
     } catch (error) {
-      console.error('Error obteniendo información de acción del menú:', error);
+      console.error('❌ Error obteniendo información de acción del menú:', error);
+      console.error('Detalles del error:', {
+        menuId,
+        errorMessage: error.message,
+        errorStack: error.stack
+      });
       throw error;
     }
   }
