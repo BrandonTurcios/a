@@ -894,12 +894,19 @@ class TrytonService {
       console.log(`🔍 Obteniendo datos para modelo: ${model}`);
       console.log('Parámetros:', { domain, fields, limit, offset });
       
-      // Validar que no hay campos vacíos
-      const validFields = fields.filter(field => field && field.trim() !== '');
+      // Validar que no hay campos vacíos con validación más estricta
+      const validFields = fields.filter(field => {
+        return field && 
+               typeof field === 'string' && 
+               field.trim() !== '' && 
+               field.length > 0;
+      });
+      
       if (validFields.length !== fields.length) {
         console.warn('⚠️ Se encontraron campos vacíos, filtrando:', {
           original: fields,
-          filtered: validFields
+          filtered: validFields,
+          removed: fields.filter(f => !validFields.includes(f))
         });
       }
       
@@ -915,7 +922,19 @@ class TrytonService {
       
       // PASO 2: Obtener datos con read
       console.log(`🔍 Solicitando campos en model.read:`, validFields);
-      const data = await this.makeRpcCall(`model.${model}.read`, [ids, validFields, {}]);
+      console.log(`🔍 Número de campos válidos:`, validFields.length);
+      console.log(`🔍 Campos detallados:`, validFields.map((field, index) => `[${index}] "${field}"`));
+      
+      // Validación final: asegurar que no hay campos vacíos en el array
+      const finalFields = validFields.filter(field => field && field.trim() !== '');
+      if (finalFields.length !== validFields.length) {
+        console.warn('⚠️ Validación final: se encontraron campos vacíos, removiendo:', {
+          before: validFields,
+          after: finalFields
+        });
+      }
+      
+      const data = await this.makeRpcCall(`model.${model}.read`, [ids, finalFields, {}]);
       
       console.log('✅ Datos obtenidos:', data);
       
@@ -951,7 +970,7 @@ class TrytonService {
       const fieldsView = await this.getFieldsView(model, viewId, viewType);
       
       // PASO 2: Extraer campos de la vista y agregar campos relacionados
-      const fields = fieldsView.fields ? Object.keys(fieldsView.fields) : [];
+      const fields = fieldsView.fields ? Object.keys(fieldsView.fields).filter(f => f && f.trim() !== '') : [];
       
       // Identificar campos relacionados basándose en los campos que existen
       const relatedFields = [];
@@ -972,8 +991,13 @@ class TrytonService {
       
       const allFields = [...fields, ...relatedFields];
       
-      // Filtrar campos vacíos o inválidos
-      const validFields = allFields.filter(field => field && field.trim() !== '');
+      // Filtrar campos vacíos o inválidos con validación más estricta
+      const validFields = allFields.filter(field => {
+        return field && 
+               typeof field === 'string' && 
+               field.trim() !== '' && 
+               field.length > 0;
+      });
       
       console.log('🔍 Campos originales:', fields);
       console.log('🔍 Campos relacionados identificados:', relatedFields);
