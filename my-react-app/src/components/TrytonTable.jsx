@@ -88,16 +88,6 @@ const TrytonTable = ({
           cell: ({ getValue, row }) => {
             const value = getValue();
             const record = row.original;
-            
-            // Debug temporal
-            if (fieldName === 'party' || fieldName === 'template' || fieldName === 'product') {
-              console.log(`🔍 Campo: ${fieldName}`, {
-                value,
-                relatedField: record[fieldName + '.'],
-                fieldDef
-              });
-            }
-            
             return formatCellValue(value, fieldDef, record);
           },
           meta: {
@@ -164,15 +154,7 @@ const TrytonTable = ({
       const relatedFieldName = fieldName + '.';
       const relatedObject = record[relatedFieldName];
       
-      console.log(`🔍 Procesando campo numérico: ${fieldName}`, {
-        value,
-        relatedFieldName,
-        relatedObject,
-        hasRecName: relatedObject && relatedObject.rec_name
-      });
-      
       if (relatedObject && typeof relatedObject === 'object' && relatedObject.rec_name) {
-        console.log(`✅ Retornando rec_name: ${relatedObject.rec_name}`);
         return relatedObject.rec_name;
       }
     }

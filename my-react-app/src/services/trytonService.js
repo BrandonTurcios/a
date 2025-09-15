@@ -904,8 +904,12 @@ class TrytonService {
       
       console.log(`✅ Encontrados ${ids.length} registros`);
       
-      // PASO 2: Obtener datos con read
-      const data = await this.makeRpcCall(`model.${model}.read`, [ids, fields, {}]);
+      // PASO 2: Expandir campos para incluir relaciones
+      const expandedFields = this.expandFieldsForRelations(fields, model);
+      console.log(`🔧 Campos expandidos:`, expandedFields);
+      
+      // PASO 3: Obtener datos con read incluyendo campos relacionados
+      const data = await this.makeRpcCall(`model.${model}.read`, [ids, expandedFields, {}]);
       
       console.log('✅ Datos obtenidos:', data);
       
@@ -914,6 +918,36 @@ class TrytonService {
       console.error('❌ Error obteniendo datos del modelo:', error);
       throw error;
     }
+  }
+
+  // Expandir campos para incluir relaciones automáticamente
+  expandFieldsForRelations(fields, model) {
+    const expandedFields = [...fields];
+    
+    // Campos comunes que suelen tener relaciones
+    const relationFields = [
+      'party', 'template', 'product', 'company', 'supplier',
+      'account_category', 'default_uom', 'purchase_uom', 'lot_sequence',
+      'default_uom_category', 'parent', 'category', 'uom', 'tax_group'
+    ];
+    
+    // Agregar campos relacionados para cada campo de relación encontrado
+    relationFields.forEach(fieldName => {
+      if (fields.includes(fieldName) && !expandedFields.includes(`${fieldName}.rec_name`)) {
+        expandedFields.push(`${fieldName}.rec_name`);
+        console.log(`➕ Agregando campo relacionado: ${fieldName}.rec_name`);
+      }
+    });
+    
+    // Agregar campos básicos que siempre queremos
+    const basicFields = ['rec_name', '_timestamp', '_write', '_delete'];
+    basicFields.forEach(fieldName => {
+      if (!expandedFields.includes(fieldName)) {
+        expandedFields.push(fieldName);
+      }
+    });
+    
+    return expandedFields;
   }
 
   // Obtener información completa de tabla (vista + datos)
