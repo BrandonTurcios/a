@@ -78,10 +78,16 @@ const TrytonTable = ({
     
     const cols = [];
     
+    console.log('🔍 Generando columnas para campos:', Object.keys(fieldsView.fields));
+    console.log('🔍 Arch de vista:', fieldsView.arch);
+    
     // Procesar campos de la vista
     Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
+      console.log(`🔍 Procesando campo: ${fieldName}`, fieldDef);
+      
       // Solo incluir campos que están en la vista tree
       if (shouldIncludeField(fieldName, fieldsView.arch)) {
+        console.log(`✅ Agregando columna para campo: ${fieldName}`);
         cols.push({
           accessorKey: fieldName,
           header: fieldDef.string || fieldName,
@@ -98,12 +104,14 @@ const TrytonTable = ({
       }
     });
     
+    console.log('✅ Columnas generadas:', cols.map(col => col.accessorKey));
     return cols;
   };
 
   const shouldIncludeField = (fieldName, arch) => {
     // Verificar si el campo está en el arch de la vista
     if (arch && arch.includes(`name="${fieldName}"`)) {
+      console.log(`✅ Campo "${fieldName}" encontrado en arch de vista`);
       return true;
     }
     
@@ -113,7 +121,15 @@ const TrytonTable = ({
     // Campos relacionados importantes que mostrar
     const relatedFields = ['party', 'template', 'product', 'company', 'supplier'];
     
-    return basicFields.includes(fieldName) || relatedFields.includes(fieldName);
+    const shouldInclude = basicFields.includes(fieldName) || relatedFields.includes(fieldName);
+    
+    if (shouldInclude) {
+      console.log(`✅ Campo "${fieldName}" incluido por ser básico o relacionado`);
+    } else {
+      console.log(`❌ Campo "${fieldName}" excluido`);
+    }
+    
+    return shouldInclude;
   };
 
   const formatCellValue = (value, fieldDef, record = null) => {
@@ -121,8 +137,17 @@ const TrytonTable = ({
       return '-';
     }
     
+    // Debug: Log para ver qué está pasando
+    const fieldName = fieldDef.name || '';
+    console.log(`🔍 Formateando campo "${fieldName}":`, {
+      value,
+      fieldDef,
+      record: record ? Object.keys(record) : null
+    });
+    
     // Manejar objetos complejos (relaciones con rec_name)
     if (typeof value === 'object' && value.rec_name) {
+      console.log(`✅ Campo "${fieldName}" es objeto con rec_name:`, value.rec_name);
       return value.rec_name;
     }
     
@@ -148,17 +173,21 @@ const TrytonTable = ({
     
     // Manejar IDs que tienen objetos relacionados
     if (typeof value === 'number' && record) {
-      const fieldName = fieldDef.name || '';
-      
       // Buscar el objeto relacionado con el mismo nombre pero terminado en "."
       const relatedFieldName = fieldName + '.';
       const relatedObject = record[relatedFieldName];
       
+      console.log(`🔍 Buscando objeto relacionado "${relatedFieldName}":`, relatedObject);
+      
       if (relatedObject && typeof relatedObject === 'object' && relatedObject.rec_name) {
+        console.log(`✅ Encontrado rec_name para "${fieldName}":`, relatedObject.rec_name);
         return relatedObject.rec_name;
+      } else {
+        console.log(`❌ No se encontró rec_name para "${fieldName}"`);
       }
     }
     
+    console.log(`📝 Retornando valor original para "${fieldName}":`, String(value));
     return String(value);
   };
 

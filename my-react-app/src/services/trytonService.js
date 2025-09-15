@@ -905,9 +905,26 @@ class TrytonService {
       console.log(`✅ Encontrados ${ids.length} registros`);
       
       // PASO 2: Obtener datos con read
+      console.log(`🔍 Solicitando campos en model.read:`, fields);
       const data = await this.makeRpcCall(`model.${model}.read`, [ids, fields, {}]);
       
       console.log('✅ Datos obtenidos:', data);
+      
+      // Verificar que los campos relacionados están presentes en los datos
+      if (data && data.length > 0) {
+        const firstRecord = data[0];
+        console.log('🔍 Campos disponibles en el primer registro:', Object.keys(firstRecord));
+        
+        // Verificar campos relacionados específicos
+        const relatedChecks = ['party.', 'template.', 'company.', 'product.'];
+        relatedChecks.forEach(field => {
+          if (firstRecord[field]) {
+            console.log(`✅ Campo relacionado "${field}" encontrado:`, firstRecord[field]);
+          } else {
+            console.log(`❌ Campo relacionado "${field}" NO encontrado`);
+          }
+        });
+      }
       
       return data;
     } catch (error) {
@@ -928,11 +945,19 @@ class TrytonService {
       // PASO 1: Obtener vista de campos
       const fieldsView = await this.getFieldsView(model, viewId, viewType);
       
-      // PASO 2: Extraer campos de la vista
+      // PASO 2: Extraer campos de la vista y agregar campos relacionados
       const fields = fieldsView.fields ? Object.keys(fieldsView.fields) : [];
       
+      // Agregar campos relacionados importantes que terminan en "."
+      const relatedFields = ['party.', 'template.', 'product.', 'company.', 'supplier.'];
+      const allFields = [...fields, ...relatedFields];
+      
+      console.log('🔍 Campos originales:', fields);
+      console.log('🔍 Campos relacionados agregados:', relatedFields);
+      console.log('🔍 Todos los campos:', allFields);
+      
       // PASO 3: Obtener datos
-      const data = await this.getModelData(model, domain, fields, limit, offset);
+      const data = await this.getModelData(model, domain, allFields, limit, offset);
       
       console.log('✅ Información completa de tabla obtenida');
       
