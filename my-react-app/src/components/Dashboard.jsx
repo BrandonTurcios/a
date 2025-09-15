@@ -475,7 +475,12 @@ const Dashboard = ({ sessionData, onLogout }) => {
     switch (activeTab) {
       case 'dashboard':
         return (
-          <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100%' }}>
+          <div style={{ 
+            padding: '24px', 
+            background: '#f5f5f5', 
+            minHeight: 'calc(100vh - 64px)',
+            overflowY: 'auto'
+          }}>
             <div style={{ marginBottom: '32px' }}>
               <Title level={2} style={{ margin: 0, color: '#1f2937' }}>
                 Hospital Management
@@ -722,7 +727,12 @@ const Dashboard = ({ sessionData, onLogout }) => {
           const viewId = treeView?.[0];
           
           return (
-            <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100%' }}>
+            <div style={{ 
+              padding: '24px', 
+              background: '#f5f5f5', 
+              minHeight: 'calc(100vh - 64px)',
+              overflowY: 'auto'
+            }}>
               <div style={{ marginBottom: '24px' }}>
                 <Title level={2} style={{ margin: 0, color: '#1f2937' }}>
                   {selectedMenuInfo.actionName || selectedItem?.name || 'Tabla'}
@@ -747,7 +757,12 @@ const Dashboard = ({ sessionData, onLogout }) => {
         // Si hay información del menú seleccionado, mostrar el JSON
         if (selectedMenuInfo) {
           return (
-            <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100%' }}>
+            <div style={{ 
+              padding: '24px', 
+              background: '#f5f5f5', 
+              minHeight: 'calc(100vh - 64px)',
+              overflowY: 'auto'
+            }}>
               <div style={{ marginBottom: '32px' }}>
                 <Title level={2} style={{ margin: 0, color: '#1f2937' }}>
                   Información del Menú
@@ -874,7 +889,12 @@ const Dashboard = ({ sessionData, onLogout }) => {
         }
         
         return (
-          <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100%' }}>
+          <div style={{ 
+            padding: '24px', 
+            background: '#f5f5f5', 
+            minHeight: 'calc(100vh - 64px)',
+            overflowY: 'auto'
+          }}>
             <div style={{ marginBottom: '32px' }}>
                 <Title level={2} style={{ margin: 0, color: '#1f2937' }}>
                   {selectedItem?.name || 'Módulo'}
@@ -1096,10 +1116,11 @@ const Dashboard = ({ sessionData, onLogout }) => {
             background: '#001529',
             boxShadow: '2px 0 8px rgba(0,0,0,0.1)',
             position: 'fixed',
-            height: '100vh',
+            height: 'calc(100vh - 64px)',
             left: 0,
             top: 64,
-            zIndex: 100
+            zIndex: 100,
+            overflow: 'hidden'
           }}
         >
           <div style={{ 
@@ -1168,10 +1189,10 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
         {/* Main Content */}
         <Content style={{ 
-          overflow: 'auto',
           marginLeft: sidebarOpen ? '280px' : '80px',
           transition: 'margin-left 0.2s',
-          minHeight: 'calc(100vh - 64px)'
+          minHeight: 'calc(100vh - 64px)',
+          background: '#f5f5f5'
         }}>
           {renderContent()}
         </Content>
