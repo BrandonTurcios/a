@@ -48,6 +48,7 @@ import {
 } from 'lucide-react';
 import trytonService from '../services/trytonService';
 import PatientsTable from './PatientsTable';
+import TrytonTable from './TrytonTable';
 
 const { Header, Sider, Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
@@ -61,6 +62,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
   const [error, setError] = useState('');
   const [expandedMenus, setExpandedMenus] = useState(new Set());
   const [selectedMenuInfo, setSelectedMenuInfo] = useState(null);
+  const [tableInfo, setTableInfo] = useState(null);
 
   useEffect(() => {
     loadSidebarMenu();
@@ -247,6 +249,48 @@ const Dashboard = ({ sessionData, onLogout }) => {
         });
       }
       
+      // Si tenemos un modelo, obtener información de la tabla
+      let tableData = null;
+      if (menuInfo.resModel && menuInfo.actionInfo && menuInfo.actionInfo.length > 0) {
+        const actionData = menuInfo.actionInfo[0];
+        if (actionData.views && actionData.views.length > 0) {
+          // Obtener la vista tree (primera vista disponible)
+          const treeView = actionData.views.find(view => view[1] === 'tree') || actionData.views[0];
+          const viewId = treeView[0];
+          
+          console.log(`🔍 Obteniendo información de tabla para modelo: ${menuInfo.resModel}, vista: ${viewId}`);
+          
+          try {
+            // Primero verificar si la vista es de tipo "tree"
+            const fieldsView = await trytonService.getFieldsView(
+              menuInfo.resModel,
+              viewId,
+              'tree'
+            );
+            
+            console.log('🔍 Vista obtenida:', fieldsView);
+            
+            // Solo proceder si es una vista de tipo "tree"
+            if (fieldsView && fieldsView.type === 'tree') {
+              console.log('✅ Vista confirmada como tipo "tree", obteniendo datos...');
+              
+              tableData = await trytonService.getTableInfo(
+                menuInfo.resModel,
+                viewId,
+                'tree',
+                [],
+                100
+              );
+              console.log('✅ Información de tabla obtenida:', tableData);
+            } else {
+              console.log(`⚠️ Vista no es de tipo "tree" (tipo: ${fieldsView?.type}), omitiendo tabla`);
+            }
+          } catch (tableError) {
+            console.warn('⚠️ Error obteniendo información de tabla:', tableError);
+          }
+        }
+      }
+      
       setSelectedMenuInfo({
         menuItem: updatedItem,
         actionInfo: menuInfo.actionInfo,
@@ -256,6 +300,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
         timestamp: new Date().toISOString()
       });
       
+      setTableInfo(tableData);
       setActiveTab(item.id);
     } catch (error) {
       console.error('Error obteniendo información del menú:', error);
@@ -668,6 +713,35 @@ const Dashboard = ({ sessionData, onLogout }) => {
         // Si el menú seleccionado es "Health" (ID 69), mostrar la tabla de pacientes
         if (selectedItem && (selectedItem.name === 'Health' || selectedItem.id === 69)) {
           return <PatientsTable sessionData={sessionData} />;
+        }
+        
+        // Si hay información de tabla, mostrar la tabla Tryton
+        if (tableInfo && selectedMenuInfo && selectedMenuInfo.resModel) {
+          const actionData = selectedMenuInfo.actionInfo && selectedMenuInfo.actionInfo[0];
+          const treeView = actionData?.views?.find(view => view[1] === 'tree') || actionData?.views?.[0];
+          const viewId = treeView?.[0];
+          
+          return (
+            <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100%' }}>
+              <div style={{ marginBottom: '24px' }}>
+                <Title level={2} style={{ margin: 0, color: '#1f2937' }}>
+                  {selectedMenuInfo.actionName || selectedItem?.name || 'Tabla'}
+                </Title>
+                <Paragraph style={{ color: '#6b7280', margin: '8px 0 0 0' }}>
+                  {selectedMenuInfo.resModel} - Vista de datos
+                </Paragraph>
+              </div>
+              
+              <TrytonTable
+                model={selectedMenuInfo.resModel}
+                viewId={viewId}
+                viewType="tree"
+                domain={[]}
+                limit={100}
+                title={selectedMenuInfo.actionName}
+              />
+            </div>
+          );
         }
         
         // Si hay información del menú seleccionado, mostrar el JSON

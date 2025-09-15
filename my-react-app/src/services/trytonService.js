@@ -860,6 +860,96 @@ class TrytonService {
     }
   }
 
+  // Obtener vista de campos para un modelo
+  async getFieldsView(model, viewId, viewType = 'tree') {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`🔍 Obteniendo vista de campos para modelo: ${model}, vista: ${viewId}, tipo: ${viewType}`);
+      
+      const fieldsView = await this.makeRpcCall(`model.${model}.fields_view_get`, [
+        viewId,
+        viewType,
+        {}
+      ]);
+      
+      console.log('✅ Vista de campos obtenida:', fieldsView);
+      
+      return fieldsView;
+    } catch (error) {
+      console.error('❌ Error obteniendo vista de campos:', error);
+      throw error;
+    }
+  }
+
+  // Obtener datos de un modelo
+  async getModelData(model, domain = [], fields = [], limit = 100, offset = 0) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`🔍 Obteniendo datos para modelo: ${model}`);
+      console.log('Parámetros:', { domain, fields, limit, offset });
+      
+      // PASO 1: Obtener IDs con search
+      const ids = await this.makeRpcCall(`model.${model}.search`, [domain, offset, limit]);
+      
+      if (ids.length === 0) {
+        console.log('📭 No se encontraron registros');
+        return [];
+      }
+      
+      console.log(`✅ Encontrados ${ids.length} registros`);
+      
+      // PASO 2: Obtener datos con read
+      const data = await this.makeRpcCall(`model.${model}.read`, [ids, fields, {}]);
+      
+      console.log('✅ Datos obtenidos:', data);
+      
+      return data;
+    } catch (error) {
+      console.error('❌ Error obteniendo datos del modelo:', error);
+      throw error;
+    }
+  }
+
+  // Obtener información completa de tabla (vista + datos)
+  async getTableInfo(model, viewId, viewType = 'tree', domain = [], limit = 100, offset = 0) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`🔍 Obteniendo información completa de tabla para modelo: ${model}`);
+      
+      // PASO 1: Obtener vista de campos
+      const fieldsView = await this.getFieldsView(model, viewId, viewType);
+      
+      // PASO 2: Extraer campos de la vista
+      const fields = fieldsView.fields ? Object.keys(fieldsView.fields) : [];
+      
+      // PASO 3: Obtener datos
+      const data = await this.getModelData(model, domain, fields, limit, offset);
+      
+      console.log('✅ Información completa de tabla obtenida');
+      
+      return {
+        fieldsView,
+        data,
+        model,
+        viewId,
+        viewType,
+        fields
+      };
+    } catch (error) {
+      console.error('❌ Error obteniendo información completa de tabla:', error);
+      throw error;
+    }
+  }
+
   // Obtener pacientes de GNU Health de forma segura
   async getPatientsSafe({
     model = 'gnuhealth.patient',
