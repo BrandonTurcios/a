@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Spin, Alert, Button, Space, Typography } from 'antd';
 import { 
-  RefreshCwIcon,
-  DownloadIcon,
-  FilterIcon,
-  SettingsIcon
-} from 'lucide-react';
+  ReloadOutlined,
+  DownloadOutlined,
+  FilterOutlined,
+  SettingOutlined
+} from '@ant-design/icons';
 import { DataTable } from './ui/data-table';
 import trytonService from '../services/trytonService';
 
@@ -209,26 +209,26 @@ const TrytonTable = ({
           
           <Space>
             <Button 
-              icon={<RefreshCwIcon size={16} />}
+              icon={<ReloadOutlined />}
               onClick={handleRefresh}
               title="Actualizar"
             >
               Actualizar
             </Button>
             <Button 
-              icon={<DownloadIcon size={16} />}
+              icon={<DownloadOutlined />}
               title="Exportar"
             >
               Exportar
             </Button>
             <Button 
-              icon={<FilterIcon size={16} />}
+              icon={<FilterOutlined />}
               title="Filtros"
             >
               Filtros
             </Button>
             <Button 
-              icon={<SettingsIcon size={16} />}
+              icon={<SettingOutlined />}
               title="Configurar"
             >
               Configurar

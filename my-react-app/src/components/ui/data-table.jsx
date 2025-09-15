@@ -1,6 +1,5 @@
 import * as React from "react"
 import {
-  ColumnDef,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
@@ -16,15 +15,14 @@ import {
   TableHeader,
   TableRow,
 } from "./table"
-import { Button } from "antd"
-import { Input } from "antd"
+import { Button, Input } from "antd"
 import { 
-  ChevronLeftIcon, 
-  ChevronRightIcon,
-  ChevronsLeftIcon,
-  ChevronsRightIcon,
-  SearchIcon
-} from "lucide-react"
+  LeftOutlined,
+  RightOutlined,
+  DoubleLeftOutlined,
+  DoubleRightOutlined,
+  SearchOutlined
+} from "@ant-design/icons"
 
 const { Search } = Input;
 
@@ -74,7 +72,7 @@ export function DataTable({
             placeholder="Buscar en la tabla..."
             value={globalFilter ?? ""}
             onChange={(e) => setGlobalFilter(e.target.value)}
-            prefix={<SearchIcon className="h-4 w-4" />}
+            prefix={<SearchOutlined />}
             className="max-w-sm"
           />
         </div>
@@ -146,41 +144,37 @@ export function DataTable({
             </div>
             <div className="flex items-center space-x-2">
               <Button
-                variant="outline"
-                className="h-8 w-8 p-0"
+                type="default"
+                size="small"
+                icon={<DoubleLeftOutlined />}
                 onClick={() => table.setPageIndex(0)}
                 disabled={!table.getCanPreviousPage()}
-              >
-                <span className="sr-only">Ir a la primera página</span>
-                <ChevronsLeftIcon className="h-4 w-4" />
-              </Button>
+                title="Ir a la primera página"
+              />
               <Button
-                variant="outline"
-                className="h-8 w-8 p-0"
+                type="default"
+                size="small"
+                icon={<LeftOutlined />}
                 onClick={() => table.previousPage()}
                 disabled={!table.getCanPreviousPage()}
-              >
-                <span className="sr-only">Ir a la página anterior</span>
-                <ChevronLeftIcon className="h-4 w-4" />
-              </Button>
+                title="Ir a la página anterior"
+              />
               <Button
-                variant="outline"
-                className="h-8 w-8 p-0"
+                type="default"
+                size="small"
+                icon={<RightOutlined />}
                 onClick={() => table.nextPage()}
                 disabled={!table.getCanNextPage()}
-              >
-                <span className="sr-only">Ir a la página siguiente</span>
-                <ChevronRightIcon className="h-4 w-4" />
-              </Button>
+                title="Ir a la página siguiente"
+              />
               <Button
-                variant="outline"
-                className="h-8 w-8 p-0"
+                type="default"
+                size="small"
+                icon={<DoubleRightOutlined />}
                 onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                 disabled={!table.getCanNextPage()}
-              >
-                <span className="sr-only">Ir a la última página</span>
-                <ChevronsRightIcon className="h-4 w-4" />
-              </Button>
+                title="Ir a la última página"
+              />
             </div>
           </div>
         </div>
