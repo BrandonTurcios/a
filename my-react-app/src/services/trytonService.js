@@ -894,22 +894,6 @@ class TrytonService {
       console.log(`🔍 Obteniendo datos para modelo: ${model}`);
       console.log('Parámetros:', { domain, fields, limit, offset });
       
-      // Validar que no hay campos vacíos con validación más estricta
-      const validFields = fields.filter(field => {
-        return field && 
-               typeof field === 'string' && 
-               field.trim() !== '' && 
-               field.length > 0;
-      });
-      
-      if (validFields.length !== fields.length) {
-        console.warn('⚠️ Se encontraron campos vacíos, filtrando:', {
-          original: fields,
-          filtered: validFields,
-          removed: fields.filter(f => !validFields.includes(f))
-        });
-      }
-      
       // PASO 1: Obtener IDs con search
       const ids = await this.makeRpcCall(`model.${model}.search`, [domain, offset, limit]);
       
@@ -921,34 +905,9 @@ class TrytonService {
       console.log(`✅ Encontrados ${ids.length} registros`);
       
       // PASO 2: Obtener datos con read
-      console.log(`🔍 Solicitando campos en model.read:`, validFields);
-      console.log(`🔍 Número de campos válidos:`, validFields.length);
-      console.log(`🔍 Campos detallados:`, validFields.map((field, index) => `[${index}] "${field}"`));
-      
-      // Validación final: asegurar que no hay campos vacíos en el array
-      const finalFields = validFields.filter(field => field && field.trim() !== '');
-      if (finalFields.length !== validFields.length) {
-        console.warn('⚠️ Validación final: se encontraron campos vacíos, removiendo:', {
-          before: validFields,
-          after: finalFields
-        });
-      }
-      
-      const data = await this.makeRpcCall(`model.${model}.read`, [ids, finalFields, {}]);
+      const data = await this.makeRpcCall(`model.${model}.read`, [ids, fields, {}]);
       
       console.log('✅ Datos obtenidos:', data);
-      
-      // Verificar que los campos relacionados están presentes en los datos
-      if (data && data.length > 0) {
-        const firstRecord = data[0];
-        console.log('🔍 Campos disponibles en el primer registro:', Object.keys(firstRecord));
-        
-        // Verificar campos relacionados que terminan en "."
-        const relatedFields = Object.keys(firstRecord).filter(key => key.endsWith('.'));
-        relatedFields.forEach(field => {
-          console.log(`✅ Campo relacionado "${field}" encontrado:`, firstRecord[field]);
-        });
-      }
       
       return data;
     } catch (error) {
@@ -969,43 +928,11 @@ class TrytonService {
       // PASO 1: Obtener vista de campos
       const fieldsView = await this.getFieldsView(model, viewId, viewType);
       
-      // PASO 2: Extraer campos de la vista y agregar campos relacionados
-      const fields = fieldsView.fields ? Object.keys(fieldsView.fields).filter(f => f && f.trim() !== '') : [];
-      
-      // Identificar campos relacionados basándose en los campos que existen
-      const relatedFields = [];
-      fields.forEach(field => {
-        // Validar que el campo no esté vacío y exista en la definición
-        if (field && field.trim() !== '' && fieldsView.fields[field]) {
-          // Si el campo es una relación (many2one, many2many, etc.), agregar el campo relacionado
-          if (fieldsView.fields[field].type === 'many2one' || 
-              fieldsView.fields[field].type === 'many2many' ||
-              fieldsView.fields[field].type === 'one2many') {
-            const relatedField = field + '.';
-            if (relatedField && relatedField.trim() !== '') {
-              relatedFields.push(relatedField);
-            }
-          }
-        }
-      });
-      
-      const allFields = [...fields, ...relatedFields];
-      
-      // Filtrar campos vacíos o inválidos con validación más estricta
-      const validFields = allFields.filter(field => {
-        return field && 
-               typeof field === 'string' && 
-               field.trim() !== '' && 
-               field.length > 0;
-      });
-      
-      console.log('🔍 Campos originales:', fields);
-      console.log('🔍 Campos relacionados identificados:', relatedFields);
-      console.log('🔍 Todos los campos (antes de filtrar):', allFields);
-      console.log('🔍 Campos válidos (después de filtrar):', validFields);
+      // PASO 2: Extraer campos de la vista
+      const fields = fieldsView.fields ? Object.keys(fieldsView.fields) : [];
       
       // PASO 3: Obtener datos
-      const data = await this.getModelData(model, domain, validFields, limit, offset);
+      const data = await this.getModelData(model, domain, fields, limit, offset);
       
       console.log('✅ Información completa de tabla obtenida');
       
