@@ -334,65 +334,87 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
     return (
       <div key={item.id} style={{ marginLeft: level > 0 && sidebarOpen ? '24px' : '0' }}>
-        <Button
-          type={isActive ? 'primary' : 'text'}
-          onClick={() => {
-            if (hasChildren) {
-              toggleMenuExpansion(item.id);
-            } else {
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+          {/* Botón principal del menú */}
+          <Button
+            type={isActive ? 'primary' : 'text'}
+            onClick={() => {
+              // Siempre ejecutar la acción del menú cuando se hace clic
               handleMenuClick(item);
-            }
-          }}
-          style={{
-            width: '100%',
-            height: 'auto',
-            padding: sidebarOpen ? '12px 16px' : '12px 8px',
-            marginBottom: '4px',
-            textAlign: 'left',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: sidebarOpen ? 'flex-start' : 'center',
-            background: isActive ? '#1890ff' : 'transparent',
-            border: 'none',
-            borderRadius: '8px',
-            color: isActive ? 'white' : '#d9d9d9',
-            minHeight: '40px'
-          }}
-          title={sidebarOpen ? (item.description || item.name) : item.name}
-        >
-          {sidebarOpen ? (
-            <Space>
-              {hasChildren && (
-                <span style={{ fontSize: '12px' }}>
-                  {isExpanded ? <DownOutlined /> : <RightOutlined />}
-                </span>
-              )}
-              {getIconComponent(item.icon, item.name)}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                <Text style={{ 
-                  fontSize: '14px', 
-                  fontWeight: '500',
-                  color: isActive ? 'white' : '#d9d9d9'
-                }}>
-                  {item.name}
-                </Text>
-                {item.type === 'module' && item.model && (
+            }}
+            style={{
+              flex: 1,
+              height: 'auto',
+              padding: sidebarOpen ? '12px 16px' : '12px 8px',
+              textAlign: 'left',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: sidebarOpen ? 'flex-start' : 'center',
+              background: isActive ? '#1890ff' : 'transparent',
+              border: 'none',
+              borderRadius: '8px',
+              color: isActive ? 'white' : '#d9d9d9',
+              minHeight: '40px'
+            }}
+            title={sidebarOpen ? (item.description || item.name) : item.name}
+          >
+            {sidebarOpen ? (
+              <Space>
+                {getIconComponent(item.icon, item.name)}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                   <Text style={{ 
-                    fontSize: '12px', 
-                    opacity: 0.7,
-                    color: isActive ? 'white' : '#8c8c8c'
+                    fontSize: '14px', 
+                    fontWeight: '500',
+                    color: isActive ? 'white' : '#d9d9d9'
                   }}>
-                    {item.model}
+                    {item.name}
                   </Text>
-                )}
+                  {item.type === 'module' && item.model && (
+                    <Text style={{ 
+                      fontSize: '12px', 
+                      opacity: 0.7,
+                      color: isActive ? 'white' : '#8c8c8c'
+                    }}>
+                      {item.model}
+                    </Text>
+                  )}
+                </div>
+              </Space>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                {getIconComponent(item.icon, item.name)}
               </div>
-            </Space>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              {getIconComponent(item.icon, item.name)}
-            </div>
+            )}
+          </Button>
+          
+          {/* Botón de expansión (solo si tiene hijos y el sidebar está abierto) */}
+          {hasChildren && sidebarOpen && (
+            <Button
+              type="text"
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation(); // Evitar que se ejecute el onClick del botón principal
+                toggleMenuExpansion(item.id);
+              }}
+              style={{
+                marginLeft: '4px',
+                padding: '4px 8px',
+                minWidth: '24px',
+                height: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: isActive ? 'white' : '#d9d9d9',
+                background: 'transparent',
+                border: 'none',
+                borderRadius: '4px'
+              }}
+              title={isExpanded ? 'Colapsar' : 'Expandir'}
+            >
+              {isExpanded ? <DownOutlined /> : <RightOutlined />}
+            </Button>
           )}
-        </Button>
+        </div>
         
         {hasChildren && isExpanded && sidebarOpen && (
           <div style={{ marginTop: '4px' }}>
