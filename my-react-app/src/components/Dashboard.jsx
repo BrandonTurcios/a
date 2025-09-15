@@ -145,7 +145,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
       const sidebarItems = [
         { 
           id: 'dashboard', 
-          label: 'Dashboard', 
+          name: 'Dashboard', 
           icon: '📊', 
           type: 'dashboard',
           modelAccessCount: result.modelAccess?.length || 0,
@@ -153,7 +153,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
         },
         ...result.menuItems.map(item => ({
           id: item.id,
-          label: item.name,
+          name: item.name,
           icon: item.icon,
           type: 'module',
           model: item.model,
@@ -177,13 +177,13 @@ const Dashboard = ({ sessionData, onLogout }) => {
       
       // Fallback a menú básico
       setMenuItems([
-        { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-        { id: 'sales', label: 'Ventas', icon: '💰' },
-        { id: 'purchases', label: 'Compras', icon: '🛒' },
-        { id: 'inventory', label: 'Inventario', icon: '📦' },
-        { id: 'accounting', label: 'Contabilidad', icon: '📋' },
-        { id: 'hr', label: 'Recursos Humanos', icon: '👥' },
-        { id: 'settings', label: 'Configuración', icon: '⚙️' }
+        { id: 'dashboard', name: 'Dashboard', icon: '📊' },
+        { id: 'sales', name: 'Ventas', icon: '💰' },
+        { id: 'purchases', name: 'Compras', icon: '🛒' },
+        { id: 'inventory', name: 'Inventario', icon: '📦' },
+        { id: 'accounting', name: 'Contabilidad', icon: '📋' },
+        { id: 'hr', name: 'Recursos Humanos', icon: '👥' },
+        { id: 'settings', name: 'Configuración', icon: '⚙️' }
       ]);
     } finally {
       setLoading(false);
@@ -333,7 +333,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
             color: isActive ? 'white' : '#d9d9d9',
             minHeight: '40px'
           }}
-          title={sidebarOpen ? (item.description || item.name || item.label) : (item.name || item.label)}
+          title={sidebarOpen ? (item.description || item.name) : item.name}
         >
           {sidebarOpen ? (
             <Space>
@@ -349,7 +349,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                   fontWeight: '500',
                   color: isActive ? 'white' : '#d9d9d9'
                 }}>
-                  {item.name || item.label}
+                  {item.name}
                 </Text>
                 {item.type === 'module' && item.model && (
                   <Text style={{ 
@@ -651,7 +651,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                       <Divider style={{ margin: '8px 0' }} />
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Text type="secondary">Nombre</Text>
-                        <Text strong>{selectedMenuInfo.menuItem.name || selectedMenuInfo.menuItem.label}</Text>
+                        <Text strong>{selectedMenuInfo.menuItem.name}</Text>
                       </div>
                       <Divider style={{ margin: '8px 0' }} />
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -755,12 +755,12 @@ const Dashboard = ({ sessionData, onLogout }) => {
         return (
           <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100%' }}>
             <div style={{ marginBottom: '32px' }}>
-              <Title level={2} style={{ margin: 0, color: '#1f2937' }}>
-                {selectedItem?.name || selectedItem?.label || 'Módulo'}
-              </Title>
-              <Paragraph style={{ color: '#6b7280', margin: '8px 0 0 0' }}>
-                Gestión de {selectedItem?.name || selectedItem?.label}
-              </Paragraph>
+                <Title level={2} style={{ margin: 0, color: '#1f2937' }}>
+                  {selectedItem?.name || 'Módulo'}
+                </Title>
+                <Paragraph style={{ color: '#6b7280', margin: '8px 0 0 0' }}>
+                  Gestión de {selectedItem?.name}
+                </Paragraph>
             </div>
             
             <Row gutter={[24, 24]}>
@@ -784,7 +784,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                     </div>
                     <div>
                       <Title level={4} style={{ margin: 0 }}>
-                        {selectedItem?.name || selectedItem?.label}
+                        {selectedItem?.name}
                       </Title>
                       <Text type="secondary">
                         {selectedItem?.type === 'module' ? 'Módulo del sistema' : 'Funcionalidad del sistema'}
