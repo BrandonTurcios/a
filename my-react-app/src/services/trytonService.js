@@ -894,6 +894,15 @@ class TrytonService {
       console.log(`🔍 Obteniendo datos para modelo: ${model}`);
       console.log('Parámetros:', { domain, fields, limit, offset });
       
+      // Validar que no hay campos vacíos
+      const validFields = fields.filter(field => field && field.trim() !== '');
+      if (validFields.length !== fields.length) {
+        console.warn('⚠️ Se encontraron campos vacíos, filtrando:', {
+          original: fields,
+          filtered: validFields
+        });
+      }
+      
       // PASO 1: Obtener IDs con search
       const ids = await this.makeRpcCall(`model.${model}.search`, [domain, offset, limit]);
       
@@ -905,8 +914,8 @@ class TrytonService {
       console.log(`✅ Encontrados ${ids.length} registros`);
       
       // PASO 2: Obtener datos con read
-      console.log(`🔍 Solicitando campos en model.read:`, fields);
-      const data = await this.makeRpcCall(`model.${model}.read`, [ids, fields, {}]);
+      console.log(`🔍 Solicitando campos en model.read:`, validFields);
+      const data = await this.makeRpcCall(`model.${model}.read`, [ids, validFields, {}]);
       
       console.log('✅ Datos obtenidos:', data);
       
@@ -947,23 +956,32 @@ class TrytonService {
       // Identificar campos relacionados basándose en los campos que existen
       const relatedFields = [];
       fields.forEach(field => {
-        // Si el campo es una relación (many2one, many2many, etc.), agregar el campo relacionado
-        if (fieldsView.fields[field] && 
-            (fieldsView.fields[field].type === 'many2one' || 
-             fieldsView.fields[field].type === 'many2many' ||
-             fieldsView.fields[field].type === 'one2many')) {
-          relatedFields.push(field + '.');
+        // Validar que el campo no esté vacío y exista en la definición
+        if (field && field.trim() !== '' && fieldsView.fields[field]) {
+          // Si el campo es una relación (many2one, many2many, etc.), agregar el campo relacionado
+          if (fieldsView.fields[field].type === 'many2one' || 
+              fieldsView.fields[field].type === 'many2many' ||
+              fieldsView.fields[field].type === 'one2many') {
+            const relatedField = field + '.';
+            if (relatedField && relatedField.trim() !== '') {
+              relatedFields.push(relatedField);
+            }
+          }
         }
       });
       
       const allFields = [...fields, ...relatedFields];
       
+      // Filtrar campos vacíos o inválidos
+      const validFields = allFields.filter(field => field && field.trim() !== '');
+      
       console.log('🔍 Campos originales:', fields);
       console.log('🔍 Campos relacionados identificados:', relatedFields);
-      console.log('🔍 Todos los campos:', allFields);
+      console.log('🔍 Todos los campos (antes de filtrar):', allFields);
+      console.log('🔍 Campos válidos (después de filtrar):', validFields);
       
       // PASO 3: Obtener datos
-      const data = await this.getModelData(model, domain, allFields, limit, offset);
+      const data = await this.getModelData(model, domain, validFields, limit, offset);
       
       console.log('✅ Información completa de tabla obtenida');
       
