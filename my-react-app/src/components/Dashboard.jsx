@@ -483,219 +483,29 @@ const Dashboard = ({ sessionData, onLogout }) => {
           }}>
             <div style={{ marginBottom: '32px' }}>
               <Title level={2} style={{ margin: 0, color: '#1f2937' }}>
-                Hospital Management
+                Dashboard
               </Title>
               <Paragraph style={{ color: '#6b7280', margin: '8px 0 0 0' }}>
-                Panel de control del sistema Tryton Health
+                Información de la sesión actual
               </Paragraph>
             </div>
             
-            {/* Quick Access Cards */}
-            <Row gutter={[16, 16]} style={{ marginBottom: '32px' }}>
-              <Col xs={12} sm={8} md={4}>
-                <Card 
-                  hoverable
-                  style={{ textAlign: 'center', borderRadius: '12px' }}
-                  bodyStyle={{ padding: '16px' }}
-                >
-                  <div style={{ 
-                    width: '48px', 
-                    height: '48px', 
-                    background: '#fef2f2',
-                    borderRadius: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 12px'
-                  }}>
-                    <Heart size={24} color="#ef4444" />
-                  </div>
-                  <Text strong>Pacientes</Text>
-                </Card>
-              </Col>
-              <Col xs={12} sm={8} md={4}>
-                <Card 
-                  hoverable
-                  style={{ textAlign: 'center', borderRadius: '12px' }}
-                  bodyStyle={{ padding: '16px' }}
-                >
-                  <div style={{ 
-                    width: '48px', 
-                    height: '48px', 
-                    background: '#eff6ff',
-                    borderRadius: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 12px'
-                  }}>
-                    <Stethoscope size={24} color="#3b82f6" />
-                  </div>
-                  <Text strong>Doctores</Text>
-                </Card>
-              </Col>
-              <Col xs={12} sm={8} md={4}>
-                <Card 
-                  hoverable
-                  style={{ textAlign: 'center', borderRadius: '12px' }}
-                  bodyStyle={{ padding: '16px' }}
-                >
-                  <div style={{ 
-                    width: '48px', 
-                    height: '48px', 
-                    background: '#f0fdf4',
-                    borderRadius: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 12px'
-                  }}>
-                    <Calendar size={24} color="#10b981" />
-                  </div>
-                  <Text strong>Citas</Text>
-                </Card>
-              </Col>
-              <Col xs={12} sm={8} md={4}>
-                <Card 
-                  hoverable
-                  style={{ textAlign: 'center', borderRadius: '12px' }}
-                  bodyStyle={{ padding: '16px' }}
-                >
-                  <div style={{ 
-                    width: '48px', 
-                    height: '48px', 
-                    background: '#faf5ff',
-                    borderRadius: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 12px'
-                  }}>
-                    <Pill size={24} color="#8b5cf6" />
-                  </div>
-                  <Text strong>Medicamentos</Text>
-                </Card>
-              </Col>
-              <Col xs={12} sm={8} md={4}>
-                <Card 
-                  hoverable
-                  style={{ textAlign: 'center', borderRadius: '12px' }}
-                  bodyStyle={{ padding: '16px' }}
-                >
-                  <div style={{ 
-                    width: '48px', 
-                    height: '48px', 
-                    background: '#fffbeb',
-                    borderRadius: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 12px'
-                  }}>
-                    <Hospital size={24} color="#f59e0b" />
-                  </div>
-                  <Text strong>Departamentos</Text>
-                </Card>
-              </Col>
-              <Col xs={12} sm={8} md={4}>
-                <Card 
-                  hoverable
-                  style={{ textAlign: 'center', borderRadius: '12px' }}
-                  bodyStyle={{ padding: '16px' }}
-                >
-                  <div style={{ 
-                    width: '48px', 
-                    height: '48px', 
-                    background: '#eef2ff',
-                    borderRadius: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 12px'
-                  }}>
-                    <BarChart3 size={24} color="#6366f1" />
-                  </div>
-                  <Text strong>Reportes</Text>
-                </Card>
-              </Col>
-            </Row>
-
-            <Row gutter={[24, 24]}>
-              {/* Estadísticas principales */}
-              <Col xs={24} lg={16}>
-                <Card 
-                  title="Estadísticas del Sistema"
-                  style={{ borderRadius: '12px' }}
-                  bodyStyle={{ padding: '24px' }}
-                >
-                  <Row gutter={[16, 16]}>
-                    <Col xs={12} sm={6}>
-                      <Statistic
-                        title="Módulos"
-                        value={menuItems.filter(item => item.type === 'module').length}
-                        prefix={<BarChart3 size={16} color="#1890ff" />}
-                        valueStyle={{ color: '#1890ff' }}
-                      />
-                    </Col>
-                    <Col xs={12} sm={6}>
-                      <Statistic
-                        title="Modelos"
-                        value={menuItems.find(item => item.id === 'dashboard')?.modelAccessCount || 0}
-                        prefix={<Shield size={16} color="#52c41a" />}
-                        valueStyle={{ color: '#52c41a' }}
-                      />
-                    </Col>
-                    <Col xs={12} sm={6}>
-                      <Statistic
-                        title="Usuario"
-                        value={sessionData.username}
-                        prefix={<User size={16} color="#722ed1" />}
-                        valueStyle={{ color: '#722ed1' }}
-                      />
-                    </Col>
-                    <Col xs={12} sm={6}>
-                      <Statistic
-                        title="Base de Datos"
-                        value={sessionData.database}
-                        prefix={<Database size={16} color="#fa8c16" />}
-                        valueStyle={{ color: '#fa8c16' }}
-                      />
-                    </Col>
-                  </Row>
-                </Card>
-              </Col>
-
-              {/* Información de sesión */}
-              <Col xs={24} lg={8}>
-                <Card 
-                  title="Información de Sesión"
-                  style={{ borderRadius: '12px' }}
-                  bodyStyle={{ padding: '24px' }}
-                >
-                  <Space direction="vertical" style={{ width: '100%' }} size="middle">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Text type="secondary">Usuario</Text>
-                      <Text strong>{sessionData.username}</Text>
-                    </div>
-                    <Divider style={{ margin: '8px 0' }} />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Text type="secondary">Base de Datos</Text>
-                      <Text strong>{sessionData.database}</Text>
-                    </div>
-                    <Divider style={{ margin: '8px 0' }} />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Text type="secondary">ID Usuario</Text>
-                      <Text strong>{sessionData.userId}</Text>
-                    </div>
-                    <Divider style={{ margin: '8px 0' }} />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Text type="secondary">Estado</Text>
-                      <Tag color="green">Activo</Tag>
-                    </div>
-                  </Space>
-                </Card>
-              </Col>
-            </Row>
+            <div style={{ 
+              background: 'white', 
+              padding: '24px', 
+              borderRadius: '8px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            }}>
+              <Title level={3} style={{ marginBottom: '16px' }}>Información de Sesión</Title>
+              
+              <div style={{ lineHeight: '1.8' }}>
+                <p><strong>Usuario:</strong> {sessionData.username}</p>
+                <p><strong>Base de Datos:</strong> {sessionData.database}</p>
+                <p><strong>ID Usuario:</strong> {sessionData.userId}</p>
+                <p><strong>Estado:</strong> Activo</p>
+                <p><strong>Hora de Login:</strong> {new Date(sessionData.loginTime).toLocaleString()}</p>
+              </div>
+            </div>
           </div>
         );
       default:
