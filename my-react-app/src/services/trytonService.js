@@ -529,7 +529,7 @@ class TrytonService {
               }
             }
           } catch (fallbackError) {
-            console.error('💥 Error en método alternativo:', fallbackError.message);
+            console.error('Error en método alternativo:', fallbackError.message);
             // Crear menús básicos como último recurso
             menuItems = [
               { id: 1, name: 'Dashboard', icon: '📊', model: '', description: 'Dashboard principal', sequence: 0, childs: [] },
@@ -808,7 +808,7 @@ class TrytonService {
     }
 
     try {
-      console.log(`🔍 Obteniendo información de acción para menú ID: ${menuId}`);
+      console.log(`Obteniendo información de acción para menú ID: ${menuId}`);
       
       // PASO 1: Obtener la información de la acción del menú
       const actionInfo = await this.makeRpcCall('model.ir.action.keyword.get_keyword', [
@@ -817,7 +817,7 @@ class TrytonService {
         {}
       ]);
       
-      console.log('✅ Información de acción obtenida:', actionInfo);
+      console.log('Información de acción obtenida:', actionInfo);
       
       // PASO 2: Si hay resultado, extraer el modelo y hacer la segunda llamada
       if (actionInfo && actionInfo.length > 0 && actionInfo[0].res_model) {
@@ -825,14 +825,14 @@ class TrytonService {
         const resModel = actionData.res_model;
         const actionName = actionData.name || `Menú ${menuId}`;
         
-        console.log(`🎯 Modelo encontrado: ${resModel}`);
-        console.log(`📝 Nombre de acción: ${actionName}`);
+        console.log(`Modelo encontrado: ${resModel}`);
+        console.log(`Nombre de acción: ${actionName}`);
         
         // PASO 3: Hacer la llamada view_toolbar_get con el modelo obtenido
-        console.log(`🔧 Ejecutando view_toolbar_get para modelo: ${resModel}`);
+        console.log(`Ejecutando view_toolbar_get para modelo: ${resModel}`);
         const toolbarInfo = await this.makeRpcCall(`model.${resModel}.view_toolbar_get`, [{}]);
         
-        console.log('✅ Información de toolbar obtenida:', toolbarInfo);
+        console.log('Información de toolbar obtenida:', toolbarInfo);
         
         return {
           actionInfo: actionInfo,
@@ -841,7 +841,7 @@ class TrytonService {
           actionName: actionName
         };
       } else {
-        console.warn('⚠️ No se encontró res_model en la respuesta de acción:', actionInfo);
+        console.warn('No se encontró res_model en la respuesta de acción:', actionInfo);
         return {
           actionInfo: actionInfo,
           toolbarInfo: null,
@@ -850,7 +850,7 @@ class TrytonService {
         };
       }
     } catch (error) {
-      console.error('❌ Error obteniendo información de acción del menú:', error);
+      console.error('Error obteniendo información de acción del menú:', error);
       console.error('Detalles del error:', {
         menuId,
         errorMessage: error.message,
@@ -867,7 +867,7 @@ class TrytonService {
     }
 
     try {
-      console.log(`🔍 Obteniendo vista de campos para modelo: ${model}, vista: ${viewId}, tipo: ${viewType}`);
+      console.log(`Obteniendo vista de campos para modelo: ${model}, vista: ${viewId}, tipo: ${viewType}`);
       
       const fieldsView = await this.makeRpcCall(`model.${model}.fields_view_get`, [
         viewId,
@@ -875,11 +875,11 @@ class TrytonService {
         {}
       ]);
       
-      console.log('✅ Vista de campos obtenida:', fieldsView);
+      console.log('Vista de campos obtenida:', fieldsView);
       
       return fieldsView;
     } catch (error) {
-      console.error('❌ Error obteniendo vista de campos:', error);
+      console.error('Error obteniendo vista de campos:', error);
       throw error;
     }
   }
@@ -891,7 +891,7 @@ class TrytonService {
     }
 
     try {
-      console.log(`🔍 Obteniendo datos para modelo: ${model}`);
+      console.log(`Obteniendo datos para modelo: ${model}`);
       console.log('Parámetros:', { domain, fields, limit, offset });
       
       // PASO 1: Obtener IDs con search
@@ -902,20 +902,20 @@ class TrytonService {
         return [];
       }
       
-      console.log(`✅ Encontrados ${ids.length} registros`);
+      console.log(`Encontrados ${ids.length} registros`);
       
       // PASO 2: Expandir campos para incluir relaciones
       const expandedFields = this.expandFieldsForRelations(fields, model);
-      console.log(`🔧 Campos expandidos:`, expandedFields);
+      console.log(`Campos expandidos:`, expandedFields);
       
       // PASO 3: Obtener datos con read incluyendo campos relacionados
       const data = await this.makeRpcCall(`model.${model}.read`, [ids, expandedFields, {}]);
       
-      console.log('✅ Datos obtenidos:', data);
+      console.log('Datos obtenidos:', data);
       
       return data;
     } catch (error) {
-      console.error('❌ Error obteniendo datos del modelo:', error);
+      console.error('Error obteniendo datos del modelo:', error);
       throw error;
     }
   }
@@ -935,7 +935,7 @@ class TrytonService {
     relationFields.forEach(fieldName => {
       if (fields.includes(fieldName) && !expandedFields.includes(`${fieldName}.rec_name`)) {
         expandedFields.push(`${fieldName}.rec_name`);
-        console.log(`➕ Agregando campo relacionado: ${fieldName}.rec_name`);
+        console.log(`Agregando campo relacionado: ${fieldName}.rec_name`);
       }
     });
     
@@ -957,7 +957,7 @@ class TrytonService {
     }
 
     try {
-      console.log(`🔍 Obteniendo información completa de tabla para modelo: ${model}`);
+      console.log(`Obteniendo información completa de tabla para modelo: ${model}`);
       
       // PASO 1: Obtener vista de campos
       const fieldsView = await this.getFieldsView(model, viewId, viewType);
@@ -968,7 +968,7 @@ class TrytonService {
       // PASO 3: Obtener datos
       const data = await this.getModelData(model, domain, fields, limit, offset);
       
-      console.log('✅ Información completa de tabla obtenida');
+      console.log('Información completa de tabla obtenida');
       
       return {
         fieldsView,
@@ -979,7 +979,7 @@ class TrytonService {
         fields
       };
     } catch (error) {
-      console.error('❌ Error obteniendo información completa de tabla:', error);
+      console.error('Error obteniendo información completa de tabla:', error);
       throw error;
     }
   }
