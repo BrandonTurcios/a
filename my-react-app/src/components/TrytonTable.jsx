@@ -116,6 +116,31 @@ const TrytonTable = ({
     return basicFields.includes(fieldName) || relatedFields.includes(fieldName);
   };
 
+  const parseTrytonDateTime = (value) => {
+    if (!value || typeof value !== 'object') return null;
+    if (value.__class__ === 'datetime') {
+      const { year, month, day, hour = 0, minute = 0, second = 0, microsecond = 0 } = value;
+      try {
+        const iso = `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}.${String(microsecond).padStart(6, '0')}Z`;
+        const d = new Date(iso);
+        if (!isNaN(d.getTime())) return d;
+      } catch (_) {
+        return null;
+      }
+    }
+    if (value.__class__ === 'date') {
+      const { year, month, day } = value;
+      try {
+        const iso = `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T00:00:00Z`;
+        const d = new Date(iso);
+        if (!isNaN(d.getTime())) return d;
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
+  };
+
   const formatCellValue = (value, fieldDef, record = null) => {
     if (value === null || value === undefined) {
       return '-';
@@ -142,8 +167,17 @@ const TrytonTable = ({
     }
     
     // Manejar fechas
-    if (fieldDef.type === 'date' || fieldDef.type === 'timestamp') {
-      return new Date(value).toLocaleDateString();
+    if (fieldDef.type === 'date' || fieldDef.type === 'timestamp' || fieldDef.type === 'datetime') {
+      // Tryton puede devolver objetos { __class__: 'datetime', ... }
+      const dt = typeof value === 'object' ? parseTrytonDateTime(value) : new Date(value);
+      if (dt && !isNaN(dt.getTime())) {
+        // Mostrar fecha y hora si es timestamp/datetime
+        if (fieldDef.type === 'timestamp' || fieldDef.type === 'datetime') {
+          return dt.toLocaleString();
+        }
+        return dt.toLocaleDateString();
+      }
+      return String(value);
     }
     
     // Manejar IDs que tienen objetos relacionados
