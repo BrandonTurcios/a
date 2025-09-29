@@ -8,7 +8,6 @@ import {
   DatePicker, 
   Switch, 
   InputNumber, 
-  TextArea, 
   Row, 
   Col, 
   Space, 
@@ -31,7 +30,7 @@ import trytonService from '../services/trytonService';
 
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
-const { TextArea: AntTextArea } = Input;
+const { TextArea } = Input;
 
 const TrytonForm = ({ 
   model, 
@@ -203,7 +202,7 @@ const TrytonForm = ({
       case 'text':
         return (
           <Form.Item key={name} {...commonProps}>
-            <AntTextArea 
+            <Input.TextArea 
               rows={4} 
               placeholder={`Ingrese ${label.toLowerCase()}`}
             />
