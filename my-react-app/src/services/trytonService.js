@@ -1025,6 +1025,35 @@ class TrytonService {
     }
   }
 
+  // Obtener datos de un registro específico para formularios
+  async getFormRecordData(model, recordId = 1, fields = []) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`Obteniendo datos del registro ${recordId} para modelo: ${model}`);
+      
+      // Obtener datos del registro específico
+      const data = await this.makeRpcCall(`model.${model}.read`, [
+        [recordId],
+        fields,
+        {}
+      ]);
+      
+      if (data && data.length > 0) {
+        console.log('✅ Datos del registro obtenidos:', data[0]);
+        return data[0];
+      } else {
+        console.log('⚠️ No se encontraron datos del registro');
+        return null;
+      }
+    } catch (error) {
+      console.error('Error obteniendo datos del registro:', error);
+      throw error;
+    }
+  }
+
   // Crear un nuevo registro
   async createRecord(model, values) {
     if (!this.sessionData) {

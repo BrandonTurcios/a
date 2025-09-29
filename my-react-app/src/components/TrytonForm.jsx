@@ -38,6 +38,7 @@ const TrytonForm = ({
   viewId, 
   viewType = 'form', 
   recordId = null, 
+  recordData = null,
   title = 'Formulario',
   onSave = null,
   onCancel = null,
@@ -76,14 +77,17 @@ const TrytonForm = ({
       setFields(formFields);
       
       // Si hay datos del registro, establecerlos
-      if (formInfo.data) {
-        setFormData(formInfo.data);
-        form.setFieldsValue(formInfo.data);
+      if (formInfo.data || recordData) {
+        const dataToUse = formInfo.data || recordData;
+        setFormData(dataToUse);
+        form.setFieldsValue(dataToUse);
+        console.log('✅ Datos del registro establecidos:', dataToUse);
       } else {
         // Formulario nuevo - establecer valores por defecto
         const defaultValues = getDefaultValues(formInfo.fieldsView);
         setFormData(defaultValues);
         form.setFieldsValue(defaultValues);
+        console.log('✅ Valores por defecto establecidos:', defaultValues);
       }
       
     } catch (error) {
@@ -257,8 +261,43 @@ const TrytonForm = ({
           </Form.Item>
         );
         
+      case 'timedelta':
+        return (
+          <Form.Item key={name} {...commonProps}>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <InputNumber 
+                placeholder="Días"
+                style={{ flex: 1 }}
+                min={0}
+              />
+              <InputNumber 
+                placeholder="Horas"
+                style={{ flex: 1 }}
+                min={0}
+                max={23}
+              />
+              <InputNumber 
+                placeholder="Minutos"
+                style={{ flex: 1 }}
+                min={0}
+                max={59}
+              />
+            </div>
+          </Form.Item>
+        );
+        
       case 'selection':
         const options = fieldDef.selection || [];
+        // Si selection es una función (string), mostrar placeholder
+        if (typeof fieldDef.selection === 'string') {
+          return (
+            <Form.Item key={name} {...commonProps}>
+              <Select placeholder={`Seleccione ${label.toLowerCase()}`}>
+                <Option value="loading">Cargando opciones...</Option>
+              </Select>
+            </Form.Item>
+          );
+        }
         return (
           <Form.Item key={name} {...commonProps}>
             <Select placeholder={`Seleccione ${label.toLowerCase()}`}>

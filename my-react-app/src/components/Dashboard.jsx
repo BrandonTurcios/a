@@ -295,11 +295,34 @@ const Dashboard = ({ sessionData, onLogout }) => {
             } else if (fieldsView && fieldsView.type === 'form') {
               console.log('✅ Vista confirmada como tipo "form", preparando formulario...');
               
+              // Para formularios, necesitamos obtener los datos del registro
+              let recordData = null;
+              try {
+                console.log('🔍 Intentando obtener datos del registro...');
+                const recordId = 1; // Para configuraciones, generalmente es el registro 1
+                const fields = Object.keys(fieldsView.fields || {});
+                recordData = await trytonService.getFormRecordData(
+                  menuInfo.resModel,
+                  recordId,
+                  fields
+                );
+                
+                if (recordData) {
+                  console.log('✅ Datos del registro obtenidos:', recordData);
+                } else {
+                  console.log('⚠️ No se encontraron datos del registro, creando formulario vacío');
+                }
+              } catch (recordError) {
+                console.warn('⚠️ Error obteniendo datos del registro:', recordError);
+                // Continuar con formulario vacío
+              }
+              
               formData = {
                 model: menuInfo.resModel,
                 viewId: viewId,
                 viewType: 'form',
-                fieldsView: fieldsView
+                fieldsView: fieldsView,
+                recordData: recordData
               };
               console.log('✅ Información de formulario preparada:', formData);
             } else {
@@ -609,6 +632,8 @@ const Dashboard = ({ sessionData, onLogout }) => {
                 model={formInfo.model}
                 viewId={formInfo.viewId}
                 viewType="form"
+                recordId={formInfo.recordData?.id || null}
+                recordData={formInfo.recordData}
                 title={selectedMenuInfo.actionName}
               />
             </div>
