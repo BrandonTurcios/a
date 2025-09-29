@@ -51,6 +51,7 @@ const TrytonForm = ({
   const [formData, setFormData] = useState({});
   const [fields, setFields] = useState([]);
   const [isEditing, setIsEditing] = useState(!readonly && !recordId);
+  const [selectionOptions, setSelectionOptions] = useState({});
 
   useEffect(() => {
     if (model && viewId) {
@@ -75,6 +76,9 @@ const TrytonForm = ({
       const formFields = generateFormFields(formInfo.fieldsView);
       setFields(formFields);
       
+      // Cargar opciones de selection dinámicas
+      await loadSelectionOptions(formInfo.fieldsView);
+      
       // Si hay datos del registro, establecerlos
       if (formInfo.data || recordData) {
         const dataToUse = formInfo.data || recordData;
@@ -97,6 +101,34 @@ const TrytonForm = ({
     }
   };
 
+  const loadSelectionOptions = async (fieldsView) => {
+    if (!fieldsView.fields) return;
+    
+    const optionsToLoad = {};
+    
+    // Identificar campos selection que tienen métodos
+    Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
+      if (fieldDef.type === 'selection' && typeof fieldDef.selection === 'string') {
+        optionsToLoad[fieldName] = fieldDef.selection;
+      }
+    });
+    
+    // Cargar opciones para cada campo
+    for (const [fieldName, methodName] of Object.entries(optionsToLoad)) {
+      try {
+        console.log(`🔍 Cargando opciones para ${fieldName} usando método ${methodName}`);
+        const options = await trytonService.getSelectionOptions(model, methodName);
+        setSelectionOptions(prev => ({
+          ...prev,
+          [fieldName]: options
+        }));
+        console.log(`✅ Opciones cargadas para ${fieldName}:`, options);
+      } catch (error) {
+        console.warn(`⚠️ Error cargando opciones para ${fieldName}:`, error);
+        // Continuar con otros campos
+      }
+    }
+  };
 
   const generateFormFields = (fieldsView) => {
     const formFields = [];
@@ -287,12 +319,21 @@ const TrytonForm = ({
         
       case 'selection':
         const options = fieldDef.selection || [];
-        // Si selection es una función (string), mostrar placeholder
+        // Si selection es una función (string), usar opciones cargadas dinámicamente
         if (typeof fieldDef.selection === 'string') {
+          const dynamicOptions = selectionOptions[name] || [];
           return (
             <Form.Item key={name} {...commonProps}>
               <Select placeholder={`Seleccione ${label.toLowerCase()}`}>
-                <Option value="loading">Cargando opciones...</Option>
+                {dynamicOptions.length > 0 ? (
+                  dynamicOptions.map(([value, optionLabel]) => (
+                    <Option key={value} value={value}>
+                      {optionLabel}
+                    </Option>
+                  ))
+                ) : (
+                  <Option value="loading">Cargando opciones...</Option>
+                )}
               </Select>
             </Form.Item>
           );

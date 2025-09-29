@@ -1054,6 +1054,26 @@ class TrytonService {
     }
   }
 
+  // Obtener opciones de un campo selection que tiene un método
+  async getSelectionOptions(model, methodName, context = {}) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`Obteniendo opciones de selection para método: ${methodName} en modelo: ${model}`);
+      
+      // Llamar al método del modelo que devuelve las opciones
+      const options = await this.makeRpcCall(`model.${model}.${methodName}`, [context]);
+      
+      console.log(`✅ Opciones obtenidas para ${methodName}:`, options);
+      return options;
+    } catch (error) {
+      console.error(`Error obteniendo opciones de selection para ${methodName}:`, error);
+      throw error;
+    }
+  }
+
   // Crear un nuevo registro
   async createRecord(model, values) {
     if (!this.sessionData) {
