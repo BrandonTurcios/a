@@ -984,6 +984,104 @@ class TrytonService {
     }
   }
 
+  // Obtener información completa de formulario (vista + datos de un registro)
+  async getFormInfo(model, viewId, viewType = 'form', recordId = null) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`Obteniendo información completa de formulario para modelo: ${model}`);
+      
+      // PASO 1: Obtener vista de campos
+      const fieldsView = await this.getFieldsView(model, viewId, viewType);
+      
+      // PASO 2: Extraer campos de la vista
+      const fields = fieldsView.fields ? Object.keys(fieldsView.fields) : [];
+      
+      // PASO 3: Si hay recordId, obtener datos del registro
+      let data = null;
+      if (recordId) {
+        data = await this.getModelData(model, [['id', '=', recordId]], fields, 1, 0);
+        if (data && data.length > 0) {
+          data = data[0];
+        }
+      }
+      
+      console.log('Información completa de formulario obtenida');
+      
+      return {
+        fieldsView,
+        data,
+        model,
+        viewId,
+        viewType,
+        fields,
+        recordId
+      };
+    } catch (error) {
+      console.error('Error obteniendo información completa de formulario:', error);
+      throw error;
+    }
+  }
+
+  // Crear un nuevo registro
+  async createRecord(model, values) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`Creando nuevo registro en modelo: ${model}`, values);
+      
+      const result = await this.makeRpcCall(`model.${model}.create`, [[values]]);
+      
+      console.log('Registro creado:', result);
+      return result;
+    } catch (error) {
+      console.error('Error creando registro:', error);
+      throw error;
+    }
+  }
+
+  // Actualizar un registro existente
+  async updateRecord(model, recordId, values) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`Actualizando registro ${recordId} en modelo: ${model}`, values);
+      
+      const result = await this.makeRpcCall(`model.${model}.write`, [[recordId], values]);
+      
+      console.log('Registro actualizado:', result);
+      return result;
+    } catch (error) {
+      console.error('Error actualizando registro:', error);
+      throw error;
+    }
+  }
+
+  // Eliminar un registro
+  async deleteRecord(model, recordId) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`Eliminando registro ${recordId} en modelo: ${model}`);
+      
+      const result = await this.makeRpcCall(`model.${model}.delete`, [[recordId]]);
+      
+      console.log('Registro eliminado:', result);
+      return result;
+    } catch (error) {
+      console.error('Error eliminando registro:', error);
+      throw error;
+    }
+  }
+
   // Obtener pacientes de GNU Health de forma segura
   async getPatientsSafe({
     model = 'gnuhealth.patient',

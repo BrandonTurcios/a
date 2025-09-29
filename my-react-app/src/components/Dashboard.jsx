@@ -49,6 +49,7 @@ import {
 import trytonService from '../services/trytonService';
 import PatientsTable from './PatientsTable';
 import TrytonTable from './TrytonTable';
+import TrytonForm from './TrytonForm';
 
 const { Header, Sider, Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
@@ -63,6 +64,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
   const [expandedMenus, setExpandedMenus] = useState(new Set());
   const [selectedMenuInfo, setSelectedMenuInfo] = useState(null);
   const [tableInfo, setTableInfo] = useState(null);
+  const [formInfo, setFormInfo] = useState(null);
 
   useEffect(() => {
     loadSidebarMenu();
@@ -249,28 +251,36 @@ const Dashboard = ({ sessionData, onLogout }) => {
         });
       }
       
-      // Si tenemos un modelo, obtener información de la tabla
+      // Si tenemos un modelo, obtener información de la vista (tree o form)
       let tableData = null;
+      let formData = null;
+      let viewType = null;
+      let viewId = null;
+      
       if (menuInfo.resModel && menuInfo.actionInfo && menuInfo.actionInfo.length > 0) {
         const actionData = menuInfo.actionInfo[0];
         if (actionData.views && actionData.views.length > 0) {
-          // Obtener la vista tree (primera vista disponible)
-          const treeView = actionData.views.find(view => view[1] === 'tree') || actionData.views[0];
-          const viewId = treeView[0];
+          // Buscar vista tree primero, luego form
+          const treeView = actionData.views.find(view => view[1] === 'tree');
+          const formView = actionData.views.find(view => view[1] === 'form');
           
-          console.log(`🔍 Obteniendo información de tabla para modelo: ${menuInfo.resModel}, vista: ${viewId}`);
+          // Priorizar tree view si existe, sino usar form view
+          const selectedView = treeView || formView || actionData.views[0];
+          viewId = selectedView[0];
+          viewType = selectedView[1];
+          
+          console.log(`🔍 Obteniendo información de vista para modelo: ${menuInfo.resModel}, vista: ${viewId}, tipo: ${viewType}`);
           
           try {
-            // Primero verificar si la vista es de tipo "tree"
+            // Verificar el tipo de vista
             const fieldsView = await trytonService.getFieldsView(
               menuInfo.resModel,
               viewId,
-              'tree'
+              viewType
             );
             
             console.log('🔍 Vista obtenida:', fieldsView);
             
-            // Solo proceder si es una vista de tipo "tree"
             if (fieldsView && fieldsView.type === 'tree') {
               console.log('✅ Vista confirmada como tipo "tree", obteniendo datos...');
               
@@ -282,11 +292,21 @@ const Dashboard = ({ sessionData, onLogout }) => {
                 100
               );
               console.log('✅ Información de tabla obtenida:', tableData);
+            } else if (fieldsView && fieldsView.type === 'form') {
+              console.log('✅ Vista confirmada como tipo "form", preparando formulario...');
+              
+              formData = {
+                model: menuInfo.resModel,
+                viewId: viewId,
+                viewType: 'form',
+                fieldsView: fieldsView
+              };
+              console.log('✅ Información de formulario preparada:', formData);
             } else {
-              console.log(`⚠️ Vista no es de tipo "tree" (tipo: ${fieldsView?.type}), omitiendo tabla`);
+              console.log(`⚠️ Vista no es de tipo "tree" ni "form" (tipo: ${fieldsView?.type}), omitiendo`);
             }
-          } catch (tableError) {
-            console.warn('⚠️ Error obteniendo información de tabla:', tableError);
+          } catch (viewError) {
+            console.warn('⚠️ Error obteniendo información de vista:', viewError);
           }
         }
       }
@@ -297,10 +317,13 @@ const Dashboard = ({ sessionData, onLogout }) => {
         toolbarInfo: menuInfo.toolbarInfo,
         resModel: menuInfo.resModel,
         actionName: menuInfo.actionName,
+        viewType: viewType,
+        viewId: viewId,
         timestamp: new Date().toISOString()
       });
       
       setTableInfo(tableData);
+      setFormInfo(formData);
       setActiveTab(item.id);
     } catch (error) {
       console.error('Error obteniendo información del menú:', error);
@@ -548,7 +571,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                   {selectedMenuInfo.actionName || selectedItem?.name || 'Tabla'}
                 </Title>
                 <Paragraph style={{ color: '#6b7280', margin: '8px 0 0 0' }}>
-                  {selectedMenuInfo.resModel}
+                  {selectedMenuInfo.resModel} - Vista de tabla
                 </Paragraph>
               </div>
               
@@ -558,6 +581,34 @@ const Dashboard = ({ sessionData, onLogout }) => {
                 viewType="tree"
                 domain={[]}
                 limit={100}
+                title={selectedMenuInfo.actionName}
+              />
+            </div>
+          );
+        }
+        
+        // Si hay información de formulario, mostrar el formulario Tryton
+        if (formInfo && selectedMenuInfo && selectedMenuInfo.resModel) {
+          return (
+            <div style={{ 
+              padding: '24px', 
+              background: '#f5f5f5', 
+              minHeight: 'calc(100vh - 64px)',
+              overflowY: 'auto'
+            }}>
+              <div style={{ marginBottom: '24px' }}>
+                <Title level={2} style={{ margin: 0, color: '#1f2937' }}>
+                  {selectedMenuInfo.actionName || selectedItem?.name || 'Formulario'}
+                </Title>
+                <Paragraph style={{ color: '#6b7280', margin: '8px 0 0 0' }}>
+                  {selectedMenuInfo.resModel} - Vista de formulario
+                </Paragraph>
+              </div>
+              
+              <TrytonForm
+                model={formInfo.model}
+                viewId={formInfo.viewId}
+                viewType="form"
                 title={selectedMenuInfo.actionName}
               />
             </div>
