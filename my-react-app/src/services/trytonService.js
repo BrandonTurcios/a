@@ -1316,7 +1316,13 @@ class TrytonService {
       console.log(`🧙 Obteniendo formulario de wizard: ${wizardName}, ID: ${wizardId}`);
       
       // Ejecutar el wizard para obtener el formulario
-      const executeResult = await this.makeRpcCall(`wizard.${wizardName}.execute`, [wizardId]);
+      // Los parámetros correctos son: [wizardId, stateName, data]
+      // Para obtener el formulario inicial, usamos el estado 'start' y datos vacíos
+      const executeResult = await this.makeRpcCall(`wizard.${wizardName}.execute`, [
+        wizardId,
+        {},       // data (vacío para el formulario inicial)
+        'start'   // state_name
+      ]);
       
       console.log(`✅ Formulario de wizard obtenido:`, executeResult);
       
@@ -1352,7 +1358,12 @@ class TrytonService {
       console.log(`📝 Valores:`, values);
       
       // Ejecutar la acción del wizard con los valores
-      const executeResult = await this.makeRpcCall(`wizard.${wizardName}.execute`, [wizardId, buttonState, values]);
+      // Los parámetros correctos son: [wizardId, data, stateName]
+      const executeResult = await this.makeRpcCall(`wizard.${wizardName}.execute`, [
+        wizardId,
+        values,       // data (valores del formulario)
+        buttonState   // state_name (ej: 'create_', 'end', etc.)
+      ]);
       
       console.log(`✅ Acción de wizard ejecutada:`, executeResult);
       
