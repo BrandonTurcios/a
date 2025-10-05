@@ -69,9 +69,6 @@ const Dashboard = ({ sessionData, onLogout }) => {
   const [showActionOptionsModal, setShowActionOptionsModal] = useState(false);
   const [actionOptions, setActionOptions] = useState([]);
   const [pendingMenuItem, setPendingMenuItem] = useState(null);
-  const [contextInfo, setContextInfo] = useState(null);
-  const [pendingActionData, setPendingActionData] = useState(null);
-  const [contextLoading, setContextLoading] = useState(false);
 
   useEffect(() => {
     loadSidebarMenu();
@@ -221,10 +218,6 @@ const Dashboard = ({ sessionData, onLogout }) => {
     setTableInfo(null);
     setFormInfo(null);
     
-    // Limpiar contexto anterior
-    setContextInfo(null);
-    setPendingActionData(null);
-    setContextLoading(false);
     
     // Limpiar errores
     setError('');
@@ -234,40 +227,80 @@ const Dashboard = ({ sessionData, onLogout }) => {
     try {
       console.log(`Seleccionada opción ${selectedIndex}:`, selectedOption);
       
-      // Limpiar estado anterior antes de procesar nueva selección
-      clearPreviousState();
-      
-      // Ejecutar la acción seleccionada
-      const result = await trytonService.executeSelectedAction(pendingMenuItem.id, selectedIndex);
-      
-      console.log('Resultado de la acción ejecutada:', result);
-      
       // Cerrar el modal
       setShowActionOptionsModal(false);
       setActionOptions([]);
-      setPendingMenuItem(null);
       
-      // Procesar el resultado según el tipo de acción
-      if (result.requiresContext) {
-        console.log('⚠️ La acción requiere contexto:', result.contextModel);
-        console.log('📋 Información del contexto:', result.contextInfo);
+      // Si es una opción de res_model (tiene resModel), ejecutarla directamente
+      if (selectedOption.resModel) {
+        console.log(`🎯 Ejecutando opción de res_model: ${selectedOption.resModel}`);
         
-        // Configurar el contexto para mostrar el formulario
-        setContextInfo(result.contextInfo);
-        setPendingActionData(result);
-        setActiveTab('context'); // Cambiar a una pestaña especial para contexto
-        return;
-      }
-      
-      // Si es una acción directa, procesar como menú normal
-      if (result.resModel && result.toolbarInfo) {
-        await processDirectAction(pendingMenuItem, result);
+        // Limpiar estado anterior
+        clearPreviousState();
+        
+        // Ejecutar la opción de res_model
+        const result = await trytonService.executeResModelOption(selectedOption);
+        
+        console.log('Resultado de la opción de res_model:', result);
+        
+        // Procesar el resultado
+        if (result.tableData) {
+          setTableInfo(result.tableData);
+          setFormInfo(null);
+        } else if (result.formData) {
+          setFormInfo(result.formData);
+          setTableInfo(null);
+        }
+        
+        setSelectedMenuInfo({
+          menuItem: pendingMenuItem,
+          actionInfo: [result],
+          toolbarInfo: result.toolbarInfo,
+          resModel: result.resModel,
+          actionName: result.actionName,
+          viewType: result.viewType,
+          viewId: result.viewId,
+          timestamp: new Date().toISOString()
+        });
+        
+        setActiveTab(pendingMenuItem.id);
+        setPendingMenuItem(null);
+        
+      } else {
+        // Es una opción normal, ejecutar como antes
+        // Limpiar estado anterior antes de procesar nueva selección
+        clearPreviousState();
+        
+        // Ejecutar la acción seleccionada
+        const result = await trytonService.executeSelectedAction(pendingMenuItem.id, selectedIndex);
+        
+        console.log('Resultado de la acción ejecutada:', result);
+        
+        // Procesar el resultado según el tipo de acción
+        if (result.requiresContext) {
+          console.log('⚠️ La acción requiere contexto:', result.contextModel);
+          console.log('📋 Opciones de res_model disponibles:', result.resModelOptions);
+          
+          // Mostrar modal con opciones de res_model
+          setActionOptions(result.resModelOptions);
+          setPendingMenuItem(pendingMenuItem);
+          setShowActionOptionsModal(true);
+          return;
+        }
+        
+        // Si es una acción directa, procesar como menú normal
+        if (result.resModel && result.toolbarInfo) {
+          await processDirectAction(pendingMenuItem, result);
+        }
+        
+        setPendingMenuItem(null);
       }
       
     } catch (error) {
       console.error('Error ejecutando acción seleccionada:', error);
       setError('Error ejecutando la acción seleccionada: ' + error.message);
       setShowActionOptionsModal(false);
+      setPendingMenuItem(null);
     }
   };
 
@@ -282,49 +315,6 @@ const Dashboard = ({ sessionData, onLogout }) => {
     // El usuario puede querer mantener la vista actual
   };
 
-  const handleContextSubmit = async (contextValues) => {
-    try {
-      setContextLoading(true);
-      console.log('📝 Valores del contexto enviados:', contextValues);
-      
-      // Ejecutar la acción con el contexto completado
-      const result = await trytonService.executeActionWithContext(pendingActionData, contextValues);
-      
-      console.log('✅ Resultado de la acción con contexto:', result);
-      
-      // Limpiar el contexto
-      setContextInfo(null);
-      setPendingActionData(null);
-      
-      // Procesar el resultado final
-      if (result.tableData) {
-        setTableInfo(result.tableData);
-        setFormInfo(null);
-      } else if (result.formData) {
-        setFormInfo(result.formData);
-        setTableInfo(null);
-      }
-      
-      setSelectedMenuInfo({
-        menuItem: pendingMenuItem,
-        actionInfo: [result],
-        toolbarInfo: result.toolbarInfo,
-        resModel: result.resModel,
-        actionName: result.actionName,
-        viewType: result.viewType,
-        viewId: result.viewId,
-        timestamp: new Date().toISOString()
-      });
-      
-      setActiveTab(pendingMenuItem.id);
-      
-    } catch (error) {
-      console.error('Error ejecutando acción con contexto:', error);
-      setError('Error ejecutando la acción con contexto: ' + error.message);
-    } finally {
-      setContextLoading(false);
-    }
-  };
 
   const processDirectAction = async (item, actionResult) => {
     try {
@@ -816,39 +806,6 @@ const Dashboard = ({ sessionData, onLogout }) => {
                 <p><strong>Hora de Login:</strong> {new Date(sessionData.loginTime).toLocaleString()}</p>
               </div>
             </div>
-          </div>
-        );
-      case 'context':
-        return (
-          <div style={{ 
-            padding: '24px', 
-            background: '#f5f5f5', 
-            minHeight: 'calc(100vh - 64px)',
-            overflowY: 'auto'
-          }}>
-            <div style={{ marginBottom: '24px' }}>
-              <Title level={2} style={{ margin: 0, color: '#1f2937' }}>
-                Configurar Contexto
-              </Title>
-              <Paragraph style={{ color: '#6b7280', margin: '8px 0 0 0' }}>
-                {pendingActionData?.actionName} - Configuración requerida
-              </Paragraph>
-            </div>
-            
-            {contextInfo && (
-              <TrytonForm
-                model={contextInfo.model}
-                viewId={null}
-                viewType="form"
-                recordId={null}
-                recordData={null}
-                fieldsView={contextInfo.fieldsView}
-                title="Configuración de Contexto"
-                onSubmit={handleContextSubmit}
-                loading={contextLoading}
-                submitButtonText="Continuar"
-              />
-            )}
           </div>
         );
       default:

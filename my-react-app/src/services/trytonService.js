@@ -1178,18 +1178,17 @@ class TrytonService {
       if (actionInfo.hasMultipleOptions && actionInfo.selectedOption) {
         const selectedOption = actionInfo.selectedOption;
         
-        // Si la opción tiene context_model, necesitamos manejar el contexto
+        // Si la opción tiene context_model, mostrar modal con opciones de res_model
         if (selectedOption.contextModel) {
           console.log(`⚠️ La opción seleccionada requiere contexto: ${selectedOption.contextModel}`);
           
-          // Obtener información del contexto
-          const contextInfo = await this.getContextInfo(selectedOption.contextModel);
+          // Obtener todas las opciones disponibles
+          const allOptions = actionInfo.options;
           
           return {
             requiresContext: true,
             contextModel: selectedOption.contextModel,
-            contextInfo: contextInfo,
-            resModel: selectedOption.resModel,
+            resModelOptions: allOptions, // Todas las opciones de res_model
             actionName: selectedOption.name,
             views: selectedOption.views,
             actionId: selectedOption.id
@@ -1244,6 +1243,94 @@ class TrytonService {
       };
     } catch (error) {
       console.error(`Error obteniendo información del contexto ${contextModel}:`, error);
+      throw error;
+    }
+  }
+
+  // Ejecutar opción específica de res_model
+  async executeResModelOption(resModelOption) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`Ejecutando opción de res_model: ${resModelOption.resModel}`);
+      
+      // Obtener fields_view_get para determinar el tipo de vista
+      const fieldsView = await this.makeRpcCall(`model.${resModelOption.resModel}.fields_view_get`, [
+        null, // view_id - usar vista por defecto
+        'tree', // intentar tree primero
+        {}
+      ]);
+      
+      console.log(`✅ Vista obtenida para ${resModelOption.resModel}:`, fieldsView);
+      
+      // Determinar el tipo de vista y vista ID
+      let viewType = fieldsView.type || 'tree';
+      let viewId = fieldsView.view_id || null;
+      
+      // Si la vista por defecto no es tree, intentar con form
+      if (viewType !== 'tree') {
+        const formView = await this.makeRpcCall(`model.${resModelOption.resModel}.fields_view_get`, [
+          null,
+          'form',
+          {}
+        ]);
+        viewType = formView.type || 'form';
+        viewId = formView.view_id || null;
+      }
+      
+      console.log(`🎯 Tipo de vista determinado: ${viewType}, ID: ${viewId}`);
+      
+      let tableData = null;
+      let formData = null;
+      
+      if (viewType === 'tree') {
+        // Obtener datos para tabla
+        const searchParams = [[], 0, 100, null, {}];
+        const ids = await this.makeRpcCall(`model.${resModelOption.resModel}.search`, searchParams);
+        
+        if (ids.length > 0) {
+          const fields = Object.keys(fieldsView.fields || {});
+          const expandedFields = this.expandFieldsForRelations(fields, resModelOption.resModel);
+          const data = await this.makeRpcCall(`model.${resModelOption.resModel}.read`, [ids, expandedFields, {}]);
+          
+          tableData = {
+            fieldsView,
+            data,
+            model: resModelOption.resModel,
+            viewId: viewId,
+            viewType: viewType,
+            fields: expandedFields
+          };
+        }
+      } else if (viewType === 'form') {
+        // Para formularios, crear un formulario vacío
+        formData = {
+          model: resModelOption.resModel,
+          viewId: viewId,
+          viewType: 'form',
+          fieldsView: fieldsView,
+          recordData: null // Formulario vacío
+        };
+      }
+      
+      // Obtener toolbar info
+      const toolbarInfo = await this.makeRpcCall(`model.${resModelOption.resModel}.view_toolbar_get`, [{}]);
+      
+      return {
+        requiresContext: false,
+        resModel: resModelOption.resModel,
+        actionName: resModelOption.name,
+        views: resModelOption.views || [[viewId, viewType]],
+        toolbarInfo: toolbarInfo,
+        viewType: viewType,
+        viewId: viewId,
+        tableData: tableData,
+        formData: formData
+      };
+    } catch (error) {
+      console.error('Error ejecutando opción de res_model:', error);
       throw error;
     }
   }
