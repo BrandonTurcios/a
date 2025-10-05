@@ -802,7 +802,7 @@ class TrytonService {
 
 
   // Obtener información de acción de menú
-  async getMenuActionInfo(menuId) {
+  async getMenuActionInfo(menuId, selectedActionIndex = 0) {
     if (!this.sessionData) {
       throw new Error('No hay sesión activa');
     }
@@ -819,36 +819,78 @@ class TrytonService {
       
       console.log('Información de acción obtenida:', actionInfo);
       
-      // PASO 2: Si hay resultado, extraer el modelo y hacer la segunda llamada
-      if (actionInfo && actionInfo.length > 0 && actionInfo[0].res_model) {
-        const actionData = actionInfo[0];
-        const resModel = actionData.res_model;
-        const actionName = actionData.name || `Menú ${menuId}`;
+      // PASO 2: Verificar si hay múltiples opciones
+      if (actionInfo && actionInfo.length > 0) {
+        // Si hay múltiples opciones, usar la seleccionada o la primera por defecto
+        const selectedAction = actionInfo[selectedActionIndex] || actionInfo[0];
         
-        console.log(`Modelo encontrado: ${resModel}`);
-        console.log(`Nombre de acción: ${actionName}`);
-        
-        // PASO 3: Hacer la llamada view_toolbar_get con el modelo obtenido
-        console.log(`Ejecutando view_toolbar_get para modelo: ${resModel}`);
-        const toolbarInfo = await this.makeRpcCall(`model.${resModel}.view_toolbar_get`, [{}]);
-        
-        console.log('Información de toolbar obtenida:', toolbarInfo);
-        
-        return {
-          actionInfo: actionInfo,
-          toolbarInfo: toolbarInfo,
-          resModel: resModel,
-          actionName: actionName
-        };
-      } else {
-        console.warn('No se encontró res_model en la respuesta de acción:', actionInfo);
-        return {
-          actionInfo: actionInfo,
-          toolbarInfo: null,
-          resModel: null,
-          actionName: null
-        };
+        if (selectedAction.context_model) {
+          // CASO: Hay context_model - múltiples opciones disponibles
+          console.log(`⚠️ Múltiples opciones disponibles (${actionInfo.length}). Usando índice ${selectedActionIndex}`);
+          
+          return {
+            actionInfo: actionInfo,
+            toolbarInfo: null,
+            resModel: selectedAction.res_model,
+            contextModel: selectedAction.context_model,
+            actionName: selectedAction.name,
+            hasMultipleOptions: true,
+            options: actionInfo.map((option, index) => ({
+              index: index,
+              id: option.id,
+              name: option.name,
+              resModel: option.res_model,
+              contextModel: option.context_model,
+              views: option.views || []
+            })),
+            selectedOption: {
+              index: selectedActionIndex,
+              id: selectedAction.id,
+              name: selectedAction.name,
+              resModel: selectedAction.res_model,
+              contextModel: selectedAction.context_model,
+              views: selectedAction.views || []
+            }
+          };
+        } else if (selectedAction.res_model) {
+          // CASO: Acción directa sin context_model
+          const resModel = selectedAction.res_model;
+          const actionName = selectedAction.name || `Menú ${menuId}`;
+          
+          console.log(`Modelo encontrado: ${resModel}`);
+          console.log(`Nombre de acción: ${actionName}`);
+          
+          // PASO 3: Hacer la llamada view_toolbar_get con el modelo obtenido
+          console.log(`Ejecutando view_toolbar_get para modelo: ${resModel}`);
+          const toolbarInfo = await this.makeRpcCall(`model.${resModel}.view_toolbar_get`, [{}]);
+          
+          console.log('Información de toolbar obtenida:', toolbarInfo);
+          
+          return {
+            actionInfo: actionInfo,
+            toolbarInfo: toolbarInfo,
+            resModel: resModel,
+            actionName: actionName,
+            hasMultipleOptions: false,
+            selectedOption: {
+              index: 0,
+              id: selectedAction.id,
+              name: actionName,
+              resModel: resModel,
+              views: selectedAction.views || []
+            }
+          };
+        }
       }
+      
+      console.warn('No se encontró res_model en la respuesta de acción:', actionInfo);
+      return {
+        actionInfo: actionInfo,
+        toolbarInfo: null,
+        resModel: null,
+        actionName: null,
+        hasMultipleOptions: false
+      };
     } catch (error) {
       console.error('Error obteniendo información de acción del menú:', error);
       console.error('Detalles del error:', {
@@ -1070,6 +1112,106 @@ class TrytonService {
       return options;
     } catch (error) {
       console.error(`Error obteniendo opciones de selection para ${methodName}:`, error);
+      throw error;
+    }
+  }
+
+  // Obtener opciones de acción cuando hay context_model
+  async getActionOptions(menuId) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`Obteniendo opciones de acción para menú ID: ${menuId}`);
+      
+      const actionInfo = await this.makeRpcCall('model.ir.action.keyword.get_keyword', [
+        'tree_open',
+        ['ir.ui.menu', menuId],
+        {}
+      ]);
+      
+      if (actionInfo && actionInfo.length > 0) {
+        // Mapear las opciones a un formato más simple para el modal
+        const options = actionInfo.map((option, index) => ({
+          index: index,
+          id: option.id,
+          name: option.name,
+          resModel: option.res_model,
+          contextModel: option.context_model,
+          type: option.type,
+          views: option.views || [],
+          description: `${option.name} (${option.res_model})`
+        }));
+        
+        console.log(`✅ Opciones de acción obtenidas:`, options);
+        return {
+          hasOptions: true,
+          options: options,
+          defaultIndex: 0
+        };
+      } else {
+        return {
+          hasOptions: false,
+          options: [],
+          defaultIndex: 0
+        };
+      }
+    } catch (error) {
+      console.error('Error obteniendo opciones de acción:', error);
+      throw error;
+    }
+  }
+
+  // Ejecutar acción seleccionada después de mostrar el modal
+  async executeSelectedAction(menuId, selectedActionIndex) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`Ejecutando acción seleccionada ${selectedActionIndex} para menú ID: ${menuId}`);
+      
+      // Obtener la información de la acción con el índice seleccionado
+      const actionInfo = await this.getMenuActionInfo(menuId, selectedActionIndex);
+      
+      if (actionInfo.hasMultipleOptions && actionInfo.selectedOption) {
+        const selectedOption = actionInfo.selectedOption;
+        
+        // Si la opción tiene context_model, necesitamos manejar el contexto
+        if (selectedOption.contextModel) {
+          console.log(`⚠️ La opción seleccionada requiere contexto: ${selectedOption.contextModel}`);
+          
+          // Por ahora, devolver la información para que el frontend maneje el contexto
+          return {
+            requiresContext: true,
+            contextModel: selectedOption.contextModel,
+            resModel: selectedOption.resModel,
+            actionName: selectedOption.name,
+            views: selectedOption.views,
+            actionId: selectedOption.id
+          };
+        } else {
+          // Acción directa sin contexto
+          console.log(`✅ Ejecutando acción directa: ${selectedOption.resModel}`);
+          
+          // Obtener toolbar info para la acción directa
+          const toolbarInfo = await this.makeRpcCall(`model.${selectedOption.resModel}.view_toolbar_get`, [{}]);
+          
+          return {
+            requiresContext: false,
+            resModel: selectedOption.resModel,
+            actionName: selectedOption.name,
+            views: selectedOption.views,
+            toolbarInfo: toolbarInfo,
+            actionId: selectedOption.id
+          };
+        }
+      } else {
+        throw new Error('No se pudo obtener la acción seleccionada');
+      }
+    } catch (error) {
+      console.error('Error ejecutando acción seleccionada:', error);
       throw error;
     }
   }

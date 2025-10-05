@@ -50,6 +50,7 @@ import trytonService from '../services/trytonService';
 import PatientsTable from './PatientsTable';
 import TrytonTable from './TrytonTable';
 import TrytonForm from './TrytonForm';
+import ActionOptionsModal from './ActionOptionsModal';
 
 const { Header, Sider, Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
@@ -65,6 +66,9 @@ const Dashboard = ({ sessionData, onLogout }) => {
   const [selectedMenuInfo, setSelectedMenuInfo] = useState(null);
   const [tableInfo, setTableInfo] = useState(null);
   const [formInfo, setFormInfo] = useState(null);
+  const [showActionOptionsModal, setShowActionOptionsModal] = useState(false);
+  const [actionOptions, setActionOptions] = useState([]);
+  const [pendingMenuItem, setPendingMenuItem] = useState(null);
 
   useEffect(() => {
     loadSidebarMenu();
@@ -204,6 +208,173 @@ const Dashboard = ({ sessionData, onLogout }) => {
     onLogout();
   };
 
+  const handleActionOptionSelect = async (selectedIndex, selectedOption) => {
+    try {
+      console.log(`Seleccionada opción ${selectedIndex}:`, selectedOption);
+      
+      // Ejecutar la acción seleccionada
+      const result = await trytonService.executeSelectedAction(pendingMenuItem.id, selectedIndex);
+      
+      console.log('Resultado de la acción ejecutada:', result);
+      
+      // Cerrar el modal
+      setShowActionOptionsModal(false);
+      setActionOptions([]);
+      setPendingMenuItem(null);
+      
+      // Procesar el resultado según el tipo de acción
+      if (result.requiresContext) {
+        console.log('⚠️ La acción requiere contexto:', result.contextModel);
+        // TODO: Implementar manejo de contexto si es necesario
+        // Por ahora, mostrar un mensaje informativo
+        setError(`Esta acción requiere configuración de contexto (${result.contextModel}). Funcionalidad en desarrollo.`);
+        return;
+      }
+      
+      // Si es una acción directa, procesar como menú normal
+      if (result.resModel && result.toolbarInfo) {
+        await processDirectAction(pendingMenuItem, result);
+      }
+      
+    } catch (error) {
+      console.error('Error ejecutando acción seleccionada:', error);
+      setError('Error ejecutando la acción seleccionada: ' + error.message);
+      setShowActionOptionsModal(false);
+    }
+  };
+
+  const handleActionOptionsModalClose = () => {
+    setShowActionOptionsModal(false);
+    setActionOptions([]);
+    setPendingMenuItem(null);
+  };
+
+  const processDirectAction = async (item, actionResult) => {
+    try {
+      // Actualizar el nombre del menú con la acción seleccionada
+      let updatedItem = { ...item };
+      if (actionResult.actionName) {
+        updatedItem.name = actionResult.actionName;
+        console.log(`🔄 Actualizando nombre del menú ${item.id} a "${actionResult.actionName}"`);
+        
+        // Actualizar el estado del menú con el nuevo nombre
+        setMenuItems(prevItems => {
+          const updateMenuItems = (items) => {
+            return items.map(menuItem => {
+              if (menuItem.id === item.id) {
+                return { ...menuItem, name: actionResult.actionName };
+              }
+              if (menuItem.childs && menuItem.childs.length > 0) {
+                return { ...menuItem, childs: updateMenuItems(menuItem.childs) };
+              }
+              return menuItem;
+            });
+          };
+          return updateMenuItems(prevItems);
+        });
+      }
+      
+      // Procesar la vista y obtener datos como en el flujo normal
+      let tableData = null;
+      let formData = null;
+      let viewType = null;
+      let viewId = null;
+      
+      if (actionResult.views && actionResult.views.length > 0) {
+        // Buscar vista tree primero, luego form
+        const treeView = actionResult.views.find(view => view[1] === 'tree');
+        const formView = actionResult.views.find(view => view[1] === 'form');
+        
+        // Priorizar tree view si existe, sino usar form view
+        const selectedView = treeView || formView || actionResult.views[0];
+        viewId = selectedView[0];
+        viewType = selectedView[1];
+        
+        console.log(`🔍 Obteniendo información de vista para modelo: ${actionResult.resModel}, vista: ${viewId}, tipo: ${viewType}`);
+        
+        try {
+          // Verificar el tipo de vista
+          const fieldsView = await trytonService.getFieldsView(
+            actionResult.resModel,
+            viewId,
+            viewType
+          );
+          
+          console.log('🔍 Vista obtenida:', fieldsView);
+          
+          if (fieldsView && fieldsView.type === 'tree') {
+            console.log('✅ Vista confirmada como tipo "tree", obteniendo datos...');
+            
+            tableData = await trytonService.getTableInfo(
+              actionResult.resModel,
+              viewId,
+              'tree',
+              [],
+              100
+            );
+            console.log('✅ Información de tabla obtenida:', tableData);
+          } else if (fieldsView && fieldsView.type === 'form') {
+            console.log('✅ Vista confirmada como tipo "form", preparando formulario...');
+            
+            // Para formularios, necesitamos obtener los datos del registro
+            let recordData = null;
+            try {
+              console.log('🔍 Intentando obtener datos del registro...');
+              const recordId = 1; // Para configuraciones, generalmente es el registro 1
+              const fields = Object.keys(fieldsView.fields || {});
+              recordData = await trytonService.getFormRecordData(
+                actionResult.resModel,
+                recordId,
+                fields
+              );
+              
+              if (recordData) {
+                console.log('✅ Datos del registro obtenidos:', recordData);
+              } else {
+                console.log('⚠️ No se encontraron datos del registro, creando formulario vacío');
+              }
+            } catch (recordError) {
+              console.warn('⚠️ Error obteniendo datos del registro:', recordError);
+              // Continuar con formulario vacío
+            }
+            
+            formData = {
+              model: actionResult.resModel,
+              viewId: viewId,
+              viewType: 'form',
+              fieldsView: fieldsView,
+              recordData: recordData
+            };
+            console.log('✅ Información de formulario preparada:', formData);
+          } else {
+            console.log(`⚠️ Vista no es de tipo "tree" ni "form" (tipo: ${fieldsView?.type}), omitiendo`);
+          }
+        } catch (viewError) {
+          console.warn('⚠️ Error obteniendo información de vista:', viewError);
+        }
+      }
+      
+      setSelectedMenuInfo({
+        menuItem: updatedItem,
+        actionInfo: [actionResult],
+        toolbarInfo: actionResult.toolbarInfo,
+        resModel: actionResult.resModel,
+        actionName: actionResult.actionName,
+        viewType: viewType,
+        viewId: viewId,
+        timestamp: new Date().toISOString()
+      });
+      
+      setTableInfo(tableData);
+      setFormInfo(formData);
+      setActiveTab(item.id);
+      
+    } catch (error) {
+      console.error('Error procesando acción directa:', error);
+      setError('Error procesando la acción: ' + error.message);
+    }
+  };
+
   const toggleMenuExpansion = (menuId) => {
     const newExpandedMenus = new Set(expandedMenus);
     if (newExpandedMenus.has(menuId)) {
@@ -227,6 +398,15 @@ const Dashboard = ({ sessionData, onLogout }) => {
       const menuInfo = await trytonService.getMenuActionInfo(item.id);
 
       console.log('Información del menú obtenida:', menuInfo);
+      
+      // Si hay múltiples opciones, mostrar el modal
+      if (menuInfo.hasMultipleOptions && menuInfo.options && menuInfo.options.length > 1) {
+        console.log('⚠️ Múltiples opciones detectadas, mostrando modal de selección');
+        setActionOptions(menuInfo.options);
+        setPendingMenuItem(item);
+        setShowActionOptionsModal(true);
+        return;
+      }
       
       // Actualizar el nombre del menú si se obtuvo un actionName
       let updatedItem = { ...item };
@@ -1091,6 +1271,16 @@ const Dashboard = ({ sessionData, onLogout }) => {
           {renderContent()}
         </Content>
       </Layout>
+      
+      {/* Modal de selección de opciones de acción */}
+      <ActionOptionsModal
+        isOpen={showActionOptionsModal}
+        onClose={handleActionOptionsModalClose}
+        options={actionOptions}
+        onSelectOption={handleActionOptionSelect}
+        title="Seleccionar Acción"
+        description="Este menú tiene múltiples opciones disponibles. Selecciona una para continuar:"
+      />
     </Layout>
   );
 };
