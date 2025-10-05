@@ -56,8 +56,15 @@ class TrytonService {
     
     // Agregar contexto si hay sesión
     if (this.sessionData && Object.keys(this.context).length > 0) {
-      const lastParam = rpcParams.pop() || {};
-      rpcParams.push({ ...this.context, ...lastParam });
+      // Para métodos de wizard, el contexto debe agregarse al final sin interferir
+      if (method.startsWith('wizard.')) {
+        // Para wizards, simplemente agregar el contexto al final
+        rpcParams.push({ ...this.context });
+      } else {
+        // Para otros métodos, mezclar con el último parámetro como antes
+        const lastParam = rpcParams.pop() || {};
+        rpcParams.push({ ...this.context, ...lastParam });
+      }
     }
 
     // Payload
