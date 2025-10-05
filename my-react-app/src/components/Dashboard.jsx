@@ -211,9 +211,31 @@ const Dashboard = ({ sessionData, onLogout }) => {
     onLogout();
   };
 
+  const clearPreviousState = () => {
+    console.log('🧹 Limpiando estado anterior...');
+    
+    // Limpiar información del menú anterior
+    setSelectedMenuInfo(null);
+    
+    // Limpiar datos de tabla y formulario
+    setTableInfo(null);
+    setFormInfo(null);
+    
+    // Limpiar contexto anterior
+    setContextInfo(null);
+    setPendingActionData(null);
+    setContextLoading(false);
+    
+    // Limpiar errores
+    setError('');
+  };
+
   const handleActionOptionSelect = async (selectedIndex, selectedOption) => {
     try {
       console.log(`Seleccionada opción ${selectedIndex}:`, selectedOption);
+      
+      // Limpiar estado anterior antes de procesar nueva selección
+      clearPreviousState();
       
       // Ejecutar la acción seleccionada
       const result = await trytonService.executeSelectedAction(pendingMenuItem.id, selectedIndex);
@@ -250,9 +272,14 @@ const Dashboard = ({ sessionData, onLogout }) => {
   };
 
   const handleActionOptionsModalClose = () => {
+    console.log('🚪 Cerrando modal de opciones de acción...');
+    
     setShowActionOptionsModal(false);
     setActionOptions([]);
     setPendingMenuItem(null);
+    
+    // No limpiar el estado completo aquí, solo cerrar el modal
+    // El usuario puede querer mantener la vista actual
   };
 
   const handleContextSubmit = async (contextValues) => {
@@ -444,6 +471,9 @@ const Dashboard = ({ sessionData, onLogout }) => {
         return;
       }
 
+      // Limpiar estado anterior antes de procesar menú
+      clearPreviousState();
+      
       // Usar el método del servicio para obtener la información del menú
       const menuInfo = await trytonService.getMenuActionInfo(item.id);
 
@@ -452,6 +482,10 @@ const Dashboard = ({ sessionData, onLogout }) => {
       // Si hay múltiples opciones, mostrar el modal
       if (menuInfo.hasMultipleOptions && menuInfo.options && menuInfo.options.length > 1) {
         console.log('⚠️ Múltiples opciones detectadas, mostrando modal de selección');
+        
+        // Limpiar estado anterior antes de mostrar modal
+        clearPreviousState();
+        
         setActionOptions(menuInfo.options);
         setPendingMenuItem(item);
         setShowActionOptionsModal(true);
