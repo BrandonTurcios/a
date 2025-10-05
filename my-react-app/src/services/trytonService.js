@@ -1256,39 +1256,77 @@ class TrytonService {
     try {
       console.log(`Ejecutando opción de res_model: ${resModelOption.resModel}`);
       
-      // Obtener fields_view_get para determinar el tipo de vista
-      const fieldsView = await this.makeRpcCall(`model.${resModelOption.resModel}.fields_view_get`, [
+      // PASO 1: Obtener fields_view_get para determinar el tipo de vista
+      // Intentar primero con vista por defecto (sin especificar view_type)
+      let fieldsView = await this.makeRpcCall(`model.${resModelOption.resModel}.fields_view_get`, [
         null, // view_id - usar vista por defecto
-        'tree', // intentar tree primero
+        null, // view_type - usar vista por defecto
         {}
       ]);
       
-      console.log(`✅ Vista obtenida para ${resModelOption.resModel}:`, fieldsView);
+      console.log(`✅ Vista por defecto obtenida para ${resModelOption.resModel}:`, fieldsView);
       
-      // Determinar el tipo de vista y vista ID
+      // Determinar el tipo de vista basado en la respuesta
       let viewType = fieldsView.type || 'tree';
       let viewId = fieldsView.view_id || null;
       
-      // Si la vista por defecto no es tree, intentar con form
-      if (viewType !== 'tree') {
-        const formView = await this.makeRpcCall(`model.${resModelOption.resModel}.fields_view_get`, [
-          null,
-          'form',
-          {}
-        ]);
-        viewType = formView.type || 'form';
-        viewId = formView.view_id || null;
+      console.log(`🎯 Tipo de vista determinado por fields_view_get: ${viewType}, ID: ${viewId}`);
+      
+      // PASO 2: Si no se pudo determinar el tipo, intentar con tipos específicos
+      if (!viewType || viewType === 'unknown') {
+        console.log(`⚠️ Tipo de vista no determinado, intentando con tipos específicos...`);
+        
+        // Intentar con 'tree' primero
+        try {
+          const treeView = await this.makeRpcCall(`model.${resModelOption.resModel}.fields_view_get`, [
+            null,
+            'tree',
+            {}
+          ]);
+          if (treeView && treeView.type) {
+            fieldsView = treeView;
+            viewType = 'tree';
+            viewId = treeView.view_id || null;
+            console.log(`✅ Vista tree encontrada: ID ${viewId}`);
+          }
+        } catch (treeError) {
+          console.log(`❌ No hay vista tree disponible:`, treeError.message);
+        }
+        
+        // Si no hay tree, intentar con 'form'
+        if (viewType !== 'tree') {
+          try {
+            const formView = await this.makeRpcCall(`model.${resModelOption.resModel}.fields_view_get`, [
+              null,
+              'form',
+              {}
+            ]);
+            if (formView && formView.type) {
+              fieldsView = formView;
+              viewType = 'form';
+              viewId = formView.view_id || null;
+              console.log(`✅ Vista form encontrada: ID ${viewId}`);
+            }
+          } catch (formError) {
+            console.log(`❌ No hay vista form disponible:`, formError.message);
+          }
+        }
       }
       
-      console.log(`🎯 Tipo de vista determinado: ${viewType}, ID: ${viewId}`);
+      console.log(`🎯 Tipo de vista final: ${viewType}, ID: ${viewId}`);
       
+      // PASO 3: Procesar según el tipo de vista determinado
       let tableData = null;
       let formData = null;
       
       if (viewType === 'tree') {
+        console.log(`📊 Procesando como tabla (tree)...`);
+        
         // Obtener datos para tabla
         const searchParams = [[], 0, 100, null, {}];
         const ids = await this.makeRpcCall(`model.${resModelOption.resModel}.search`, searchParams);
+        
+        console.log(`📊 IDs encontrados: ${ids.length}`);
         
         if (ids.length > 0) {
           const fields = Object.keys(fieldsView.fields || {});
@@ -1303,8 +1341,24 @@ class TrytonService {
             viewType: viewType,
             fields: expandedFields
           };
+          
+          console.log(`✅ Datos de tabla preparados: ${data.length} registros`);
+        } else {
+          // Tabla vacía pero con estructura
+          tableData = {
+            fieldsView,
+            data: [],
+            model: resModelOption.resModel,
+            viewId: viewId,
+            viewType: viewType,
+            fields: Object.keys(fieldsView.fields || {})
+          };
+          console.log(`📊 Tabla vacía preparada`);
         }
+        
       } else if (viewType === 'form') {
+        console.log(`📝 Procesando como formulario (form)...`);
+        
         // Para formularios, crear un formulario vacío
         formData = {
           model: resModelOption.resModel,
@@ -1313,10 +1367,26 @@ class TrytonService {
           fieldsView: fieldsView,
           recordData: null // Formulario vacío
         };
+        
+        console.log(`✅ Formulario preparado`);
+        
+      } else {
+        console.warn(`⚠️ Tipo de vista no reconocido: ${viewType}, usando como formulario por defecto`);
+        
+        // Fallback a formulario si no se reconoce el tipo
+        formData = {
+          model: resModelOption.resModel,
+          viewId: viewId,
+          viewType: 'form',
+          fieldsView: fieldsView,
+          recordData: null
+        };
       }
       
-      // Obtener toolbar info
+      // PASO 4: Obtener toolbar info
       const toolbarInfo = await this.makeRpcCall(`model.${resModelOption.resModel}.view_toolbar_get`, [{}]);
+      
+      console.log(`✅ Toolbar obtenido para ${resModelOption.resModel}`);
       
       return {
         requiresContext: false,
