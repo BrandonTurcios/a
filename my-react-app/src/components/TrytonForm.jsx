@@ -41,27 +41,39 @@ const TrytonForm = ({
   title = 'Formulario',
   onSave = null,
   onCancel = null,
-  readonly = false 
+  readonly = false,
+  onSubmit = null, // Nueva prop para manejar envío personalizado
+  loading = false, // Nueva prop para estado de carga externo
+  submitButtonText = 'Guardar', // Nueva prop para texto del botón
+  fieldsView = null // Nueva prop para pasar fieldsView directamente
 }) => {
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
+  const [internalLoading, setInternalLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [formInfo, setFormInfo] = useState(null);
+  
+  // Usar loading externo si se proporciona, sino usar el interno
+  const currentLoading = loading || internalLoading;
   const [formData, setFormData] = useState({});
   const [fields, setFields] = useState([]);
   const [isEditing, setIsEditing] = useState(!readonly && !recordId);
   const [selectionOptions, setSelectionOptions] = useState({});
 
   useEffect(() => {
-    if (model && viewId) {
+    if (fieldsView) {
+      // Si se proporciona fieldsView directamente, usarlo
+      setFormInfo(fieldsView);
+      setFields(Object.keys(fieldsView.fields || {}));
+      setFormData(recordData || {});
+    } else if (model && viewId) {
       loadFormData();
     }
-  }, [model, viewId, viewType, recordId]);
+  }, [model, viewId, viewType, recordId, fieldsView, recordData]);
 
   const loadFormData = async () => {
     try {
-      setLoading(true);
+      setInternalLoading(true);
       setError(null);
       
       console.log(`🔍 Cargando formulario para modelo: ${model}, vista: ${viewId}`);
@@ -97,7 +109,7 @@ const TrytonForm = ({
       console.error('❌ Error cargando formulario:', error);
       setError(error.message);
     } finally {
-      setLoading(false);
+      setInternalLoading(false);
     }
   };
 
@@ -456,6 +468,12 @@ const TrytonForm = ({
       
       console.log('💾 Guardando formulario:', values);
       
+      // Si se proporciona onSubmit, usarlo en lugar del flujo normal
+      if (onSubmit) {
+        await onSubmit(values);
+        return;
+      }
+      
       if (recordId) {
         // Actualizar registro existente
         await trytonService.updateRecord(model, recordId, values);
@@ -500,7 +518,7 @@ const TrytonForm = ({
     }
   };
 
-  if (loading) {
+  if (currentLoading) {
     return (
       <div style={{ 
         display: 'flex', 
@@ -553,7 +571,7 @@ const TrytonForm = ({
                       loading={saving}
                       onClick={() => form.submit()}
                     >
-                      Guardar
+                      {submitButtonText}
                     </Button>
                     <Button 
                       icon={<MinusOutlined />}

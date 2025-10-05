@@ -1182,10 +1182,13 @@ class TrytonService {
         if (selectedOption.contextModel) {
           console.log(`⚠️ La opción seleccionada requiere contexto: ${selectedOption.contextModel}`);
           
-          // Por ahora, devolver la información para que el frontend maneje el contexto
+          // Obtener información del contexto
+          const contextInfo = await this.getContextInfo(selectedOption.contextModel);
+          
           return {
             requiresContext: true,
             contextModel: selectedOption.contextModel,
+            contextInfo: contextInfo,
             resModel: selectedOption.resModel,
             actionName: selectedOption.name,
             views: selectedOption.views,
@@ -1212,6 +1215,129 @@ class TrytonService {
       }
     } catch (error) {
       console.error('Error ejecutando acción seleccionada:', error);
+      throw error;
+    }
+  }
+
+  // Obtener información del contexto
+  async getContextInfo(contextModel) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`Obteniendo información del contexto: ${contextModel}`);
+      
+      // Obtener la vista de formulario del contexto
+      const contextFieldsView = await this.makeRpcCall(`model.${contextModel}.fields_view_get`, [
+        null, // view_id - usar vista por defecto
+        'form', // view_type
+        {} // context
+      ]);
+      
+      console.log(`✅ Vista del contexto obtenida:`, contextFieldsView);
+      
+      return {
+        model: contextModel,
+        fieldsView: contextFieldsView,
+        fields: contextFieldsView.fields ? Object.keys(contextFieldsView.fields) : []
+      };
+    } catch (error) {
+      console.error(`Error obteniendo información del contexto ${contextModel}:`, error);
+      throw error;
+    }
+  }
+
+  // Ejecutar acción con contexto completado
+  async executeActionWithContext(actionData, contextValues) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`Ejecutando acción con contexto:`, { actionData, contextValues });
+      
+      // Obtener toolbar info con el contexto
+      const toolbarInfo = await this.makeRpcCall(`model.${actionData.resModel}.view_toolbar_get`, [
+        { context: contextValues }
+      ]);
+      
+      console.log(`✅ Toolbar obtenido con contexto:`, toolbarInfo);
+      
+      // Determinar qué vista mostrar basado en las vistas disponibles
+      let finalViewType = 'tree'; // por defecto
+      let finalViewId = null;
+      
+      if (actionData.views && actionData.views.length > 0) {
+        // Buscar vista tree primero, luego form
+        const treeView = actionData.views.find(view => view[1] === 'tree');
+        const formView = actionData.views.find(view => view[1] === 'form');
+        
+        const selectedView = treeView || formView || actionData.views[0];
+        finalViewId = selectedView[0];
+        finalViewType = selectedView[1];
+      }
+      
+      console.log(`🎯 Vista final seleccionada: ID ${finalViewId}, Tipo ${finalViewType}`);
+      
+      // Obtener la vista de campos
+      const fieldsView = await this.makeRpcCall(`model.${actionData.resModel}.fields_view_get`, [
+        finalViewId,
+        finalViewType,
+        { context: contextValues }
+      ]);
+      
+      console.log(`✅ Vista de campos obtenida:`, fieldsView);
+      
+      let tableData = null;
+      let formData = null;
+      
+      if (finalViewType === 'tree') {
+        // Obtener datos para tabla
+        const searchParams = [[], 0, 100, null, { context: contextValues }];
+        const ids = await this.makeRpcCall(`model.${actionData.resModel}.search`, searchParams);
+        
+        if (ids.length > 0) {
+          const fields = Object.keys(fieldsView.fields || {});
+          const expandedFields = this.expandFieldsForRelations(fields, actionData.resModel);
+          const data = await this.makeRpcCall(`model.${actionData.resModel}.read`, [ids, expandedFields, { context: contextValues }]);
+          
+          tableData = {
+            fieldsView,
+            data,
+            model: actionData.resModel,
+            viewId: finalViewId,
+            viewType: finalViewType,
+            fields: expandedFields,
+            context: contextValues
+          };
+        }
+      } else if (finalViewType === 'form') {
+        // Para formularios, crear un registro nuevo o obtener uno existente
+        formData = {
+          model: actionData.resModel,
+          viewId: finalViewId,
+          viewType: 'form',
+          fieldsView: fieldsView,
+          recordData: null, // Formulario vacío
+          context: contextValues
+        };
+      }
+      
+      return {
+        requiresContext: false,
+        resModel: actionData.resModel,
+        actionName: actionData.actionName,
+        views: actionData.views,
+        toolbarInfo: toolbarInfo,
+        viewType: finalViewType,
+        viewId: finalViewId,
+        tableData: tableData,
+        formData: formData,
+        contextValues: contextValues
+      };
+    } catch (error) {
+      console.error('Error ejecutando acción con contexto:', error);
       throw error;
     }
   }

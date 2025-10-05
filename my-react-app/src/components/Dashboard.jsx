@@ -69,6 +69,9 @@ const Dashboard = ({ sessionData, onLogout }) => {
   const [showActionOptionsModal, setShowActionOptionsModal] = useState(false);
   const [actionOptions, setActionOptions] = useState([]);
   const [pendingMenuItem, setPendingMenuItem] = useState(null);
+  const [contextInfo, setContextInfo] = useState(null);
+  const [pendingActionData, setPendingActionData] = useState(null);
+  const [contextLoading, setContextLoading] = useState(false);
 
   useEffect(() => {
     loadSidebarMenu();
@@ -225,9 +228,12 @@ const Dashboard = ({ sessionData, onLogout }) => {
       // Procesar el resultado según el tipo de acción
       if (result.requiresContext) {
         console.log('⚠️ La acción requiere contexto:', result.contextModel);
-        // TODO: Implementar manejo de contexto si es necesario
-        // Por ahora, mostrar un mensaje informativo
-        setError(`Esta acción requiere configuración de contexto (${result.contextModel}). Funcionalidad en desarrollo.`);
+        console.log('📋 Información del contexto:', result.contextInfo);
+        
+        // Configurar el contexto para mostrar el formulario
+        setContextInfo(result.contextInfo);
+        setPendingActionData(result);
+        setActiveTab('context'); // Cambiar a una pestaña especial para contexto
         return;
       }
       
@@ -247,6 +253,50 @@ const Dashboard = ({ sessionData, onLogout }) => {
     setShowActionOptionsModal(false);
     setActionOptions([]);
     setPendingMenuItem(null);
+  };
+
+  const handleContextSubmit = async (contextValues) => {
+    try {
+      setContextLoading(true);
+      console.log('📝 Valores del contexto enviados:', contextValues);
+      
+      // Ejecutar la acción con el contexto completado
+      const result = await trytonService.executeActionWithContext(pendingActionData, contextValues);
+      
+      console.log('✅ Resultado de la acción con contexto:', result);
+      
+      // Limpiar el contexto
+      setContextInfo(null);
+      setPendingActionData(null);
+      
+      // Procesar el resultado final
+      if (result.tableData) {
+        setTableInfo(result.tableData);
+        setFormInfo(null);
+      } else if (result.formData) {
+        setFormInfo(result.formData);
+        setTableInfo(null);
+      }
+      
+      setSelectedMenuInfo({
+        menuItem: pendingMenuItem,
+        actionInfo: [result],
+        toolbarInfo: result.toolbarInfo,
+        resModel: result.resModel,
+        actionName: result.actionName,
+        viewType: result.viewType,
+        viewId: result.viewId,
+        timestamp: new Date().toISOString()
+      });
+      
+      setActiveTab(pendingMenuItem.id);
+      
+    } catch (error) {
+      console.error('Error ejecutando acción con contexto:', error);
+      setError('Error ejecutando la acción con contexto: ' + error.message);
+    } finally {
+      setContextLoading(false);
+    }
   };
 
   const processDirectAction = async (item, actionResult) => {
@@ -732,6 +782,39 @@ const Dashboard = ({ sessionData, onLogout }) => {
                 <p><strong>Hora de Login:</strong> {new Date(sessionData.loginTime).toLocaleString()}</p>
               </div>
             </div>
+          </div>
+        );
+      case 'context':
+        return (
+          <div style={{ 
+            padding: '24px', 
+            background: '#f5f5f5', 
+            minHeight: 'calc(100vh - 64px)',
+            overflowY: 'auto'
+          }}>
+            <div style={{ marginBottom: '24px' }}>
+              <Title level={2} style={{ margin: 0, color: '#1f2937' }}>
+                Configurar Contexto
+              </Title>
+              <Paragraph style={{ color: '#6b7280', margin: '8px 0 0 0' }}>
+                {pendingActionData?.actionName} - Configuración requerida
+              </Paragraph>
+            </div>
+            
+            {contextInfo && (
+              <TrytonForm
+                model={contextInfo.model}
+                viewId={null}
+                viewType="form"
+                recordId={null}
+                recordData={null}
+                fieldsView={contextInfo.fieldsView}
+                title="Configuración de Contexto"
+                onSubmit={handleContextSubmit}
+                loading={contextLoading}
+                submitButtonText="Continuar"
+              />
+            )}
           </div>
         );
       default:
