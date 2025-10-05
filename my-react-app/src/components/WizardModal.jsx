@@ -40,6 +40,10 @@ const WizardModal = ({
         console.log('🎯 Estableciendo valores iniciales:', wizardInfo.values);
         form.setFieldsValue(wizardInfo.values);
       }
+    } else if (visible && !wizardInfo) {
+      // Si el modal está visible pero no hay wizardInfo, mostrar mensaje de error
+      console.warn('⚠️ Modal de wizard visible pero wizardInfo es null');
+      setFormFields([]);
     }
   }, [wizardInfo, visible, form]);
 
@@ -104,7 +108,7 @@ const WizardModal = ({
       console.log('🧙 Enviando formulario de wizard:', values);
       
       // Encontrar el botón por defecto o el primer botón de submit
-      const submitButton = wizardInfo.buttons?.find(btn => btn.default || btn.validate);
+      const submitButton = wizardInfo?.buttons?.find(btn => btn.default || btn.validate);
       const buttonState = submitButton?.state || 'end';
       
       console.log(`🎯 Botón seleccionado: ${submitButton?.string}, Estado: ${buttonState}`);
@@ -126,7 +130,9 @@ const WizardModal = ({
   const handleCancel = async () => {
     try {
       console.log('🧙 Cancelando wizard...');
-      await onCancel();
+      if (onCancel) {
+        await onCancel();
+      }
       onClose();
     } catch (error) {
       console.error('Error cancelando wizard:', error);
@@ -270,7 +276,7 @@ const WizardModal = ({
 
   // Renderizar botones del wizard
   const renderButtons = () => {
-    if (!wizardInfo.buttons || wizardInfo.buttons.length === 0) {
+    if (!wizardInfo || !wizardInfo.buttons || wizardInfo.buttons.length === 0) {
       return (
         <Space>
           <Button onClick={handleCancel} icon={<CloseOutlined />}>
@@ -330,14 +336,20 @@ const WizardModal = ({
       maskClosable={false}
     >
       <Spin spinning={currentLoading}>
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSubmit}
-          disabled={currentLoading}
-        >
-          {formFields.map(renderFormField)}
-        </Form>
+        {wizardInfo ? (
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={handleSubmit}
+            disabled={currentLoading}
+          >
+            {formFields.map(renderFormField)}
+          </Form>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '20px' }}>
+            <p>Error: No se pudo cargar la información del wizard</p>
+          </div>
+        )}
       </Spin>
     </Modal>
   );
