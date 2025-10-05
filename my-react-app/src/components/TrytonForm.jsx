@@ -64,8 +64,19 @@ const TrytonForm = ({
     if (fieldsView) {
       // Si se proporciona fieldsView directamente, usarlo
       setFormInfo(fieldsView);
-      setFields(Object.keys(fieldsView.fields || {}));
+      
+      // Generar campos del formulario usando generateFormFields
+      const formFields = generateFormFields(fieldsView);
+      setFields(formFields);
+      
+      // Cargar opciones de selection dinámicas
+      loadSelectionOptions(fieldsView);
+      
+      // Establecer datos del formulario
       setFormData(recordData || {});
+      if (recordData) {
+        form.setFieldsValue(recordData);
+      }
     } else if (model && viewId) {
       loadFormData();
     }
@@ -214,6 +225,17 @@ const TrytonForm = ({
 
   const renderFormField = (field) => {
     const { name, label, fieldDef, required, readonly, help } = field;
+    
+    // Validar que fieldDef existe
+    if (!fieldDef) {
+      console.warn(`⚠️ Campo ${name} no tiene fieldDef definido`);
+      return (
+        <Form.Item key={name} name={name} label={label || name}>
+          <Input disabled placeholder="Campo no disponible" />
+        </Form.Item>
+      );
+    }
+    
     const fieldType = fieldDef.type;
     const isReadonly = readonly || !isEditing;
     
@@ -595,7 +617,7 @@ const TrytonForm = ({
         </div>
       }
       style={{ borderRadius: '12px' }}
-      bodyStyle={{ padding: '24px' }}
+      styles={{ body: { padding: '24px' } }}
     >
       <Form
         form={form}
