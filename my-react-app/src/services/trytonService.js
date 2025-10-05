@@ -1256,66 +1256,74 @@ class TrytonService {
     try {
       console.log(`Ejecutando opción de res_model: ${resModelOption.resModel}`);
       
-      // PASO 1: Obtener fields_view_get para determinar el tipo de vista
-      // Intentar primero con vista por defecto (sin especificar view_type)
-      let fieldsView = await this.makeRpcCall(`model.${resModelOption.resModel}.fields_view_get`, [
-        null, // view_id - usar vista por defecto
-        null, // view_type - usar vista por defecto
-        {}
-      ]);
+      // PASO 1: Intentar obtener fields_view_get con diferentes estrategias
+      let fieldsView = null;
+      let viewType = null;
+      let viewId = null;
       
-      console.log(`✅ Vista por defecto obtenida para ${resModelOption.resModel}:`, fieldsView);
-      
-      // Determinar el tipo de vista basado en la respuesta
-      let viewType = fieldsView.type || 'tree';
-      let viewId = fieldsView.view_id || null;
-      
-      console.log(`🎯 Tipo de vista determinado por fields_view_get: ${viewType}, ID: ${viewId}`);
-      
-      // PASO 2: Si no se pudo determinar el tipo, intentar con tipos específicos
-      if (!viewType || viewType === 'unknown') {
-        console.log(`⚠️ Tipo de vista no determinado, intentando con tipos específicos...`);
+      // Estrategia 1: Intentar con 'tree' primero (más común para reportes)
+      try {
+        fieldsView = await this.makeRpcCall(`model.${resModelOption.resModel}.fields_view_get`, [
+          null, // view_id - usar vista por defecto
+          'tree', // view_type - intentar tree primero
+          {}
+        ]);
         
-        // Intentar con 'tree' primero
+        if (fieldsView && fieldsView.type) {
+          viewType = fieldsView.type;
+          viewId = fieldsView.view_id || null;
+          console.log(`✅ Vista tree obtenida para ${resModelOption.resModel}: ${viewType}, ID: ${viewId}`);
+        }
+      } catch (treeError) {
+        console.log(`❌ No hay vista tree disponible para ${resModelOption.resModel}:`, treeError.message);
+      }
+      
+      // Estrategia 2: Si tree falló, intentar con 'form'
+      if (!viewType || !fieldsView) {
         try {
-          const treeView = await this.makeRpcCall(`model.${resModelOption.resModel}.fields_view_get`, [
+          fieldsView = await this.makeRpcCall(`model.${resModelOption.resModel}.fields_view_get`, [
             null,
-            'tree',
+            'form',
             {}
           ]);
-          if (treeView && treeView.type) {
-            fieldsView = treeView;
-            viewType = 'tree';
-            viewId = treeView.view_id || null;
-            console.log(`✅ Vista tree encontrada: ID ${viewId}`);
+          
+          if (fieldsView && fieldsView.type) {
+            viewType = fieldsView.type;
+            viewId = fieldsView.view_id || null;
+            console.log(`✅ Vista form obtenida para ${resModelOption.resModel}: ${viewType}, ID: ${viewId}`);
           }
-        } catch (treeError) {
-          console.log(`❌ No hay vista tree disponible:`, treeError.message);
+        } catch (formError) {
+          console.log(`❌ No hay vista form disponible para ${resModelOption.resModel}:`, formError.message);
         }
-        
-        // Si no hay tree, intentar con 'form'
-        if (viewType !== 'tree') {
-          try {
-            const formView = await this.makeRpcCall(`model.${resModelOption.resModel}.fields_view_get`, [
-              null,
-              'form',
-              {}
-            ]);
-            if (formView && formView.type) {
-              fieldsView = formView;
-              viewType = 'form';
-              viewId = formView.view_id || null;
-              console.log(`✅ Vista form encontrada: ID ${viewId}`);
-            }
-          } catch (formError) {
-            console.log(`❌ No hay vista form disponible:`, formError.message);
+      }
+      
+      // Estrategia 3: Si todo falla, intentar sin especificar view_type
+      if (!viewType || !fieldsView) {
+        try {
+          fieldsView = await this.makeRpcCall(`model.${resModelOption.resModel}.fields_view_get`, [
+            null,
+            null, // Sin especificar view_type
+            {}
+          ]);
+          
+          if (fieldsView && fieldsView.type) {
+            viewType = fieldsView.type;
+            viewId = fieldsView.view_id || null;
+            console.log(`✅ Vista por defecto obtenida para ${resModelOption.resModel}: ${viewType}, ID: ${viewId}`);
           }
+        } catch (defaultError) {
+          console.log(`❌ No hay vista por defecto disponible para ${resModelOption.resModel}:`, defaultError.message);
         }
       }
       
       console.log(`🎯 Tipo de vista final: ${viewType}, ID: ${viewId}`);
       
-      // PASO 3: Procesar según el tipo de vista determinado
+      // Si ninguna estrategia funcionó, lanzar error
+      if (!viewType || !fieldsView) {
+        throw new Error(`No se pudo obtener vista para el modelo ${resModelOption.resModel}. No hay vistas tree, form o por defecto disponibles.`);
+      }
+      
+      // PASO 2: Procesar según el tipo de vista determinado
       let tableData = null;
       let formData = null;
       
@@ -1383,7 +1391,7 @@ class TrytonService {
         };
       }
       
-      // PASO 4: Obtener toolbar info
+      // PASO 3: Obtener toolbar info
       const toolbarInfo = await this.makeRpcCall(`model.${resModelOption.resModel}.view_toolbar_get`, [{}]);
       
       console.log(`✅ Toolbar obtenido para ${resModelOption.resModel}`);
