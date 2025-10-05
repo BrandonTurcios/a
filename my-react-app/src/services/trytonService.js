@@ -1288,7 +1288,7 @@ class TrytonService {
       console.log(`🧙 Creando wizard: ${wizardName}`);
       
       // Crear el wizard
-      const createResult = await this.makeRpcCall(`wizard.${wizardName}.create`, [{}]);
+      const createResult = await this.makeRpcCall(`wizard.${wizardName}.create`, []);
       
       console.log(`✅ Wizard creado:`, createResult);
       
