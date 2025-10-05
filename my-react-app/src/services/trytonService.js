@@ -824,7 +824,30 @@ class TrytonService {
         // Si hay múltiples opciones, usar la seleccionada o la primera por defecto
         const selectedAction = actionInfo[selectedActionIndex] || actionInfo[0];
         
-        if (selectedAction.context_model) {
+        if (selectedAction.type === 'ir.action.wizard') {
+          // CASO: Es un wizard
+          console.log(`🧙 Wizard detectado: ${selectedAction.wiz_name}`);
+          
+          return {
+            actionInfo: actionInfo,
+            toolbarInfo: null,
+            resModel: null,
+            contextModel: null,
+            actionName: selectedAction.name,
+            hasMultipleOptions: false,
+            isWizard: true,
+            wizardName: selectedAction.wiz_name,
+            wizardId: selectedAction.id,
+            selectedOption: {
+              index: selectedActionIndex,
+              id: selectedAction.id,
+              name: selectedAction.name,
+              type: selectedAction.type,
+              wiz_name: selectedAction.wiz_name,
+              records: selectedAction.records
+            }
+          };
+        } else if (selectedAction.context_model) {
           // CASO: Hay context_model - múltiples opciones disponibles
           console.log(`⚠️ Múltiples opciones disponibles (${actionInfo.length}). Usando índice ${selectedActionIndex}`);
           
@@ -835,6 +858,7 @@ class TrytonService {
             contextModel: selectedAction.context_model,
             actionName: selectedAction.name,
             hasMultipleOptions: true,
+            isWizard: false,
             options: actionInfo.map((option, index) => ({
               index: index,
               id: option.id,
@@ -1243,6 +1267,119 @@ class TrytonService {
       };
     } catch (error) {
       console.error(`Error obteniendo información del contexto ${contextModel}:`, error);
+      throw error;
+    }
+  }
+
+  // Crear y obtener información de wizard
+  async createWizard(wizardName) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`🧙 Creando wizard: ${wizardName}`);
+      
+      // Crear el wizard
+      const createResult = await this.makeRpcCall(`wizard.${wizardName}.create`, [{}]);
+      
+      console.log(`✅ Wizard creado:`, createResult);
+      
+      // El resultado debería ser [wizardId, state, ...]
+      if (createResult && Array.isArray(createResult) && createResult.length >= 2) {
+        const wizardId = createResult[0];
+        const state = createResult[1];
+        
+        console.log(`🎯 Wizard ID: ${wizardId}, Estado: ${state}`);
+        
+        return {
+          wizardId: wizardId,
+          state: state,
+          createResult: createResult
+        };
+      } else {
+        throw new Error(`Respuesta inesperada al crear wizard: ${JSON.stringify(createResult)}`);
+      }
+    } catch (error) {
+      console.error('Error creando wizard:', error);
+      throw error;
+    }
+  }
+
+  // Obtener formulario de wizard
+  async getWizardForm(wizardName, wizardId) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`🧙 Obteniendo formulario de wizard: ${wizardName}, ID: ${wizardId}`);
+      
+      // Ejecutar el wizard para obtener el formulario
+      const executeResult = await this.makeRpcCall(`wizard.${wizardName}.execute`, [wizardId]);
+      
+      console.log(`✅ Formulario de wizard obtenido:`, executeResult);
+      
+      if (executeResult && executeResult.view) {
+        const view = executeResult.view;
+        
+        return {
+          wizardId: wizardId,
+          state: executeResult.state || view.state,
+          fieldsView: view.fields_view,
+          defaults: view.defaults || {},
+          values: view.values || {},
+          buttons: view.buttons || [],
+          model: view.fields_view?.model || wizardName
+        };
+      } else {
+        throw new Error(`Respuesta inesperada al ejecutar wizard: ${JSON.stringify(executeResult)}`);
+      }
+    } catch (error) {
+      console.error('Error obteniendo formulario de wizard:', error);
+      throw error;
+    }
+  }
+
+  // Ejecutar acción de wizard (submit)
+  async executeWizardAction(wizardName, wizardId, values, buttonState) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`🧙 Ejecutando acción de wizard: ${wizardName}, ID: ${wizardId}, Estado: ${buttonState}`);
+      console.log(`📝 Valores:`, values);
+      
+      // Ejecutar la acción del wizard con los valores
+      const executeResult = await this.makeRpcCall(`wizard.${wizardName}.execute`, [wizardId, buttonState, values]);
+      
+      console.log(`✅ Acción de wizard ejecutada:`, executeResult);
+      
+      return executeResult;
+    } catch (error) {
+      console.error('Error ejecutando acción de wizard:', error);
+      throw error;
+    }
+  }
+
+  // Eliminar wizard
+  async deleteWizard(wizardName, wizardId) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`🧙 Eliminando wizard: ${wizardName}, ID: ${wizardId}`);
+      
+      // Eliminar el wizard
+      const deleteResult = await this.makeRpcCall(`wizard.${wizardName}.delete`, [wizardId]);
+      
+      console.log(`✅ Wizard eliminado:`, deleteResult);
+      
+      return deleteResult;
+    } catch (error) {
+      console.error('Error eliminando wizard:', error);
       throw error;
     }
   }

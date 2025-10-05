@@ -51,6 +51,7 @@ import PatientsTable from './PatientsTable';
 import TrytonTable from './TrytonTable';
 import TrytonForm from './TrytonForm';
 import ActionOptionsModal from './ActionOptionsModal';
+import WizardModal from './WizardModal';
 
 const { Header, Sider, Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
@@ -69,6 +70,9 @@ const Dashboard = ({ sessionData, onLogout }) => {
   const [showActionOptionsModal, setShowActionOptionsModal] = useState(false);
   const [actionOptions, setActionOptions] = useState([]);
   const [pendingMenuItem, setPendingMenuItem] = useState(null);
+  const [showWizardModal, setShowWizardModal] = useState(false);
+  const [wizardInfo, setWizardInfo] = useState(null);
+  const [wizardLoading, setWizardLoading] = useState(false);
 
   useEffect(() => {
     loadSidebarMenu();
@@ -218,6 +222,10 @@ const Dashboard = ({ sessionData, onLogout }) => {
     setTableInfo(null);
     setFormInfo(null);
     
+    // Limpiar wizard anterior
+    setShowWizardModal(false);
+    setWizardInfo(null);
+    setWizardLoading(false);
     
     // Limpiar errores
     setError('');
@@ -276,17 +284,21 @@ const Dashboard = ({ sessionData, onLogout }) => {
         
         console.log('Resultado de la acción ejecutada:', result);
         
-        // Procesar el resultado según el tipo de acción
-        if (result.requiresContext) {
-          console.log('⚠️ La acción requiere contexto:', result.contextModel);
-          console.log('📋 Opciones de res_model disponibles:', result.resModelOptions);
-          
-          // Mostrar modal con opciones de res_model
-          setActionOptions(result.resModelOptions);
-          setPendingMenuItem(pendingMenuItem);
-          setShowActionOptionsModal(true);
-          return;
-        }
+      // Procesar el resultado según el tipo de acción
+      if (result.isWizard) {
+        console.log('🧙 Wizard detectado:', result.wizardName);
+        await handleWizardAction(result, pendingMenuItem);
+        return;
+      } else if (result.requiresContext) {
+        console.log('⚠️ La acción requiere contexto:', result.contextModel);
+        console.log('📋 Opciones de res_model disponibles:', result.resModelOptions);
+        
+        // Mostrar modal con opciones de res_model
+        setActionOptions(result.resModelOptions);
+        setPendingMenuItem(pendingMenuItem);
+        setShowActionOptionsModal(true);
+        return;
+      }
         
         // Si es una acción directa, procesar como menú normal
         if (result.resModel && result.toolbarInfo) {
@@ -313,6 +325,128 @@ const Dashboard = ({ sessionData, onLogout }) => {
     
     // No limpiar el estado completo aquí, solo cerrar el modal
     // El usuario puede querer mantener la vista actual
+  };
+
+  const handleWizardAction = async (wizardResult, menuItem) => {
+    try {
+      setWizardLoading(true);
+      console.log('🧙 Iniciando wizard:', wizardResult.wizardName);
+      
+      // Crear el wizard
+      const createResult = await trytonService.createWizard(wizardResult.wizardName);
+      console.log('✅ Wizard creado:', createResult);
+      
+      // Obtener el formulario del wizard
+      const wizardForm = await trytonService.getWizardForm(wizardResult.wizardName, createResult.wizardId);
+      console.log('✅ Formulario de wizard obtenido:', wizardForm);
+      
+      // Configurar la información del wizard para el modal
+      const wizardModalInfo = {
+        ...wizardForm,
+        wizardName: wizardResult.wizardName,
+        wizardId: createResult.wizardId,
+        title: wizardResult.actionName || 'Wizard'
+      };
+      
+      setWizardInfo(wizardModalInfo);
+      setShowWizardModal(true);
+      
+    } catch (error) {
+      console.error('Error manejando wizard:', error);
+      setError('Error iniciando wizard: ' + error.message);
+    } finally {
+      setWizardLoading(false);
+    }
+  };
+
+  const handleWizardSubmit = async (values, buttonState) => {
+    try {
+      console.log('🧙 Enviando wizard:', { values, buttonState });
+      
+      // Ejecutar la acción del wizard
+      const result = await trytonService.executeWizardAction(
+        wizardInfo.wizardName,
+        wizardInfo.wizardId,
+        values,
+        buttonState
+      );
+      
+      console.log('✅ Wizard ejecutado:', result);
+      
+      // Si el wizard devuelve una vista, procesarla
+      if (result && result.view) {
+        const view = result.view;
+        
+        if (view.fields_view && view.fields_view.type === 'tree') {
+          // Es una tabla
+          setTableInfo({
+            fieldsView: view.fields_view,
+            data: view.values || [],
+            model: view.fields_view.model,
+            viewId: view.fields_view.view_id,
+            viewType: 'tree',
+            fields: Object.keys(view.fields_view.fields || {})
+          });
+          setFormInfo(null);
+        } else if (view.fields_view && view.fields_view.type === 'form') {
+          // Es un formulario
+          setFormInfo({
+            model: view.fields_view.model,
+            viewId: view.fields_view.view_id,
+            viewType: 'form',
+            fieldsView: view.fields_view,
+            recordData: view.values || null
+          });
+          setTableInfo(null);
+        }
+        
+        setSelectedMenuInfo({
+          menuItem: pendingMenuItem,
+          actionInfo: [result],
+          toolbarInfo: null,
+          resModel: view.fields_view?.model,
+          actionName: wizardInfo.title,
+          viewType: view.fields_view?.type,
+          viewId: view.fields_view?.view_id,
+          timestamp: new Date().toISOString()
+        });
+        
+        setActiveTab(pendingMenuItem.id);
+      }
+      
+      // Limpiar el wizard
+      await trytonService.deleteWizard(wizardInfo.wizardName, wizardInfo.wizardId);
+      
+    } catch (error) {
+      console.error('Error enviando wizard:', error);
+      setError('Error ejecutando wizard: ' + error.message);
+      throw error; // Re-lanzar para que el modal maneje el error
+    }
+  };
+
+  const handleWizardCancel = async () => {
+    try {
+      console.log('🧙 Cancelando wizard...');
+      
+      // Eliminar el wizard
+      await trytonService.deleteWizard(wizardInfo.wizardName, wizardInfo.wizardId);
+      
+      console.log('✅ Wizard cancelado y eliminado');
+      
+    } catch (error) {
+      console.error('Error cancelando wizard:', error);
+      // No re-lanzar el error, solo loggearlo
+      // El modal se cerrará de todas formas
+    }
+  };
+
+  const handleWizardModalClose = () => {
+    console.log('🚪 Cerrando modal de wizard...');
+    
+    setShowWizardModal(false);
+    setWizardInfo(null);
+    setWizardLoading(false);
+    setPendingMenuItem(null);
   };
 
 
@@ -1354,6 +1488,16 @@ const Dashboard = ({ sessionData, onLogout }) => {
         onSelectOption={handleActionOptionSelect}
         title="Seleccionar Acción"
         description="Este menú tiene múltiples opciones disponibles. Selecciona una para continuar:"
+      />
+
+      <WizardModal
+        visible={showWizardModal}
+        onClose={handleWizardModalClose}
+        onCancel={handleWizardCancel}
+        onSubmit={handleWizardSubmit}
+        wizardInfo={wizardInfo}
+        loading={wizardLoading}
+        title={wizardInfo?.title || "Wizard"}
       />
     </Layout>
   );
