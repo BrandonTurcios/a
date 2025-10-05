@@ -603,6 +603,13 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
       console.log('Información del menú obtenida:', menuInfo);
       
+      // Si es un wizard, manejarlo directamente
+      if (menuInfo.isWizard) {
+        console.log('🧙 Wizard detectado en handleMenuClick:', menuInfo.wizardName);
+        await handleWizardAction(menuInfo, item);
+        return;
+      }
+      
       // Si hay múltiples opciones, mostrar el modal
       if (menuInfo.hasMultipleOptions && menuInfo.options && menuInfo.options.length > 1) {
         console.log('⚠️ Múltiples opciones detectadas, mostrando modal de selección');
