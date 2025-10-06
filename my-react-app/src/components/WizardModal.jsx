@@ -7,7 +7,7 @@ import trytonService from '../services/trytonService';
 const Many2OneField = ({ name, string, required, help, relation, disabled, form }) => {
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [selectedLabel, setSelectedLabel] = useState('');
+  const [inputValue, setInputValue] = useState('');
 
   // Función para buscar opciones basada en el texto
   const searchOptions = async (searchText) => {
@@ -53,16 +53,16 @@ const Many2OneField = ({ name, string, required, help, relation, disabled, form 
   // Función para manejar selección
   const handleSelect = (value, option) => {
     console.log(`✅ Opción seleccionada para ${name}:`, { value, option });
-    setSelectedLabel(option.label);
+    setInputValue(option.label);
     // Actualizar el valor del formulario con el ID
     form.setFieldValue(name, value);
   };
 
-  // Función para manejar cambio del valor
+  // Función para manejar cambio del input
   const handleChange = (value) => {
-    // Si el usuario borra el texto, limpiar también el valor
+    setInputValue(value);
+    // Si el usuario borra el texto, limpiar también el valor del formulario
     if (!value) {
-      setSelectedLabel('');
       form.setFieldValue(name, null);
     }
   };
@@ -88,7 +88,7 @@ const Many2OneField = ({ name, string, required, help, relation, disabled, form 
           onSearch={searchOptions}
           onSelect={handleSelect}
           onChange={handleChange}
-          value={selectedLabel} // Mostrar el label seleccionado
+          value={inputValue} // Permitir escribir libremente
           filterOption={false} // Desactivar filtrado local ya que se hace en el servidor
           showSearch
           allowClear
