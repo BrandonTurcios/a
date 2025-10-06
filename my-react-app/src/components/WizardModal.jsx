@@ -4,9 +4,10 @@ import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
 import trytonService from '../services/trytonService';
 
 // Componente para campos many2one con autocompletado
-const Many2OneField = ({ name, string, required, help, relation, disabled }) => {
+const Many2OneField = ({ name, string, required, help, relation, disabled, form }) => {
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedLabel, setSelectedLabel] = useState('');
 
   // Función para buscar opciones basada en el texto
   const searchOptions = async (searchText) => {
@@ -52,29 +53,50 @@ const Many2OneField = ({ name, string, required, help, relation, disabled }) => 
   // Función para manejar selección
   const handleSelect = (value, option) => {
     console.log(`✅ Opción seleccionada para ${name}:`, { value, option });
+    setSelectedLabel(option.label);
+    // Actualizar el valor del formulario con el ID
+    form.setFieldValue(name, value);
+  };
+
+  // Función para manejar cambio del valor
+  const handleChange = (value) => {
+    // Si el usuario borra el texto, limpiar también el valor
+    if (!value) {
+      setSelectedLabel('');
+      form.setFieldValue(name, null);
+    }
   };
 
   return (
-    <Form.Item
-      name={name}
-      label={string}
-      rules={required ? [{ required: true, message: `Campo ${string} es requerido` }] : []}
-      help={help}
-    >
-      <AutoComplete
-        placeholder={`Buscar ${string.toLowerCase()}...`}
-        disabled={disabled}
-        loading={loading}
-        options={options}
-        onSearch={searchOptions}
-        onSelect={handleSelect}
-        filterOption={false} // Desactivar filtrado local ya que se hace en el servidor
-        showSearch
-        allowClear
-        style={{ width: '100%' }}
-        notFoundContent={loading ? "Buscando..." : "No se encontraron opciones"}
-      />
-    </Form.Item>
+    <>
+      {/* Campo oculto para almacenar el ID real */}
+      <Form.Item name={name} style={{ display: 'none' }}>
+        <input type="hidden" />
+      </Form.Item>
+      
+      {/* Campo visible para mostrar el label */}
+      <Form.Item
+        label={string}
+        rules={required ? [{ required: true, message: `Campo ${string} es requerido` }] : []}
+        help={help}
+      >
+        <AutoComplete
+          placeholder={`Buscar ${string.toLowerCase()}...`}
+          disabled={disabled}
+          loading={loading}
+          options={options}
+          onSearch={searchOptions}
+          onSelect={handleSelect}
+          onChange={handleChange}
+          value={selectedLabel} // Mostrar el label seleccionado
+          filterOption={false} // Desactivar filtrado local ya que se hace en el servidor
+          showSearch
+          allowClear
+          style={{ width: '100%' }}
+          notFoundContent={loading ? "Buscando..." : "No se encontraron opciones"}
+        />
+      </Form.Item>
+    </>
   );
 };
 
@@ -401,6 +423,7 @@ const WizardModal = ({
              help={fieldDef.help}
              relation={fieldDef.relation}
              disabled={readonly || currentLoading}
+             form={form}
            />
          );
 
