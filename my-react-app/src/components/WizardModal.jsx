@@ -63,11 +63,47 @@ const WizardModal = ({
     groups.forEach(group => {
       const groupFields = [];
       
-      group.fields.forEach(fieldName => {
+      if (group.fields && Array.isArray(group.fields)) {
+        group.fields.forEach(fieldName => {
+          const fieldDef = fieldDefinitions[fieldName];
+          
+          if (fieldDef) {
+            groupFields.push({
+              name: fieldName,
+              fieldDef: fieldDef,
+              required: fieldDef.required || false,
+              readonly: fieldDef.readonly || false,
+              type: fieldDef.type,
+              string: fieldDef.string || fieldName,
+              help: fieldDef.help || '',
+              domain: fieldDef.domain || '[]',
+              relation: fieldDef.relation,
+              on_change_with: fieldDef.on_change_with || []
+            });
+          }
+        });
+      }
+
+      if (groupFields.length > 0) {
+        fields.push({
+          groupId: group.id,
+          groupTitle: group.title,
+          colspan: group.colspan,
+          fields: groupFields
+        });
+      }
+    });
+
+    // Si no se pudieron parsear grupos del XML, crear un grupo por defecto con todos los campos
+    if (fields.length === 0) {
+      console.warn('⚠️ No se pudieron parsear grupos del XML, creando grupo por defecto');
+      const allFields = [];
+      
+      Object.keys(fieldDefinitions).forEach(fieldName => {
         const fieldDef = fieldDefinitions[fieldName];
         
         if (fieldDef) {
-          groupFields.push({
+          allFields.push({
             name: fieldName,
             fieldDef: fieldDef,
             required: fieldDef.required || false,
@@ -82,15 +118,15 @@ const WizardModal = ({
         }
       });
 
-      if (groupFields.length > 0) {
+      if (allFields.length > 0) {
         fields.push({
-          groupId: group.id,
-          groupTitle: group.title,
-          colspan: group.colspan,
-          fields: groupFields
+          groupId: 'default',
+          groupTitle: 'Campos del Formulario',
+          colspan: 4,
+          fields: allFields
         });
       }
-    });
+    }
 
     console.log(`✅ Grupos generados para wizard: ${fields.length}`);
     return fields;
@@ -98,53 +134,68 @@ const WizardModal = ({
 
   // Parsear grupos del XML arch
   const parseFormGroups = (arch) => {
-    if (!arch) return [];
+    if (!arch) {
+      console.warn('⚠️ No hay arch XML para parsear');
+      return [];
+    }
 
+    console.log('🔍 Parseando XML arch:', arch);
     const groups = [];
     
-    // Extraer grupos usando regex
-    const groupRegex = /<group[^>]*id="([^"]*)"[^>]*colspan="([^"]*)"[^>]*>(.*?)<\/group>/gs;
-    let match;
-    
-    while ((match = groupRegex.exec(arch)) !== null) {
-      const groupId = match[1];
-      const colspan = parseInt(match[2]) || 4;
-      const groupContent = match[3];
+    try {
+      // Extraer grupos usando regex más flexible
+      const groupRegex = /<group[^>]*id="([^"]*)"[^>]*(?:colspan="([^"]*)")?[^>]*>(.*?)<\/group>/gs;
+      let match;
       
-      // Extraer campos del grupo
-      const fieldRegex = /<field name="([^"]*)"[^>]*\/>/g;
-      const fields = [];
-      let fieldMatch;
-      
-      while ((fieldMatch = fieldRegex.exec(groupContent)) !== null) {
-        fields.push(fieldMatch[1]);
+      while ((match = groupRegex.exec(arch)) !== null) {
+        const groupId = match[1];
+        const colspan = parseInt(match[2]) || 4;
+        const groupContent = match[3];
+        
+        console.log(`📦 Procesando grupo: ${groupId}, colspan: ${colspan}`);
+        console.log(`📝 Contenido del grupo:`, groupContent);
+        
+        // Extraer campos del grupo
+        const fieldRegex = /<field name="([^"]*)"[^>]*\/>/g;
+        const fields = [];
+        let fieldMatch;
+        
+        while ((fieldMatch = fieldRegex.exec(groupContent)) !== null) {
+          fields.push(fieldMatch[1]);
+        }
+        
+        console.log(`🔧 Campos encontrados en ${groupId}:`, fields);
+        
+        // Determinar título del grupo basado en el ID
+        let title = '';
+        switch (groupId) {
+          case 'header':
+            title = 'Información Principal';
+            break;
+          case 'date':
+            title = 'Fechas y Horarios';
+            break;
+          case 'footer':
+            title = 'Configuración';
+            break;
+          default:
+            title = groupId.charAt(0).toUpperCase() + groupId.slice(1);
+        }
+        
+        groups.push({
+          id: groupId,
+          title: title,
+          colspan: colspan,
+          fields: fields || [] // Asegurar que fields siempre sea un array
+        });
       }
       
-      // Determinar título del grupo basado en el ID
-      let title = '';
-      switch (groupId) {
-        case 'header':
-          title = 'Información Principal';
-          break;
-        case 'date':
-          title = 'Fechas y Horarios';
-          break;
-        case 'footer':
-          title = 'Configuración';
-          break;
-        default:
-          title = groupId.charAt(0).toUpperCase() + groupId.slice(1);
-      }
-      
-      groups.push({
-        id: groupId,
-        title: title,
-        colspan: colspan,
-        fields: fields
-      });
+      console.log(`✅ Grupos parseados:`, groups);
+      return groups;
+    } catch (error) {
+      console.error('❌ Error parseando XML:', error);
+      return [];
     }
-    
-    return groups;
   };
 
   // Cargar opciones de selección para campos many2one
@@ -429,25 +480,33 @@ const WizardModal = ({
             onFinish={handleSubmit}
             disabled={currentLoading}
           >
-            {formFields.map((group, groupIndex) => (
-              <Card 
-                key={groupIndex}
-                title={group.groupTitle}
-                size="small"
-                style={{ marginBottom: '16px' }}
-              >
-                <Row gutter={[16, 16]}>
-                  {group.fields.map((field, fieldIndex) => (
-                    <Col 
-                      key={fieldIndex}
-                      span={group.colspan === 4 ? 12 : group.colspan === 2 ? 24 : 8}
-                    >
-                      {renderFormField(field)}
-                    </Col>
-                  ))}
-                </Row>
-              </Card>
-            ))}
+            {formFields.map((group, groupIndex) => {
+              // Verificación defensiva
+              if (!group || !group.fields || !Array.isArray(group.fields)) {
+                console.warn(`⚠️ Grupo ${groupIndex} no tiene campos válidos:`, group);
+                return null;
+              }
+              
+              return (
+                <Card 
+                  key={groupIndex}
+                  title={group.groupTitle || `Grupo ${groupIndex + 1}`}
+                  size="small"
+                  style={{ marginBottom: '16px' }}
+                >
+                  <Row gutter={[16, 16]}>
+                    {group.fields.map((field, fieldIndex) => (
+                      <Col 
+                        key={fieldIndex}
+                        span={group.colspan === 4 ? 12 : group.colspan === 2 ? 24 : 8}
+                      >
+                        {renderFormField(field)}
+                      </Col>
+                    ))}
+                  </Row>
+                </Card>
+              );
+            })}
           </Form>
         ) : (
           <div style={{ textAlign: 'center', padding: '20px' }}>
