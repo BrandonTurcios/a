@@ -84,14 +84,14 @@ const WizardModal = ({
         });
       }
 
-      if (groupFields.length > 0) {
-        fields.push({
-          groupId: group.id,
-          groupTitle: group.title,
-          colspan: group.colspan,
-          fields: groupFields
-        });
-      }
+       if (groupFields.length > 0) {
+         fields.push({
+           groupId: group.id,
+           title: group.title,
+           colspan: group.colspan,
+           fields: groupFields
+         });
+       }
     });
 
     // Si no se pudieron parsear grupos del XML, crear un grupo por defecto con todos los campos
@@ -118,14 +118,14 @@ const WizardModal = ({
         }
       });
 
-      if (allFields.length > 0) {
-        fields.push({
-          groupId: 'default',
-          groupTitle: 'Campos del Formulario',
-          colspan: 4,
-          fields: allFields
-        });
-      }
+       if (allFields.length > 0) {
+         fields.push({
+           groupId: 'default',
+           title: null, // Sin título específico
+           colspan: 4,
+           fields: allFields
+         });
+       }
     }
 
     console.log(`✅ Grupos generados para wizard: ${fields.length}`);
@@ -164,30 +164,14 @@ const WizardModal = ({
           fields.push(fieldMatch[1]);
         }
         
-        console.log(`🔧 Campos encontrados en ${groupId}:`, fields);
-        
-        // Determinar título del grupo basado en el ID
-        let title = '';
-        switch (groupId) {
-          case 'header':
-            title = 'Información Principal';
-            break;
-          case 'date':
-            title = 'Fechas y Horarios';
-            break;
-          case 'footer':
-            title = 'Configuración';
-            break;
-          default:
-            title = groupId.charAt(0).toUpperCase() + groupId.slice(1);
-        }
-        
-        groups.push({
-          id: groupId,
-          title: title,
-          colspan: colspan,
-          fields: fields || [] // Asegurar que fields siempre sea un array
-        });
+         console.log(`🔧 Campos encontrados en ${groupId}:`, fields);
+         
+         groups.push({
+           id: groupId,
+           title: null, // Sin título específico
+           colspan: colspan,
+           fields: fields || [] // Asegurar que fields siempre sea un array
+         });
       }
       
       console.log(`✅ Grupos parseados:`, groups);
@@ -487,25 +471,24 @@ const WizardModal = ({
                 return null;
               }
               
-              return (
-                <Card 
-                  key={groupIndex}
-                  title={group.groupTitle || `Grupo ${groupIndex + 1}`}
-                  size="small"
-                  style={{ marginBottom: '16px' }}
-                >
-                  <Row gutter={[16, 16]}>
-                    {group.fields.map((field, fieldIndex) => (
-                      <Col 
-                        key={fieldIndex}
-                        span={group.colspan === 4 ? 12 : group.colspan === 2 ? 24 : 8}
-                      >
-                        {renderFormField(field)}
-                      </Col>
-                    ))}
-                  </Row>
-                </Card>
-              );
+               return (
+                 <Card 
+                   key={groupIndex}
+                   size="small"
+                   style={{ marginBottom: '16px' }}
+                 >
+                   <Row gutter={[16, 16]}>
+                     {group.fields.map((field, fieldIndex) => (
+                       <Col 
+                         key={fieldIndex}
+                         span={group.colspan === 4 ? 12 : group.colspan === 2 ? 24 : 8}
+                       >
+                         {renderFormField(field)}
+                       </Col>
+                     ))}
+                   </Row>
+                 </Card>
+               );
             })}
           </Form>
         ) : (

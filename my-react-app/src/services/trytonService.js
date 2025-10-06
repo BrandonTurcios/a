@@ -62,8 +62,8 @@ class TrytonService {
         rpcParams.push({ ...this.context });
       } else {
         // Para otros métodos, mezclar con el último parámetro como antes
-        const lastParam = rpcParams.pop() || {};
-        rpcParams.push({ ...this.context, ...lastParam });
+      const lastParam = rpcParams.pop() || {};
+      rpcParams.push({ ...this.context, ...lastParam });
       }
     }
 
@@ -887,20 +887,20 @@ class TrytonService {
           // CASO: Acción directa sin context_model
           const resModel = selectedAction.res_model;
           const actionName = selectedAction.name || `Menú ${menuId}`;
-          
-          console.log(`Modelo encontrado: ${resModel}`);
-          console.log(`Nombre de acción: ${actionName}`);
-          
-          // PASO 3: Hacer la llamada view_toolbar_get con el modelo obtenido
-          console.log(`Ejecutando view_toolbar_get para modelo: ${resModel}`);
-          const toolbarInfo = await this.makeRpcCall(`model.${resModel}.view_toolbar_get`, [{}]);
-          
-          console.log('Información de toolbar obtenida:', toolbarInfo);
-          
-          return {
-            actionInfo: actionInfo,
-            toolbarInfo: toolbarInfo,
-            resModel: resModel,
+        
+        console.log(`Modelo encontrado: ${resModel}`);
+        console.log(`Nombre de acción: ${actionName}`);
+        
+        // PASO 3: Hacer la llamada view_toolbar_get con el modelo obtenido
+        console.log(`Ejecutando view_toolbar_get para modelo: ${resModel}`);
+        const toolbarInfo = await this.makeRpcCall(`model.${resModel}.view_toolbar_get`, [{}]);
+        
+        console.log('Información de toolbar obtenida:', toolbarInfo);
+        
+        return {
+          actionInfo: actionInfo,
+          toolbarInfo: toolbarInfo,
+          resModel: resModel,
             actionName: actionName,
             hasMultipleOptions: false,
             selectedOption: {
@@ -914,14 +914,14 @@ class TrytonService {
         }
       }
       
-      console.warn('No se encontró res_model en la respuesta de acción:', actionInfo);
-      return {
-        actionInfo: actionInfo,
-        toolbarInfo: null,
-        resModel: null,
+        console.warn('No se encontró res_model en la respuesta de acción:', actionInfo);
+        return {
+          actionInfo: actionInfo,
+          toolbarInfo: null,
+          resModel: null,
         actionName: null,
         hasMultipleOptions: false
-      };
+        };
     } catch (error) {
       console.error('Error obteniendo información de acción del menú:', error);
       console.error('Detalles del error:', {
