@@ -53,14 +53,16 @@ const Many2OneField = ({ name, string, required, help, relation, disabled, form 
   // Función para manejar selección
   const handleSelect = (value, option) => {
     console.log(`✅ Opción seleccionada para ${name}:`, { value, option });
-    setInputValue(option.label);
+    // Asegurar que siempre sea un string
+    setInputValue(option.label || '');
     // Actualizar el valor del formulario con el ID
     form.setFieldValue(name, value);
   };
 
   // Función para manejar cambio del input
   const handleChange = (value) => {
-    setInputValue(value);
+    // Asegurar que siempre sea un string, nunca undefined o null
+    setInputValue(value || '');
     // Si el usuario borra el texto, limpiar también el valor del formulario
     if (!value) {
       form.setFieldValue(name, null);
@@ -88,7 +90,7 @@ const Many2OneField = ({ name, string, required, help, relation, disabled, form 
           onSearch={searchOptions}
           onSelect={handleSelect}
           onChange={handleChange}
-          value={inputValue} // Permitir escribir libremente
+          value={inputValue || ''} // Siempre un string, nunca undefined
           filterOption={false} // Desactivar filtrado local ya que se hace en el servidor
           showSearch
           allowClear
