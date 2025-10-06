@@ -1,7 +1,76 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Button, Space, message, Spin, Card, Row, Col } from 'antd';
+import { Modal, Form, Button, Space, message, Spin, Card, Row, Col, AutoComplete } from 'antd';
 import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
 import trytonService from '../services/trytonService';
+
+// Componente para campos many2one con autocompletado
+const Many2OneField = ({ name, string, required, help, relation, disabled }) => {
+  const [options, setOptions] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // Función para buscar opciones basada en el texto
+  const searchOptions = async (searchText) => {
+    if (!relation || !searchText || searchText.length < 2) {
+      setOptions([]);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      console.log(`🔍 Buscando opciones para ${name} (${relation}) con texto: "${searchText}"`);
+      
+      const autocompleteMethod = `model.${relation}.autocomplete`;
+      const autocompleteOptions = await trytonService.makeRpcCall(autocompleteMethod, [searchText]);
+      
+      if (autocompleteOptions && Array.isArray(autocompleteOptions)) {
+        const formattedOptions = autocompleteOptions.map(option => ({
+          value: option.id,
+          label: option.name || option.rec_name || `ID: ${option.id}`,
+          id: option.id,
+          name: option.name || option.rec_name
+        }));
+        
+        setOptions(formattedOptions);
+        console.log(`✅ Opciones encontradas para "${searchText}": ${formattedOptions.length}`);
+      } else {
+        setOptions([]);
+      }
+    } catch (error) {
+      console.warn(`⚠️ Error buscando opciones para ${name}:`, error.message);
+      setOptions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Función para manejar selección
+  const handleSelect = (value, option) => {
+    console.log(`✅ Opción seleccionada para ${name}:`, { value, option });
+  };
+
+  return (
+    <Form.Item
+      name={name}
+      label={string}
+      rules={required ? [{ required: true, message: `Campo ${string} es requerido` }] : []}
+      help={help}
+    >
+      <AutoComplete
+        placeholder={`Buscar ${string.toLowerCase()}...`}
+        disabled={disabled}
+        loading={loading}
+        options={options}
+        onSearch={searchOptions}
+        onSelect={handleSelect}
+        filterOption={false} // Desactivar filtrado local ya que se hace en el servidor
+        showSearch
+        allowClear
+        style={{ width: '100%' }}
+        notFoundContent={loading ? "Buscando..." : "No se encontraron opciones"}
+      />
+    </Form.Item>
+  );
+};
 
 const WizardModal = ({
   visible,
@@ -15,7 +84,6 @@ const WizardModal = ({
   const [form] = Form.useForm();
   const [internalLoading, setInternalLoading] = useState(false);
   const [formFields, setFormFields] = useState([]);
-  const [selectionOptions, setSelectionOptions] = useState({});
 
   const currentLoading = loading || internalLoading;
 
@@ -23,12 +91,9 @@ const WizardModal = ({
     if (wizardInfo && wizardInfo.fieldsView && visible) {
       console.log('🧙 Configurando formulario de wizard:', wizardInfo);
       
-      // Generar campos del formulario
-      const fields = generateFormFields(wizardInfo.fieldsView);
-      setFormFields(fields);
-      
-      // Cargar opciones de selección
-      loadSelectionOptions(wizardInfo.fieldsView);
+       // Generar campos del formulario
+       const fields = generateFormFields(wizardInfo.fieldsView);
+       setFormFields(fields);
       
       // Establecer valores por defecto
       if (wizardInfo.defaults) {
@@ -182,45 +247,6 @@ const WizardModal = ({
     }
   };
 
-  // Cargar opciones de selección para campos many2one
-  const loadSelectionOptions = async (fieldsView) => {
-    if (!fieldsView || !fieldsView.fields) {
-      return;
-    }
-
-    const options = {};
-    const fieldDefinitions = fieldsView.fields;
-
-    // Procesar campos many2one
-    for (const fieldName of Object.keys(fieldDefinitions)) {
-      const fieldDef = fieldDefinitions[fieldName];
-      
-      if (fieldDef && fieldDef.type === 'many2one' && fieldDef.relation) {
-        try {
-          console.log(`🔍 Cargando opciones para ${fieldName} (${fieldDef.relation})`);
-          
-          // Intentar cargar opciones usando autocomplete
-          const autocompleteMethod = `model.${fieldDef.relation}.autocomplete`;
-          const autocompleteOptions = await trytonService.makeRpcCall(autocompleteMethod, []);
-          
-          if (autocompleteOptions && Array.isArray(autocompleteOptions)) {
-            options[fieldName] = autocompleteOptions.map(option => ({
-              value: option.id,
-              label: option.name || option.rec_name || `ID: ${option.id}`
-            }));
-            console.log(`✅ Opciones cargadas para ${fieldName}: ${options[fieldName].length}`);
-          } else {
-            options[fieldName] = [];
-          }
-        } catch (error) {
-          console.warn(`⚠️ No se pudieron cargar opciones para ${fieldName}:`, error.message);
-          options[fieldName] = [];
-        }
-      }
-    }
-
-    setSelectionOptions(options);
-  };
 
   // Manejar envío del formulario
   const handleSubmit = async (values) => {
@@ -359,26 +385,18 @@ const WizardModal = ({
           </Form.Item>
         );
 
-      case 'many2one':
-        const options = selectionOptions[name] || [];
-        return (
-          <Form.Item
-            key={name}
-            name={name}
-            label={string}
-            rules={required ? [{ required: true, message: `Campo ${string} es requerido` }] : []}
-            help={fieldDef.help}
-          >
-            <select {...commonProps} style={{ width: '100%', height: '32px' }}>
-              <option value="">Seleccionar...</option>
-              {options.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </Form.Item>
-        );
+       case 'many2one':
+         return (
+           <Many2OneField
+             key={name}
+             name={name}
+             string={string}
+             required={required}
+             help={fieldDef.help}
+             relation={fieldDef.relation}
+             disabled={readonly || currentLoading}
+           />
+         );
 
       default:
         return (
