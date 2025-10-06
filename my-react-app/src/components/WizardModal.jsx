@@ -20,7 +20,13 @@ const Many2OneField = ({ name, string, required, help, relation, disabled }) => 
       console.log(`🔍 Buscando opciones para ${name} (${relation}) con texto: "${searchText}"`);
       
       const autocompleteMethod = `model.${relation}.autocomplete`;
-      const autocompleteOptions = await trytonService.makeRpcCall(autocompleteMethod, [searchText]);
+      const autocompleteOptions = await trytonService.makeRpcCall(autocompleteMethod, [
+        searchText,  // text
+        [],          // domain (vacío para buscar todos)
+        1000,        // limit
+        null,        // order (null para orden por defecto)
+        {}           // context (vacío, el servicio agregará el contexto automáticamente)
+      ]);
       
       if (autocompleteOptions && Array.isArray(autocompleteOptions)) {
         const formattedOptions = autocompleteOptions.map(option => ({
