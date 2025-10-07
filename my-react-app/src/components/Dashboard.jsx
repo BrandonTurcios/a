@@ -1481,7 +1481,8 @@ const Dashboard = ({ sessionData, onLogout }) => {
             padding: sidebarOpen ? '16px' : '8px',
             paddingTop: '80px', // Espacio para el header
             height: '100%',
-            overflowY: 'auto'
+            display: 'flex',
+            flexDirection: 'column'
           }}>
             {loading ? (
               <div style={{ 
@@ -1513,15 +1514,21 @@ const Dashboard = ({ sessionData, onLogout }) => {
               />
             ) : null}
             
-            <div style={{ marginTop: '16px' }}>
+            <div style={{ 
+              marginTop: '16px',
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-evenly'
+            }}>
               {menuItems.map((item) => renderMenuItem(item))}
             </div>
             
             {sidebarOpen && (
               <div style={{ 
-                marginTop: '32px', 
                 paddingTop: '16px', 
-                borderTop: '1px solid rgba(255,255,255,0.2)' 
+                borderTop: '1px solid rgba(255,255,255,0.2)',
+                marginTop: 'auto' // Empuja hacia abajo
               }}>
                 <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px' }}>
                   {(() => {
