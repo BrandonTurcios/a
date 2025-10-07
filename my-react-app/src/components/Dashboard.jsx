@@ -855,27 +855,45 @@ const Dashboard = ({ sessionData, onLogout }) => {
                 borderRadius: '8px',
                 color: isActive ? 'white' : 'white',
                 minHeight: '40px',
-                position: 'relative'
+                position: 'relative',
+                maxWidth: '100%',
+                overflow: 'hidden'
               }}
               title={sidebarOpen ? (item.description || item.name) : item.name}
             >
               {sidebarOpen ? (
-                <Space>
+                <Space style={{ width: '100%', minWidth: 0 }}>
                   {getIconComponent(item.icon, item.name)}
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                    <Text style={{ 
-                      fontSize: '14px', 
-                      fontWeight: isChild ? '400' : '500',
-                      color: isActive ? 'white' : 'white'
-                    }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'flex-start',
+                    minWidth: 0,
+                    flex: 1
+                  }}>
+                    <Text 
+                      style={{ 
+                        fontSize: '14px', 
+                        fontWeight: isChild ? '400' : '500',
+                        color: isActive ? 'white' : 'white',
+                        wordBreak: 'break-word',
+                        lineHeight: '1.3'
+                      }}
+                      ellipsis={{ tooltip: true }}
+                    >
                       {item.name}
                     </Text>
                     {item.type === 'module' && item.model && (
-                      <Text style={{ 
-                        fontSize: '12px', 
-                        opacity: 0.7,
-                        color: isActive ? 'white' : 'rgba(255,255,255,0.7)'
-                      }}>
+                      <Text 
+                        style={{ 
+                          fontSize: '12px', 
+                          opacity: 0.7,
+                          color: isActive ? 'white' : 'rgba(255,255,255,0.7)',
+                          wordBreak: 'break-word',
+                          lineHeight: '1.2'
+                        }}
+                        ellipsis={{ tooltip: true }}
+                      >
                         {item.model}
                       </Text>
                     )}
@@ -1440,7 +1458,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
           trigger={null}
           collapsible
           collapsed={!sidebarOpen}
-          width={280}
+          width={320}
           collapsedWidth={80}
           breakpoint="lg"
           onBreakpoint={(broken) => {
@@ -1525,7 +1543,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
         {/* Main Content */}
         <Content style={{ 
-          marginLeft: sidebarOpen ? '280px' : '80px',
+          marginLeft: sidebarOpen ? '320px' : '80px',
           transition: 'margin-left 0.2s',
           minHeight: 'calc(100vh - 64px)',
           background: '#F8F9FA',
