@@ -3,13 +3,13 @@ import { Modal, Form, Button, Space, message, Spin, Card, Row, Col, AutoComplete
 import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
 import trytonService from '../services/trytonService';
 
-// Componente para campos many2one con autocompletado
+// Component for many2one fields with autocomplete
 const Many2OneField = ({ name, string, required, help, relation, disabled, form }) => {
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [inputValue, setInputValue] = useState('');
 
-  // Función para buscar opciones basada en el texto
+  // Function to search options based on text
   const searchOptions = async (searchText) => {
     if (!relation || !searchText || searchText.length < 2) {
       setOptions([]);
@@ -18,15 +18,15 @@ const Many2OneField = ({ name, string, required, help, relation, disabled, form 
 
     try {
       setLoading(true);
-      console.log(`🔍 Buscando opciones para ${name} (${relation}) con texto: "${searchText}"`);
+      console.log(`🔍 Searching options for ${name} (${relation}) with text: "${searchText}"`);
       
       const autocompleteMethod = `model.${relation}.autocomplete`;
       const autocompleteOptions = await trytonService.makeRpcCall(autocompleteMethod, [
         searchText,  // text
-        [],          // domain (vacío para buscar todos)
+        [],          // domain (empty to search all)
         1000,        // limit
-        null,        // order (null para orden por defecto)
-        {}           // context (vacío, el servicio agregará el contexto automáticamente)
+        null,        // order (null for default order)
+        {}           // context (empty, service will add context automatically)
       ]);
       
       if (autocompleteOptions && Array.isArray(autocompleteOptions)) {
@@ -38,32 +38,32 @@ const Many2OneField = ({ name, string, required, help, relation, disabled, form 
         }));
         
         setOptions(formattedOptions);
-        console.log(`✅ Opciones encontradas para "${searchText}": ${formattedOptions.length}`);
+        console.log(`✅ Options found for "${searchText}": ${formattedOptions.length}`);
       } else {
         setOptions([]);
       }
     } catch (error) {
-      console.warn(`⚠️ Error buscando opciones para ${name}:`, error.message);
+      console.warn(`⚠️ Error searching options for ${name}:`, error.message);
       setOptions([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Función para manejar selección
+  // Function to handle selection
   const handleSelect = (value, option) => {
-    console.log(`✅ Opción seleccionada para ${name}:`, { value, option });
-    // Asegurar que siempre sea un string
+    console.log(`✅ Option selected for ${name}:`, { value, option });
+    // Ensure it's always a string
     setInputValue(option.label || '');
-    // Actualizar el valor del formulario con el ID
+    // Update form value with the ID
     form.setFieldValue(name, value);
   };
 
-  // Función para manejar cambio del input
+  // Function to handle input change
   const handleChange = (value) => {
-    // Asegurar que siempre sea un string, nunca undefined o null
+    // Ensure it's always a string, never undefined or null
     setInputValue(value || '');
-    // Si el usuario borra el texto, limpiar también el valor del formulario
+    // If user clears the text, also clear the form value
     if (!value) {
       form.setFieldValue(name, null);
     }
@@ -71,19 +71,19 @@ const Many2OneField = ({ name, string, required, help, relation, disabled, form 
 
   return (
     <>
-      {/* Campo oculto para almacenar el ID real */}
+      {/* Hidden field to store the real ID */}
       <Form.Item name={name} style={{ display: 'none' }}>
         <input type="hidden" />
       </Form.Item>
       
-      {/* Campo visible para mostrar el label */}
+      {/* Visible field to show the label */}
       <Form.Item
         label={string}
-        rules={required ? [{ required: true, message: `Campo ${string} es requerido` }] : []}
+        rules={required ? [{ required: true, message: `Field ${string} is required` }] : []}
         help={help}
       >
         <AutoComplete
-          placeholder={`Buscar ${string.toLowerCase()}...`}
+          placeholder={`Search ${string.toLowerCase()}...`}
           disabled={disabled}
           loading={loading}
           options={options}
@@ -95,7 +95,7 @@ const Many2OneField = ({ name, string, required, help, relation, disabled, form 
           showSearch
           allowClear
           style={{ width: '100%' }}
-          notFoundContent={loading ? "Buscando..." : "No se encontraron opciones"}
+          notFoundContent={loading ? "Searching..." : "No options found"}
         />
       </Form.Item>
     </>
@@ -259,7 +259,7 @@ const WizardModal = ({
           fields.push(fieldMatch[1]);
         }
         
-         console.log(`🔧 Campos encontrados en ${groupId}:`, fields);
+         console.log(`🔧 Fields found in ${groupId}:`, fields);
          
          groups.push({
            id: groupId,
@@ -272,7 +272,7 @@ const WizardModal = ({
       console.log(`✅ Grupos parseados:`, groups);
       return groups;
     } catch (error) {
-      console.error('❌ Error parseando XML:', error);
+      console.error('❌ Error parsing XML:', error);
       return [];
     }
   };
@@ -292,12 +292,12 @@ const WizardModal = ({
       
       await onSubmit(values, buttonState);
       
-      message.success('Wizard ejecutado exitosamente');
+      message.success('Wizard executed successfully');
       onClose();
       
     } catch (error) {
-      console.error('Error enviando wizard:', error);
-      message.error('Error ejecutando wizard: ' + error.message);
+      console.error('Error sending wizard:', error);
+      message.error('Error executing wizard: ' + error.message);
     } finally {
       setInternalLoading(false);
     }
@@ -312,8 +312,8 @@ const WizardModal = ({
       }
       onClose();
     } catch (error) {
-      console.error('Error cancelando wizard:', error);
-      message.error('Error cancelando wizard: ' + error.message);
+      console.error('Error canceling wizard:', error);
+      message.error('Error canceling wizard: ' + error.message);
     }
   };
 
@@ -324,7 +324,7 @@ const WizardModal = ({
     if (!fieldDef) {
       return (
         <Form.Item key={name} name={name} label={string}>
-          <input disabled placeholder="Campo no disponible" />
+          <input disabled placeholder="Field not available" />
         </Form.Item>
       );
     }
@@ -342,7 +342,7 @@ const WizardModal = ({
             key={name}
             name={name}
             label={string}
-            rules={required ? [{ required: true, message: `Campo ${string} es requerido` }] : []}
+            rules={required ? [{ required: true, message: `Field ${string} is required` }] : []}
             help={fieldDef.help}
           >
             <input {...commonProps} />
@@ -355,7 +355,7 @@ const WizardModal = ({
             key={name}
             name={name}
             label={string}
-            rules={required ? [{ required: true, message: `Campo ${string} es requerido` }] : []}
+            rules={required ? [{ required: true, message: `Field ${string} is required` }] : []}
             help={fieldDef.help}
           >
             <textarea {...commonProps} rows={4} />
@@ -369,7 +369,7 @@ const WizardModal = ({
             key={name}
             name={name}
             label={string}
-            rules={required ? [{ required: true, message: `Campo ${string} es requerido` }] : []}
+            rules={required ? [{ required: true, message: `Field ${string} is required` }] : []}
             help={fieldDef.help}
           >
             <input type="number" {...commonProps} />
@@ -395,7 +395,7 @@ const WizardModal = ({
             key={name}
             name={name}
             label={string}
-            rules={required ? [{ required: true, message: `Campo ${string} es requerido` }] : []}
+            rules={required ? [{ required: true, message: `Field ${string} is required` }] : []}
             help={fieldDef.help}
           >
             <input type="date" {...commonProps} />
@@ -408,7 +408,7 @@ const WizardModal = ({
             key={name}
             name={name}
             label={string}
-            rules={required ? [{ required: true, message: `Campo ${string} es requerido` }] : []}
+            rules={required ? [{ required: true, message: `Field ${string} is required` }] : []}
             help={fieldDef.help}
           >
             <input type="time" {...commonProps} />
@@ -435,10 +435,10 @@ const WizardModal = ({
             key={name}
             name={name}
             label={string}
-            rules={required ? [{ required: true, message: `Campo ${string} es requerido` }] : []}
+            rules={required ? [{ required: true, message: `Field ${string} is required` }] : []}
             help={fieldDef.help}
           >
-            <input {...commonProps} placeholder={`Campo tipo ${type}`} />
+            <input {...commonProps} placeholder={`Field type ${type}`} />
           </Form.Item>
         );
     }
@@ -450,7 +450,7 @@ const WizardModal = ({
       return (
         <Space>
           <Button onClick={handleCancel} icon={<CloseOutlined />}>
-            Cancelar
+            Cancel
           </Button>
           <Button 
             type="primary" 
@@ -542,7 +542,7 @@ const WizardModal = ({
           </Form>
         ) : (
           <div style={{ textAlign: 'center', padding: '20px' }}>
-            <p>Error: No se pudo cargar la información del wizard</p>
+            <p>Error: Could not load wizard information</p>
           </div>
         )}
       </Spin>

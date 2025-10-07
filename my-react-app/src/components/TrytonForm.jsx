@@ -69,7 +69,7 @@ const TrytonForm = ({
       const formFields = generateFormFields(fieldsView);
       setFields(formFields);
       
-      // Cargar opciones de selection dinámicas
+      // Load dynamic selection options
       loadSelectionOptions(fieldsView);
       
       // Establecer datos del formulario
@@ -87,7 +87,7 @@ const TrytonForm = ({
       setInternalLoading(true);
       setError(null);
       
-      console.log(`🔍 Cargando formulario para modelo: ${model}, vista: ${viewId}`);
+      console.log(`🔍 Loading form for model: ${model}, view: ${viewId}`);
       
       // Obtener información completa del formulario
       const formInfo = await trytonService.getFormInfo(model, viewId, viewType, recordId);
@@ -99,7 +99,7 @@ const TrytonForm = ({
       const formFields = generateFormFields(formInfo.fieldsView);
       setFields(formFields);
       
-      // Cargar opciones de selection dinámicas
+      // Load dynamic selection options
       await loadSelectionOptions(formInfo.fieldsView);
       
       // Si hay datos del registro, establecerlos
@@ -117,7 +117,7 @@ const TrytonForm = ({
       }
       
     } catch (error) {
-      console.error('❌ Error cargando formulario:', error);
+      console.error('❌ Error loading form:', error);
       setError(error.message);
     } finally {
       setInternalLoading(false);
@@ -136,10 +136,10 @@ const TrytonForm = ({
       }
     });
     
-    // Cargar opciones para cada campo
+    // Load options for each field
     for (const [fieldName, methodName] of Object.entries(optionsToLoad)) {
       try {
-        console.log(`🔍 Cargando opciones para ${fieldName} usando método ${methodName}`);
+        console.log(`🔍 Loading options for ${fieldName} using method ${methodName}`);
         const options = await trytonService.getSelectionOptions(model, methodName);
         setSelectionOptions(prev => ({
           ...prev,

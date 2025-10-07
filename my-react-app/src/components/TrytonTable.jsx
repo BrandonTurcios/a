@@ -34,7 +34,7 @@ const TrytonTable = ({
       setLoading(true);
       setError(null);
       
-      console.log(`🔍 Cargando tabla para modelo: ${model}`);
+      console.log(`🔍 Loading table for model: ${model}`);
       
       // Primero verificar el tipo de vista
       const fieldsView = await trytonService.getFieldsView(model, viewId, viewType);
@@ -42,7 +42,7 @@ const TrytonTable = ({
       
       // Solo proceder si es una vista de tipo "tree"
       if (!fieldsView || fieldsView.type !== 'tree') {
-        throw new Error(`Vista no es de tipo "tree" (tipo actual: ${fieldsView?.type || 'desconocido'})`);
+        throw new Error(`View is not of type "tree" (current type: ${fieldsView?.type || 'unknown'})`);
       }
       
       const info = await trytonService.getTableInfo(
@@ -66,7 +66,7 @@ const TrytonTable = ({
       setData(processedData);
       
     } catch (error) {
-      console.error('❌ Error cargando tabla:', error);
+      console.error('❌ Error loading table:', error);
       setError(error.message);
     } finally {
       setLoading(false);
@@ -107,10 +107,10 @@ const TrytonTable = ({
       return true;
     }
     
-    // Campos básicos que siempre incluir
+    // Basic fields to always include
     const basicFields = ['id', 'name', 'code', 'rec_name'];
     
-    // Campos relacionados importantes que mostrar
+    // Important related fields to show
     const relatedFields = ['party', 'template', 'product', 'company', 'supplier'];
     
     return basicFields.includes(fieldName) || relatedFields.includes(fieldName);
@@ -228,7 +228,7 @@ const TrytonTable = ({
           minHeight: '200px' 
         }}>
           <Spin size="large" />
-          <Text style={{ marginLeft: '16px' }}>Cargando tabla...</Text>
+          <Text style={{ marginLeft: '16px' }}>Loading table...</Text>
         </div>
       </Card>
     );

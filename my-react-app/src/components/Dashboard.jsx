@@ -1497,7 +1497,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                       });
                       return count;
                     };
-                    return `${countTotalItems(menuItems)} elementos cargados`;
+                    return `${countTotalItems(menuItems)}`;
                   })()}
                 </Text>
               </div>
