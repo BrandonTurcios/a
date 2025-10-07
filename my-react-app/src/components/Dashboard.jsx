@@ -77,6 +77,31 @@ const Dashboard = ({ sessionData, onLogout }) => {
     loadSidebarMenu();
   }, []);
 
+  // Aplicar estilos de scroll personalizados
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      .sidebar-scroll::-webkit-scrollbar {
+        width: 6px;
+      }
+      .sidebar-scroll::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .sidebar-scroll::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.3);
+        border-radius: 3px;
+      }
+      .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+        background: rgba(255,255,255,0.5);
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   // Efecto para manejar el responsive del sidebar
   useEffect(() => {
     const handleResize = () => {
@@ -1477,13 +1502,18 @@ const Dashboard = ({ sessionData, onLogout }) => {
             overflow: 'hidden'
           }}
         >
-          <div style={{ 
-            padding: sidebarOpen ? '16px' : '8px',
-            paddingTop: '80px', // Espacio para el header
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column'
-          }}>
+          <div 
+            className="sidebar-scroll"
+            style={{ 
+              padding: sidebarOpen ? '16px' : '8px',
+              paddingTop: '80px', // Espacio para el header
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              overflowY: 'auto', // Scroll cuando sea necesario
+              scrollbarWidth: 'thin', // Firefox
+              scrollbarColor: 'rgba(255,255,255,0.3) transparent' // Firefox
+            }}>
             {loading ? (
               <div style={{ 
                 display: 'flex', 
@@ -1519,7 +1549,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
               flex: 1,
               display: 'flex',
               flexDirection: 'column',
-              justifyContent: 'space-evenly'
+              gap: '8px' // Espaciado consistente entre elementos
             }}>
               {menuItems.map((item) => renderMenuItem(item))}
             </div>
