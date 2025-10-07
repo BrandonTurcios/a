@@ -820,38 +820,39 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
     return (
       <div key={item.id} style={{ position: 'relative' }}>
-        {/* Línea conectora vertical para elementos hijo */}
-        {isChild && sidebarOpen && (
-          <div style={{
-            position: 'absolute',
-            left: '16px',
-            top: '-8px',
-            bottom: isLastChild ? '50%' : '100%',
-            width: '2px',
-            background: 'rgba(255,255,255,0.3)',
-            zIndex: 1
-          }} />
-        )}
-        
-        {/* Línea conectora horizontal para elementos hijo */}
-        {isChild && sidebarOpen && (
-          <div style={{
-            position: 'absolute',
-            left: '16px',
-            top: '20px',
-            width: '12px',
-            height: '2px',
-            background: 'rgba(255,255,255,0.3)',
-            zIndex: 1
-          }} />
-        )}
-
         <div style={{ 
-          marginLeft: isChild && sidebarOpen ? '32px' : '0',
+          marginLeft: isChild && sidebarOpen ? '24px' : '0',
           position: 'relative',
           zIndex: 2
         }}>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+            {/* Línea conectora horizontal para elementos hijo */}
+            {isChild && sidebarOpen && (
+              <div style={{
+                position: 'absolute',
+                left: '-12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: '12px',
+                height: '1px',
+                background: 'rgba(255,255,255,0.4)',
+                zIndex: 1
+              }} />
+            )}
+
+            {/* Línea conectora vertical para elementos hijo */}
+            {isChild && sidebarOpen && (
+              <div style={{
+                position: 'absolute',
+                left: '-12px',
+                top: '-8px',
+                bottom: isLastChild ? '50%' : '100%',
+                width: '1px',
+                background: 'rgba(255,255,255,0.4)',
+                zIndex: 1
+              }} />
+            )}
+
             {/* Botón principal del menú */}
             <Button
               type={isActive ? 'primary' : 'text'}
@@ -942,11 +943,11 @@ const Dashboard = ({ sessionData, onLogout }) => {
               {/* Línea conectora vertical para el grupo de hijos */}
               <div style={{
                 position: 'absolute',
-                left: '8px',
+                left: '-12px',
                 top: '0',
                 bottom: '0',
-                width: '2px',
-                background: 'rgba(255,255,255,0.2)',
+                width: '1px',
+                background: 'rgba(255,255,255,0.3)',
                 zIndex: 1
               }} />
               
