@@ -120,7 +120,7 @@ const Login = ({ onLogin }) => {
               Tryton Management
             </Title>
             <Text style={{ color: '#6C757D', fontSize: '16px' }}>
-              Inicia sesión en tu servidor
+              Connect to your Tryton server
             </Text>
           </div>
 
@@ -129,22 +129,22 @@ const Login = ({ onLogin }) => {
               layout="vertical"
               onFinish={handleSubmit}
             >
-              {/* Campo de Base de Datos */}
+              {/* Database Field */}
               <Form.Item
                 name="database"
-                label={<span style={{ color: '#333333', fontWeight: '500' }}>Base de Datos</span>}
-                rules={[{ required: true, message: 'Por favor selecciona una base de datos' }]}
+                label={<span style={{ color: '#333333', fontWeight: '500' }}>Database</span>}
+                rules={[{ required: true, message: 'Please select a database' }]}
               >
                 {loadingDatabases ? (
                   <div style={{ textAlign: 'center', padding: '16px' }}>
                     <Spin />
                     <div style={{ marginTop: '8px', color: '#6C757D' }}>
-                      Cargando...
+                      Loading...
                     </div>
                   </div>
                 ) : databases.length > 0 ? (
                   <Select
-                    placeholder="Selecciona una base de datos"
+                    placeholder="Select a database"
                     style={{ width: '100%', height: '40px' }}
                     showSearch
                     onChange={(value) => setSelectedDatabase(value)}
@@ -157,40 +157,40 @@ const Login = ({ onLogin }) => {
                   </Select>
                 ) : (
                   <Input
-                    placeholder="Nombre de la base de datos"
+                    placeholder="Database name"
                     style={{ height: '40px' }}
                   />
                 )}
               </Form.Item>
 
-              {/* Campo de Usuario */}
+              {/* Username Field */}
               <Form.Item
                 name="username"
-                label={<span style={{ color: '#333333', fontWeight: '500' }}>Usuario</span>}
-                rules={[{ required: true, message: 'Por favor ingresa tu nombre de usuario' }]}
+                label={<span style={{ color: '#333333', fontWeight: '500' }}>Username</span>}
+                rules={[{ required: true, message: 'Please enter your username' }]}
               >
                 <Input 
-                  placeholder="Nombre de usuario" 
+                  placeholder="Username" 
                   style={{ height: '40px' }}
                 />
               </Form.Item>
 
-              {/* Campo de Contraseña */}
+              {/* Password Field */}
               <Form.Item
                 name="password"
-                label={<span style={{ color: '#333333', fontWeight: '500' }}>Contraseña</span>}
-                rules={[{ required: true, message: 'Por favor ingresa tu contraseña' }]}
+                label={<span style={{ color: '#333333', fontWeight: '500' }}>Password</span>}
+                rules={[{ required: true, message: 'Please enter your password' }]}
               >
                 <Input.Password 
-                  placeholder="Contraseña" 
+                  placeholder="Password" 
                   style={{ height: '40px' }}
                 />
               </Form.Item>
 
-              {/* Mensaje de Error */}
+              {/* Error Message */}
               {error && (
                 <Alert
-                  message="Error de autenticación"
+                  message="Authentication Error"
                   description={error}
                   type="error"
                   icon={<ExclamationCircleOutlined />}
@@ -199,7 +199,7 @@ const Login = ({ onLogin }) => {
                 />
               )}
 
-              {/* Botón de Login */}
+              {/* Login Button */}
               <Form.Item style={{ marginBottom: '0' }}>
                 <Button
                   htmlType="submit"
@@ -215,7 +215,7 @@ const Login = ({ onLogin }) => {
                     fontWeight: '500'
                   }}
                 >
-                  {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+                  {loading ? 'Signing in...' : 'Sign In'}
                 </Button>
               </Form.Item>
             </Form>

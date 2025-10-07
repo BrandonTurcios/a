@@ -927,7 +927,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                 Dashboard
               </Title>
               <Paragraph style={{ color: '#6C757D', margin: '8px 0 0 0' }}>
-                Información de la sesión actual
+                Current session information
               </Paragraph>
             </div>
             
@@ -937,14 +937,14 @@ const Dashboard = ({ sessionData, onLogout }) => {
               borderRadius: '8px',
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
             }}>
-              <Title level={3} style={{ marginBottom: '16px' }}>Información de Sesión</Title>
+              <Title level={3} style={{ marginBottom: '16px' }}>Session Information</Title>
               
               <div style={{ lineHeight: '1.8' }}>
-                <p><strong>Usuario:</strong> {sessionData.username}</p>
-                <p><strong>Base de Datos:</strong> {sessionData.database}</p>
-                <p><strong>ID Usuario:</strong> {sessionData.userId}</p>
-                <p><strong>Estado:</strong> Activo</p>
-                <p><strong>Hora de Login:</strong> {new Date(sessionData.loginTime).toLocaleString()}</p>
+                <p><strong>User:</strong> {sessionData.username}</p>
+                <p><strong>Database:</strong> {sessionData.database}</p>
+                <p><strong>User ID:</strong> {sessionData.userId}</p>
+                <p><strong>Status:</strong> Active</p>
+                <p><strong>Login Time:</strong> {new Date(sessionData.loginTime).toLocaleString()}</p>
               </div>
             </div>
           </div>
@@ -986,10 +986,10 @@ const Dashboard = ({ sessionData, onLogout }) => {
             }}>
               <div style={{ marginBottom: '24px' }}>
                 <Title level={2} style={{ margin: 0, color: '#333333' }}>
-                  {selectedMenuInfo.actionName || selectedItem?.name || 'Tabla'}
+                  {selectedMenuInfo.actionName || selectedItem?.name || 'Table'}
                 </Title>
                 <Paragraph style={{ color: '#6C757D', margin: '8px 0 0 0' }}>
-                  {selectedMenuInfo.resModel} - Vista de tabla
+                  {selectedMenuInfo.resModel} - Table view
                 </Paragraph>
               </div>
               
@@ -1016,10 +1016,10 @@ const Dashboard = ({ sessionData, onLogout }) => {
             }}>
               <div style={{ marginBottom: '24px' }}>
                 <Title level={2} style={{ margin: 0, color: '#333333' }}>
-                  {selectedMenuInfo.actionName || selectedItem?.name || 'Formulario'}
+                  {selectedMenuInfo.actionName || selectedItem?.name || 'Form'}
                 </Title>
                 <Paragraph style={{ color: '#6C757D', margin: '8px 0 0 0' }}>
-                  {selectedMenuInfo.resModel} - Vista de formulario
+                  {selectedMenuInfo.resModel} - Form view
                 </Paragraph>
               </div>
               
@@ -1046,33 +1046,33 @@ const Dashboard = ({ sessionData, onLogout }) => {
             }}>
               <div style={{ marginBottom: '32px' }}>
                 <Title level={2} style={{ margin: 0, color: '#333333' }}>
-                  Información del Menú
+                  Menu Information
                 </Title>
                 <Paragraph style={{ color: '#6C757D', margin: '8px 0 0 0' }}>
-                  Detalles de la acción del menú seleccionado
+                  Details of the selected menu action
                 </Paragraph>
               </div>
               
               <Row gutter={[24, 24]}>
                 <Col xs={24} lg={8}>
                   <Card 
-                    title="Información del Menú"
+                    title="Menu Information"
                     style={{ borderRadius: '12px' }}
                     bodyStyle={{ padding: '24px' }}
                   >
                     <Space direction="vertical" style={{ width: '100%' }} size="middle">
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Text type="secondary">ID del Menú</Text>
+                        <Text type="secondary">Menu ID</Text>
                         <Tag color="blue">{selectedMenuInfo.menuItem.id}</Tag>
                       </div>
                       <Divider style={{ margin: '8px 0' }} />
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Text type="secondary">Nombre</Text>
+                        <Text type="secondary">Name</Text>
                         <Text strong>{selectedMenuInfo.actionName || selectedMenuInfo.menuItem.name}</Text>
                       </div>
                       <Divider style={{ margin: '8px 0' }} />
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Text type="secondary">Modelo</Text>
+                        <Text type="secondary">Model</Text>
                         <Text strong>{selectedMenuInfo.menuItem.model || 'N/A'}</Text>
                       </div>
                       <Divider style={{ margin: '8px 0' }} />
@@ -1349,7 +1349,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <Search
-            placeholder="Buscar en el sistema..."
+            placeholder="Search in the system..."
             prefix={<SearchOutlined style={{ color: '#6C757D' }} />}
             style={{
               width: 320,
@@ -1362,33 +1362,39 @@ const Dashboard = ({ sessionData, onLogout }) => {
           <div style={{ 
             display: 'flex', 
             alignItems: 'center', 
-            gap: '12px',
-            padding: '8px 12px',
-            background: '#F8F9FA',
-            borderRadius: '8px',
-            border: '1px solid #E0E7EB'
+            gap: '12px'
           }}>
-            <div style={{ textAlign: 'right' }}>
-              <Text style={{ color: '#333333', display: 'block', fontSize: '14px', fontWeight: '500' }}>
-                {sessionData.username}
-              </Text>
-              <Text style={{ color: '#6C757D', fontSize: '12px' }}>
-                {sessionData.database}
-              </Text>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px',
+              padding: '6px 12px',
+              background: '#F8F9FA',
+              borderRadius: '8px',
+              border: '1px solid #E0E7EB'
+            }}>
+              <Avatar 
+                style={{ 
+                  background: '#00A88E',
+                  color: 'white',
+                  width: '28px',
+                  height: '28px',
+                  fontSize: '12px',
+                  fontWeight: 'bold'
+                }}
+              >
+                {sessionData.username.charAt(0).toUpperCase()}
+              </Avatar>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                <Text style={{ color: '#333333', fontSize: '13px', fontWeight: '500', lineHeight: '1.2' }}>
+                  {sessionData.username}
+                </Text>
+                <Text style={{ color: '#6C757D', fontSize: '11px', lineHeight: '1.2' }}>
+                  {sessionData.database}
+                </Text>
+              </div>
             </div>
-            <Avatar 
-              style={{ 
-                background: '#00A88E',
-                color: 'white',
-                width: '32px',
-                height: '32px',
-                fontSize: '14px',
-                fontWeight: 'bold'
-              }}
-            >
-              {sessionData.username.charAt(0).toUpperCase()}
-            </Avatar>
-            <Tooltip title="Cerrar sesión">
+            <Tooltip title="Sign out">
               <Button
                 type="text"
                 icon={<LogoutOutlined />}
@@ -1399,7 +1405,10 @@ const Dashboard = ({ sessionData, onLogout }) => {
                   height: '32px',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  borderRadius: '8px',
+                  border: '1px solid #E0E7EB',
+                  background: '#F8F9FA'
                 }}
               />
             </Tooltip>
