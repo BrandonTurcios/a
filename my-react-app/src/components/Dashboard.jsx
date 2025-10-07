@@ -47,7 +47,6 @@ import {
   Package
 } from 'lucide-react';
 import trytonService from '../services/trytonService';
-import PatientsTable from './PatientsTable';
 import TrytonTable from './TrytonTable';
 import TrytonForm from './TrytonForm';
 import ActionOptionsModal from './ActionOptionsModal';
@@ -966,10 +965,6 @@ const Dashboard = ({ sessionData, onLogout }) => {
         
         const selectedItem = findSelectedItem(menuItems, activeTab);
         
-        // Si el menú seleccionado es "Health" (ID 69), mostrar la tabla de pacientes
-        if (selectedItem && (selectedItem.name === 'Health' || selectedItem.id === 69)) {
-          return <PatientsTable sessionData={sessionData} />;
-        }
         
         // Si hay información de tabla, mostrar la tabla Tryton
         if (tableInfo && selectedMenuInfo && selectedMenuInfo.resModel) {
