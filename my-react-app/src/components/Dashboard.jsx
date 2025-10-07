@@ -812,7 +812,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
     return <FileText size={16} />;
   };
 
-  const renderMenuItem = (item, level = 0, isLastChild = false, parentId = null) => {
+  const renderMenuItem = (item, level = 0, isLastChild = false, parentId = null, isMainMenu = false) => {
     const hasChildren = item.childs && item.childs.length > 0;
     const isExpanded = expandedMenus.has(item.id);
     const isActive = activeTab === item.id;
@@ -821,12 +821,12 @@ const Dashboard = ({ sessionData, onLogout }) => {
     return (
       <div key={item.id} style={{ marginBottom: '2px' }}>
         <div style={{ 
-          marginLeft: isChild && sidebarOpen ? '20px' : '0',
+          marginLeft: isChild && sidebarOpen && isMainMenu ? '20px' : '0',
           position: 'relative'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
-            {/* Flecha indicadora para elementos hijo */}
-            {isChild && sidebarOpen && (
+            {/* Flecha indicadora para elementos hijo (solo en menú principal) */}
+            {isChild && sidebarOpen && isMainMenu && (
               <div style={{
                 marginRight: '8px',
                 color: 'rgba(255,255,255,0.6)',
@@ -906,8 +906,8 @@ const Dashboard = ({ sessionData, onLogout }) => {
               )}
             </Button>
             
-            {/* Botón de expansión (solo si tiene hijos y el sidebar está abierto) */}
-            {hasChildren && sidebarOpen && (
+            {/* Botón de expansión (solo si tiene hijos, el sidebar está abierto y es menú principal) */}
+            {hasChildren && sidebarOpen && isMainMenu && (
               <Button
                 type="text"
                 size="small"
@@ -935,14 +935,15 @@ const Dashboard = ({ sessionData, onLogout }) => {
             )}
           </div>
           
-          {/* Contenedor de hijos */}
-          {hasChildren && isExpanded && sidebarOpen && (
+          {/* Contenedor de hijos (solo en menú principal, ya no se muestra inline) */}
+          {false && hasChildren && isExpanded && sidebarOpen && isMainMenu && (
             <div style={{ marginTop: '4px' }}>
               {item.childs.map((child, index) => renderMenuItem(
                 child, 
                 level + 1, 
                 index === item.childs.length - 1,
-                item.id
+                item.id,
+                isMainMenu
               ))}
             </div>
           )}
@@ -1474,53 +1475,166 @@ const Dashboard = ({ sessionData, onLogout }) => {
             left: 0,
             top: 64,
             zIndex: 100,
-            overflow: 'hidden'
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column'
           }}
         >
-          <div style={{ 
-            padding: sidebarOpen ? '16px' : '8px',
-            height: '100%',
-            overflowY: 'auto'
-          }}>
-            {loading ? (
+          {sidebarOpen ? (
+            <>
+              {/* Sección superior - Menú principal */}
               <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                padding: '32px 0',
-                flexDirection: sidebarOpen ? 'row' : 'column'
+                padding: '16px 16px 8px 16px',
+                borderBottom: '1px solid rgba(255,255,255,0.2)',
+                flexShrink: 0
               }}>
-                <Spin size="large" />
-                {sidebarOpen && (
-                  <Text style={{ color: 'white', marginLeft: '12px' }}>
-                    Loading menu...
-                  </Text>
+                {loading ? (
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    padding: '32px 0'
+                  }}>
+                    <Spin size="large" />
+                    <Text style={{ color: 'white', marginLeft: '12px' }}>
+                      Loading menu...
+                    </Text>
+                  </div>
+                ) : error ? (
+                  <Alert
+                    message="Error"
+                    description={error}
+                    type="error"
+                    showIcon
+                    style={{ marginBottom: '16px' }}
+                    action={
+                      <Button size="small" onClick={loadSidebarMenu}>
+                        Retry
+                      </Button>
+                    }
+                  />
+                ) : (
+                  <div>
+                    <Text style={{ 
+                      color: 'rgba(255,255,255,0.9)', 
+                      fontSize: '14px', 
+                      fontWeight: '600',
+                      marginBottom: '12px',
+                      display: 'block'
+                    }}>
+                      Main Menu
+                    </Text>
+                    <div>
+                      {menuItems.map((item) => renderMenuItem(item, 0, false, null, true))}
+                    </div>
+                  </div>
                 )}
               </div>
-            ) : error ? (
-              <Alert
-                message={sidebarOpen ? "Error" : ""}
-                description={sidebarOpen ? error : ""}
-                type="error"
-                showIcon={sidebarOpen}
-                style={{ marginBottom: '16px' }}
-                action={sidebarOpen ? (
-                  <Button size="small" onClick={loadSidebarMenu}>
-                    Reintentar
-                  </Button>
-                ) : null}
-              />
-            ) : null}
-            
-            <div style={{ marginTop: '16px' }}>
-              {menuItems.map((item) => renderMenuItem(item))}
-            </div>
-            
-            {sidebarOpen && (
+
+              {/* Sección inferior - Submenús expandidos */}
               <div style={{ 
-                marginTop: '32px', 
-                paddingTop: '16px', 
-                borderTop: '1px solid rgba(255,255,255,0.2)' 
+                flex: 1,
+                padding: '16px',
+                overflowY: 'auto',
+                background: 'rgba(0,0,0,0.1)'
+              }}>
+                <Text style={{ 
+                  color: 'rgba(255,255,255,0.9)', 
+                  fontSize: '14px', 
+                  fontWeight: '600',
+                  marginBottom: '12px',
+                  display: 'block'
+                }}>
+                  Submenu
+                </Text>
+                <div style={{ minHeight: '200px' }}>
+                  {(() => {
+                    // Encontrar el menú expandido actual
+                    const findExpandedMenu = (items) => {
+                      for (const item of items) {
+                        if (expandedMenus.has(item.id)) {
+                          return item;
+                        }
+                        if (item.childs && item.childs.length > 0) {
+                          const found = findExpandedMenu(item.childs);
+                          if (found) return found;
+                        }
+                      }
+                      return null;
+                    };
+                    
+                    const expandedMenu = findExpandedMenu(menuItems);
+                    
+                    if (expandedMenu && expandedMenu.childs && expandedMenu.childs.length > 0) {
+                      return (
+                        <div>
+                          <div style={{ 
+                            marginBottom: '12px',
+                            padding: '8px 12px',
+                            background: 'rgba(255,255,255,0.1)',
+                            borderRadius: '6px',
+                            border: '1px solid rgba(255,255,255,0.2)'
+                          }}>
+                            <Text style={{ 
+                              color: 'white', 
+                              fontSize: '13px', 
+                              fontWeight: '500' 
+                            }}>
+                              {expandedMenu.name}
+                            </Text>
+                            {expandedMenu.model && (
+                              <Text style={{ 
+                                color: 'rgba(255,255,255,0.7)', 
+                                fontSize: '11px',
+                                display: 'block',
+                                marginTop: '2px'
+                              }}>
+                                {expandedMenu.model}
+                              </Text>
+                            )}
+                          </div>
+                          <div>
+                            {expandedMenu.childs.map((child, index) => renderMenuItem(
+                              child, 
+                              1, 
+                              index === expandedMenu.childs.length - 1,
+                              expandedMenu.id,
+                              false
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    }
+                    
+                    return (
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        height: '100%',
+                        flexDirection: 'column',
+                        color: 'rgba(255,255,255,0.6)',
+                        textAlign: 'center'
+                      }}>
+                        <Text style={{ fontSize: '48px', marginBottom: '12px' }}>📁</Text>
+                        <Text style={{ fontSize: '14px', marginBottom: '4px' }}>
+                          No submenu selected
+                        </Text>
+                        <Text style={{ fontSize: '12px' }}>
+                          Click on a menu item with children to view its submenu here
+                        </Text>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              {/* Contador de elementos */}
+              <div style={{ 
+                padding: '12px 16px', 
+                borderTop: '1px solid rgba(255,255,255,0.2)',
+                flexShrink: 0,
+                background: 'rgba(0,0,0,0.1)'
               }}>
                 <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px' }}>
                   {(() => {
@@ -1533,12 +1647,43 @@ const Dashboard = ({ sessionData, onLogout }) => {
                       });
                       return count;
                     };
-                    return `${countTotalItems(menuItems)}`;
+                    return `${countTotalItems(menuItems)} items`;
                   })()}
                 </Text>
               </div>
-            )}
-          </div>
+            </>
+          ) : (
+            /* Sidebar colapsado */
+            <div style={{ 
+              padding: '8px',
+              height: '100%',
+              overflowY: 'auto'
+            }}>
+              {loading ? (
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  padding: '32px 0',
+                  flexDirection: 'column'
+                }}>
+                  <Spin size="large" />
+                </div>
+              ) : error ? (
+                <Alert
+                  message=""
+                  description=""
+                  type="error"
+                  showIcon={false}
+                  style={{ marginBottom: '16px' }}
+                />
+              ) : null}
+              
+              <div style={{ marginTop: '16px' }}>
+                {menuItems.map((item) => renderMenuItem(item, 0, false, null, true))}
+              </div>
+            </div>
+          )}
         </Sider>
 
         {/* Main Content */}

@@ -36,11 +36,11 @@ const TrytonTable = ({
       
       console.log(`🔍 Loading table for model: ${model}`);
       
-      // Primero verificar el tipo de vista
+      // First verify the view type
       const fieldsView = await trytonService.getFieldsView(model, viewId, viewType);
-      console.log('🔍 Vista obtenida:', fieldsView);
+      console.log('🔍 View obtained:', fieldsView);
       
-      // Solo proceder si es una vista de tipo "tree"
+      // Only proceed if it's a "tree" type view
       if (!fieldsView || fieldsView.type !== 'tree') {
         throw new Error(`View is not of type "tree" (current type: ${fieldsView?.type || 'unknown'})`);
       }
@@ -53,15 +53,15 @@ const TrytonTable = ({
         limit
       );
       
-      console.log('✅ Información de tabla cargada:', info);
+      console.log('✅ Table information loaded:', info);
       
       setTableInfo(info);
       
-      // Generar columnas dinámicamente basadas en la vista
+      // Generate columns dynamically based on the view
       const generatedColumns = generateColumns(info.fieldsView);
       setColumns(generatedColumns);
       
-      // Procesar datos
+      // Process data
       const processedData = processData(info.data);
       setData(processedData);
       
@@ -78,9 +78,9 @@ const TrytonTable = ({
     
     const cols = [];
     
-    // Procesar campos de la vista
+    // Process view fields
     Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
-      // Solo incluir campos que están en la vista tree
+      // Only include fields that are in the tree view
       if (shouldIncludeField(fieldName, fieldsView.arch)) {
         cols.push({
           accessorKey: fieldName,
@@ -102,7 +102,7 @@ const TrytonTable = ({
   };
 
   const shouldIncludeField = (fieldName, arch) => {
-    // Verificar si el campo está en el arch de la vista
+    // Check if the field is in the view arch
     if (arch && arch.includes(`name="${fieldName}"`)) {
       return true;
     }
@@ -146,32 +146,32 @@ const TrytonTable = ({
       return '-';
     }
     
-    // Manejar objetos complejos (relaciones con rec_name)
+    // Handle complex objects (relations with rec_name)
     if (typeof value === 'object' && value.rec_name) {
       return value.rec_name;
     }
     
-    // Manejar arrays (many2many, one2many)
+    // Handle arrays (many2many, one2many)
     if (Array.isArray(value)) {
-      return value.length > 0 ? `${value.length} elemento(s)` : '-';
+      return value.length > 0 ? `${value.length} element(s)` : '-';
     }
     
-    // Manejar números decimales
+    // Handle decimal numbers
     if (fieldDef.type === 'numeric' && typeof value === 'object' && value.decimal) {
       return parseFloat(value.decimal).toFixed(4);
     }
     
-    // Manejar booleanos
+    // Handle booleans
     if (fieldDef.type === 'boolean') {
-      return value ? 'Sí' : 'No';
+      return value ? 'Yes' : 'No';
     }
     
-    // Manejar fechas
+    // Handle dates
     if (fieldDef.type === 'date' || fieldDef.type === 'timestamp' || fieldDef.type === 'datetime') {
-      // Tryton puede devolver objetos { __class__: 'datetime', ... }
+      // Tryton can return objects { __class__: 'datetime', ... }
       const dt = typeof value === 'object' ? parseTrytonDateTime(value) : new Date(value);
       if (dt && !isNaN(dt.getTime())) {
-        // Mostrar fecha y hora si es timestamp/datetime
+        // Show date and time if it's timestamp/datetime
         if (fieldDef.type === 'timestamp' || fieldDef.type === 'datetime') {
           return dt.toLocaleString();
         }
@@ -180,11 +180,11 @@ const TrytonTable = ({
       return String(value);
     }
     
-    // Manejar IDs que tienen objetos relacionados
+    // Handle IDs that have related objects
     if (typeof value === 'number' && record) {
       const fieldName = fieldDef.name || '';
       
-      // Buscar el objeto relacionado con el mismo nombre pero terminado en "."
+      // Search for the related object with the same name but ending in "."
       const relatedFieldName = fieldName + '.';
       const relatedObject = record[relatedFieldName];
       
@@ -193,7 +193,7 @@ const TrytonTable = ({
       }
     }
     
-    // Si es null pero hay un objeto relacionado, intentar mostrar ese
+    // If it's null but there's a related object, try to show that
     if (value === null && record) {
       const fieldName = fieldDef.name || '';
       const relatedFieldName = fieldName + '.';
@@ -244,7 +244,7 @@ const TrytonTable = ({
           showIcon
           action={
             <Button size="small" onClick={handleRefresh}>
-              Reintentar
+              Retry
             </Button>
           }
         />
@@ -263,7 +263,7 @@ const TrytonTable = ({
         }}>
           <div>
             <Title level={4} style={{ margin: 0 }}>
-              {title || `Tabla: ${model}`}
+              {title || `Table: ${model}`}
             </Title>
            
           </div>
@@ -272,27 +272,27 @@ const TrytonTable = ({
             <Button 
               icon={<ReloadOutlined />}
               onClick={handleRefresh}
-              title="Actualizar"
+              title="Update"
             >
-              Actualizar
+              Update
             </Button>
             <Button 
               icon={<DownloadOutlined />}
-              title="Exportar"
+              title="Export"
             >
-              Exportar
+              Export
             </Button>
             <Button 
               icon={<FilterOutlined />}
-              title="Filtros"
+              title="Filters"
             >
-              Filtros
+              Filters
             </Button>
             <Button 
               icon={<SettingOutlined />}
-              title="Configurar"
+              title="Configure"
             >
-              Configurar
+              Configure
             </Button>
           </Space>
         </div>
@@ -306,7 +306,7 @@ const TrytonTable = ({
         pageSize={20}
       />
       
-      {/* Información de depuración (solo en desarrollo) */}
+      {/* Debug information (development only) */}
       {process.env.NODE_ENV === 'development' && (
         <details style={{ marginTop: '16px' }}>
           <summary style={{ cursor: 'pointer', color: '#666' }}>
