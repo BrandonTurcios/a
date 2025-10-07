@@ -819,38 +819,21 @@ const Dashboard = ({ sessionData, onLogout }) => {
     const isChild = level > 0;
 
     return (
-      <div key={item.id} style={{ position: 'relative' }}>
+      <div key={item.id} style={{ marginBottom: '2px' }}>
         <div style={{ 
-          marginLeft: isChild && sidebarOpen ? '24px' : '0',
-          position: 'relative',
-          zIndex: 2
+          marginLeft: isChild && sidebarOpen ? '20px' : '0',
+          position: 'relative'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
-            {/* Línea conectora horizontal para elementos hijo */}
+            {/* Flecha indicadora para elementos hijo */}
             {isChild && sidebarOpen && (
               <div style={{
-                position: 'absolute',
-                left: '-12px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                width: '12px',
-                height: '1px',
-                background: 'rgba(255,255,255,0.4)',
-                zIndex: 1
-              }} />
-            )}
-
-            {/* Línea conectora vertical para elementos hijo */}
-            {isChild && sidebarOpen && (
-              <div style={{
-                position: 'absolute',
-                left: '-12px',
-                top: '-8px',
-                bottom: isLastChild ? '50%' : '100%',
-                width: '1px',
-                background: 'rgba(255,255,255,0.4)',
-                zIndex: 1
-              }} />
+                marginRight: '8px',
+                color: 'rgba(255,255,255,0.6)',
+                fontSize: '12px'
+              }}>
+                →
+              </div>
             )}
 
             {/* Botón principal del menú */}
@@ -934,31 +917,15 @@ const Dashboard = ({ sessionData, onLogout }) => {
             )}
           </div>
           
-          {/* Contenedor de hijos con línea conectora vertical */}
+          {/* Contenedor de hijos */}
           {hasChildren && isExpanded && sidebarOpen && (
-            <div style={{ 
-              marginTop: '4px',
-              position: 'relative'
-            }}>
-              {/* Línea conectora vertical para el grupo de hijos */}
-              <div style={{
-                position: 'absolute',
-                left: '-12px',
-                top: '0',
-                bottom: '0',
-                width: '1px',
-                background: 'rgba(255,255,255,0.3)',
-                zIndex: 1
-              }} />
-              
-              <div style={{ position: 'relative', zIndex: 2 }}>
-                {item.childs.map((child, index) => renderMenuItem(
-                  child, 
-                  level + 1, 
-                  index === item.childs.length - 1,
-                  item.id
-                ))}
-              </div>
+            <div style={{ marginTop: '4px' }}>
+              {item.childs.map((child, index) => renderMenuItem(
+                child, 
+                level + 1, 
+                index === item.childs.length - 1,
+                item.id
+              ))}
             </div>
           )}
         </div>
@@ -1508,7 +1475,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                 <Spin size="large" />
                 {sidebarOpen && (
                   <Text style={{ color: 'white', marginLeft: '12px' }}>
-                    Cargando menú...
+                    Loading menu...
                   </Text>
                 )}
               </div>
