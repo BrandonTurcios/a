@@ -1339,28 +1339,37 @@ const Dashboard = ({ sessionData, onLogout }) => {
               justifyContent: 'center',
               marginRight: '12px'
             }}>
-              <span style={{ color: 'white', fontWeight: 'bold', fontSize: '14px' }}>🏥</span>
+              <span style={{ color: 'white', fontWeight: 'bold', fontSize: '14px' }}>T</span>
             </div>
             <Title level={4} style={{ color: '#333333', margin: 0 }}>
-              Healthcare Management System
+              Tryton Management System
             </Title>
           </div>
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <Search
-            placeholder="Buscar..."
+            placeholder="Buscar en el sistema..."
             prefix={<SearchOutlined style={{ color: '#6C757D' }} />}
             style={{
-              width: 300,
+              width: 320,
               background: '#F8F9FA',
               border: '1px solid #E0E7EB',
-              color: '#333333'
+              color: '#333333',
+              borderRadius: '8px'
             }}
           />
-          <Space>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '12px',
+            padding: '8px 12px',
+            background: '#F8F9FA',
+            borderRadius: '8px',
+            border: '1px solid #E0E7EB'
+          }}>
             <div style={{ textAlign: 'right' }}>
-              <Text style={{ color: '#333333', display: 'block', fontSize: '14px' }}>
+              <Text style={{ color: '#333333', display: 'block', fontSize: '14px', fontWeight: '500' }}>
                 {sessionData.username}
               </Text>
               <Text style={{ color: '#6C757D', fontSize: '12px' }}>
@@ -1370,7 +1379,11 @@ const Dashboard = ({ sessionData, onLogout }) => {
             <Avatar 
               style={{ 
                 background: '#00A88E',
-                color: 'white'
+                color: 'white',
+                width: '32px',
+                height: '32px',
+                fontSize: '14px',
+                fontWeight: 'bold'
               }}
             >
               {sessionData.username.charAt(0).toUpperCase()}
@@ -1380,10 +1393,17 @@ const Dashboard = ({ sessionData, onLogout }) => {
                 type="text"
                 icon={<LogoutOutlined />}
                 onClick={handleLogout}
-                style={{ color: '#6C757D' }}
+                style={{ 
+                  color: '#6C757D',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
               />
             </Tooltip>
-          </Space>
+          </div>
         </div>
       </Header>
 

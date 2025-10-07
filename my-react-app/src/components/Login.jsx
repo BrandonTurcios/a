@@ -114,7 +114,7 @@ const Login = ({ onLogin }) => {
               justifyContent: 'center',
               margin: '0 auto 20px'
             }}>
-              <span style={{ fontSize: '24px', color: 'white' }}>🏥</span>
+              <span style={{ fontSize: '24px', color: 'white', fontWeight: 'bold' }}>T</span>
             </div>
             <Title level={3} style={{ margin: '0 0 8px 0', color: '#333333' }}>
               Tryton Management
