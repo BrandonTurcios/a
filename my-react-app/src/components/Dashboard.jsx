@@ -1524,28 +1524,6 @@ const Dashboard = ({ sessionData, onLogout }) => {
               {menuItems.map((item) => renderMenuItem(item))}
             </div>
             
-            {sidebarOpen && (
-              <div style={{ 
-                paddingTop: '16px', 
-                borderTop: '1px solid rgba(255,255,255,0.2)',
-                marginTop: 'auto' // Empuja hacia abajo
-              }}>
-                <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px' }}>
-                  {(() => {
-                    const countTotalItems = (items) => {
-                      let count = items.length;
-                      items.forEach(item => {
-                        if (item.childs && item.childs.length > 0) {
-                          count += countTotalItems(item.childs);
-                        }
-                      });
-                      return count;
-                    };
-                    return `${countTotalItems(menuItems)}`;
-                  })()}
-                </Text>
-              </div>
-            )}
           </div>
         </Sider>
 
