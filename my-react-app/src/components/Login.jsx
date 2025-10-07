@@ -87,7 +87,7 @@ const Login = ({ onLogin }) => {
   return (
     <div style={{ 
       minHeight: '100vh', 
-      background: '#f5f5f5',
+      background: '#F8F9FA',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -96,17 +96,30 @@ const Login = ({ onLogin }) => {
       <div style={{ width: '100%', maxWidth: '400px' }}>
         <Card 
           style={{ 
-            borderRadius: '8px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            borderRadius: '12px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+            border: '1px solid #E0E7EB'
           }}
-          bodyStyle={{ padding: '32px' }}
+          bodyStyle={{ padding: '40px' }}
         >
           {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-            <Title level={3} style={{ margin: '0 0 8px 0', color: '#333' }}>
-              Tryton Health Management
+          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+            <div style={{
+              width: '60px',
+              height: '60px',
+              background: '#00A88E',
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 20px'
+            }}>
+              <span style={{ fontSize: '24px', color: 'white' }}>🏥</span>
+            </div>
+            <Title level={3} style={{ margin: '0 0 8px 0', color: '#333333' }}>
+              Tryton Management
             </Title>
-            <Text type="secondary">
+            <Text style={{ color: '#6C757D', fontSize: '16px' }}>
               Inicia sesión en tu servidor
             </Text>
           </div>
@@ -119,20 +132,20 @@ const Login = ({ onLogin }) => {
               {/* Campo de Base de Datos */}
               <Form.Item
                 name="database"
-                label="Base de Datos"
+                label={<span style={{ color: '#333333', fontWeight: '500' }}>Base de Datos</span>}
                 rules={[{ required: true, message: 'Por favor selecciona una base de datos' }]}
               >
                 {loadingDatabases ? (
                   <div style={{ textAlign: 'center', padding: '16px' }}>
                     <Spin />
-                    <div style={{ marginTop: '8px', color: '#666' }}>
+                    <div style={{ marginTop: '8px', color: '#6C757D' }}>
                       Cargando...
                     </div>
                   </div>
                 ) : databases.length > 0 ? (
                   <Select
                     placeholder="Selecciona una base de datos"
-                    style={{ width: '100%' }}
+                    style={{ width: '100%', height: '40px' }}
                     showSearch
                     onChange={(value) => setSelectedDatabase(value)}
                   >
@@ -145,6 +158,7 @@ const Login = ({ onLogin }) => {
                 ) : (
                   <Input
                     placeholder="Nombre de la base de datos"
+                    style={{ height: '40px' }}
                   />
                 )}
               </Form.Item>
@@ -152,19 +166,25 @@ const Login = ({ onLogin }) => {
               {/* Campo de Usuario */}
               <Form.Item
                 name="username"
-                label="Usuario"
+                label={<span style={{ color: '#333333', fontWeight: '500' }}>Usuario</span>}
                 rules={[{ required: true, message: 'Por favor ingresa tu nombre de usuario' }]}
               >
-                <Input placeholder="Nombre de usuario" />
+                <Input 
+                  placeholder="Nombre de usuario" 
+                  style={{ height: '40px' }}
+                />
               </Form.Item>
 
               {/* Campo de Contraseña */}
               <Form.Item
                 name="password"
-                label="Contraseña"
+                label={<span style={{ color: '#333333', fontWeight: '500' }}>Contraseña</span>}
                 rules={[{ required: true, message: 'Por favor ingresa tu contraseña' }]}
               >
-                <Input.Password placeholder="Contraseña" />
+                <Input.Password 
+                  placeholder="Contraseña" 
+                  style={{ height: '40px' }}
+                />
               </Form.Item>
 
               {/* Mensaje de Error */}
@@ -180,13 +200,20 @@ const Login = ({ onLogin }) => {
               )}
 
               {/* Botón de Login */}
-              <Form.Item>
+              <Form.Item style={{ marginBottom: '0' }}>
                 <Button
-                  type="primary"
                   htmlType="submit"
                   loading={loading}
                   disabled={loadingDatabases}
                   block
+                  style={{
+                    height: '44px',
+                    background: '#00A88E',
+                    borderColor: '#00A88E',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    fontWeight: '500'
+                  }}
                 >
                   {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
                 </Button>

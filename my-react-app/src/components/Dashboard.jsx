@@ -836,10 +836,10 @@ const Dashboard = ({ sessionData, onLogout }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: sidebarOpen ? 'flex-start' : 'center',
-              background: isActive ? '#1890ff' : 'transparent',
+              background: isActive ? '#007BFF' : 'transparent',
               border: 'none',
               borderRadius: '8px',
-              color: isActive ? 'white' : '#d9d9d9',
+              color: isActive ? 'white' : 'white',
               minHeight: '40px'
             }}
             title={sidebarOpen ? (item.description || item.name) : item.name}
@@ -851,7 +851,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                   <Text style={{ 
                     fontSize: '14px', 
                     fontWeight: '500',
-                    color: isActive ? 'white' : '#d9d9d9'
+                    color: isActive ? 'white' : 'white'
                   }}>
                     {item.name}
                   </Text>
@@ -859,7 +859,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                     <Text style={{ 
                       fontSize: '12px', 
                       opacity: 0.7,
-                      color: isActive ? 'white' : '#8c8c8c'
+                      color: isActive ? 'white' : 'rgba(255,255,255,0.7)'
                     }}>
                       {item.model}
                     </Text>
@@ -890,7 +890,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: isActive ? 'white' : '#d9d9d9',
+                color: isActive ? 'white' : 'white',
                 background: 'transparent',
                 border: 'none',
                 borderRadius: '4px'
@@ -916,17 +916,17 @@ const Dashboard = ({ sessionData, onLogout }) => {
     switch (activeTab) {
       case 'dashboard':
         return (
-          <div style={{ 
-            padding: '24px', 
-            background: '#f5f5f5', 
-            minHeight: 'calc(100vh - 64px)',
-            overflowY: 'auto'
-          }}>
+            <div style={{ 
+              padding: '24px', 
+              background: '#F8F9FA', 
+              minHeight: 'calc(100vh - 64px)',
+              overflowY: 'auto'
+            }}>
             <div style={{ marginBottom: '32px' }}>
-              <Title level={2} style={{ margin: 0, color: '#1f2937' }}>
+              <Title level={2} style={{ margin: 0, color: '#333333' }}>
                 Dashboard
               </Title>
-              <Paragraph style={{ color: '#6b7280', margin: '8px 0 0 0' }}>
+              <Paragraph style={{ color: '#6C757D', margin: '8px 0 0 0' }}>
                 Información de la sesión actual
               </Paragraph>
             </div>
@@ -980,15 +980,15 @@ const Dashboard = ({ sessionData, onLogout }) => {
           return (
             <div style={{ 
               padding: '24px', 
-              background: '#f5f5f5', 
+              background: '#F8F9FA', 
               minHeight: 'calc(100vh - 64px)',
               overflowY: 'auto'
             }}>
               <div style={{ marginBottom: '24px' }}>
-                <Title level={2} style={{ margin: 0, color: '#1f2937' }}>
+                <Title level={2} style={{ margin: 0, color: '#333333' }}>
                   {selectedMenuInfo.actionName || selectedItem?.name || 'Tabla'}
                 </Title>
-                <Paragraph style={{ color: '#6b7280', margin: '8px 0 0 0' }}>
+                <Paragraph style={{ color: '#6C757D', margin: '8px 0 0 0' }}>
                   {selectedMenuInfo.resModel} - Vista de tabla
                 </Paragraph>
               </div>
@@ -1010,15 +1010,15 @@ const Dashboard = ({ sessionData, onLogout }) => {
           return (
             <div style={{ 
               padding: '24px', 
-              background: '#f5f5f5', 
+              background: '#F8F9FA', 
               minHeight: 'calc(100vh - 64px)',
               overflowY: 'auto'
             }}>
               <div style={{ marginBottom: '24px' }}>
-                <Title level={2} style={{ margin: 0, color: '#1f2937' }}>
+                <Title level={2} style={{ margin: 0, color: '#333333' }}>
                   {selectedMenuInfo.actionName || selectedItem?.name || 'Formulario'}
                 </Title>
-                <Paragraph style={{ color: '#6b7280', margin: '8px 0 0 0' }}>
+                <Paragraph style={{ color: '#6C757D', margin: '8px 0 0 0' }}>
                   {selectedMenuInfo.resModel} - Vista de formulario
                 </Paragraph>
               </div>
@@ -1040,15 +1040,15 @@ const Dashboard = ({ sessionData, onLogout }) => {
           return (
             <div style={{ 
               padding: '24px', 
-              background: '#f5f5f5', 
+              background: '#F8F9FA', 
               minHeight: 'calc(100vh - 64px)',
               overflowY: 'auto'
             }}>
               <div style={{ marginBottom: '32px' }}>
-                <Title level={2} style={{ margin: 0, color: '#1f2937' }}>
+                <Title level={2} style={{ margin: 0, color: '#333333' }}>
                   Información del Menú
                 </Title>
-                <Paragraph style={{ color: '#6b7280', margin: '8px 0 0 0' }}>
+                <Paragraph style={{ color: '#6C757D', margin: '8px 0 0 0' }}>
                   Detalles de la acción del menú seleccionado
                 </Paragraph>
               </div>
@@ -1172,15 +1172,15 @@ const Dashboard = ({ sessionData, onLogout }) => {
         return (
           <div style={{ 
             padding: '24px', 
-            background: '#f5f5f5', 
+            background: '#F8F9FA', 
             minHeight: 'calc(100vh - 64px)',
             overflowY: 'auto'
           }}>
             <div style={{ marginBottom: '32px' }}>
-                <Title level={2} style={{ margin: 0, color: '#1f2937' }}>
+                <Title level={2} style={{ margin: 0, color: '#333333' }}>
                   {selectedItem?.name || 'Módulo'}
                 </Title>
-                <Paragraph style={{ color: '#6b7280', margin: '8px 0 0 0' }}>
+                <Paragraph style={{ color: '#6C757D', margin: '8px 0 0 0' }}>
                   Gestión de {selectedItem?.name}
                 </Paragraph>
             </div>
@@ -1195,12 +1195,13 @@ const Dashboard = ({ sessionData, onLogout }) => {
                     <div style={{ 
                       width: '48px', 
                       height: '48px', 
-                      background: '#eff6ff',
+                      background: '#00A88E',
                       borderRadius: '8px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      marginRight: '16px'
+                      marginRight: '16px',
+                      color: 'white'
                     }}>
                       {getIconComponent(selectedItem?.icon, selectedItem?.name)}
                     </div>
@@ -1302,7 +1303,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
     <Layout style={{ minHeight: '100vh', paddingTop: '64px' }}>
       {/* Header */}
       <Header style={{ 
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: 'white',
         padding: '0 24px',
         display: 'flex',
         alignItems: 'center',
@@ -1313,7 +1314,8 @@ const Dashboard = ({ sessionData, onLogout }) => {
         left: 0,
         right: 0,
         zIndex: 1000,
-        height: '64px'
+        height: '64px',
+        borderBottom: '1px solid #E0E7EB'
       }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <Button
@@ -1321,7 +1323,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
             icon={<MenuOutlined />}
             onClick={() => setSidebarOpen(!sidebarOpen)}
             style={{ 
-              color: 'white', 
+              color: '#333333', 
               marginRight: '16px',
               fontSize: '18px'
             }}
@@ -1330,17 +1332,17 @@ const Dashboard = ({ sessionData, onLogout }) => {
             <div style={{
               width: '32px',
               height: '32px',
-              background: 'linear-gradient(135deg, #ff6b6b 0%, #feca57 100%)',
+              background: '#00A88E',
               borderRadius: '8px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               marginRight: '12px'
             }}>
-              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: '14px' }}>T</Text>
+              <span style={{ color: 'white', fontWeight: 'bold', fontSize: '14px' }}>🏥</span>
             </div>
-            <Title level={4} style={{ color: 'white', margin: 0 }}>
-              proyecto brandon
+            <Title level={4} style={{ color: '#333333', margin: 0 }}>
+              Healthcare Management System
             </Title>
           </div>
         </div>
@@ -1348,26 +1350,26 @@ const Dashboard = ({ sessionData, onLogout }) => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <Search
             placeholder="Buscar..."
-            prefix={<SearchOutlined style={{ color: 'rgba(255,255,255,0.6)' }} />}
+            prefix={<SearchOutlined style={{ color: '#6C757D' }} />}
             style={{
               width: 300,
-              background: 'rgba(255,255,255,0.1)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              color: 'white'
+              background: '#F8F9FA',
+              border: '1px solid #E0E7EB',
+              color: '#333333'
             }}
           />
           <Space>
             <div style={{ textAlign: 'right' }}>
-              <Text style={{ color: 'white', display: 'block', fontSize: '14px' }}>
+              <Text style={{ color: '#333333', display: 'block', fontSize: '14px' }}>
                 {sessionData.username}
               </Text>
-              <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px' }}>
+              <Text style={{ color: '#6C757D', fontSize: '12px' }}>
                 {sessionData.database}
               </Text>
             </div>
             <Avatar 
               style={{ 
-                background: 'rgba(255,255,255,0.2)',
+                background: '#00A88E',
                 color: 'white'
               }}
             >
@@ -1378,7 +1380,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                 type="text"
                 icon={<LogoutOutlined />}
                 onClick={handleLogout}
-                style={{ color: 'white' }}
+                style={{ color: '#6C757D' }}
               />
             </Tooltip>
           </Space>
@@ -1400,7 +1402,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
             }
           }}
           style={{
-            background: '#001529',
+            background: '#00A88E',
             boxShadow: '2px 0 8px rgba(0,0,0,0.1)',
             position: 'fixed',
             height: 'calc(100vh - 64px)',
@@ -1425,7 +1427,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
               }}>
                 <Spin size="large" />
                 {sidebarOpen && (
-                  <Text style={{ color: '#fff', marginLeft: '12px' }}>
+                  <Text style={{ color: 'white', marginLeft: '12px' }}>
                     Cargando menú...
                   </Text>
                 )}
@@ -1453,9 +1455,9 @@ const Dashboard = ({ sessionData, onLogout }) => {
               <div style={{ 
                 marginTop: '32px', 
                 paddingTop: '16px', 
-                borderTop: '1px solid #303030' 
+                borderTop: '1px solid rgba(255,255,255,0.2)' 
               }}>
-                <Text style={{ color: '#8c8c8c', fontSize: '12px' }}>
+                <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px' }}>
                   {(() => {
                     const countTotalItems = (items) => {
                       let count = items.length;
@@ -1479,7 +1481,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
           marginLeft: sidebarOpen ? '280px' : '80px',
           transition: 'margin-left 0.2s',
           minHeight: 'calc(100vh - 64px)',
-          background: '#f5f5f5',
+          background: '#F8F9FA',
           marginTop: '-64px',
           paddingTop: '64px'
         }}>
