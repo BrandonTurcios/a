@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Button, Space, message, Spin, Card, Row, Col, AutoComplete } from 'antd';
-import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
+import { Modal, Form, Button, Space, message, Spin, Card, Row, Col, AutoComplete, Table, Input } from 'antd';
+import { CloseOutlined, CheckOutlined, PlusOutlined, MinusOutlined, SearchOutlined } from '@ant-design/icons';
 import trytonService from '../services/trytonService';
 
 // Component for many2one fields with autocomplete
-const Many2OneField = ({ name, string, required, help, relation, disabled, form }) => {
+const Many2OneField = ({ name, string, required, help, relation, disabled, form, defaultValue }) => {
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [inputValue, setInputValue] = useState('');
@@ -69,6 +69,39 @@ const Many2OneField = ({ name, string, required, help, relation, disabled, form 
     }
   };
 
+  // Load default value when component mounts
+  useEffect(() => {
+    if (defaultValue && typeof defaultValue === 'object') {
+      // If defaultValue has a rec_name property, use it as display value
+      if (defaultValue.rec_name) {
+        setInputValue(defaultValue.rec_name);
+        // Set the actual ID value in the form
+        const actualId = defaultValue.id || defaultValue;
+        form.setFieldValue(name, actualId);
+      }
+    } else if (defaultValue) {
+      // If defaultValue is just an ID, try to load the record name
+      loadRecordName(defaultValue);
+    }
+  }, [defaultValue, name, form]);
+
+  // Function to load record name for a given ID
+  const loadRecordName = async (recordId) => {
+    if (!relation || !recordId) return;
+    
+    try {
+      const records = await trytonService.getModelData(relation, [['id', '=', recordId]], ['id', 'name', 'rec_name'], 1);
+      if (records && records.length > 0) {
+        const record = records[0];
+        const displayName = record.name || record.rec_name || `ID: ${record.id}`;
+        setInputValue(displayName);
+        form.setFieldValue(name, recordId);
+      }
+    } catch (error) {
+      console.warn(`⚠️ Error loading record name for ${relation} ID ${recordId}:`, error.message);
+    }
+  };
+
   return (
     <>
       {/* Hidden field to store the real ID */}
@@ -102,6 +135,181 @@ const Many2OneField = ({ name, string, required, help, relation, disabled, form 
   );
 };
 
+// Component for many2many fields with table selection
+const Many2ManyField = ({ name, string, relation, disabled, form, fieldDef }) => {
+  const [availableOptions, setAvailableOptions] = useState([]);
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [searchText, setSearchText] = useState('');
+
+  // Load available options
+  const loadOptions = async (search = '') => {
+    if (!relation) return;
+    
+    try {
+      setLoading(true);
+      console.log(`🔍 Loading many2many options for ${name} (${relation})`);
+      
+      // Get the view for the relation
+      let fields = ['id', 'name', 'rec_name'];
+      
+      // If there's a specific view defined in fieldDef.views
+      if (fieldDef.views && fieldDef.views.tree) {
+        const viewFields = Object.keys(fieldDef.views.tree.fields || {});
+        fields = [...new Set([...fields, ...viewFields])];
+      }
+      
+      // Search for records
+      const searchParams = [
+        search ? [['name', 'ilike', search]] : [], // domain
+        0, // offset
+        100, // limit
+        null, // order
+        {} // context
+      ];
+      
+      const records = await trytonService.getModelData(relation, searchParams[0], fields, searchParams[2]);
+      
+      const formattedOptions = records.map(record => ({
+        id: record.id,
+        name: record.name || record.rec_name || `ID: ${record.id}`,
+        ...record
+      }));
+      
+      setAvailableOptions(formattedOptions);
+      console.log(`✅ Loaded ${formattedOptions.length} options for ${relation}`);
+      
+    } catch (error) {
+      console.error(`❌ Error loading many2many options for ${name}:`, error);
+      setAvailableOptions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle adding item to selection
+  const handleAddItem = (item) => {
+    if (!selectedItems.find(selected => selected.id === item.id)) {
+      const newSelection = [...selectedItems, item];
+      setSelectedItems(newSelection);
+      form.setFieldValue(name, newSelection.map(item => item.id));
+      console.log(`✅ Added item to ${name}:`, item);
+    }
+  };
+
+  // Handle removing item from selection
+  const handleRemoveItem = (itemId) => {
+    const newSelection = selectedItems.filter(item => item.id !== itemId);
+    setSelectedItems(newSelection);
+    form.setFieldValue(name, newSelection.map(item => item.id));
+    console.log(`❌ Removed item from ${name}:`, itemId);
+  };
+
+  // Handle search
+  const handleSearch = (value) => {
+    setSearchText(value);
+    loadOptions(value);
+  };
+
+  // Load initial options
+  useEffect(() => {
+    loadOptions();
+  }, [relation]);
+
+  // Define table columns for available options
+  const availableColumns = [
+    {
+      title: 'Name',
+      dataIndex: 'name',
+      key: 'name',
+      render: (text) => text || 'N/A'
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (_, record) => (
+        <Button
+          type="primary"
+          size="small"
+          icon={<PlusOutlined />}
+          onClick={() => handleAddItem(record)}
+          disabled={disabled || selectedItems.find(item => item.id === record.id)}
+        >
+          Add
+        </Button>
+      )
+    }
+  ];
+
+  // Define table columns for selected items
+  const selectedColumns = [
+    {
+      title: 'Name',
+      dataIndex: 'name',
+      key: 'name',
+      render: (text) => text || 'N/A'
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (_, record) => (
+        <Button
+          type="default"
+          size="small"
+          icon={<MinusOutlined />}
+          onClick={() => handleRemoveItem(record.id)}
+          disabled={disabled}
+        >
+          Remove
+        </Button>
+      )
+    }
+  ];
+
+  return (
+    <div>
+      {/* Search input */}
+      <Input
+        placeholder={`Search ${string.toLowerCase()}...`}
+        prefix={<SearchOutlined />}
+        value={searchText}
+        onChange={(e) => handleSearch(e.target.value)}
+        disabled={disabled}
+        style={{ marginBottom: 16 }}
+      />
+
+      {/* Available options table */}
+      <div style={{ marginBottom: 16 }}>
+        <h4>Available {string}</h4>
+        <Table
+          dataSource={availableOptions}
+          columns={availableColumns}
+          rowKey="id"
+          size="small"
+          loading={loading}
+          pagination={{ pageSize: 5 }}
+        />
+      </div>
+
+      {/* Selected items */}
+      <div>
+        <h4>Selected {string} ({selectedItems.length})</h4>
+        {selectedItems.length > 0 ? (
+          <Table
+            dataSource={selectedItems}
+            columns={selectedColumns}
+            rowKey="id"
+            size="small"
+            pagination={false}
+          />
+        ) : (
+          <p style={{ color: '#999', fontStyle: 'italic' }}>No items selected</p>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const WizardModal = ({
   visible,
   onClose,
@@ -128,7 +336,20 @@ const WizardModal = ({
       // Establecer valores por defecto
       if (wizardInfo.defaults) {
         console.log('🎯 Estableciendo valores por defecto:', wizardInfo.defaults);
-        form.setFieldsValue(wizardInfo.defaults);
+        
+        // Convertir valores datetime de Tryton a formato HTML datetime-local
+        const processedDefaults = { ...wizardInfo.defaults };
+        Object.keys(processedDefaults).forEach(key => {
+          const value = processedDefaults[key];
+          if (value && typeof value === 'object' && value.__class__ === 'datetime') {
+            // Convertir datetime de Tryton a formato ISO string para datetime-local
+            const date = new Date(value.year, value.month - 1, value.day, value.hour, value.minute, value.second);
+            processedDefaults[key] = date.toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm
+            console.log(`🕒 Converted datetime ${key}:`, value, '->', processedDefaults[key]);
+          }
+        });
+        
+        form.setFieldsValue(processedDefaults);
       }
       
       // Establecer valores iniciales
@@ -238,11 +459,61 @@ const WizardModal = ({
     const groups = [];
     
     try {
-      // Extraer grupos usando regex más flexible
-      const groupRegex = /<group[^>]*id="([^"]*)"[^>]*(?:colspan="([^"]*)")?[^>]*>(.*?)<\/group>/gs;
+      // PASO 1: Extraer campos que están fuera de grupos (en el nivel raíz del form)
+      const formContent = arch.replace(/<form[^>]*>(.*)<\/form>/s, '$1');
+      console.log('📋 Contenido del form:', formContent);
+      
+      // Buscar campos que NO están dentro de grupos
+      const rootFields = [];
+      const fieldRegex = /<field name="([^"]*)"[^>]*\/>/g;
+      let fieldMatch;
+      
+      // Primero, marcar todas las posiciones donde empiezan y terminan los grupos
+      const groupPositions = [];
+      const groupRegex = /<group[^>]*>.*?<\/group>/gs;
+      let groupMatch;
+      while ((groupMatch = groupRegex.exec(formContent)) !== null) {
+        groupPositions.push({
+          start: groupMatch.index,
+          end: groupMatch.index + groupMatch[0].length
+        });
+      }
+      
+      // Buscar campos que están fuera de grupos
+      let fieldIndex = 0;
+      fieldRegex.lastIndex = 0; // Reset regex
+      while ((fieldMatch = fieldRegex.exec(formContent)) !== null) {
+        const fieldStart = fieldMatch.index;
+        const fieldEnd = fieldMatch.index + fieldMatch[0].length;
+        const fieldName = fieldMatch[1];
+        
+        // Verificar si este campo está dentro de algún grupo
+        const isInsideGroup = groupPositions.some(pos => 
+          fieldStart >= pos.start && fieldEnd <= pos.end
+        );
+        
+        if (!isInsideGroup) {
+          rootFields.push(fieldName);
+          console.log(`🔧 Campo raíz encontrado: ${fieldName}`);
+        }
+      }
+      
+      // Si hay campos raíz, crear un grupo para ellos
+      if (rootFields.length > 0) {
+        groups.push({
+          id: 'root_fields',
+          title: 'Form Fields',
+          colspan: 4,
+          fields: rootFields
+        });
+        console.log(`✅ Grupo raíz creado con ${rootFields.length} campos:`, rootFields);
+      }
+      
+      // PASO 2: Extraer grupos usando regex más flexible
+      const groupRegex2 = /<group[^>]*id="([^"]*)"[^>]*(?:colspan="([^"]*)")?[^>]*>(.*?)<\/group>/gs;
       let match;
       
-      while ((match = groupRegex.exec(arch)) !== null) {
+      while ((match = groupRegex2.exec(arch)) !== null) {
         const groupId = match[1];
         const colspan = parseInt(match[2]) || 4;
         const groupContent = match[3];
@@ -251,25 +522,25 @@ const WizardModal = ({
         console.log(`📝 Contenido del grupo:`, groupContent);
         
         // Extraer campos del grupo
-        const fieldRegex = /<field name="([^"]*)"[^>]*\/>/g;
-        const fields = [];
-        let fieldMatch;
+        const groupFields = [];
+        const groupFieldRegex = /<field name="([^"]*)"[^>]*\/>/g;
+        let groupFieldMatch;
         
-        while ((fieldMatch = fieldRegex.exec(groupContent)) !== null) {
-          fields.push(fieldMatch[1]);
+        while ((groupFieldMatch = groupFieldRegex.exec(groupContent)) !== null) {
+          groupFields.push(groupFieldMatch[1]);
         }
         
-         console.log(`🔧 Fields found in ${groupId}:`, fields);
+         console.log(`🔧 Fields found in ${groupId}:`, groupFields);
          
          groups.push({
            id: groupId,
            title: null, // Sin título específico
            colspan: colspan,
-           fields: fields || [] // Asegurar que fields siempre sea un array
+           fields: groupFields || [] // Asegurar que fields siempre sea un array
          });
       }
       
-      console.log(`✅ Grupos parseados:`, groups);
+      console.log(`✅ Total grupos parseados: ${groups.length}`, groups);
       return groups;
     } catch (error) {
       console.error('❌ Error parsing XML:', error);
@@ -284,13 +555,37 @@ const WizardModal = ({
       setInternalLoading(true);
       console.log('🧙 Enviando formulario de wizard:', values);
       
+      // Procesar valores antes de enviar
+      const processedValues = { ...values };
+      
+      // Convertir valores datetime-local de vuelta al formato Tryton
+      Object.keys(processedValues).forEach(key => {
+        const value = processedValues[key];
+        if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)) {
+          // Es un datetime-local, convertir a objeto datetime de Tryton
+          const date = new Date(value);
+          processedValues[key] = {
+            __class__: 'datetime',
+            year: date.getFullYear(),
+            month: date.getMonth() + 1,
+            day: date.getDate(),
+            hour: date.getHours(),
+            minute: date.getMinutes(),
+            second: date.getSeconds(),
+            microsecond: 0
+          };
+          console.log(`🕒 Converted datetime ${key}:`, value, '->', processedValues[key]);
+        }
+      });
+      
       // Encontrar el botón por defecto o el primer botón de submit
       const submitButton = wizardInfo?.buttons?.find(btn => btn.default || btn.validate);
       const buttonState = submitButton?.state || 'end';
       
       console.log(`🎯 Botón seleccionado: ${submitButton?.string}, Estado: ${buttonState}`);
+      console.log(`📤 Valores procesados para envío:`, processedValues);
       
-      await onSubmit(values, buttonState);
+      await onSubmit(processedValues, buttonState);
       
       message.success('Wizard executed successfully');
       onClose();
@@ -415,19 +710,53 @@ const WizardModal = ({
           </Form.Item>
         );
 
-       case 'many2one':
-         return (
-           <Many2OneField
-             key={name}
-             name={name}
-             string={string}
-             required={required}
-             help={fieldDef.help}
-             relation={fieldDef.relation}
-             disabled={readonly || currentLoading}
-             form={form}
-           />
-         );
+      case 'many2one':
+        return (
+          <Many2OneField
+            key={name}
+            name={name}
+            string={string}
+            required={required}
+            help={fieldDef.help}
+            relation={fieldDef.relation}
+            disabled={readonly || currentLoading}
+            form={form}
+            defaultValue={wizardInfo?.defaults?.[name]}
+          />
+        );
+
+      case 'many2many':
+        return (
+          <Form.Item
+            key={name}
+            name={name}
+            label={string}
+            rules={required ? [{ required: true, message: `Field ${string} is required` }] : []}
+            help={fieldDef.help}
+          >
+            <Many2ManyField
+              name={name}
+              string={string}
+              relation={fieldDef.relation}
+              disabled={readonly || currentLoading}
+              form={form}
+              fieldDef={fieldDef}
+            />
+          </Form.Item>
+        );
+
+      case 'datetime':
+        return (
+          <Form.Item
+            key={name}
+            name={name}
+            label={string}
+            rules={required ? [{ required: true, message: `Field ${string} is required` }] : []}
+            help={fieldDef.help}
+          >
+            <input type="datetime-local" {...commonProps} />
+          </Form.Item>
+        );
 
       default:
         return (
