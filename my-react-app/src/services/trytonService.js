@@ -1364,10 +1364,12 @@ class TrytonService {
       console.log(`🧙 Ejecutando acción de wizard: ${wizardName}, ID: ${wizardId}, Estado: ${buttonState}`);
       console.log(`📝 Valores:`, values);
       
-      // Envolver los valores en un objeto con el nombre del estado actual
-      // Tryton espera que los datos estén estructurados como: { "stateName": { ...values } }
+      // Envolver los valores en un objeto con el nombre del estado actual del wizard
+      // Tryton usa el estado actual del wizard, no el estado del botón
+      // El estado actual del wizard es "start", no el estado del botón "request"
+      const currentWizardState = "start"; // Estado actual del wizard
       const wrappedValues = {
-        [buttonState]: values
+        [currentWizardState]: values
       };
       
       console.log(`📦 Valores envueltos para Tryton:`, wrappedValues);
