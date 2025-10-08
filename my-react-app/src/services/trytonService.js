@@ -1373,13 +1373,12 @@ class TrytonService {
       console.log(`📦 Valores envueltos para Tryton:`, wrappedValues);
       
       // Ejecutar la acción del wizard con los valores envueltos
-      // Los parámetros correctos son: [wizardId, data, stateName, context]
-      // Según el JSON de Tryton: [wizardId, { "stateName": values }, stateName, context]
+      // Los parámetros correctos son: [wizardId, data, stateName]
+      // El contexto se incluye automáticamente en la llamada RPC
       const executeResult = await this.makeRpcCall(`wizard.${wizardName}.execute`, [
         wizardId,
         wrappedValues,  // data (valores envueltos en el estado)
-        buttonState,    // state_name (ej: 'request', 'end', etc.)
-        this.context    // context (contexto del usuario)
+        buttonState     // state_name (ej: 'request', 'end', etc.)
       ]);
       
       console.log(`✅ Acción de wizard ejecutada:`, executeResult);
