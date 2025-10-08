@@ -637,11 +637,31 @@ const WizardModal = ({
       // Procesar valores antes de enviar
       const processedValues = { ...values };
       
-      // Asegurar que campos many2many tengan valores por defecto
-      if (!processedValues.tests || !Array.isArray(processedValues.tests)) {
-        processedValues.tests = [];
-        console.log('⚠️ Campo tests vacío, estableciendo array vacío');
-      }
+      // Asegurar que todos los campos tengan valores por defecto apropiados
+      Object.keys(processedValues).forEach(fieldName => {
+        const value = processedValues[fieldName];
+        
+        // Para campos many2many, asegurar que sean arrays
+        // Los campos many2many suelen terminar en 's' (plural) o tener nombres específicos
+        const isMany2ManyField = fieldName.endsWith('s') || 
+                                fieldName === 'tests' || 
+                                fieldName === 'items' || 
+                                fieldName === 'records' ||
+                                (Array.isArray(value) && value.length > 0 && typeof value[0] === 'number');
+        
+        if (isMany2ManyField) {
+          if (!Array.isArray(value)) {
+            processedValues[fieldName] = [];
+            console.log(`⚠️ Campo many2many ${fieldName} no es array, estableciendo array vacío`);
+          }
+        } else {
+          // Para campos many2one y otros, asegurar que tengan null si están vacíos
+          if (value === undefined || value === '') {
+            processedValues[fieldName] = null;
+            console.log(`⚠️ Campo ${fieldName} vacío, estableciendo null`);
+          }
+        }
+      });
       
       // Logging adicional para debug
       console.log('🔍 Valores antes del procesamiento:', values);
