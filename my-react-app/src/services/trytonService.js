@@ -1408,8 +1408,8 @@ class TrytonService {
       
       // Envolver los valores en un objeto con el nombre del estado actual del wizard
       // Tryton usa el estado actual del wizard, no el estado del botón
-      // El estado actual del wizard es "start", no el estado del botón "request"
-      const currentWizardState = "start"; // Estado actual del wizard
+      // El estado actual puede variar: "start", "test", etc., dependiendo del modelo y el .create
+      const currentWizardState = await this.getCurrentWizardState(wizardName, wizardId);
       const wrappedValues = {
         [currentWizardState]: values
       };
@@ -1452,6 +1452,49 @@ class TrytonService {
     } catch (error) {
       console.error('Error eliminando wizard:', error);
       throw error;
+    }
+  }
+
+  // Obtener el estado actual del wizard
+  async getCurrentWizardState(wizardName, wizardId) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`🔍 Obteniendo estado actual del wizard: ${wizardName}, ID: ${wizardId}`);
+      
+      // Ejecutar el wizard con datos vacíos para obtener el estado actual
+      const result = await this.makeRpcCall(`wizard.${wizardName}.execute`, [
+        wizardId,
+        {},       // data vacío
+        'start'   // estado inicial para obtener el estado actual
+      ]);
+      
+      console.log(`🔍 Resultado para obtener estado:`, result);
+      
+      // El estado actual está en result.state o en el segundo elemento del array
+      let currentState = 'start'; // fallback por defecto
+      
+      if (result && typeof result === 'object') {
+        if (result.state) {
+          currentState = result.state;
+        } else if (Array.isArray(result) && result.length >= 2) {
+          // Si es un array, el estado puede estar en diferentes posiciones
+          // Generalmente el estado está en result[1] o result[2]
+          if (typeof result[1] === 'string') {
+            currentState = result[1];
+          } else if (result.length >= 3 && typeof result[2] === 'string') {
+            currentState = result[2];
+          }
+        }
+      }
+      
+      console.log(`✅ Estado actual del wizard: ${currentState}`);
+      return currentState;
+    } catch (error) {
+      console.warn('Error obteniendo estado del wizard, usando fallback "start":', error.message);
+      return 'start'; // fallback por defecto
     }
   }
 
