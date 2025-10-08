@@ -192,8 +192,9 @@ const Many2ManyField = ({ name, string, relation, disabled, form, fieldDef, wiza
     if (!selectedItems.find(selected => selected.id === item.id)) {
       const newSelection = [...selectedItems, item];
       setSelectedItems(newSelection);
-      form.setFieldValue(name, newSelection.map(item => item.id));
-      console.log(`✅ Added item to ${name}:`, item);
+      const ids = newSelection.map(item => item.id);
+      form.setFieldValue(name, ids);
+      console.log(`✅ Added item to ${name}:`, item, 'IDs:', ids);
     }
   };
 
@@ -201,8 +202,9 @@ const Many2ManyField = ({ name, string, relation, disabled, form, fieldDef, wiza
   const handleRemoveItem = (itemId) => {
     const newSelection = selectedItems.filter(item => item.id !== itemId);
     setSelectedItems(newSelection);
-    form.setFieldValue(name, newSelection.map(item => item.id));
-    console.log(`❌ Removed item from ${name}:`, itemId);
+    const ids = newSelection.map(item => item.id);
+    form.setFieldValue(name, ids);
+    console.log(`❌ Removed item from ${name}:`, itemId, 'Remaining IDs:', ids);
   };
 
   // Handle search
@@ -419,6 +421,19 @@ const WizardModal = ({
         console.log('🎯 Estableciendo valores iniciales:', wizardInfo.values);
         form.setFieldsValue(wizardInfo.values);
       }
+      
+      // Asegurar que todos los campos many2many tengan valores por defecto
+      const allFields = wizardInfo.fieldsView?.fields || {};
+      Object.keys(allFields).forEach(fieldName => {
+        const fieldDef = allFields[fieldName];
+        if (fieldDef.type === 'many2many') {
+          const currentValue = form.getFieldValue(fieldName);
+          if (currentValue === undefined || currentValue === null) {
+            form.setFieldValue(fieldName, []);
+            console.log(`🎯 Inicializando campo many2many ${fieldName} con array vacío`);
+          }
+        }
+      });
     } else if (visible && !wizardInfo) {
       // Si el modal está visible pero no hay wizardInfo, mostrar mensaje de error
       console.warn('⚠️ Modal de wizard visible pero wizardInfo es null');
@@ -627,6 +642,16 @@ const WizardModal = ({
         processedValues.tests = [];
         console.log('⚠️ Campo tests vacío, estableciendo array vacío');
       }
+      
+      // Logging adicional para debug
+      console.log('🔍 Valores antes del procesamiento:', values);
+      console.log('🔍 Valores después del procesamiento:', processedValues);
+      console.log('🔍 Campo tests específico:', {
+        original: values.tests,
+        processed: processedValues.tests,
+        type: typeof processedValues.tests,
+        isArray: Array.isArray(processedValues.tests)
+      });
       
       // Convertir valores datetime-local de vuelta al formato Tryton
       Object.keys(processedValues).forEach(key => {
