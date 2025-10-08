@@ -1339,7 +1339,13 @@ class TrytonService {
         const wizardId = createResult[0];
         const state = createResult[1];
         
-        console.log(`🎯 Wizard ID: ${wizardId}, Estado: ${state}`);
+        console.log(`🎯 Wizard ID: ${wizardId}, Estado inicial: ${state}`);
+        
+        // Guardar el estado inicial en el contexto para uso posterior
+        if (!this.wizardStates) {
+          this.wizardStates = new Map();
+        }
+        this.wizardStates.set(wizardId, state);
         
         return {
           wizardId: wizardId,
@@ -1364,13 +1370,16 @@ class TrytonService {
     try {
       console.log(`🧙 Obteniendo formulario de wizard: ${wizardName}, ID: ${wizardId}`);
       
+      // Obtener el estado actual del wizard (el que devolvió el .create)
+      const currentState = await this.getCurrentWizardState(wizardName, wizardId);
+      
       // Ejecutar el wizard para obtener el formulario
-      // Los parámetros correctos son: [wizardId, stateName, data]
-      // Para obtener el formulario inicial, usamos el estado 'start' y datos vacíos
+      // Los parámetros correctos son: [wizardId, data, stateName]
+      // Para obtener el formulario inicial, usamos el estado actual y datos vacíos
       const executeResult = await this.makeRpcCall(`wizard.${wizardName}.execute`, [
         wizardId,
-        {},       // data (vacío para el formulario inicial)
-        'start'   // state_name
+        {},               // data (vacío para el formulario inicial)
+        currentState      // state_name (estado actual del wizard)
       ]);
       
       console.log(`✅ Formulario de wizard obtenido:`, executeResult);
@@ -1446,6 +1455,12 @@ class TrytonService {
       // Eliminar el wizard
       const deleteResult = await this.makeRpcCall(`wizard.${wizardName}.delete`, [wizardId]);
       
+      // Limpiar el estado guardado del wizard
+      if (this.wizardStates && this.wizardStates.has(wizardId)) {
+        this.wizardStates.delete(wizardId);
+        console.log(`🧹 Estado del wizard ${wizardId} eliminado de la caché`);
+      }
+      
       console.log(`✅ Wizard eliminado:`, deleteResult);
       
       return deleteResult;
@@ -1464,34 +1479,64 @@ class TrytonService {
     try {
       console.log(`🔍 Obteniendo estado actual del wizard: ${wizardName}, ID: ${wizardId}`);
       
-      // Ejecutar el wizard con datos vacíos para obtener el estado actual
-      const result = await this.makeRpcCall(`wizard.${wizardName}.execute`, [
-        wizardId,
-        {},       // data vacío
-        'start'   // estado inicial para obtener el estado actual
-      ]);
+      // Primero intentar obtener el estado guardado del .create
+      if (this.wizardStates && this.wizardStates.has(wizardId)) {
+        const savedState = this.wizardStates.get(wizardId);
+        console.log(`✅ Estado guardado del wizard: ${savedState}`);
+        return savedState;
+      }
       
-      console.log(`🔍 Resultado para obtener estado:`, result);
+      // Si no hay estado guardado, intentar con diferentes estados comunes
+      const possibleStates = ['start', 'test', 'request', 'end'];
       
-      // El estado actual está en result.state o en el segundo elemento del array
-      let currentState = 'start'; // fallback por defecto
-      
-      if (result && typeof result === 'object') {
-        if (result.state) {
-          currentState = result.state;
-        } else if (Array.isArray(result) && result.length >= 2) {
-          // Si es un array, el estado puede estar en diferentes posiciones
-          // Generalmente el estado está en result[1] o result[2]
-          if (typeof result[1] === 'string') {
-            currentState = result[1];
-          } else if (result.length >= 3 && typeof result[2] === 'string') {
-            currentState = result[2];
+      for (const state of possibleStates) {
+        try {
+          console.log(`🔍 Probando estado: ${state}`);
+          
+          const result = await this.makeRpcCall(`wizard.${wizardName}.execute`, [
+            wizardId,
+            {},       // data vacío
+            state     // probar este estado
+          ]);
+          
+          console.log(`✅ Estado ${state} funcionó:`, result);
+          
+          // Si no hay error, este es el estado correcto
+          // El estado actual está en result.state o en el segundo elemento del array
+          let currentState = state;
+          
+          if (result && typeof result === 'object') {
+            if (result.state) {
+              currentState = result.state;
+            } else if (Array.isArray(result) && result.length >= 2) {
+              // Si es un array, el estado puede estar en diferentes posiciones
+              if (typeof result[1] === 'string') {
+                currentState = result[1];
+              } else if (result.length >= 3 && typeof result[2] === 'string') {
+                currentState = result[2];
+              }
+            }
           }
+          
+          // Guardar el estado encontrado para futuras referencias
+          if (!this.wizardStates) {
+            this.wizardStates = new Map();
+          }
+          this.wizardStates.set(wizardId, currentState);
+          
+          console.log(`✅ Estado actual del wizard: ${currentState}`);
+          return currentState;
+          
+        } catch (stateError) {
+          console.log(`❌ Estado ${state} falló:`, stateError.message);
+          // Continuar con el siguiente estado
         }
       }
       
-      console.log(`✅ Estado actual del wizard: ${currentState}`);
-      return currentState;
+      // Si todos los estados fallaron, usar fallback
+      console.warn('Todos los estados fallaron, usando fallback "start"');
+      return 'start';
+      
     } catch (error) {
       console.warn('Error obteniendo estado del wizard, usando fallback "start":', error.message);
       return 'start'; // fallback por defecto
