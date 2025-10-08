@@ -216,6 +216,15 @@ const Many2ManyField = ({ name, string, relation, disabled, form, fieldDef, wiza
     loadOptions();
   }, [relation]);
 
+  // Initialize field with empty array if no value
+  useEffect(() => {
+    const currentValue = form.getFieldValue(name);
+    if (currentValue === undefined || currentValue === null) {
+      form.setFieldValue(name, []);
+      console.log(`🎯 Inicializando campo ${name} con array vacío`);
+    }
+  }, [name, form]);
+
   // Load default values when component mounts
   useEffect(() => {
     if (wizardInfo?.defaults?.[name]) {
@@ -395,6 +404,12 @@ const WizardModal = ({
             console.log(`🕒 Converted datetime ${key}:`, value, '->', processedDefaults[key]);
           }
         });
+        
+        // Asegurar que campos many2many tengan valores por defecto
+        if (!processedDefaults.tests) {
+          processedDefaults.tests = [];
+          console.log('⚠️ Campo tests no tiene valor por defecto, estableciendo array vacío');
+        }
         
         form.setFieldsValue(processedDefaults);
       }
@@ -602,6 +617,7 @@ const WizardModal = ({
       setInternalLoading(true);
       console.log('🧙 Enviando formulario de wizard:', values);
       console.log('🔍 Verificando campo tests:', values.tests);
+      console.log('🔍 Tipo de tests:', typeof values.tests, Array.isArray(values.tests));
       
       // Procesar valores antes de enviar
       const processedValues = { ...values };
