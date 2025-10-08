@@ -677,78 +677,133 @@ const Dashboard = ({ sessionData, onLogout }) => {
       let viewId = null;
       
       if (menuInfo.resModel && menuInfo.actionInfo && menuInfo.actionInfo.length > 0) {
-        const actionData = menuInfo.actionInfo[0];
-        if (actionData.views && actionData.views.length > 0) {
-          // Buscar vista tree primero, luego form
-          const treeView = actionData.views.find(view => view[1] === 'tree');
-          const formView = actionData.views.find(view => view[1] === 'form');
+        // Si ya tenemos la vista de campos del servicio, usarla
+        if (menuInfo.fieldsView && menuInfo.viewType) {
+          console.log(`🔍 Usando vista de campos ya obtenida: ${menuInfo.viewType}, ID: ${menuInfo.viewId}`);
           
-          // Priorizar tree view si existe, sino usar form view
-          const selectedView = treeView || formView || actionData.views[0];
-          viewId = selectedView[0];
-          viewType = selectedView[1];
-          
-          console.log(`🔍 Obteniendo información de vista para modelo: ${menuInfo.resModel}, vista: ${viewId}, tipo: ${viewType}`);
-          
-          try {
-            // Verificar el tipo de vista
-            const fieldsView = await trytonService.getFieldsView(
+          if (menuInfo.viewType === 'tree') {
+            console.log('✅ Vista confirmada como tipo "tree", obteniendo datos...');
+            
+            tableData = await trytonService.getTableInfo(
               menuInfo.resModel,
-              viewId,
-              viewType
+              menuInfo.viewId,
+              'tree',
+              [],
+              100
             );
+            console.log('✅ Información de tabla obtenida:', tableData);
+          } else if (menuInfo.viewType === 'form') {
+            console.log('✅ Vista confirmada como tipo "form", preparando formulario...');
             
-            console.log('🔍 Vista obtenida:', fieldsView);
-            
-            if (fieldsView && fieldsView.type === 'tree') {
-              console.log('✅ Vista confirmada como tipo "tree", obteniendo datos...');
+            // Para formularios, necesitamos obtener los datos del registro
+            let recordData = null;
+            try {
+              console.log('🔍 Intentando obtener datos del registro...');
+              const recordId = 1; // Para configuraciones, generalmente es el registro 1
+              const fields = Object.keys(menuInfo.fieldsView.fields || {});
+              recordData = await trytonService.getFormRecordData(
+                menuInfo.resModel,
+                recordId,
+                fields
+              );
               
-              tableData = await trytonService.getTableInfo(
+              if (recordData) {
+                console.log('✅ Datos del registro obtenidos:', recordData);
+              } else {
+                console.log('⚠️ No se encontraron datos del registro, creando formulario vacío');
+              }
+            } catch (recordError) {
+              console.warn('⚠️ Error obteniendo datos del registro:', recordError);
+              // Continuar con formulario vacío
+            }
+            
+            formData = {
+              model: menuInfo.resModel,
+              viewId: menuInfo.viewId,
+              viewType: 'form',
+              fieldsView: menuInfo.fieldsView,
+              recordData: recordData
+            };
+            console.log('✅ Información de formulario preparada:', formData);
+          }
+          
+          viewType = menuInfo.viewType;
+          viewId = menuInfo.viewId;
+        } else {
+          // Fallback al método anterior si no tenemos la vista de campos
+          const actionData = menuInfo.actionInfo[0];
+          if (actionData.views && actionData.views.length > 0) {
+            // Buscar vista tree primero, luego form
+            const treeView = actionData.views.find(view => view[1] === 'tree');
+            const formView = actionData.views.find(view => view[1] === 'form');
+            
+            // Priorizar tree view si existe, sino usar form view
+            const selectedView = treeView || formView || actionData.views[0];
+            viewId = selectedView[0];
+            viewType = selectedView[1];
+            
+            console.log(`🔍 Obteniendo información de vista para modelo: ${menuInfo.resModel}, vista: ${viewId}, tipo: ${viewType}`);
+            
+            try {
+              // Verificar el tipo de vista
+              const fieldsView = await trytonService.getFieldsView(
                 menuInfo.resModel,
                 viewId,
-                'tree',
-                [],
-                100
+                viewType
               );
-              console.log('✅ Información de tabla obtenida:', tableData);
-            } else if (fieldsView && fieldsView.type === 'form') {
-              console.log('✅ Vista confirmada como tipo "form", preparando formulario...');
               
-              // Para formularios, necesitamos obtener los datos del registro
-              let recordData = null;
-              try {
-                console.log('🔍 Intentando obtener datos del registro...');
-                const recordId = 1; // Para configuraciones, generalmente es el registro 1
-                const fields = Object.keys(fieldsView.fields || {});
-                recordData = await trytonService.getFormRecordData(
-                  menuInfo.resModel,
-                  recordId,
-                  fields
-                );
+              console.log('🔍 Vista obtenida:', fieldsView);
+              
+              if (fieldsView && fieldsView.type === 'tree') {
+                console.log('✅ Vista confirmada como tipo "tree", obteniendo datos...');
                 
-                if (recordData) {
-                  console.log('✅ Datos del registro obtenidos:', recordData);
-                } else {
-                  console.log('⚠️ No se encontraron datos del registro, creando formulario vacío');
+                tableData = await trytonService.getTableInfo(
+                  menuInfo.resModel,
+                  viewId,
+                  'tree',
+                  [],
+                  100
+                );
+                console.log('✅ Información de tabla obtenida:', tableData);
+              } else if (fieldsView && fieldsView.type === 'form') {
+                console.log('✅ Vista confirmada como tipo "form", preparando formulario...');
+                
+                // Para formularios, necesitamos obtener los datos del registro
+                let recordData = null;
+                try {
+                  console.log('🔍 Intentando obtener datos del registro...');
+                  const recordId = 1; // Para configuraciones, generalmente es el registro 1
+                  const fields = Object.keys(fieldsView.fields || {});
+                  recordData = await trytonService.getFormRecordData(
+                    menuInfo.resModel,
+                    recordId,
+                    fields
+                  );
+                  
+                  if (recordData) {
+                    console.log('✅ Datos del registro obtenidos:', recordData);
+                  } else {
+                    console.log('⚠️ No se encontraron datos del registro, creando formulario vacío');
+                  }
+                } catch (recordError) {
+                  console.warn('⚠️ Error obteniendo datos del registro:', recordError);
+                  // Continuar con formulario vacío
                 }
-              } catch (recordError) {
-                console.warn('⚠️ Error obteniendo datos del registro:', recordError);
-                // Continuar con formulario vacío
+                
+                formData = {
+                  model: menuInfo.resModel,
+                  viewId: viewId,
+                  viewType: 'form',
+                  fieldsView: fieldsView,
+                  recordData: recordData
+                };
+                console.log('✅ Información de formulario preparada:', formData);
+              } else {
+                console.log(`⚠️ Vista no es de tipo "tree" ni "form" (tipo: ${fieldsView?.type}), omitiendo`);
               }
-              
-              formData = {
-                model: menuInfo.resModel,
-                viewId: viewId,
-                viewType: 'form',
-                fieldsView: fieldsView,
-                recordData: recordData
-              };
-              console.log('✅ Información de formulario preparada:', formData);
-            } else {
-              console.log(`⚠️ Vista no es de tipo "tree" ni "form" (tipo: ${fieldsView?.type}), omitiendo`);
+            } catch (viewError) {
+              console.warn('⚠️ Error obteniendo información de vista:', viewError);
             }
-          } catch (viewError) {
-            console.warn('⚠️ Error obteniendo información de vista:', viewError);
           }
         }
       }

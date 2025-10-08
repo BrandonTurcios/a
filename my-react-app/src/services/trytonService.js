@@ -897,20 +897,62 @@ class TrytonService {
         
         console.log('Información de toolbar obtenida:', toolbarInfo);
         
+        // PASO 4: Obtener la vista de campos para determinar el tipo de vista
+        let fieldsView = null;
+        let viewType = null;
+        let viewId = null;
+        
+        try {
+          // Intentar obtener vista tree primero (más común para tablas)
+          fieldsView = await this.makeRpcCall(`model.${resModel}.fields_view_get`, [
+            null, // view_id - usar vista por defecto
+            'tree', // view_type - intentar tree primero
+            {}
+          ]);
+          
+          if (fieldsView && fieldsView.type) {
+            viewType = fieldsView.type;
+            viewId = fieldsView.view_id || null;
+            console.log(`✅ Vista tree obtenida para ${resModel}: ${viewType}, ID: ${viewId}`);
+          }
+        } catch (treeError) {
+          console.log(`❌ No hay vista tree disponible para ${resModel}:`, treeError.message);
+          
+          // Si tree falló, intentar con form
+          try {
+            fieldsView = await this.makeRpcCall(`model.${resModel}.fields_view_get`, [
+              null,
+              'form',
+              {}
+            ]);
+            
+            if (fieldsView && fieldsView.type) {
+              viewType = fieldsView.type;
+              viewId = fieldsView.view_id || null;
+              console.log(`✅ Vista form obtenida para ${resModel}: ${viewType}, ID: ${viewId}`);
+            }
+          } catch (formError) {
+            console.log(`❌ No hay vista form disponible para ${resModel}:`, formError.message);
+          }
+        }
+        
         return {
           actionInfo: actionInfo,
           toolbarInfo: toolbarInfo,
           resModel: resModel,
-            actionName: actionName,
-            hasMultipleOptions: false,
-            selectedOption: {
-              index: 0,
-              id: selectedAction.id,
-              name: actionName,
-              resModel: resModel,
-              views: selectedAction.views || []
-            }
-          };
+          actionName: actionName,
+          hasMultipleOptions: false,
+          fieldsView: fieldsView,
+          viewType: viewType,
+          viewId: viewId,
+          selectedOption: {
+            index: 0,
+            id: selectedAction.id,
+            name: actionName,
+            resModel: resModel,
+            views: selectedAction.views || []
+          }
+        };
         }
       }
       
