@@ -136,7 +136,7 @@ const Many2OneField = ({ name, string, required, help, relation, disabled, form,
 };
 
 // Component for many2many fields with table selection
-const Many2ManyField = ({ name, string, relation, disabled, form, fieldDef }) => {
+const Many2ManyField = ({ name, string, relation, disabled, form, fieldDef, wizardInfo }) => {
   const [availableOptions, setAvailableOptions] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -215,6 +215,53 @@ const Many2ManyField = ({ name, string, relation, disabled, form, fieldDef }) =>
   useEffect(() => {
     loadOptions();
   }, [relation]);
+
+  // Load default values when component mounts
+  useEffect(() => {
+    if (wizardInfo?.defaults?.[name]) {
+      const defaultValues = wizardInfo.defaults[name];
+      console.log(`🎯 Loading default values for ${name}:`, defaultValues);
+      
+      if (Array.isArray(defaultValues) && defaultValues.length > 0) {
+        // If defaultValues are IDs, we need to load the actual records
+        loadDefaultRecords(defaultValues);
+      }
+    }
+  }, [wizardInfo?.defaults, name]);
+
+  // Load default records for many2many field
+  const loadDefaultRecords = async (recordIds) => {
+    if (!relation || !Array.isArray(recordIds)) return;
+    
+    try {
+      console.log(`🔍 Loading default records for ${name}:`, recordIds);
+      
+      // Get the view for the relation
+      let fields = ['id', 'name', 'rec_name'];
+      
+      // If there's a specific view defined in fieldDef.views
+      if (fieldDef.views && fieldDef.views.tree) {
+        const viewFields = Object.keys(fieldDef.views.tree.fields || {});
+        fields = [...new Set([...fields, ...viewFields])];
+      }
+      
+      // Load records by IDs
+      const records = await trytonService.getModelData(relation, [['id', 'in', recordIds]], fields, recordIds.length);
+      
+      const formattedRecords = records.map(record => ({
+        id: record.id,
+        name: record.name || record.rec_name || `ID: ${record.id}`,
+        ...record
+      }));
+      
+      setSelectedItems(formattedRecords);
+      form.setFieldValue(name, recordIds);
+      console.log(`✅ Loaded ${formattedRecords.length} default records for ${name}`);
+      
+    } catch (error) {
+      console.error(`❌ Error loading default records for ${name}:`, error);
+    }
+  };
 
   // Define table columns for available options
   const availableColumns = [
@@ -554,9 +601,16 @@ const WizardModal = ({
     try {
       setInternalLoading(true);
       console.log('🧙 Enviando formulario de wizard:', values);
+      console.log('🔍 Verificando campo tests:', values.tests);
       
       // Procesar valores antes de enviar
       const processedValues = { ...values };
+      
+      // Asegurar que campos many2many tengan valores por defecto
+      if (!processedValues.tests || !Array.isArray(processedValues.tests)) {
+        processedValues.tests = [];
+        console.log('⚠️ Campo tests vacío, estableciendo array vacío');
+      }
       
       // Convertir valores datetime-local de vuelta al formato Tryton
       Object.keys(processedValues).forEach(key => {
@@ -741,6 +795,7 @@ const WizardModal = ({
               disabled={readonly || currentLoading}
               form={form}
               fieldDef={fieldDef}
+              wizardInfo={wizardInfo}
             />
           </Form.Item>
         );
