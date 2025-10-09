@@ -24,7 +24,9 @@ import {
   EyeOutlined, 
   DeleteOutlined,
   PlusOutlined,
-  MinusOutlined
+  MinusOutlined,
+  SearchOutlined,
+  CalendarOutlined
 } from '@ant-design/icons';
 import trytonService from '../services/trytonService';
 
@@ -260,17 +262,43 @@ const TrytonForm = ({
       case 'char':
       case 'varchar':
         return (
-          <Form.Item key={name} {...commonProps}>
-            <Input placeholder={`Ingrese ${label.toLowerCase()}`} />
+          <Form.Item 
+            key={name} 
+            {...commonProps}
+            label={
+              <div className="flex items-center gap-2 font-medium text-gray-700">
+                {required && <span className="text-red-500">*</span>}
+                {label}
+              </div>
+            }
+            help={help ? <Text type="secondary" className="text-xs">{help}</Text> : null}
+            className="mb-6"
+          >
+            <Input 
+              placeholder={`Ingrese ${label.toLowerCase()}`}
+              className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 text-base"
+            />
           </Form.Item>
         );
         
       case 'text':
         return (
-          <Form.Item key={name} {...commonProps}>
+          <Form.Item 
+            key={name} 
+            {...commonProps}
+            label={
+              <div className="flex items-center gap-2 font-medium text-gray-700">
+                {required && <span className="text-red-500">*</span>}
+                {label}
+              </div>
+            }
+            help={help ? <Text type="secondary" className="text-xs">{help}</Text> : null}
+            className="mb-6"
+          >
             <Input.TextArea 
               rows={4} 
               placeholder={`Ingrese ${label.toLowerCase()}`}
+              className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 text-base resize-y"
             />
           </Form.Item>
         );
@@ -278,10 +306,22 @@ const TrytonForm = ({
       case 'integer':
       case 'bigint':
         return (
-          <Form.Item key={name} {...commonProps}>
+          <Form.Item 
+            key={name} 
+            {...commonProps}
+            label={
+              <div className="flex items-center gap-2 font-medium text-gray-700">
+                {required && <span className="text-red-500">*</span>}
+                {label}
+              </div>
+            }
+            help={help ? <Text type="secondary" className="text-xs">{help}</Text> : null}
+            className="mb-6"
+          >
             <InputNumber 
               style={{ width: '100%' }}
               placeholder={`Ingrese ${label.toLowerCase()}`}
+              className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 text-base w-full"
             />
           </Form.Item>
         );
@@ -289,39 +329,89 @@ const TrytonForm = ({
       case 'float':
       case 'numeric':
         return (
-          <Form.Item key={name} {...commonProps}>
+          <Form.Item 
+            key={name} 
+            {...commonProps}
+            label={
+              <div className="flex items-center gap-2 font-medium text-gray-700">
+                {required && <span className="text-red-500">*</span>}
+                {label}
+              </div>
+            }
+            help={help ? <Text type="secondary" className="text-xs">{help}</Text> : null}
+            className="mb-6"
+          >
             <InputNumber 
               style={{ width: '100%' }}
               step={0.01}
               placeholder={`Ingrese ${label.toLowerCase()}`}
+              className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 text-base w-full"
             />
           </Form.Item>
         );
         
       case 'boolean':
         return (
-          <Form.Item key={name} {...commonProps} valuePropName="checked">
-            <Switch />
+          <Form.Item 
+            key={name} 
+            {...commonProps} 
+            valuePropName="checked"
+            label={
+              <div className="flex items-center gap-2 font-medium text-gray-700">
+                {required && <span className="text-red-500">*</span>}
+                {label}
+              </div>
+            }
+            help={help ? <Text type="secondary" className="text-xs">{help}</Text> : null}
+            className="mb-6"
+          >
+            <Switch className="[&.ant-switch-checked]:bg-teal-600 [&.ant-switch-checked]:shadow-teal-200" />
           </Form.Item>
         );
         
       case 'date':
         return (
-          <Form.Item key={name} {...commonProps}>
+          <Form.Item 
+            key={name} 
+            {...commonProps}
+            label={
+              <div className="flex items-center gap-2 font-medium text-gray-700">
+                {required && <span className="text-red-500">*</span>}
+                <CalendarOutlined className="text-teal-600" />
+                {label}
+              </div>
+            }
+            help={help ? <Text type="secondary" className="text-xs">{help}</Text> : null}
+            className="mb-6"
+          >
             <DatePicker 
               style={{ width: '100%' }}
               placeholder={`Seleccione ${label.toLowerCase()}`}
+              className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 w-full"
             />
           </Form.Item>
         );
         
       case 'datetime':
         return (
-          <Form.Item key={name} {...commonProps}>
+          <Form.Item 
+            key={name} 
+            {...commonProps}
+            label={
+              <div className="flex items-center gap-2 font-medium text-gray-700">
+                {required && <span className="text-red-500">*</span>}
+                <CalendarOutlined className="text-teal-600" />
+                {label}
+              </div>
+            }
+            help={help ? <Text type="secondary" className="text-xs">{help}</Text> : null}
+            className="mb-6"
+          >
             <DatePicker 
               showTime
               style={{ width: '100%' }}
               placeholder={`Seleccione ${label.toLowerCase()}`}
+              className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 w-full"
             />
           </Form.Item>
         );
@@ -357,8 +447,22 @@ const TrytonForm = ({
         if (typeof fieldDef.selection === 'string') {
           const dynamicOptions = selectionOptions[name] || [];
           return (
-            <Form.Item key={name} {...commonProps}>
-              <Select placeholder={`Seleccione ${label.toLowerCase()}`}>
+            <Form.Item 
+              key={name} 
+              {...commonProps}
+              label={
+                <div className="flex items-center gap-2 font-medium text-gray-700">
+                  {required && <span className="text-red-500">*</span>}
+                  {label}
+                </div>
+              }
+              help={help ? <Text type="secondary" className="text-xs">{help}</Text> : null}
+              className="mb-6"
+            >
+              <Select 
+                placeholder={`Seleccione ${label.toLowerCase()}`}
+                className="w-full rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12"
+              >
                 {dynamicOptions.length > 0 ? (
                   dynamicOptions.map(([value, optionLabel]) => (
                     <Option key={value} value={value}>
@@ -373,8 +477,22 @@ const TrytonForm = ({
           );
         }
         return (
-          <Form.Item key={name} {...commonProps}>
-            <Select placeholder={`Seleccione ${label.toLowerCase()}`}>
+          <Form.Item 
+            key={name} 
+            {...commonProps}
+            label={
+              <div className="flex items-center gap-2 font-medium text-gray-700">
+                {required && <span className="text-red-500">*</span>}
+                {label}
+              </div>
+            }
+            help={help ? <Text type="secondary" className="text-xs">{help}</Text> : null}
+            className="mb-6"
+          >
+            <Select 
+              placeholder={`Seleccione ${label.toLowerCase()}`}
+              className="w-full rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12"
+            >
               {options.map(([value, label]) => (
                 <Option key={value} value={value}>
                   {label}
@@ -386,10 +504,23 @@ const TrytonForm = ({
         
       case 'many2one':
         return (
-          <Form.Item key={name} {...commonProps}>
+          <Form.Item 
+            key={name} 
+            {...commonProps}
+            label={
+              <div className="flex items-center gap-2 font-medium text-gray-700">
+                {required && <span className="text-red-500">*</span>}
+                <SearchOutlined className="text-teal-600" />
+                {label}
+              </div>
+            }
+            help={help ? <Text type="secondary" className="text-xs">{help}</Text> : null}
+            className="mb-6"
+          >
             <Select 
               placeholder={`Seleccione ${label.toLowerCase()}`}
               showSearch
+              className="w-full rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12"
               filterOption={(input, option) =>
                 option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
               }
@@ -572,83 +703,95 @@ const TrytonForm = ({
 
   return (
     <Card 
+      className="rounded-2xl shadow-lg border border-teal-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+      headStyle={{
+        background: 'linear-gradient(135deg, #00A88E 0%, #00C4A7 100%)',
+        borderRadius: '16px 16px 0 0',
+        border: 'none',
+        padding: '20px 24px'
+      }}
       title={
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+            <span className="text-white text-lg font-bold">F</span>
+          </div>
           <div>
-            <Title level={4} style={{ margin: 0 }}>
+            <Title level={4} className="text-white font-semibold m-0">
               {title}
             </Title>
-            <Text type="secondary">
+            <Text className="text-white text-opacity-80 text-sm">
               {model} {recordId ? `- Registro ${recordId}` : '- Nuevo registro'}
             </Text>
           </div>
-          <Space>
-            {!readonly && (
-              <>
-                {isEditing ? (
-                  <>
-                    <Button 
-                      type="primary" 
-                      icon={<SaveOutlined />}
-                      loading={saving}
-                      onClick={() => form.submit()}
-                    >
-                      {submitButtonText}
-                    </Button>
-                    <Button 
-                      icon={<MinusOutlined />}
-                      onClick={handleCancel}
-                    >
-                      Cancelar
-                    </Button>
-                  </>
-                ) : (
-                  <Button 
-                    type="primary" 
-                    icon={<EditOutlined />}
-                    onClick={handleEdit}
-                  >
-                    Editar
-                  </Button>
-                )}
-              </>
-            )}
-          </Space>
         </div>
       }
-      style={{ borderRadius: '12px' }}
+      extra={
+        <Space className="flex flex-wrap gap-2">
+          {!readonly && (
+            <>
+              {isEditing ? (
+                <>
+                  <Button 
+                    type="primary" 
+                    icon={<SaveOutlined />}
+                    loading={saving}
+                    onClick={() => form.submit()}
+                    className="bg-teal-600 hover:bg-teal-700 border-teal-600 hover:border-teal-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
+                  >
+                    {submitButtonText}
+                  </Button>
+                  <Button 
+                    icon={<MinusOutlined />}
+                    onClick={handleCancel}
+                    className="bg-white border-gray-300 text-gray-600 hover:border-teal-600 hover:text-teal-600 rounded-lg transition-all duration-300 hover:-translate-y-0.5"
+                  >
+                    Cancelar
+                  </Button>
+                </>
+              ) : (
+                <Button 
+                  type="primary" 
+                  icon={<EditOutlined />}
+                  onClick={handleEdit}
+                  className="bg-teal-600 hover:bg-teal-700 border-teal-600 hover:border-teal-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
+                >
+                  Editar
+                </Button>
+              )}
+            </>
+          )}
+        </Space>
+      }
       styles={{ body: { padding: '24px' } }}
     >
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handleSave}
-        initialValues={formData}
-      >
-        <Row gutter={[24, 0]}>
-          {fields.map((field, index) => (
-            <Col 
-              key={field.name} 
-              xs={24} 
-              sm={12} 
-              lg={8}
-              style={{ marginBottom: '16px' }}
-            >
-              {renderFormField(field)}
-            </Col>
-          ))}
-        </Row>
-        
-        {fields.length === 0 && (
-          <div style={{ 
-            textAlign: 'center', 
-            padding: '40px',
-            color: '#8c8c8c'
-          }}>
-            <Text>No hay campos disponibles para este formulario</Text>
-          </div>
-        )}
-      </Form>
+      <div className="bg-gray-50 rounded-lg p-6 -mx-6 -mb-6">
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleSave}
+          initialValues={formData}
+        >
+          <Row gutter={[24, 16]}>
+            {fields.map((field, index) => (
+              <Col 
+                key={field.name} 
+                xs={24} 
+                sm={12} 
+                lg={8}
+                style={{ marginBottom: '16px' }}
+              >
+                {renderFormField(field)}
+              </Col>
+            ))}
+          </Row>
+          
+          {fields.length === 0 && (
+            <div className="text-center py-10 text-gray-500">
+              <Text>No hay campos disponibles para este formulario</Text>
+            </div>
+          )}
+        </Form>
+      </div>
       
       {formInfo && (
         <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #f0f0f0' }}>
