@@ -911,10 +911,10 @@ class TrytonService {
           ]);
           
           if (fieldsView) {
-            // Mantener el tipo solicitado, no confiar en fieldsView.type
-            viewType = 'tree';
+            // Usar el tipo real que devuelve Tryton, no el solicitado
+            viewType = fieldsView.type || 'tree';
             viewId = fieldsView.view_id || null;
-            console.log(`✅ Vista tree obtenida para ${resModel}: solicitado tree, ID: ${viewId}`);
+            console.log(`✅ Vista obtenida para ${resModel}: solicitado tree, Tryton devuelve "${fieldsView.type}", usando "${viewType}", ID: ${viewId}`);
           }
         } catch (treeError) {
           console.log(`❌ No hay vista tree disponible para ${resModel}:`, treeError.message);
@@ -928,10 +928,10 @@ class TrytonService {
             ]);
             
             if (fieldsView) {
-              // Mantener el tipo solicitado, no confiar en fieldsView.type
-              viewType = 'form';
+              // Usar el tipo real que devuelve Tryton, no el solicitado
+              viewType = fieldsView.type || 'form';
               viewId = fieldsView.view_id || null;
-              console.log(`✅ Vista form obtenida para ${resModel}: solicitado form, ID: ${viewId}`);
+              console.log(`✅ Vista obtenida para ${resModel}: solicitado form, Tryton devuelve "${fieldsView.type}", usando "${viewType}", ID: ${viewId}`);
             }
           } catch (formError) {
             console.log(`❌ No hay vista form disponible para ${resModel}:`, formError.message);
@@ -1578,10 +1578,10 @@ class TrytonService {
         ]);
         
         if (fieldsView) {
-          // Mantener el tipo solicitado, no confiar en fieldsView.type
-          viewType = 'tree';
+          // Usar el tipo real que devuelve Tryton, no el solicitado
+          viewType = fieldsView.type || 'tree';
           viewId = fieldsView.view_id || null;
-          console.log(`✅ Vista tree obtenida para ${resModelOption.resModel}: solicitado tree, ID: ${viewId}`);
+          console.log(`✅ Vista obtenida para ${resModelOption.resModel}: solicitado tree, Tryton devuelve "${fieldsView.type}", usando "${viewType}", ID: ${viewId}`);
         }
       } catch (treeError) {
         console.log(`❌ No hay vista tree disponible para ${resModelOption.resModel}:`, treeError.message);
@@ -1597,10 +1597,10 @@ class TrytonService {
           ]);
           
           if (fieldsView) {
-            // Mantener el tipo solicitado, no confiar en fieldsView.type
-            viewType = 'form';
+            // Usar el tipo real que devuelve Tryton, no el solicitado
+            viewType = fieldsView.type || 'form';
             viewId = fieldsView.view_id || null;
-            console.log(`✅ Vista form obtenida para ${resModelOption.resModel}: solicitado form, ID: ${viewId}`);
+            console.log(`✅ Vista obtenida para ${resModelOption.resModel}: solicitado form, Tryton devuelve "${fieldsView.type}", usando "${viewType}", ID: ${viewId}`);
           }
         } catch (formError) {
           console.log(`❌ No hay vista form disponible para ${resModelOption.resModel}:`, formError.message);

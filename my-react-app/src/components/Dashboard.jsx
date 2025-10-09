@@ -701,6 +701,8 @@ const Dashboard = ({ sessionData, onLogout }) => {
           const realViewType = menuInfo.fieldsView.type || menuInfo.viewType;
           viewType = realViewType; // Actualizar viewType con el tipo real
           
+          console.log(`🔍 Comparando tipos: servicio dice "${menuInfo.viewType}", Tryton dice "${menuInfo.fieldsView.type}"`);
+          
           if (realViewType === 'tree') {
             console.log('✅ Vista confirmada como tipo "tree", obteniendo datos...');
             
@@ -746,9 +748,6 @@ const Dashboard = ({ sessionData, onLogout }) => {
             };
             console.log('✅ Información de formulario preparada:', formData);
           }
-          
-          viewType = menuInfo.viewType;
-          viewId = menuInfo.viewId;
         } else {
           // Fallback al método anterior si no tenemos la vista de campos
           const actionData = menuInfo.actionInfo[0];
