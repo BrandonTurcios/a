@@ -277,16 +277,21 @@ const Dashboard = ({ sessionData, onLogout }) => {
         const result = await trytonService.executeResModelOption(selectedOption);
 
         console.log('Resultado de la opción de res_model:', result);
-
         // Procesar el resultado
         if (result.tableData) {
           setTableInfo(result.tableData);
           setFormInfo(null);
-        } else if (result.formData) {
+        } else if (result.formData && result.viewType === 'form') {
+          console.log('✅ Estableciendo TrytonForm con formInfo');
           setFormInfo(result.formData);
           setTableInfo(null);
+        } else {
+          console.log('⚠️ No hay datos válidos, limpiando tableInfo y formInfo');
+          setTableInfo(null);
+          setFormInfo(null);
         }
 
+        // Luego establecer selectedMenuInfo con el viewType correcto
         setSelectedMenuInfo({
           menuItem: pendingMenuItem,
           actionInfo: [result],
@@ -530,18 +535,28 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
           console.log('🔍 Vista obtenida:', fieldsView);
 
-          if (fieldsView && fieldsView.type === 'tree') {
-            console.log('✅ Vista confirmada como tipo "tree", obteniendo datos...');
+          // Usar el tipo real de la vista que devuelve Tryton
+          const realViewType = fieldsView.type;
+          viewType = realViewType; // Actualizar viewType con el tipo real
 
-            tableData = await trytonService.getTableInfo(
-              actionResult.resModel,
-              viewId,
-              'tree',
-              [],
-              100
-            );
-            console.log('✅ Información de tabla obtenida:', tableData);
-          } else if (fieldsView && fieldsView.type === 'form') {
+          if (realViewType === 'tree') {
+            console.log('✅ Vista confirmada como tipo "tree", obteniendo datos...');
+            console.log(`🔍 Parámetros: resModel=${actionResult.resModel}, viewId=${viewId}`);
+
+            // Solo llamar a getTableInfo si tenemos un viewId válido
+            if (viewId) {
+              tableData = await trytonService.getTableInfo(
+                actionResult.resModel,
+                viewId,
+                'tree',
+                [],
+                100
+              );
+              console.log('✅ Información de tabla obtenida:', tableData);
+            } else {
+              console.warn('⚠️ No hay viewId disponible, no se puede obtener información de tabla');
+            }
+          } else if (realViewType === 'form') {
             console.log('✅ Vista confirmada como tipo "form", preparando formulario...');
 
             // Para formularios, necesitamos obtener los datos del registro
@@ -550,10 +565,13 @@ const Dashboard = ({ sessionData, onLogout }) => {
               console.log('🔍 Intentando obtener datos del registro...');
               const recordId = 1; // Para configuraciones, generalmente es el registro 1
               const fields = Object.keys(fieldsView.fields || {});
+              // Expandir campos para incluir many2one.rec_name
+              const expandedFields = trytonService.expandFieldsForRelationsFromFieldsView(fields, fieldsView);
+              console.log('🔍 Campos expandidos para formulario:', expandedFields);
               recordData = await trytonService.getFormRecordData(
                 actionResult.resModel,
                 recordId,
-                fields
+                expandedFields
               );
 
               if (recordData) {
@@ -582,6 +600,25 @@ const Dashboard = ({ sessionData, onLogout }) => {
         }
       }
 
+      // Establecer primero tableInfo o formInfo basado en el tipo real de vista
+      console.log(`📊 Estableciendo estado de vista: tipo="${viewType}", tableData=${!!tableData}, formData=${!!formData}`);
+
+      if (viewType === 'tree' && tableData) {
+        console.log('✅ Estableciendo TrytonTable con tableInfo');
+        setTableInfo(tableData);
+        setFormInfo(null);
+      } else if (viewType === 'form' && formData) {
+        console.log('✅ Estableciendo TrytonForm con formInfo');
+        setFormInfo(formData);
+        setTableInfo(null);
+      } else {
+        // Si no hay datos válidos, limpiar ambos
+        console.log('⚠️ No hay datos válidos, limpiando tableInfo y formInfo');
+        setTableInfo(null);
+        setFormInfo(null);
+      }
+
+      // Luego establecer selectedMenuInfo con el viewType correcto
       setSelectedMenuInfo({
         menuItem: updatedItem,
         actionInfo: [actionResult],
@@ -593,8 +630,6 @@ const Dashboard = ({ sessionData, onLogout }) => {
         timestamp: new Date().toISOString()
       });
 
-      setTableInfo(tableData);
-      setFormInfo(formData);
       setActiveTab(item.id);
 
     } catch (error) {
@@ -698,82 +733,191 @@ const Dashboard = ({ sessionData, onLogout }) => {
       let viewId = null;
 
       if (menuInfo.resModel && menuInfo.actionInfo && menuInfo.actionInfo.length > 0) {
-        const actionData = menuInfo.actionInfo[0];
-        if (actionData.views && actionData.views.length > 0) {
-          // Buscar vista tree primero, luego form
-          const treeView = actionData.views.find(view => view[1] === 'tree');
-          const formView = actionData.views.find(view => view[1] === 'form');
+        console.log(`🔍 Procesando menuInfo para modelo: ${menuInfo.resModel}`);
+        console.log(`🔍 menuInfo completo:`, {
+          hasFieldsView: !!menuInfo.fieldsView,
+          viewType: menuInfo.viewType,
+          viewId: menuInfo.viewId,
+          fieldsViewType: menuInfo.fieldsView?.type
+        });
 
-          // Priorizar tree view si existe, sino usar form view
-          const selectedView = treeView || formView || actionData.views[0];
-          viewId = selectedView[0];
-          viewType = selectedView[1];
+        // Si ya tenemos la vista de campos del servicio, usarla
+        if (menuInfo.fieldsView && menuInfo.viewType) {
+          console.log(`🔍 Usando vista de campos ya obtenida: ${menuInfo.viewType}, ID: ${menuInfo.viewId}`);
+          console.log(`🔍 Tipo real de la vista: ${menuInfo.fieldsView.type}`);
 
-          console.log(`🔍 Obteniendo información de vista para modelo: ${menuInfo.resModel}, vista: ${viewId}, tipo: ${viewType}`);
+          // Usar el tipo real de la vista, no el que establece el servicio
+          const realViewType = menuInfo.fieldsView.type || menuInfo.viewType;
+          viewType = realViewType; // Actualizar viewType con el tipo real
 
-          try {
-            // Verificar el tipo de vista
-            const fieldsView = await trytonService.getFieldsView(
-              menuInfo.resModel,
-              viewId,
-              viewType
-            );
+          console.log(`🔍 Comparando tipos: servicio dice "${menuInfo.viewType}", Tryton dice "${menuInfo.fieldsView.type}", usando "${realViewType}"`);
 
-            console.log('🔍 Vista obtenida:', fieldsView);
+          if (realViewType === 'tree') {
+            console.log('✅ Vista confirmada como tipo "tree", obteniendo datos...');
+            console.log(`🔍 Parámetros: resModel=${menuInfo.resModel}, viewId=${menuInfo.viewId}`);
 
-            if (fieldsView && fieldsView.type === 'tree') {
-              console.log('✅ Vista confirmada como tipo "tree", obteniendo datos...');
-
+            // Solo llamar a getTableInfo si tenemos un viewId válido
+            if (menuInfo.viewId) {
               tableData = await trytonService.getTableInfo(
                 menuInfo.resModel,
-                viewId,
+                menuInfo.viewId,
                 'tree',
                 [],
                 100
               );
               console.log('✅ Información de tabla obtenida:', tableData);
-            } else if (fieldsView && fieldsView.type === 'form') {
-              console.log('✅ Vista confirmada como tipo "form", preparando formulario...');
-
-              // Para formularios, necesitamos obtener los datos del registro
-              let recordData = null;
-              try {
-                console.log('🔍 Intentando obtener datos del registro...');
-                const recordId = 1; // Para configuraciones, generalmente es el registro 1
-                const fields = Object.keys(fieldsView.fields || {});
-                recordData = await trytonService.getFormRecordData(
-                  menuInfo.resModel,
-                  recordId,
-                  fields
-                );
-
-                if (recordData) {
-                  console.log('✅ Datos del registro obtenidos:', recordData);
-                } else {
-                  console.log('⚠️ No se encontraron datos del registro, creando formulario vacío');
-                }
-              } catch (recordError) {
-                console.warn('⚠️ Error obteniendo datos del registro:', recordError);
-                // Continuar con formulario vacío
-              }
-
-              formData = {
-                model: menuInfo.resModel,
-                viewId: viewId,
-                viewType: 'form',
-                fieldsView: fieldsView,
-                recordData: recordData
-              };
-              console.log('✅ Información de formulario preparada:', formData);
             } else {
-              console.log(`⚠️ Vista no es de tipo "tree" ni "form" (tipo: ${fieldsView?.type}), omitiendo`);
+              console.warn('⚠️ No hay viewId disponible, no se puede obtener información de tabla');
             }
-          } catch (viewError) {
-            console.warn('⚠️ Error obteniendo información de vista:', viewError);
+          } else if (realViewType === 'form') {
+            console.log('✅ Vista confirmada como tipo "form", preparando formulario...');
+
+            // Para formularios, necesitamos obtener los datos del registro
+            let recordData = null;
+            try {
+              console.log('🔍 Intentando obtener datos del registro...');
+              const recordId = 1; // Para configuraciones, generalmente es el registro 1
+              const fields = Object.keys(menuInfo.fieldsView.fields || {});
+              // Expandir campos para incluir many2one.rec_name
+              const expandedFields = trytonService.expandFieldsForRelationsFromFieldsView(fields, menuInfo.fieldsView);
+              console.log('🔍 Campos expandidos para formulario:', expandedFields);
+              recordData = await trytonService.getFormRecordData(
+                menuInfo.resModel,
+                recordId,
+                expandedFields
+              );
+
+              if (recordData) {
+                console.log('✅ Datos del registro obtenidos:', recordData);
+              } else {
+                console.log('⚠️ No se encontraron datos del registro, creando formulario vacío');
+              }
+            } catch (recordError) {
+              console.warn('⚠️ Error obteniendo datos del registro:', recordError);
+              // Continuar con formulario vacío
+            }
+
+            formData = {
+              model: menuInfo.resModel,
+              viewId: menuInfo.viewId,
+              viewType: 'form',
+              fieldsView: menuInfo.fieldsView,
+              recordData: recordData
+            };
+            console.log('✅ Información de formulario preparada:', formData);
+            console.log('🔍 recordData que se pasa a TrytonForm:', recordData);
+          }
+        } else {
+          // Fallback al método anterior si no tenemos la vista de campos
+          const actionData = menuInfo.actionInfo[0];
+          if (actionData.views && actionData.views.length > 0) {
+            // Buscar vista tree primero, luego form
+            const treeView = actionData.views.find(view => view[1] === 'tree');
+            const formView = actionData.views.find(view => view[1] === 'form');
+
+            // Priorizar tree view si existe, sino usar form view
+            const selectedView = treeView || formView || actionData.views[0];
+            viewId = selectedView[0];
+            viewType = selectedView[1];
+
+            console.log(`🔍 Obteniendo información de vista para modelo: ${menuInfo.resModel}, vista: ${viewId}, tipo: ${viewType}`);
+
+            try {
+              // Verificar el tipo de vista
+              const fieldsView = await trytonService.getFieldsView(
+                menuInfo.resModel,
+                viewId,
+                viewType
+              );
+
+              console.log('🔍 Vista obtenida:', fieldsView);
+
+              // Usar el tipo real de la vista que devuelve Tryton
+              const realViewType = fieldsView.type;
+              viewType = realViewType; // Actualizar viewType con el tipo real
+
+              if (realViewType === 'tree') {
+                console.log('✅ Vista confirmada como tipo "tree", obteniendo datos...');
+                console.log(`🔍 Parámetros: resModel=${menuInfo.resModel}, viewId=${viewId}`);
+
+                // Solo llamar a getTableInfo si tenemos un viewId válido
+                if (viewId) {
+                  tableData = await trytonService.getTableInfo(
+                    menuInfo.resModel,
+                    viewId,
+                    'tree',
+                    [],
+                    100
+                  );
+                  console.log('✅ Información de tabla obtenida:', tableData);
+                } else {
+                  console.warn('⚠️ No hay viewId disponible, no se puede obtener información de tabla');
+                }
+              } else if (realViewType === 'form') {
+                console.log('✅ Vista confirmada como tipo "form", preparando formulario...');
+
+            // Para formularios, necesitamos obtener los datos del registro
+            let recordData = null;
+            try {
+              console.log('🔍 Intentando obtener datos del registro...');
+              const recordId = 1; // Para configuraciones, generalmente es el registro 1
+              const fields = Object.keys(menuInfo.fieldsView.fields || {});
+              // Expandir campos para incluir many2one.rec_name
+              const expandedFields = trytonService.expandFieldsForRelationsFromFieldsView(fields, menuInfo.fieldsView);
+              console.log('🔍 Campos expandidos para formulario:', expandedFields);
+              recordData = await trytonService.getFormRecordData(
+                menuInfo.resModel,
+                recordId,
+                expandedFields
+              );
+
+                  if (recordData) {
+                    console.log('✅ Datos del registro obtenidos:', recordData);
+                  } else {
+                    console.log('⚠️ No se encontraron datos del registro, creando formulario vacío');
+                  }
+                } catch (recordError) {
+                  console.warn('⚠️ Error obteniendo datos del registro:', recordError);
+                  // Continuar con formulario vacío
+                }
+
+                formData = {
+                  model: menuInfo.resModel,
+                  viewId: viewId,
+                  viewType: 'form',
+                  fieldsView: fieldsView,
+                  recordData: recordData
+                };
+                console.log('✅ Información de formulario preparada:', formData);
+              } else {
+                console.log(`⚠️ Vista no es de tipo "tree" ni "form" (tipo: ${fieldsView?.type}), omitiendo`);
+              }
+            } catch (viewError) {
+              console.warn('⚠️ Error obteniendo información de vista:', viewError);
+            }
           }
         }
       }
 
+      // Establecer primero tableInfo o formInfo basado en el tipo real de vista
+      console.log(`📊 Estableciendo estado de vista: tipo="${viewType}", tableData=${!!tableData}, formData=${!!formData}`);
+
+      if (viewType === 'tree' && tableData) {
+        console.log('✅ Estableciendo TrytonTable con tableInfo');
+        setTableInfo(tableData);
+        setFormInfo(null);
+      } else if (viewType === 'form' && formData) {
+        console.log('✅ Estableciendo TrytonForm con formInfo');
+        setFormInfo(formData);
+        setTableInfo(null);
+      } else {
+        // Si no hay datos válidos, limpiar ambos
+        console.log('⚠️ No hay datos válidos, limpiando tableInfo y formInfo');
+        setTableInfo(null);
+        setFormInfo(null);
+      }
+
+      // Luego establecer selectedMenuInfo con el viewType correcto
       setSelectedMenuInfo({
         menuItem: updatedItem,
         actionInfo: menuInfo.actionInfo,
@@ -785,9 +929,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
         timestamp: new Date().toISOString()
       });
 
-      setTableInfo(tableData);
-      setFormInfo(formData);
-      setLoadingContent(false);
+      setActiveTab(item.id);
     } catch (error) {
       console.error('Error obteniendo información del menú:', error);
       setSelectedMenuInfo({
@@ -1087,12 +1229,19 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
         const selectedItem = findSelectedItem(menuItems, activeTab);
 
+        // Log del estado actual para debugging
+        console.log(`🎨 Renderizando contenido: activeTab=${activeTab}`);
+        console.log(`📊 Estado actual:`, {
+          hasTableInfo: !!tableInfo,
+          hasFormInfo: !!formInfo,
+          hasSelectedMenuInfo: !!selectedMenuInfo,
+          viewType: selectedMenuInfo?.viewType,
+          resModel: selectedMenuInfo?.resModel
+        });
 
         // Si hay información de tabla, mostrar la tabla Tryton
-        if (tableInfo && selectedMenuInfo && selectedMenuInfo.resModel) {
-          const actionData = selectedMenuInfo.actionInfo && selectedMenuInfo.actionInfo[0];
-          const treeView = actionData?.views?.find(view => view[1] === 'tree') || actionData?.views?.[0];
-          const viewId = treeView?.[0];
+        if (tableInfo && selectedMenuInfo && selectedMenuInfo.resModel && selectedMenuInfo.viewType === 'tree') {
+          console.log('✅ Renderizando TrytonTable con viewId:', tableInfo.viewId);
 
           return (
             <div style={{
@@ -1111,9 +1260,9 @@ const Dashboard = ({ sessionData, onLogout }) => {
               </div>
 
               <TrytonTable
-                model={selectedMenuInfo.resModel}
-                viewId={viewId}
-                viewType="tree"
+                model={tableInfo.model}
+                viewId={tableInfo.viewId}
+                viewType={tableInfo.viewType}
                 domain={[]}
                 limit={100}
                 title={selectedMenuInfo.actionName}
@@ -1123,7 +1272,9 @@ const Dashboard = ({ sessionData, onLogout }) => {
         }
 
         // Si hay información de formulario, mostrar el formulario Tryton
-        if (formInfo && selectedMenuInfo && selectedMenuInfo.resModel) {
+        if (formInfo && selectedMenuInfo && selectedMenuInfo.resModel && selectedMenuInfo.viewType === 'form') {
+          console.log('✅ Renderizando TrytonForm');
+
           return (
             <div style={{
               padding: '24px',
@@ -1143,9 +1294,10 @@ const Dashboard = ({ sessionData, onLogout }) => {
               <TrytonForm
                 model={formInfo.model}
                 viewId={formInfo.viewId}
-                viewType="form"
+                viewType={selectedMenuInfo.viewType}
                 recordId={formInfo.recordData?.id || null}
                 recordData={formInfo.recordData}
+                fieldsView={formInfo.fieldsView}
                 title={selectedMenuInfo.actionName}
               />
             </div>

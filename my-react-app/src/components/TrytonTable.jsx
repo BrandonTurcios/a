@@ -253,58 +253,50 @@ const TrytonTable = ({
   }
 
   return (
-    <Card>
-      <div style={{ marginBottom: '16px' }}>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          marginBottom: '16px'
-        }}>
-          <div>
-            <Title level={4} style={{ margin: 0 }}>
-              {title || `Table: ${model}`}
-            </Title>
-           
-          </div>
-          
-          <Space>
-            <Button 
-              icon={<ReloadOutlined />}
-              onClick={handleRefresh}
-              title="Update"
-            >
-              Update
-            </Button>
-            <Button 
-              icon={<DownloadOutlined />}
-              title="Export"
-            >
-              Export
-            </Button>
-            <Button 
-              icon={<FilterOutlined />}
-              title="Filters"
-            >
-              Filters
-            </Button>
-            <Button 
-              icon={<SettingOutlined />}
-              title="Configure"
-            >
-              Configure
-            </Button>
-          </Space>
-        </div>
+    <div className="rounded-2xl shadow-lg border border-gray-200 bg-white p-6">
+      <div className="mb-4 flex justify-end">
+        <Space className="flex flex-wrap gap-2">
+          <Button 
+            icon={<ReloadOutlined />}
+            onClick={handleRefresh}
+            title="Update"
+            className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg"
+          >
+            Update
+          </Button>
+          <Button 
+            icon={<DownloadOutlined />}
+            title="Export"
+            className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg"
+          >
+            Export
+          </Button>
+          <Button 
+            icon={<FilterOutlined />}
+            title="Filters"
+            className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg"
+          >
+            Filters
+          </Button>
+          <Button 
+            icon={<SettingOutlined />}
+            title="Configure"
+            className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg"
+          >
+            Configure
+          </Button>
+        </Space>
       </div>
-
-      <DataTable
-        columns={columns}
-        data={data}
-        searchable={true}
-        pagination={true}
-        pageSize={20}
-      />
+      
+      <div className="bg-gray-50 rounded-lg p-4">
+        <DataTable
+          columns={columns}
+          data={data}
+          searchable={true}
+          pagination={true}
+          pageSize={20}
+        />
+      </div>
       
       {/* Debug information (development only) */}
       {process.env.NODE_ENV === 'development' && (
@@ -332,7 +324,7 @@ const TrytonTable = ({
           </pre>
         </details>
       )}
-    </Card>
+    </div>
   );
 };
 

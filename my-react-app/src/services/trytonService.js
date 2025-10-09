@@ -937,20 +937,102 @@ class TrytonService {
 
         console.log('Información de toolbar obtenida:', toolbarInfo);
 
+        // PASO 4: Obtener la vista de campos para determinar el tipo de vista
+        let fieldsView = null;
+        let viewType = null;
+        let viewId = null;
+
+        // Verificar si hay vistas especificadas en la acción
+        if (selectedAction.views && selectedAction.views.length > 0) {
+          console.log(`📋 Vistas disponibles en la acción:`, selectedAction.views);
+
+          // Buscar vista tree primero, luego form
+          const treeView = selectedAction.views.find(view => view[1] === 'tree');
+          const formView = selectedAction.views.find(view => view[1] === 'form');
+
+          // Priorizar tree view si existe, sino usar form view
+          const selectedView = treeView || formView || selectedAction.views[0];
+          viewId = selectedView[0];
+          viewType = selectedView[1];
+
+          console.log(`🎯 Vista seleccionada: ID=${viewId}, tipo="${viewType}"`);
+
+          // Obtener la vista de campos con el ID y tipo específicos
+          try {
+            fieldsView = await this.makeRpcCall(`model.${resModel}.fields_view_get`, [
+              viewId,
+              viewType,
+              {}
+            ]);
+
+            if (fieldsView) {
+              // Usar el tipo real que devuelve Tryton
+              const realViewType = fieldsView.type || viewType;
+              viewType = realViewType;
+              viewId = fieldsView.view_id || viewId;
+              console.log(`✅ Vista obtenida para ${resModel}: ID=${viewId}, tipo solicitado="${selectedView[1]}", tipo real="${realViewType}"`);
+            }
+          } catch (viewError) {
+            console.log(`❌ Error obteniendo vista específica:`, viewError.message);
+          }
+        } else {
+          // Fallback al método anterior si no hay vistas especificadas
+          console.log(`⚠️ No hay vistas especificadas en la acción, usando método por defecto`);
+
+          try {
+            // Intentar obtener vista tree primero (más común para tablas)
+            fieldsView = await this.makeRpcCall(`model.${resModel}.fields_view_get`, [
+              null, // view_id - usar vista por defecto
+              'tree', // view_type - intentar tree primero
+              {}
+            ]);
+
+            if (fieldsView) {
+              // Usar el tipo real que devuelve Tryton, no el solicitado
+              viewType = fieldsView.type || 'tree';
+              viewId = fieldsView.view_id || null;
+              console.log(`✅ Vista obtenida para ${resModel}: solicitado tree, Tryton devuelve "${fieldsView.type}", usando "${viewType}", ID: ${viewId}`);
+            }
+          } catch (treeError) {
+            console.log(`❌ No hay vista tree disponible para ${resModel}:`, treeError.message);
+
+            // Si tree falló, intentar con form
+            try {
+              fieldsView = await this.makeRpcCall(`model.${resModel}.fields_view_get`, [
+                null,
+                'form',
+                {}
+              ]);
+
+              if (fieldsView) {
+                // Usar el tipo real que devuelve Tryton, no el solicitado
+                viewType = fieldsView.type || 'form';
+                viewId = fieldsView.view_id || null;
+                console.log(`✅ Vista obtenida para ${resModel}: solicitado form, Tryton devuelve "${fieldsView.type}", usando "${viewType}", ID: ${viewId}`);
+              }
+            } catch (formError) {
+              console.log(`❌ No hay vista form disponible para ${resModel}:`, formError.message);
+            }
+          }
+        }
+
         return {
           actionInfo: actionInfo,
           toolbarInfo: toolbarInfo,
           resModel: resModel,
-            actionName: actionName,
-            hasMultipleOptions: false,
-            selectedOption: {
-              index: 0,
-              id: selectedAction.id,
-              name: actionName,
-              resModel: resModel,
-              views: selectedAction.views || []
-            }
-          };
+          actionName: actionName,
+          hasMultipleOptions: false,
+          fieldsView: fieldsView,
+          viewType: viewType,
+          viewId: viewId,
+          selectedOption: {
+            index: 0,
+            id: selectedAction.id,
+            name: actionName,
+            resModel: resModel,
+            views: selectedAction.views || []
+          }
+        };
         }
       }
 
@@ -1075,10 +1157,15 @@ class TrytonService {
       // PASO 1: Obtener vista de campos
       const fieldsView = await this.getFieldsView(model, viewId, viewType);
 
-      // PASO 2: Extraer campos de la vista
+      // PASO 2: Verificar que la vista es realmente del tipo solicitado
+      if (fieldsView && fieldsView.type && fieldsView.type !== viewType) {
+        throw new Error(`View is not of type "${viewType}" (current type: ${fieldsView.type})`);
+      }
+
+      // PASO 3: Extraer campos de la vista
       const fields = fieldsView.fields ? Object.keys(fieldsView.fields) : [];
 
-      // PASO 3: Obtener datos
+      // PASO 4: Obtener datos
       const data = await this.getModelData(model, domain, fields, limit, offset);
 
       console.log('Información completa de tabla obtenida');
@@ -1109,15 +1196,27 @@ class TrytonService {
       // PASO 1: Obtener vista de campos
       const fieldsView = await this.getFieldsView(model, viewId, viewType);
 
-      // PASO 2: Extraer campos de la vista
+      // PASO 2: Verificar que la vista es realmente del tipo solicitado
+      if (fieldsView && fieldsView.type && fieldsView.type !== viewType) {
+        throw new Error(`View is not of type "${viewType}" (current type: ${fieldsView.type})`);
+      }
+
+      // PASO 3: Extraer campos de la vista
       const fields = fieldsView.fields ? Object.keys(fieldsView.fields) : [];
 
-      // PASO 3: Si hay recordId, obtener datos del registro
+      // PASO 4: Expandir campos para incluir relaciones many2one
+      const expandedFields = this.expandFieldsForRelationsFromFieldsView(fields, fieldsView);
+      console.log(`Campos expandidos para formulario:`, expandedFields);
+
+      // PASO 5: Si hay recordId, obtener datos del registro con campos expandidos
       let data = null;
       if (recordId) {
-        data = await this.getModelData(model, [['id', '=', recordId]], fields, 1, 0);
-        if (data && data.length > 0) {
-          data = data[0];
+        const ids = await this.makeRpcCall(`model.${model}.search`, [[['id', '=', recordId]], 0, 1]);
+        if (ids.length > 0) {
+          const dataArray = await this.makeRpcCall(`model.${model}.read`, [ids, expandedFields, {}]);
+          if (dataArray && dataArray.length > 0) {
+            data = dataArray[0];
+          }
         }
       }
 
@@ -1136,6 +1235,37 @@ class TrytonService {
       console.error('Error obteniendo información completa de formulario:', error);
       throw error;
     }
+  }
+  
+  // Expandir campos para incluir relaciones basándose en fieldsView
+  expandFieldsForRelationsFromFieldsView(fields, fieldsView) {
+    const expandedFields = [...fields];
+    
+    if (!fieldsView.fields) {
+      return expandedFields;
+    }
+    
+    // Recorrer todos los campos y expandir los many2one
+    Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
+      if (fieldDef.type === 'many2one' && fields.includes(fieldName)) {
+        // Agregar .rec_name para obtener el nombre legible
+        // Tryton devuelve campo. (con punto) en la respuesta
+        if (!expandedFields.includes(`${fieldName}.rec_name`)) {
+          expandedFields.push(`${fieldName}.rec_name`);
+          console.log(`Agregando campo relacionado many2one: ${fieldName}.rec_name`);
+        }
+      }
+    });
+    
+    // Agregar campos básicos que siempre queremos
+    const basicFields = ['rec_name', '_timestamp', '_write', '_delete'];
+    basicFields.forEach(fieldName => {
+      if (!expandedFields.includes(fieldName)) {
+        expandedFields.push(fieldName);
+      }
+    });
+    
+    return expandedFields;
   }
 
   // Obtener datos de un registro específico para formularios
@@ -1185,6 +1315,99 @@ class TrytonService {
       console.error(`Error obteniendo opciones de selection para ${methodName}:`, error);
       throw error;
     }
+  }
+
+  // Autocomplete para campos many2one
+  async autocomplete(model, searchText, domain = [], limit = 1000) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`🔍 Autocomplete para modelo: ${model}, búsqueda: "${searchText}"`);
+      console.log(`📋 Domain original:`, domain);
+      
+      // Evaluar domain PYSON si es necesario
+      const evaluatedDomain = this.evaluatePysonDomain(domain);
+      console.log(`📋 Domain evaluado:`, evaluatedDomain);
+      
+      // Llamar al método autocomplete del modelo
+      // Parámetros: [searchText, domain, limit, order, context]
+      // El contexto se agrega automáticamente en makeRpcCall como último parámetro
+      const results = await this.makeRpcCall(`model.${model}.autocomplete`, [
+        searchText,
+        evaluatedDomain,
+        limit,
+        null,  // order (null para usar orden por defecto)
+        {}     // context placeholder - makeRpcCall lo mezclará con this.context
+      ]);
+      
+      console.log(`✅ Resultados de autocomplete:`, results);
+      return results;
+    } catch (error) {
+      console.error(`Error en autocomplete para ${model}:`, error);
+      throw error;
+    }
+  }
+
+  // Evaluar domain PYSON simple (evalúa objetos __class__ comunes)
+  evaluatePysonDomain(domain) {
+    if (!domain || !Array.isArray(domain)) {
+      return domain;
+    }
+
+    const evaluateValue = (value) => {
+      // Si es un objeto PYSON
+      if (value && typeof value === 'object' && value.__class__) {
+        switch (value.__class__) {
+          case 'Get':
+            // Get obtiene un valor del contexto
+            // {"__class__": "Get", "v": {"__class__": "Eval", "v": "context", "d": {}}, "k": "company", "d": -1}
+            // Intenta obtener context[company], si no existe usa el default (d)
+            if (value.k === 'company' && this.context && this.context.company) {
+              return this.context.company;
+            }
+            return value.d; // default value
+          
+          case 'Eval':
+            // Eval evalúa una expresión en el contexto
+            // {"__class__": "Eval", "v": "context", "d": {}}
+            if (value.v === 'context') {
+              return this.context || value.d;
+            }
+            return value.d; // default value
+          
+          default:
+            console.warn(`⚠️ PYSON class no soportada: ${value.__class__}, usando valor por defecto`);
+            return value.d || null;
+        }
+      }
+      
+      // Si es un array, evaluar recursivamente
+      if (Array.isArray(value)) {
+        return value.map(v => evaluateValue(v));
+      }
+      
+      // Valor simple, retornar como está
+      return value;
+    };
+
+    // Evaluar cada cláusula del domain
+    return domain.map(clause => {
+      if (Array.isArray(clause)) {
+        // Una cláusula es [field, operator, value]
+        if (clause.length >= 3) {
+          return [
+            clause[0], // field name
+            clause[1], // operator
+            evaluateValue(clause[2]) // value (evaluar PYSON)
+          ];
+        }
+        // Cláusulas especiales como ['AND', ...] o ['OR', ...]
+        return clause.map(c => evaluateValue(c));
+      }
+      return clause;
+    });
   }
 
   // Obtener opciones de acción cuando hay context_model
@@ -1337,7 +1560,13 @@ class TrytonService {
         const wizardId = createResult[0];
         const state = createResult[1];
 
-        console.log(`🎯 Wizard ID: ${wizardId}, Estado: ${state}`);
+        console.log(`🎯 Wizard ID: ${wizardId}, Estado inicial: ${state}`);
+
+        // Guardar el estado inicial en el contexto para uso posterior
+        if (!this.wizardStates) {
+          this.wizardStates = new Map();
+        }
+        this.wizardStates.set(wizardId, state);
 
         return {
           wizardId: wizardId,
@@ -1362,13 +1591,16 @@ class TrytonService {
     try {
       console.log(`🧙 Obteniendo formulario de wizard: ${wizardName}, ID: ${wizardId}`);
 
+      // Obtener el estado actual del wizard (el que devolvió el .create)
+      const currentState = await this.getCurrentWizardState(wizardName, wizardId);
+
       // Ejecutar el wizard para obtener el formulario
-      // Los parámetros correctos son: [wizardId, stateName, data]
-      // Para obtener el formulario inicial, usamos el estado 'start' y datos vacíos
+      // Los parámetros correctos son: [wizardId, data, stateName]
+      // Para obtener el formulario inicial, usamos el estado actual y datos vacíos
       const executeResult = await this.makeRpcCall(`wizard.${wizardName}.execute`, [
         wizardId,
-        {},       // data (vacío para el formulario inicial)
-        'start'   // state_name
+        {},               // data (vacío para el formulario inicial)
+        currentState      // state_name (estado actual del wizard)
       ]);
 
       console.log(`✅ Formulario de wizard obtenido:`, executeResult);
@@ -1404,12 +1636,23 @@ class TrytonService {
       console.log(`🧙 Ejecutando acción de wizard: ${wizardName}, ID: ${wizardId}, Estado: ${buttonState}`);
       console.log(`📝 Valores:`, values);
 
-      // Ejecutar la acción del wizard con los valores
+      // Envolver los valores en un objeto con el nombre del estado actual del wizard
+      // Tryton usa el estado actual del wizard, no el estado del botón
+      // El estado actual puede variar: "start", "test", etc., dependiendo del modelo y el .create
+      const currentWizardState = await this.getCurrentWizardState(wizardName, wizardId);
+      const wrappedValues = {
+        [currentWizardState]: values
+      };
+
+      console.log(`📦 Valores envueltos para Tryton:`, wrappedValues);
+
+      // Ejecutar la acción del wizard con los valores envueltos
       // Los parámetros correctos son: [wizardId, data, stateName]
+      // El contexto se incluye automáticamente en la llamada RPC
       const executeResult = await this.makeRpcCall(`wizard.${wizardName}.execute`, [
         wizardId,
-        values,       // data (valores del formulario)
-        buttonState   // state_name (ej: 'create_', 'end', etc.)
+        wrappedValues,  // data (valores envueltos en el estado)
+        buttonState     // state_name (ej: 'request', 'end', etc.)
       ]);
 
       console.log(`✅ Acción de wizard ejecutada:`, executeResult);
@@ -1433,12 +1676,91 @@ class TrytonService {
       // Eliminar el wizard
       const deleteResult = await this.makeRpcCall(`wizard.${wizardName}.delete`, [wizardId]);
 
+      // Limpiar el estado guardado del wizard
+      if (this.wizardStates && this.wizardStates.has(wizardId)) {
+        this.wizardStates.delete(wizardId);
+        console.log(`🧹 Estado del wizard ${wizardId} eliminado de la caché`);
+      }
+
       console.log(`✅ Wizard eliminado:`, deleteResult);
 
       return deleteResult;
     } catch (error) {
       console.error('Error eliminando wizard:', error);
       throw error;
+    }
+  }
+
+  // Obtener el estado actual del wizard
+  async getCurrentWizardState(wizardName, wizardId) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`🔍 Obteniendo estado actual del wizard: ${wizardName}, ID: ${wizardId}`);
+      
+      // Primero intentar obtener el estado guardado del .create
+      if (this.wizardStates && this.wizardStates.has(wizardId)) {
+        const savedState = this.wizardStates.get(wizardId);
+        console.log(`✅ Estado guardado del wizard: ${savedState}`);
+        return savedState;
+      }
+      
+      // Si no hay estado guardado, intentar con diferentes estados comunes
+      const possibleStates = ['start', 'test', 'request', 'end'];
+      
+      for (const state of possibleStates) {
+        try {
+          console.log(`🔍 Probando estado: ${state}`);
+          
+          const result = await this.makeRpcCall(`wizard.${wizardName}.execute`, [
+            wizardId,
+            {},       // data vacío
+            state     // probar este estado
+          ]);
+          
+          console.log(`✅ Estado ${state} funcionó:`, result);
+          
+          // Si no hay error, este es el estado correcto
+          // El estado actual está en result.state o en el segundo elemento del array
+          let currentState = state;
+          
+          if (result && typeof result === 'object') {
+            if (result.state) {
+              currentState = result.state;
+            } else if (Array.isArray(result) && result.length >= 2) {
+              // Si es un array, el estado puede estar en diferentes posiciones
+              if (typeof result[1] === 'string') {
+                currentState = result[1];
+              } else if (result.length >= 3 && typeof result[2] === 'string') {
+                currentState = result[2];
+              }
+            }
+          }
+          
+          // Guardar el estado encontrado para futuras referencias
+          if (!this.wizardStates) {
+            this.wizardStates = new Map();
+          }
+          this.wizardStates.set(wizardId, currentState);
+          
+          console.log(`✅ Estado actual del wizard: ${currentState}`);
+          return currentState;
+          
+        } catch (stateError) {
+          console.log(`❌ Estado ${state} falló:`, stateError.message);
+          // Continuar con el siguiente estado
+        }
+      }
+      
+      // Si todos los estados fallaron, usar fallback
+      console.warn('Todos los estados fallaron, usando fallback "start"');
+      return 'start';
+      
+    } catch (error) {
+      console.warn('Error obteniendo estado del wizard, usando fallback "start":', error.message);
+      return 'start'; // fallback por defecto
     }
   }
 
@@ -1464,10 +1786,11 @@ class TrytonService {
           {}
         ]);
 
-        if (fieldsView && fieldsView.type) {
-          viewType = fieldsView.type;
+        if (fieldsView) {
+          // Usar el tipo real que devuelve Tryton, no el solicitado
+          viewType = fieldsView.type || 'tree';
           viewId = fieldsView.view_id || null;
-          console.log(`✅ Vista tree obtenida para ${resModelOption.resModel}: ${viewType}, ID: ${viewId}`);
+          console.log(`✅ Vista obtenida para ${resModelOption.resModel}: solicitado tree, Tryton devuelve "${fieldsView.type}", usando "${viewType}", ID: ${viewId}`);
         }
       } catch (treeError) {
         console.log(`❌ No hay vista tree disponible para ${resModelOption.resModel}:`, treeError.message);
@@ -1482,10 +1805,11 @@ class TrytonService {
             {}
           ]);
 
-          if (fieldsView && fieldsView.type) {
-            viewType = fieldsView.type;
+          if (fieldsView) {
+            // Usar el tipo real que devuelve Tryton, no el solicitado
+            viewType = fieldsView.type || 'form';
             viewId = fieldsView.view_id || null;
-            console.log(`✅ Vista form obtenida para ${resModelOption.resModel}: ${viewType}, ID: ${viewId}`);
+            console.log(`✅ Vista obtenida para ${resModelOption.resModel}: solicitado form, Tryton devuelve "${fieldsView.type}", usando "${viewType}", ID: ${viewId}`);
           }
         } catch (formError) {
           console.log(`❌ No hay vista form disponible para ${resModelOption.resModel}:`, formError.message);
@@ -1501,8 +1825,9 @@ class TrytonService {
             {}
           ]);
 
-          if (fieldsView && fieldsView.type) {
-            viewType = fieldsView.type;
+          if (fieldsView) {
+            // Usar el tipo que devuelve Tryton cuando no especificamos view_type
+            viewType = fieldsView.type || 'form';
             viewId = fieldsView.view_id || null;
             console.log(`✅ Vista por defecto obtenida para ${resModelOption.resModel}: ${viewType}, ID: ${viewId}`);
           }

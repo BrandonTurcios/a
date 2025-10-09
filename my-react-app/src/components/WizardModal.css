@@ -1,0 +1,112 @@
+/* Estilos personalizados para WizardModal */
+
+/* Asegurar que el modal sea responsive y esté bien centrado */
+.wizard-modal .ant-modal {
+  max-width: 90vw !important;
+  width: 90vw !important;
+  top: 5vh !important;
+  margin-bottom: 5vh !important;
+}
+
+.wizard-modal .ant-modal-content {
+  border-radius: 16px !important;
+  overflow: hidden;
+  max-height: 90vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Asegurar que el contenido no cause scroll horizontal y use todo el espacio disponible */
+.wizard-modal .ant-modal-body {
+  padding: 0 !important;
+  overflow-x: hidden !important;
+  flex: 1 !important;
+  overflow-y: auto !important;
+  max-height: none !important;
+}
+
+/* Asegurar que el footer no se corte */
+.wizard-modal .ant-modal-footer {
+  flex-shrink: 0 !important;
+  border-top: 1px solid #f0f0f0 !important;
+}
+
+/* Responsive para pantallas pequeñas */
+@media (max-width: 768px) {
+  .wizard-modal .ant-modal {
+    max-width: 95vw !important;
+    width: 95vw !important;
+    top: 3vh !important;
+    margin-bottom: 3vh !important;
+  }
+  
+  .wizard-modal .ant-modal-content {
+    max-height: 94vh !important;
+  }
+}
+
+/* Responsive para pantallas muy pequeñas */
+@media (max-width: 480px) {
+  .wizard-modal .ant-modal {
+    max-width: 98vw !important;
+    width: 98vw !important;
+    top: 1vh !important;
+    margin-bottom: 1vh !important;
+  }
+  
+  .wizard-modal .ant-modal-content {
+    max-height: 98vh !important;
+  }
+}
+
+/* Asegurar que las columnas no causen overflow */
+.wizard-modal .ant-row {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+.wizard-modal .ant-col {
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+
+/* Mejorar el scroll */
+.wizard-modal .ant-modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.wizard-modal .ant-modal-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.wizard-modal .ant-modal-body::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.wizard-modal .ant-modal-body::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Asegurar que el modal esté perfectamente centrado verticalmente */
+.wizard-modal .ant-modal-wrap {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 2vh 0 !important;
+}
+
+/* Ajustar el contenedor del modal para mejor centrado */
+.wizard-modal .ant-modal {
+  position: relative !important;
+  top: auto !important;
+  margin: 0 !important;
+  max-height: 96vh !important;
+}
+
+/* Asegurar que el header no se corte */
+.wizard-modal .ant-modal-header {
+  flex-shrink: 0 !important;
+  border-bottom: 1px solid #f0f0f0 !important;
+}
