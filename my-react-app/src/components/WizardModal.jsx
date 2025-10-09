@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Form, Button, Space, message, Spin, Card, Row, Col, AutoComplete, Table, Input, Divider, Typography, Checkbox, DatePicker, TimePicker, Select } from 'antd';
 import { CloseOutlined, CheckOutlined, PlusOutlined, MinusOutlined, SearchOutlined, CalendarOutlined, DollarOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import trytonService from '../services/trytonService';
+import './WizardModal.css';
 
 const { Option } = Select;
 
@@ -1107,14 +1108,21 @@ const WizardModal = ({
       open={visible}
       onCancel={handleCancel}
       footer={renderButtons()}
-      width={800}
+      width="90vw"
+      style={{ maxWidth: '1200px', minWidth: '600px' }}
       destroyOnClose
       maskClosable={false}
-      className="rounded-2xl"
+      className="rounded-2xl wizard-modal"
+      centered
+      bodyStyle={{ 
+        maxHeight: '80vh', 
+        overflowY: 'auto',
+        padding: '0'
+      }}
     >
       <Spin spinning={currentLoading}>
         {wizardInfo ? (
-          <div className="bg-gray-50 rounded-lg p-6 -mx-6 -mb-6 min-h-[400px]">
+          <div className="bg-gray-50 rounded-lg p-6 min-h-[400px]">
             <Form
               form={form}
               layout="vertical"
@@ -1152,23 +1160,24 @@ const WizardModal = ({
                          // Ajustar columnas basado en el tipo de campo y cantidad
                          let colSpan = 24; // Por defecto una columna por fila
                          
-                         if (group.fields.length <= 2) {
-                           // Si hay 2 campos o menos, usar 2 columnas
-                           colSpan = 12;
-                         } else if (group.fields.length <= 4) {
-                           // Si hay 3-4 campos, usar 2 columnas
-                           colSpan = 12;
-                         } else if (group.fields.length <= 6) {
-                           // Si hay 5-6 campos, usar 3 columnas
-                           colSpan = 8;
-                         } else {
-                           // Si hay más de 6 campos, usar 4 columnas
-                           colSpan = 6;
-                         }
-                         
-                         // Campos especiales que necesitan más espacio
+                         // Campos especiales que necesitan toda la fila
                          if (field.type === 'many2many' || field.type === 'text') {
                            colSpan = 24; // Toda la fila
+                         } else {
+                           // Lógica mejorada para aprovechar mejor el espacio horizontal
+                           if (group.fields.length <= 2) {
+                             colSpan = 12; // 2 campos = 2 columnas
+                           } else if (group.fields.length <= 3) {
+                             colSpan = 8; // 3 campos = 3 columnas
+                           } else if (group.fields.length <= 4) {
+                             colSpan = 6; // 4 campos = 4 columnas
+                           } else if (group.fields.length <= 6) {
+                             colSpan = 8; // 5-6 campos = 3 columnas (2 filas)
+                           } else if (group.fields.length <= 8) {
+                             colSpan = 6; // 7-8 campos = 4 columnas (2 filas)
+                           } else {
+                             colSpan = 4; // 9+ campos = 6 columnas
+                           }
                          }
                          
                          return (
