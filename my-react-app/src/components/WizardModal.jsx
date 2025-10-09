@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Button, Space, message, Spin, Card, Row, Col, AutoComplete, Table, Input } from 'antd';
-import { CloseOutlined, CheckOutlined, PlusOutlined, MinusOutlined, SearchOutlined } from '@ant-design/icons';
+import { Modal, Form, Button, Space, message, Spin, Card, Row, Col, AutoComplete, Table, Input, Divider, Typography } from 'antd';
+import { CloseOutlined, CheckOutlined, PlusOutlined, MinusOutlined, SearchOutlined, CalendarOutlined, DollarOutlined } from '@ant-design/icons';
 import trytonService from '../services/trytonService';
+
+const { Title, Text } = Typography;
 
 // Component for many2one fields with autocomplete
 const Many2OneField = ({ name, string, required, help, relation, disabled, form, defaultValue }) => {
@@ -751,11 +753,20 @@ const WizardModal = ({
           <Form.Item
             key={name}
             name={name}
-            label={string}
+            label={
+              <div className="flex items-center gap-2 font-medium text-gray-700">
+                {required && <span className="text-red-500">*</span>}
+                {string}
+              </div>
+            }
             rules={required ? [{ required: true, message: `Field ${string} is required` }] : []}
-            help={fieldDef.help}
+            help={fieldDef.help ? <Text type="secondary" className="text-xs">{fieldDef.help}</Text> : null}
           >
-            <input {...commonProps} />
+            <Input 
+              {...commonProps} 
+              size="large"
+              className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 transition-colors duration-300"
+            />
           </Form.Item>
         );
 
@@ -778,11 +789,21 @@ const WizardModal = ({
           <Form.Item
             key={name}
             name={name}
-            label={string}
+            label={
+              <div className="flex items-center gap-2 font-medium text-gray-700">
+                {required && <span className="text-red-500">*</span>}
+                {string}
+              </div>
+            }
             rules={required ? [{ required: true, message: `Field ${string} is required` }] : []}
-            help={fieldDef.help}
+            help={fieldDef.help ? <Text type="secondary" className="text-xs">{fieldDef.help}</Text> : null}
           >
-            <input type="number" {...commonProps} />
+            <Input 
+              type="number"
+              {...commonProps} 
+              size="large"
+              className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 transition-colors duration-300"
+            />
           </Form.Item>
         );
 
@@ -866,11 +887,22 @@ const WizardModal = ({
           <Form.Item
             key={name}
             name={name}
-            label={string}
+            label={
+              <div className="flex items-center gap-2 font-medium text-gray-700">
+                {required && <span className="text-red-500">*</span>}
+                <CalendarOutlined className="text-teal-600" />
+                {string}
+              </div>
+            }
             rules={required ? [{ required: true, message: `Field ${string} is required` }] : []}
-            help={fieldDef.help}
+            help={fieldDef.help ? <Text type="secondary" className="text-xs">{fieldDef.help}</Text> : null}
           >
-            <input type="datetime-local" {...commonProps} />
+            <Input 
+              type="datetime-local"
+              {...commonProps} 
+              size="large"
+              className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 transition-colors duration-300"
+            />
           </Form.Item>
         );
 
@@ -893,8 +925,13 @@ const WizardModal = ({
   const renderButtons = () => {
     if (!wizardInfo || !wizardInfo.buttons || wizardInfo.buttons.length === 0) {
       return (
-        <Space>
-          <Button onClick={handleCancel} icon={<CloseOutlined />}>
+        <div className="flex justify-end gap-3 p-5 bg-white rounded-lg shadow-md -mx-6 -mb-6">
+          <Button 
+            onClick={handleCancel} 
+            icon={<CloseOutlined />}
+            size="large"
+            className="min-w-[100px] border-gray-300 text-gray-600 rounded-lg hover:border-teal-600 hover:text-teal-600 transition-colors duration-300"
+          >
             Cancel
           </Button>
           <Button 
@@ -902,15 +939,17 @@ const WizardModal = ({
             onClick={() => form.submit()} 
             icon={<CheckOutlined />}
             loading={currentLoading}
+            size="large"
+            className="min-w-[120px] bg-teal-600 border-teal-600 rounded-lg font-medium hover:bg-teal-700 hover:border-teal-700 transition-colors duration-300"
           >
             Ejecutar
           </Button>
-        </Space>
+        </div>
       );
     }
 
     return (
-      <Space>
+      <div className="flex justify-end gap-3 p-5 bg-white rounded-lg shadow-md -mx-6 -mb-6">
         {wizardInfo.buttons.map((button, index) => {
           if (button.validate) {
             return (
@@ -920,6 +959,11 @@ const WizardModal = ({
                 onClick={() => form.submit()}
                 icon={<CheckOutlined />}
                 loading={currentLoading}
+                size="large"
+                className={button.default 
+                  ? "min-w-[120px] bg-teal-600 border-teal-600 rounded-lg font-medium hover:bg-teal-700 hover:border-teal-700 transition-colors duration-300"
+                  : "min-w-[100px] rounded-lg hover:border-teal-600 transition-colors duration-300"
+                }
               >
                 {button.string}
               </Button>
@@ -930,61 +974,93 @@ const WizardModal = ({
                 key={index}
                 onClick={handleCancel}
                 icon={<CloseOutlined />}
+                size="large"
+                className="min-w-[100px] border-gray-300 text-gray-600 rounded-lg hover:border-teal-600 hover:text-teal-600 transition-colors duration-300"
               >
                 {button.string}
               </Button>
             );
           }
         })}
-      </Space>
+      </div>
     );
   };
 
   return (
     <Modal
-      title={title}
+      title={
+        <div className="flex items-center gap-3 py-2 border-b-2 border-teal-600">
+          <div className="w-10 h-10 bg-teal-600 rounded-lg flex items-center justify-center text-white text-lg font-bold">
+            W
+          </div>
+          <div>
+            <Title level={3} className="m-0 text-teal-600">
+              {title}
+            </Title>
+            <Text type="secondary" className="text-sm">
+              Complete the form below to proceed
+            </Text>
+          </div>
+        </div>
+      }
       open={visible}
       onCancel={handleCancel}
       footer={renderButtons()}
-      width={800}
+      width={900}
       destroyOnClose
       maskClosable={false}
+      className="rounded-2xl"
     >
       <Spin spinning={currentLoading}>
         {wizardInfo ? (
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={handleSubmit}
-            disabled={currentLoading}
-          >
-            {formFields.map((group, groupIndex) => {
-              // Verificación defensiva
-              if (!group || !group.fields || !Array.isArray(group.fields)) {
-                console.warn(`⚠️ Grupo ${groupIndex} no tiene campos válidos:`, group);
-                return null;
-              }
-              
-               return (
-                 <Card 
-                   key={groupIndex}
-                   size="small"
-                   style={{ marginBottom: '16px' }}
-                 >
-                   <Row gutter={[16, 16]}>
-                     {group.fields.map((field, fieldIndex) => (
-                       <Col 
-                         key={fieldIndex}
-                         span={group.colspan === 4 ? 12 : group.colspan === 2 ? 24 : 8}
-                       >
-                         {renderFormField(field)}
-                       </Col>
-                     ))}
-                   </Row>
-                 </Card>
-               );
-            })}
-          </Form>
+          <div className="bg-gray-50 rounded-lg p-6 -mx-6 -mb-6 min-h-[400px]">
+            <Form
+              form={form}
+              layout="vertical"
+              onFinish={handleSubmit}
+              disabled={currentLoading}
+            >
+              {formFields.map((group, groupIndex) => {
+                // Verificación defensiva
+                if (!group || !group.fields || !Array.isArray(group.fields)) {
+                  console.warn(`⚠️ Grupo ${groupIndex} no tiene campos válidos:`, group);
+                  return null;
+                }
+                
+                 return (
+                   <Card 
+                     key={groupIndex}
+                     size="small"
+                     className="mb-5 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-300"
+                     headStyle={{
+                       background: '#00A88E',
+                       borderRadius: '12px 12px 0 0',
+                       borderBottom: 'none'
+                     }}
+                     title={
+                       <div className="flex items-center gap-2 text-white">
+                         <div className="w-6 h-6 bg-white bg-opacity-20 rounded flex items-center justify-center text-xs font-medium">
+                           {groupIndex + 1}
+                         </div>
+                         {group.title || 'Form Fields'}
+                       </div>
+                     }
+                   >
+                     <Row gutter={[20, 20]}>
+                       {group.fields.map((field, fieldIndex) => (
+                         <Col 
+                           key={fieldIndex}
+                           span={group.colspan === 4 ? 12 : group.colspan === 2 ? 24 : 8}
+                         >
+                           {renderFormField(field)}
+                         </Col>
+                       ))}
+                     </Row>
+                   </Card>
+                 );
+              })}
+            </Form>
+          </div>
         ) : (
           <div style={{ textAlign: 'center', padding: '20px' }}>
             <p>Error: Could not load wizard information</p>
