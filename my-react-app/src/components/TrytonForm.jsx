@@ -703,28 +703,14 @@ const TrytonForm = ({
 
   return (
     <Card 
-      className="rounded-2xl shadow-lg border border-teal-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+      className="rounded-2xl shadow-lg border border-teal-100"
       headStyle={{
         background: 'linear-gradient(135deg, #00A88E 0%, #00C4A7 100%)',
         borderRadius: '16px 16px 0 0',
         border: 'none',
         padding: '20px 24px'
       }}
-      title={
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-            <span className="text-white text-lg font-bold">F</span>
-          </div>
-          <div>
-            <Title level={4} className="text-white font-semibold m-0">
-              {title}
-            </Title>
-            <Text className="text-white text-opacity-80 text-sm">
-              {model} {recordId ? `- Registro ${recordId}` : '- Nuevo registro'}
-            </Text>
-          </div>
-        </div>
-      }
+      title={null}
       extra={
         <Space className="flex flex-wrap gap-2">
           {!readonly && (
@@ -736,14 +722,14 @@ const TrytonForm = ({
                     icon={<SaveOutlined />}
                     loading={saving}
                     onClick={() => form.submit()}
-                    className="bg-teal-600 hover:bg-teal-700 border-teal-600 hover:border-teal-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
+                    className="bg-teal-600 hover:bg-teal-700 border-teal-600 hover:border-teal-700 text-white rounded-lg shadow-md"
                   >
                     {submitButtonText}
                   </Button>
                   <Button 
                     icon={<MinusOutlined />}
                     onClick={handleCancel}
-                    className="bg-white border-gray-300 text-gray-600 hover:border-teal-600 hover:text-teal-600 rounded-lg transition-all duration-300 hover:-translate-y-0.5"
+                    className="bg-white border-gray-300 text-gray-600 hover:border-teal-600 hover:text-teal-600 rounded-lg"
                   >
                     Cancelar
                   </Button>
@@ -753,7 +739,7 @@ const TrytonForm = ({
                   type="primary" 
                   icon={<EditOutlined />}
                   onClick={handleEdit}
-                  className="bg-teal-600 hover:bg-teal-700 border-teal-600 hover:border-teal-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
+                  className="bg-teal-600 hover:bg-teal-700 border-teal-600 hover:border-teal-700 text-white rounded-lg shadow-md"
                 >
                   Editar
                 </Button>

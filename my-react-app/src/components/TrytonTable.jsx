@@ -254,56 +254,42 @@ const TrytonTable = ({
 
   return (
     <Card 
-      className="rounded-2xl shadow-lg border border-teal-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+      className="rounded-2xl shadow-lg border border-teal-100"
       headStyle={{
         background: 'linear-gradient(135deg, #00A88E 0%, #00C4A7 100%)',
         borderRadius: '16px 16px 0 0',
         border: 'none',
         padding: '20px 24px'
       }}
-      title={
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-            <span className="text-white text-lg font-bold">T</span>
-          </div>
-          <div>
-            <Title level={4} className="text-white font-semibold m-0">
-              {title || `Table: ${model}`}
-            </Title>
-            <Text className="text-white text-opacity-80 text-sm">
-              Data management and visualization
-            </Text>
-          </div>
-        </div>
-      }
+      title={null}
       extra={
         <Space className="flex flex-wrap gap-2">
           <Button 
             icon={<ReloadOutlined />}
             onClick={handleRefresh}
             title="Update"
-            className="bg-white bg-opacity-20 border border-white border-opacity-30 text-white hover:bg-opacity-30 hover:border-opacity-50 backdrop-blur-sm rounded-lg transition-all duration-300 hover:-translate-y-0.5"
+            className="bg-white bg-opacity-20 border border-white border-opacity-30 text-white hover:bg-opacity-30 hover:border-opacity-50 backdrop-blur-sm rounded-lg"
           >
             Update
           </Button>
           <Button 
             icon={<DownloadOutlined />}
             title="Export"
-            className="bg-white bg-opacity-20 border border-white border-opacity-30 text-white hover:bg-opacity-30 hover:border-opacity-50 backdrop-blur-sm rounded-lg transition-all duration-300 hover:-translate-y-0.5"
+            className="bg-white bg-opacity-20 border border-white border-opacity-30 text-white hover:bg-opacity-30 hover:border-opacity-50 backdrop-blur-sm rounded-lg"
           >
             Export
           </Button>
           <Button 
             icon={<FilterOutlined />}
             title="Filters"
-            className="bg-white bg-opacity-20 border border-white border-opacity-30 text-white hover:bg-opacity-30 hover:border-opacity-50 backdrop-blur-sm rounded-lg transition-all duration-300 hover:-translate-y-0.5"
+            className="bg-white bg-opacity-20 border border-white border-opacity-30 text-white hover:bg-opacity-30 hover:border-opacity-50 backdrop-blur-sm rounded-lg"
           >
             Filters
           </Button>
           <Button 
             icon={<SettingOutlined />}
             title="Configure"
-            className="bg-white bg-opacity-20 border border-white border-opacity-30 text-white hover:bg-opacity-30 hover:border-opacity-50 backdrop-blur-sm rounded-lg transition-all duration-300 hover:-translate-y-0.5"
+            className="bg-white bg-opacity-20 border border-white border-opacity-30 text-white hover:bg-opacity-30 hover:border-opacity-50 backdrop-blur-sm rounded-lg"
           >
             Configure
           </Button>
