@@ -1114,11 +1114,6 @@ const WizardModal = ({
       maskClosable={false}
       className="rounded-2xl wizard-modal"
       centered
-      bodyStyle={{ 
-        maxHeight: '80vh', 
-        overflowY: 'auto',
-        padding: '0'
-      }}
     >
       <Spin spinning={currentLoading}>
         {wizardInfo ? (
