@@ -1,32 +1,32 @@
 import { useState, useEffect } from 'react';
-import { 
-  Layout, 
-  Menu, 
-  Button, 
-  Input, 
-  Avatar, 
-  Card, 
-  Row, 
-  Col, 
-  Statistic, 
-  Typography, 
-  Space, 
-  Badge, 
-  Dropdown, 
-  Spin, 
+import {
+  Layout,
+  Menu,
+  Button,
+  Input,
+  Avatar,
+  Card,
+  Row,
+  Col,
+  Statistic,
+  Typography,
+  Space,
+  Badge,
+  Dropdown,
+  Spin,
   Alert,
   Tag,
   Divider,
   Tooltip
 } from 'antd';
-import { 
+import {
   MenuOutlined,
   SearchOutlined,
   LogoutOutlined,
   DownOutlined,
   RightOutlined
 } from '@ant-design/icons';
-import { 
+import {
   Heart,
   User,
   Calendar,
@@ -72,6 +72,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
   const [showWizardModal, setShowWizardModal] = useState(false);
   const [wizardInfo, setWizardInfo] = useState(null);
   const [wizardLoading, setWizardLoading] = useState(false);
+  const [loadingContent, setLoadingContent] = useState(false);
 
   useEffect(() => {
     loadSidebarMenu();
@@ -96,7 +97,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
       }
     `;
     document.head.appendChild(style);
-    
+
     return () => {
       document.head.removeChild(style);
     };
@@ -120,26 +121,26 @@ const Dashboard = ({ sessionData, onLogout }) => {
     try {
       setLoading(true);
       console.log('Cargando menú del sidebar...');
-      
+
       // Restaurar la sesión en el servicio
       console.log('Restaurando sesión en el servicio...');
       console.log('Datos de sesión disponibles:', sessionData);
       console.log('Datos de sesión tipo:', typeof sessionData);
       console.log('Datos de sesión keys:', Object.keys(sessionData || {}));
-      
+
       // Restaurar la sesión en el servicio Tryton
       const sessionRestored = trytonService.restoreSession(sessionData);
-      
+
       if (!sessionRestored) {
         throw new Error('No se pudo restaurar la sesión. Los datos de sesión son inválidos.');
       }
-      
+
       // Validar que la sesión sea válida (opcional - no crítico)
       console.log('Validando sesión restaurada...');
       try {
         // Pequeño delay para asegurar que la sesión esté completamente establecida
         await new Promise(resolve => setTimeout(resolve, 500));
-        
+
         const isValid = await trytonService.validateSession();
         if (!isValid) {
           console.warn('⚠️ La sesión no se pudo validar, pero continuando...');
@@ -149,10 +150,10 @@ const Dashboard = ({ sessionData, onLogout }) => {
       } catch (validationError) {
         console.warn('⚠️ Error validando sesión, pero continuando:', validationError.message);
       }
-      
+
       const result = await trytonService.getSidebarMenu();
       console.log('Resultado completo del menú:', result);
-      
+
       // Mostrar información de las preferencias
       if (result.preferences) {
         console.log('Usuario:', result.preferences.user_name);
@@ -160,29 +161,29 @@ const Dashboard = ({ sessionData, onLogout }) => {
         console.log('Idioma:', result.preferences.language);
         console.log('Grupos:', result.preferences.groups?.length || 0);
       }
-      
+
       // Mostrar información de acceso a modelos
       if (result.modelAccess) {
         console.log('Acceso a modelos cargado:', result.modelAccess.length || 0);
         console.log('Modelos con acceso:', result.modelAccess.map(ma => ma.model).slice(0, 10));
       }
-      
+
       // Mostrar información de iconos
       if (result.icons) {
         console.log('Iconos disponibles:', result.icons.length || 0);
       }
-      
+
       // Mostrar información de vistas
       if (result.viewSearch) {
         console.log('Vistas de búsqueda:', result.viewSearch.length || 0);
       }
-      
+
       // Convertir los módulos a elementos del menú con submenús
       const sidebarItems = [
-        { 
-          id: 'dashboard', 
-          name: 'Dashboard', 
-          icon: '📊', 
+        {
+          id: 'dashboard',
+          name: 'Dashboard',
+          icon: '📊',
           type: 'dashboard',
           modelAccessCount: result.modelAccess?.length || 0,
           childs: []
@@ -191,26 +192,28 @@ const Dashboard = ({ sessionData, onLogout }) => {
           id: item.id,
           name: item.name,
           icon: item.icon,
+          iconName: item.iconName,
+          iconUrl: item.iconUrl,
           type: 'module',
           model: item.model,
           description: item.description,
           childs: item.childs || []
         }))
       ];
-      
+
       setMenuItems(sidebarItems);
       console.log('Elementos del sidebar cargados:', sidebarItems);
     } catch (error) {
       console.error('Error cargando menú del sidebar:', error);
       setError('Error cargando el menú: ' + error.message);
-      
+
       // Solo hacer logout automático si es un error crítico de sesión
       if (error.message.includes('No se pudo restaurar la sesión') || error.message.includes('datos de sesión son inválidos')) {
         console.log('Error crítico de sesión, haciendo logout automático...');
         handleLogout();
         return;
       }
-      
+
       // Fallback a menú básico
       setMenuItems([
         { id: 'dashboard', name: 'Dashboard', icon: '📊' },
@@ -238,19 +241,19 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
   const clearPreviousState = () => {
     console.log('🧹 Limpiando estado anterior...');
-    
+
     // Limpiar información del menú anterior
     setSelectedMenuInfo(null);
-    
+
     // Limpiar datos de tabla y formulario
     setTableInfo(null);
     setFormInfo(null);
-    
+
     // Limpiar wizard anterior
     setShowWizardModal(false);
     setWizardInfo(null);
     setWizardLoading(false);
-    
+
     // Limpiar errores
     setError('');
   };
@@ -258,23 +261,23 @@ const Dashboard = ({ sessionData, onLogout }) => {
   const handleActionOptionSelect = async (selectedIndex, selectedOption) => {
     try {
       console.log(`Seleccionada opción ${selectedIndex}:`, selectedOption);
-      
+
       // Cerrar el modal
       setShowActionOptionsModal(false);
       setActionOptions([]);
-      
+
       // Si es una opción de res_model (tiene resModel), ejecutarla directamente
       if (selectedOption.resModel) {
         console.log(`🎯 Ejecutando opción de res_model: ${selectedOption.resModel}`);
-        
+
         // Limpiar estado anterior
         clearPreviousState();
-        
+
         // Ejecutar la opción de res_model
         const result = await trytonService.executeResModelOption(selectedOption);
-        
+
         console.log('Resultado de la opción de res_model:', result);
-        
+
         // Procesar el resultado
         if (result.tableData) {
           setTableInfo(result.tableData);
@@ -283,7 +286,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
           setFormInfo(result.formData);
           setTableInfo(null);
         }
-        
+
         setSelectedMenuInfo({
           menuItem: pendingMenuItem,
           actionInfo: [result],
@@ -294,20 +297,20 @@ const Dashboard = ({ sessionData, onLogout }) => {
           viewId: result.viewId,
           timestamp: new Date().toISOString()
         });
-        
+
         setActiveTab(pendingMenuItem.id);
         setPendingMenuItem(null);
-        
+
       } else {
         // Es una opción normal, ejecutar como antes
         // Limpiar estado anterior antes de procesar nueva selección
         clearPreviousState();
-        
+
         // Ejecutar la acción seleccionada
         const result = await trytonService.executeSelectedAction(pendingMenuItem.id, selectedIndex);
-        
+
         console.log('Resultado de la acción ejecutada:', result);
-        
+
       // Procesar el resultado según el tipo de acción
       if (result.isWizard) {
         console.log('🧙 Wizard detectado:', result.wizardName);
@@ -316,22 +319,22 @@ const Dashboard = ({ sessionData, onLogout }) => {
       } else if (result.requiresContext) {
         console.log('⚠️ La acción requiere contexto:', result.contextModel);
         console.log('📋 Opciones de res_model disponibles:', result.resModelOptions);
-        
+
         // Mostrar modal con opciones de res_model
         setActionOptions(result.resModelOptions);
         setPendingMenuItem(pendingMenuItem);
         setShowActionOptionsModal(true);
         return;
       }
-        
+
         // Si es una acción directa, procesar como menú normal
         if (result.resModel && result.toolbarInfo) {
           await processDirectAction(pendingMenuItem, result);
         }
-        
+
         setPendingMenuItem(null);
       }
-      
+
     } catch (error) {
       console.error('Error ejecutando acción seleccionada:', error);
       setError('Error ejecutando la acción seleccionada: ' + error.message);
@@ -342,28 +345,28 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
   const handleActionOptionsModalClose = () => {
     console.log('🚪 Cerrando modal de opciones de acción...');
-    
+
     setShowActionOptionsModal(false);
     setActionOptions([]);
     setPendingMenuItem(null);
-    
+
     // No limpiar el estado completo aquí, solo cerrar el modal
     // El usuario puede querer mantener la vista actual
   };
 
-  const handleWizardAction = async (wizardResult, menuItem) => {
+  const handleWizardAction = async (wizardResult) => {
     try {
       setWizardLoading(true);
       console.log('🧙 Iniciando wizard:', wizardResult.wizardName);
-      
+
       // Crear el wizard
       const createResult = await trytonService.createWizard(wizardResult.wizardName);
       console.log('✅ Wizard creado:', createResult);
-      
+
       // Obtener el formulario del wizard
       const wizardForm = await trytonService.getWizardForm(wizardResult.wizardName, createResult.wizardId);
       console.log('✅ Formulario de wizard obtenido:', wizardForm);
-      
+
       // Configurar la información del wizard para el modal
       const wizardModalInfo = {
         ...wizardForm,
@@ -371,10 +374,10 @@ const Dashboard = ({ sessionData, onLogout }) => {
         wizardId: createResult.wizardId,
         title: wizardResult.actionName || 'Wizard'
       };
-      
+
       setWizardInfo(wizardModalInfo);
       setShowWizardModal(true);
-      
+
     } catch (error) {
       console.error('Error manejando wizard:', error);
       setError('Error iniciando wizard: ' + error.message);
@@ -386,7 +389,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
   const handleWizardSubmit = async (values, buttonState) => {
     try {
       console.log('🧙 Enviando wizard:', { values, buttonState });
-      
+
       // Ejecutar la acción del wizard
       const result = await trytonService.executeWizardAction(
         wizardInfo.wizardName,
@@ -394,13 +397,13 @@ const Dashboard = ({ sessionData, onLogout }) => {
         values,
         buttonState
       );
-      
+
       console.log('✅ Wizard ejecutado:', result);
-      
+
       // Si el wizard devuelve una vista, procesarla
       if (result && result.view) {
         const view = result.view;
-        
+
         if (view.fields_view && view.fields_view.type === 'tree') {
           // Es una tabla
           setTableInfo({
@@ -423,7 +426,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
           });
           setTableInfo(null);
         }
-        
+
         setSelectedMenuInfo({
           menuItem: pendingMenuItem,
           actionInfo: [result],
@@ -434,13 +437,13 @@ const Dashboard = ({ sessionData, onLogout }) => {
           viewId: view.fields_view?.view_id,
           timestamp: new Date().toISOString()
         });
-        
+
         setActiveTab(pendingMenuItem.id);
       }
-      
+
       // Limpiar el wizard
       await trytonService.deleteWizard(wizardInfo.wizardName, wizardInfo.wizardId);
-      
+
     } catch (error) {
       console.error('Error enviando wizard:', error);
       setError('Error ejecutando wizard: ' + error.message);
@@ -451,12 +454,12 @@ const Dashboard = ({ sessionData, onLogout }) => {
   const handleWizardCancel = async () => {
     try {
       console.log('🧙 Cancelando wizard...');
-      
+
       // Eliminar el wizard
       await trytonService.deleteWizard(wizardInfo.wizardName, wizardInfo.wizardId);
-      
+
       console.log('✅ Wizard cancelado y eliminado');
-      
+
     } catch (error) {
       console.error('Error cancelando wizard:', error);
       // No re-lanzar el error, solo loggearlo
@@ -466,7 +469,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
   const handleWizardModalClose = () => {
     console.log('🚪 Cerrando modal de wizard...');
-    
+
     setShowWizardModal(false);
     setWizardInfo(null);
     setWizardLoading(false);
@@ -481,7 +484,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
       if (actionResult.actionName) {
         updatedItem.name = actionResult.actionName;
         console.log(`🔄 Actualizando nombre del menú ${item.id} a "${actionResult.actionName}"`);
-        
+
         // Actualizar el estado del menú con el nuevo nombre
         setMenuItems(prevItems => {
           const updateMenuItems = (items) => {
@@ -498,25 +501,25 @@ const Dashboard = ({ sessionData, onLogout }) => {
           return updateMenuItems(prevItems);
         });
       }
-      
+
       // Procesar la vista y obtener datos como en el flujo normal
       let tableData = null;
       let formData = null;
       let viewType = null;
       let viewId = null;
-      
+
       if (actionResult.views && actionResult.views.length > 0) {
         // Buscar vista tree primero, luego form
         const treeView = actionResult.views.find(view => view[1] === 'tree');
         const formView = actionResult.views.find(view => view[1] === 'form');
-        
+
         // Priorizar tree view si existe, sino usar form view
         const selectedView = treeView || formView || actionResult.views[0];
         viewId = selectedView[0];
         viewType = selectedView[1];
-        
+
         console.log(`🔍 Obteniendo información de vista para modelo: ${actionResult.resModel}, vista: ${viewId}, tipo: ${viewType}`);
-        
+
         try {
           // Verificar el tipo de vista
           const fieldsView = await trytonService.getFieldsView(
@@ -524,12 +527,12 @@ const Dashboard = ({ sessionData, onLogout }) => {
             viewId,
             viewType
           );
-          
+
           console.log('🔍 Vista obtenida:', fieldsView);
-          
+
           if (fieldsView && fieldsView.type === 'tree') {
             console.log('✅ Vista confirmada como tipo "tree", obteniendo datos...');
-            
+
             tableData = await trytonService.getTableInfo(
               actionResult.resModel,
               viewId,
@@ -540,7 +543,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
             console.log('✅ Información de tabla obtenida:', tableData);
           } else if (fieldsView && fieldsView.type === 'form') {
             console.log('✅ Vista confirmada como tipo "form", preparando formulario...');
-            
+
             // Para formularios, necesitamos obtener los datos del registro
             let recordData = null;
             try {
@@ -552,7 +555,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                 recordId,
                 fields
               );
-              
+
               if (recordData) {
                 console.log('✅ Datos del registro obtenidos:', recordData);
               } else {
@@ -562,7 +565,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
               console.warn('⚠️ Error obteniendo datos del registro:', recordError);
               // Continuar con formulario vacío
             }
-            
+
             formData = {
               model: actionResult.resModel,
               viewId: viewId,
@@ -578,7 +581,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
           console.warn('⚠️ Error obteniendo información de vista:', viewError);
         }
       }
-      
+
       setSelectedMenuInfo({
         menuItem: updatedItem,
         actionInfo: [actionResult],
@@ -589,11 +592,11 @@ const Dashboard = ({ sessionData, onLogout }) => {
         viewId: viewId,
         timestamp: new Date().toISOString()
       });
-      
+
       setTableInfo(tableData);
       setFormInfo(formData);
       setActiveTab(item.id);
-      
+
     } catch (error) {
       console.error('Error procesando acción directa:', error);
       setError('Error procesando la acción: ' + error.message);
@@ -616,43 +619,61 @@ const Dashboard = ({ sessionData, onLogout }) => {
       if (item.id === 'dashboard') {
         setActiveTab(item.id);
         setSelectedMenuInfo(null);
+        setLoadingContent(false);
         return;
       }
 
+      // Si el item tiene hijos, solo expandir/colapsar
+      const hasChildren = item.childs && item.childs.length > 0;
+      if (hasChildren) {
+        toggleMenuExpansion(item.id);
+        return;
+      }
+
+      // Cambiar inmediatamente el tab y mostrar loading
+      setActiveTab(item.id);
+      setLoadingContent(true);
+
       // Limpiar estado anterior antes de procesar menú
-      clearPreviousState();
-      
+      setSelectedMenuInfo(null);
+      setTableInfo(null);
+      setFormInfo(null);
+      setShowWizardModal(false);
+      setWizardInfo(null);
+      setWizardLoading(false);
+      setError('');
+
       // Usar el método del servicio para obtener la información del menú
       const menuInfo = await trytonService.getMenuActionInfo(item.id);
 
       console.log('Información del menú obtenida:', menuInfo);
-      
+
       // Si es un wizard, manejarlo directamente
       if (menuInfo.isWizard) {
         console.log('🧙 Wizard detectado en handleMenuClick:', menuInfo.wizardName);
-        await handleWizardAction(menuInfo, item);
+        await handleWizardAction(menuInfo);
         return;
       }
-      
+
       // Si hay múltiples opciones, mostrar el modal
       if (menuInfo.hasMultipleOptions && menuInfo.options && menuInfo.options.length > 1) {
         console.log('⚠️ Múltiples opciones detectadas, mostrando modal de selección');
-        
+
         // Limpiar estado anterior antes de mostrar modal
         clearPreviousState();
-        
+
         setActionOptions(menuInfo.options);
         setPendingMenuItem(item);
         setShowActionOptionsModal(true);
         return;
       }
-      
+
       // Actualizar el nombre del menú si se obtuvo un actionName
       let updatedItem = { ...item };
       if (menuInfo.actionName) {
         updatedItem.name = menuInfo.actionName;
         console.log(`🔄 Actualizando nombre del menú ${item.id} de "${item.name}" a "${menuInfo.actionName}"`);
-        
+
         // Actualizar el estado del menú con el nuevo nombre
         setMenuItems(prevItems => {
           const updateMenuItems = (items) => {
@@ -669,27 +690,27 @@ const Dashboard = ({ sessionData, onLogout }) => {
           return updateMenuItems(prevItems);
         });
       }
-      
+
       // Si tenemos un modelo, obtener información de la vista (tree o form)
       let tableData = null;
       let formData = null;
       let viewType = null;
       let viewId = null;
-      
+
       if (menuInfo.resModel && menuInfo.actionInfo && menuInfo.actionInfo.length > 0) {
         const actionData = menuInfo.actionInfo[0];
         if (actionData.views && actionData.views.length > 0) {
           // Buscar vista tree primero, luego form
           const treeView = actionData.views.find(view => view[1] === 'tree');
           const formView = actionData.views.find(view => view[1] === 'form');
-          
+
           // Priorizar tree view si existe, sino usar form view
           const selectedView = treeView || formView || actionData.views[0];
           viewId = selectedView[0];
           viewType = selectedView[1];
-          
+
           console.log(`🔍 Obteniendo información de vista para modelo: ${menuInfo.resModel}, vista: ${viewId}, tipo: ${viewType}`);
-          
+
           try {
             // Verificar el tipo de vista
             const fieldsView = await trytonService.getFieldsView(
@@ -697,12 +718,12 @@ const Dashboard = ({ sessionData, onLogout }) => {
               viewId,
               viewType
             );
-            
+
             console.log('🔍 Vista obtenida:', fieldsView);
-            
+
             if (fieldsView && fieldsView.type === 'tree') {
               console.log('✅ Vista confirmada como tipo "tree", obteniendo datos...');
-              
+
               tableData = await trytonService.getTableInfo(
                 menuInfo.resModel,
                 viewId,
@@ -713,7 +734,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
               console.log('✅ Información de tabla obtenida:', tableData);
             } else if (fieldsView && fieldsView.type === 'form') {
               console.log('✅ Vista confirmada como tipo "form", preparando formulario...');
-              
+
               // Para formularios, necesitamos obtener los datos del registro
               let recordData = null;
               try {
@@ -725,7 +746,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                   recordId,
                   fields
                 );
-                
+
                 if (recordData) {
                   console.log('✅ Datos del registro obtenidos:', recordData);
                 } else {
@@ -735,7 +756,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                 console.warn('⚠️ Error obteniendo datos del registro:', recordError);
                 // Continuar con formulario vacío
               }
-              
+
               formData = {
                 model: menuInfo.resModel,
                 viewId: viewId,
@@ -752,7 +773,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
           }
         }
       }
-      
+
       setSelectedMenuInfo({
         menuItem: updatedItem,
         actionInfo: menuInfo.actionInfo,
@@ -763,10 +784,10 @@ const Dashboard = ({ sessionData, onLogout }) => {
         viewId: viewId,
         timestamp: new Date().toISOString()
       });
-      
+
       setTableInfo(tableData);
       setFormInfo(formData);
-      setActiveTab(item.id);
+      setLoadingContent(false);
     } catch (error) {
       console.error('Error obteniendo información del menú:', error);
       setSelectedMenuInfo({
@@ -778,11 +799,27 @@ const Dashboard = ({ sessionData, onLogout }) => {
         error: error.message,
         timestamp: new Date().toISOString()
       });
-      setActiveTab(item.id);
+      setLoadingContent(false);
     }
   };
 
-  const getIconComponent = (icon, name) => {
+  const getIconComponent = (item) => {
+    // Si el item tiene iconUrl (SVG del backend), usarlo
+    if (item?.iconUrl) {
+      return (
+        <img
+          src={item.iconUrl}
+          alt={item.name || 'icon'}
+          style={{
+            width: '16px',
+            height: '16px',
+            objectFit: 'contain'
+          }}
+        />
+      );
+    }
+
+    // Fallback a iconos por defecto si no hay iconUrl
     const iconMap = {
       '📊': BarChart3,
       '💰': DollarSign,
@@ -805,9 +842,9 @@ const Dashboard = ({ sessionData, onLogout }) => {
     };
 
     // Si es un emoji, usar el mapeo
-    if (icon && iconMap[icon]) {
-      const IconComponent = iconMap[icon];
-      return <IconComponent size={16} />;
+    if (item?.icon && iconMap[item.icon]) {
+      const IconComponent = iconMap[item.icon];
+      return <IconComponent size={20} />;
     }
 
     // Si es un nombre específico, mapear por nombre
@@ -828,16 +865,16 @@ const Dashboard = ({ sessionData, onLogout }) => {
       'Report': BarChart3
     };
 
-    if (name && nameMap[name]) {
-      const IconComponent = nameMap[name];
-      return <IconComponent size={16} />;
+    if (item?.name && nameMap[item.name]) {
+      const IconComponent = nameMap[item.name];
+      return <IconComponent size={20} />;
     }
 
     // Fallback por defecto
     return <FileText size={16} />;
   };
 
-  const renderMenuItem = (item, level = 0, isLastChild = false, parentId = null) => {
+  const renderMenuItem = (item, level = 0) => {
     const hasChildren = item.childs && item.childs.length > 0;
     const isExpanded = expandedMenus.has(item.id);
     const isActive = activeTab === item.id;
@@ -845,7 +882,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
     return (
       <div key={item.id} style={{ marginBottom: '2px' }}>
-        <div style={{ 
+        <div style={{
           marginLeft: isChild && sidebarOpen ? '20px' : '0',
           position: 'relative'
         }}>
@@ -888,17 +925,17 @@ const Dashboard = ({ sessionData, onLogout }) => {
             >
               {sidebarOpen ? (
                 <Space style={{ width: '100%', minWidth: 0 }}>
-                  {getIconComponent(item.icon, item.name)}
-                  <div style={{ 
-                    display: 'flex', 
-                    flexDirection: 'column', 
+                  {getIconComponent(item)}
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
                     alignItems: 'flex-start',
                     minWidth: 0,
                     flex: 1
                   }}>
-                    <Text 
-                      style={{ 
-                        fontSize: '14px', 
+                    <Text
+                      style={{
+                        fontSize: '14px',
                         fontWeight: isChild ? '400' : '500',
                         color: isActive ? 'white' : 'white',
                         wordBreak: 'break-word',
@@ -909,9 +946,9 @@ const Dashboard = ({ sessionData, onLogout }) => {
                       {item.name}
                     </Text>
                     {item.type === 'module' && item.model && (
-                      <Text 
-                        style={{ 
-                          fontSize: '12px', 
+                      <Text
+                        style={{
+                          fontSize: '12px',
                           opacity: 0.7,
                           color: isActive ? 'white' : 'rgba(255,255,255,0.7)',
                           wordBreak: 'break-word',
@@ -926,11 +963,11 @@ const Dashboard = ({ sessionData, onLogout }) => {
                 </Space>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  {getIconComponent(item.icon, item.name)}
+                  {getIconComponent(item)}
                 </div>
               )}
             </Button>
-            
+
             {/* Botón de expansión (solo si tiene hijos y el sidebar está abierto) */}
             {hasChildren && sidebarOpen && (
               <Button
@@ -959,15 +996,13 @@ const Dashboard = ({ sessionData, onLogout }) => {
               </Button>
             )}
           </div>
-          
+
           {/* Contenedor de hijos */}
           {hasChildren && isExpanded && sidebarOpen && (
             <div style={{ marginTop: '4px' }}>
-              {item.childs.map((child, index) => renderMenuItem(
-                child, 
-                level + 1, 
-                index === item.childs.length - 1,
-                item.id
+              {item.childs.map((child) => renderMenuItem(
+                child,
+                level + 1
               ))}
             </div>
           )}
@@ -981,9 +1016,9 @@ const Dashboard = ({ sessionData, onLogout }) => {
     switch (activeTab) {
       case 'dashboard':
         return (
-            <div style={{ 
-              padding: '24px', 
-              background: '#F8F9FA', 
+            <div style={{
+              padding: '24px',
+              background: '#F8F9FA',
               minHeight: 'calc(100vh - 64px)',
               overflowY: 'auto'
             }}>
@@ -995,15 +1030,15 @@ const Dashboard = ({ sessionData, onLogout }) => {
                 Current session information
               </Paragraph>
             </div>
-            
-            <div style={{ 
-              background: 'white', 
-              padding: '24px', 
+
+            <div style={{
+              background: 'white',
+              padding: '24px',
               borderRadius: '8px',
               boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
             }}>
               <Title level={3} style={{ marginBottom: '16px' }}>Session Information</Title>
-              
+
               <div style={{ lineHeight: '1.8' }}>
                 <p><strong>User:</strong> {sessionData.username}</p>
                 <p><strong>Database:</strong> {sessionData.database}</p>
@@ -1014,7 +1049,28 @@ const Dashboard = ({ sessionData, onLogout }) => {
             </div>
           </div>
         );
-      default:
+      default: {
+        // Si está cargando contenido, mostrar spinner
+        if (loadingContent) {
+          return (
+            <div style={{
+              padding: '24px',
+              background: '#F8F9FA',
+              minHeight: 'calc(100vh - 64px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'column'
+            }}>
+              <Spin size="large" />
+              <Text style={{ marginTop: '16px', color: '#6C757D' }}>
+                Loading content...
+              </Text>
+            </div>
+          );
+
+        }
+
         // Buscar el elemento seleccionado en todos los niveles
         const findSelectedItem = (items, targetId) => {
           for (const item of items) {
@@ -1028,20 +1084,20 @@ const Dashboard = ({ sessionData, onLogout }) => {
           }
           return null;
         };
-        
+
         const selectedItem = findSelectedItem(menuItems, activeTab);
-        
-        
+
+
         // Si hay información de tabla, mostrar la tabla Tryton
         if (tableInfo && selectedMenuInfo && selectedMenuInfo.resModel) {
           const actionData = selectedMenuInfo.actionInfo && selectedMenuInfo.actionInfo[0];
           const treeView = actionData?.views?.find(view => view[1] === 'tree') || actionData?.views?.[0];
           const viewId = treeView?.[0];
-          
+
           return (
-            <div style={{ 
-              padding: '24px', 
-              background: '#F8F9FA', 
+            <div style={{
+              padding: '24px',
+              background: '#F8F9FA',
               minHeight: 'calc(100vh - 64px)',
               overflowY: 'auto'
             }}>
@@ -1053,7 +1109,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                   {selectedMenuInfo.resModel} - Table view
                 </Paragraph>
               </div>
-              
+
               <TrytonTable
                 model={selectedMenuInfo.resModel}
                 viewId={viewId}
@@ -1065,13 +1121,13 @@ const Dashboard = ({ sessionData, onLogout }) => {
             </div>
           );
         }
-        
+
         // Si hay información de formulario, mostrar el formulario Tryton
         if (formInfo && selectedMenuInfo && selectedMenuInfo.resModel) {
           return (
-            <div style={{ 
-              padding: '24px', 
-              background: '#F8F9FA', 
+            <div style={{
+              padding: '24px',
+              background: '#F8F9FA',
               minHeight: 'calc(100vh - 64px)',
               overflowY: 'auto'
             }}>
@@ -1083,7 +1139,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                   {selectedMenuInfo.resModel} - Form view
                 </Paragraph>
               </div>
-              
+
               <TrytonForm
                 model={formInfo.model}
                 viewId={formInfo.viewId}
@@ -1095,13 +1151,13 @@ const Dashboard = ({ sessionData, onLogout }) => {
             </div>
           );
         }
-        
+
         // Si hay información del menú seleccionado, mostrar el JSON
         if (selectedMenuInfo) {
           return (
-            <div style={{ 
-              padding: '24px', 
-              background: '#F8F9FA', 
+            <div style={{
+              padding: '24px',
+              background: '#F8F9FA',
               minHeight: 'calc(100vh - 64px)',
               overflowY: 'auto'
             }}>
@@ -1113,10 +1169,10 @@ const Dashboard = ({ sessionData, onLogout }) => {
                   Details of the selected menu action
                 </Paragraph>
               </div>
-              
+
               <Row gutter={[24, 24]}>
                 <Col xs={24} lg={8}>
-                  <Card 
+                  <Card
                     title="Menu Information"
                     style={{ borderRadius: '12px' }}
                     bodyStyle={{ padding: '24px' }}
@@ -1160,25 +1216,25 @@ const Dashboard = ({ sessionData, onLogout }) => {
                     </Space>
                   </Card>
                 </Col>
-                
+
                 <Col xs={24} lg={8}>
-                  <Card 
+                  <Card
                     title="Información del Toolbar"
                     style={{ borderRadius: '12px' }}
                     bodyStyle={{ padding: '24px' }}
                   >
                     {selectedMenuInfo.toolbarInfo ? (
-                      <div style={{ 
-                        background: '#f8f9fa', 
-                        border: '1px solid #e9ecef', 
+                      <div style={{
+                        background: '#f8f9fa',
+                        border: '1px solid #e9ecef',
                         borderRadius: '8px',
                         padding: '16px',
                         maxHeight: '300px',
                         overflowY: 'auto'
                       }}>
-                        <pre style={{ 
-                          margin: 0, 
-                          fontSize: '12px', 
+                        <pre style={{
+                          margin: 0,
+                          fontSize: '12px',
                           lineHeight: '1.4',
                           color: '#495057',
                           whiteSpace: 'pre-wrap',
@@ -1197,24 +1253,24 @@ const Dashboard = ({ sessionData, onLogout }) => {
                     )}
                   </Card>
                 </Col>
-                
+
                 <Col xs={24} lg={8}>
-                  <Card 
+                  <Card
                     title="Respuesta RPC (JSON)"
                     style={{ borderRadius: '12px' }}
                     bodyStyle={{ padding: '24px' }}
                   >
-                    <div style={{ 
-                      background: '#f8f9fa', 
-                      border: '1px solid #e9ecef', 
+                    <div style={{
+                      background: '#f8f9fa',
+                      border: '1px solid #e9ecef',
                       borderRadius: '8px',
                       padding: '16px',
                       maxHeight: '500px',
                       overflowY: 'auto'
                     }}>
-                      <pre style={{ 
-                        margin: 0, 
-                        fontSize: '12px', 
+                      <pre style={{
+                        margin: 0,
+                        fontSize: '12px',
                         lineHeight: '1.4',
                         color: '#495057',
                         whiteSpace: 'pre-wrap',
@@ -1229,11 +1285,11 @@ const Dashboard = ({ sessionData, onLogout }) => {
             </div>
           );
         }
-        
+
         return (
-          <div style={{ 
-            padding: '24px', 
-            background: '#F8F9FA', 
+          <div style={{
+            padding: '24px',
+            background: '#F8F9FA',
             minHeight: 'calc(100vh - 64px)',
             overflowY: 'auto'
           }}>
@@ -1245,17 +1301,17 @@ const Dashboard = ({ sessionData, onLogout }) => {
                   Gestión de {selectedItem?.name}
                 </Paragraph>
             </div>
-            
+
             <Row gutter={[24, 24]}>
               <Col xs={24} lg={16}>
-                <Card 
+                <Card
                   style={{ borderRadius: '12px' }}
                   bodyStyle={{ padding: '24px' }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', marginBottom: '24px' }}>
-                    <div style={{ 
-                      width: '48px', 
-                      height: '48px', 
+                    <div style={{
+                      width: '48px',
+                      height: '48px',
                       background: '#00A88E',
                       borderRadius: '8px',
                       display: 'flex',
@@ -1264,7 +1320,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                       marginRight: '16px',
                       color: 'white'
                     }}>
-                      {getIconComponent(selectedItem?.icon, selectedItem?.name)}
+                      {getIconComponent(selectedItem)}
                     </div>
                     <div>
                       <Title level={4} style={{ margin: 0 }}>
@@ -1275,7 +1331,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                       </Text>
                     </div>
                   </div>
-                  
+
                   <Space direction="vertical" style={{ width: '100%' }} size="middle">
                     {selectedItem?.type === 'module' && (
                       <>
@@ -1286,12 +1342,12 @@ const Dashboard = ({ sessionData, onLogout }) => {
                         <Divider style={{ margin: '8px 0' }} />
                       </>
                     )}
-                    
+
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Text type="secondary">ID</Text>
                       <Tag color="default">{selectedItem?.id}</Tag>
                     </div>
-                    
+
                     {selectedItem?.description && (
                       <>
                         <Divider style={{ margin: '8px 0' }} />
@@ -1299,8 +1355,8 @@ const Dashboard = ({ sessionData, onLogout }) => {
                           <Text type="secondary" style={{ display: 'block', marginBottom: '8px' }}>
                             Descripción
                           </Text>
-                          <Card 
-                            size="small" 
+                          <Card
+                            size="small"
                             style={{ background: '#fafafa' }}
                             bodyStyle={{ padding: '12px' }}
                           >
@@ -1312,10 +1368,10 @@ const Dashboard = ({ sessionData, onLogout }) => {
                   </Space>
                 </Card>
               </Col>
-              
+
               <Col xs={24} lg={8}>
                 <Space direction="vertical" style={{ width: '100%' }} size="large">
-                  <Card 
+                  <Card
                     title="Estado del Módulo"
                     style={{ borderRadius: '12px' }}
                     bodyStyle={{ padding: '24px' }}
@@ -1337,8 +1393,8 @@ const Dashboard = ({ sessionData, onLogout }) => {
                       </div>
                     </Space>
                   </Card>
-                  
-                  <Card 
+
+                  <Card
                     title="Acciones"
                     style={{ borderRadius: '12px' }}
                     bodyStyle={{ padding: '24px' }}
@@ -1357,13 +1413,14 @@ const Dashboard = ({ sessionData, onLogout }) => {
             </Row>
           </div>
         );
+      }
     }
   };
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
       {/* Header */}
-      <Header style={{ 
+      <Header style={{
         background: 'white',
         padding: '0 24px',
         display: 'flex',
@@ -1383,8 +1440,8 @@ const Dashboard = ({ sessionData, onLogout }) => {
             type="text"
             icon={<MenuOutlined />}
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            style={{ 
-              color: '#333333', 
+            style={{
+              color: '#333333',
               marginRight: '16px',
               fontSize: '18px'
             }}
@@ -1407,7 +1464,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
             </Title>
           </div>
         </div>
-        
+
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <Search
             placeholder="Search in the system..."
@@ -1420,22 +1477,22 @@ const Dashboard = ({ sessionData, onLogout }) => {
               borderRadius: '8px'
             }}
           />
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
             gap: '12px'
           }}>
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
               gap: '8px',
               padding: '6px 12px',
               background: '#F8F9FA',
               borderRadius: '8px',
               border: '1px solid #E0E7EB'
             }}>
-              <Avatar 
-                style={{ 
+              <Avatar
+                style={{
                   background: '#00A88E',
                   color: 'white',
                   width: '28px',
@@ -1460,7 +1517,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                 type="text"
                 icon={<LogoutOutlined />}
                 onClick={handleLogout}
-                style={{ 
+                style={{
                   color: '#6C757D',
                   width: '32px',
                   height: '32px',
@@ -1502,9 +1559,9 @@ const Dashboard = ({ sessionData, onLogout }) => {
             overflow: 'hidden'
           }}
         >
-          <div 
+          <div
             className="sidebar-scroll"
-            style={{ 
+            style={{
               padding: sidebarOpen ? '16px' : '8px',
               paddingTop: '80px', // Espacio para el header
               height: '100%',
@@ -1515,10 +1572,10 @@ const Dashboard = ({ sessionData, onLogout }) => {
               scrollbarColor: 'rgba(255,255,255,0.3) transparent' // Firefox
             }}>
             {loading ? (
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 padding: '32px 0',
                 flexDirection: sidebarOpen ? 'row' : 'column'
               }}>
@@ -1543,8 +1600,8 @@ const Dashboard = ({ sessionData, onLogout }) => {
                 ) : null}
               />
             ) : null}
-            
-            <div style={{ 
+
+            <div style={{
               marginTop: '16px',
               flex: 1,
               display: 'flex',
@@ -1553,12 +1610,12 @@ const Dashboard = ({ sessionData, onLogout }) => {
             }}>
               {menuItems.map((item) => renderMenuItem(item))}
             </div>
-            
+
           </div>
         </Sider>
 
         {/* Main Content */}
-        <Content style={{ 
+        <Content style={{
           marginLeft: sidebarOpen ? '320px' : '80px',
           transition: 'margin-left 0.2s',
           minHeight: '100vh',
@@ -1568,7 +1625,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
           {renderContent()}
         </Content>
       </Layout>
-      
+
       {/* Modal de selección de opciones de acción */}
       <ActionOptionsModal
         isOpen={showActionOptionsModal}

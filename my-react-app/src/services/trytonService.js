@@ -18,7 +18,7 @@ class TrytonService {
   // Generar header de autorización
   getAuthHeader() {
     if (!this.sessionData) return '';
-    
+
     const { username, userId, sessionId } = this.sessionData;
     // Formato: username + ':' + userId + ':' + sessionId
     // Donde: login = username, user_id = userId, session = sessionId
@@ -34,13 +34,13 @@ class TrytonService {
     if (method === 'common.db.list') {
       return `${this.baseURL}/`;
     }
-    
+
     // Formato: '/' + (database || '') + '/'
     // Si hay base de datos, usar la estructura /database/
     if (this.database && this.database.trim() !== '') {
       return `${this.baseURL}/${this.database}/`;
     }
-    
+
     // Fallback a URL base (sin base de datos)
     return `${this.baseURL}/`;
   }
@@ -48,12 +48,12 @@ class TrytonService {
   // Método RPC principal simplificado
   async makeRpcCall(method, params = []) {
     const url = this.buildURL(method);
-    
-    
+
+
     // Construir parámetros
     // Agregar contexto a los parámetros
     const rpcParams = [...params];
-    
+
     // Agregar contexto si hay sesión
     if (this.sessionData && Object.keys(this.context).length > 0) {
       // Para métodos de wizard, el contexto debe agregarse al final sin interferir
@@ -82,7 +82,7 @@ class TrytonService {
 
 
     try {
-      
+
       // Llamada fetch
       const response = await fetch(url, {
         method: 'POST',
@@ -124,12 +124,12 @@ class TrytonService {
         errorType: error.constructor.name,
         fullError: error
       });
-      
+
       // Manejar errores de red específicamente
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
         throw new Error(`Error de red: No se pudo conectar a ${url}. Verifica que el servidor Tryton esté ejecutándose y que la URL sea correcta.`);
       }
-      
+
       throw error;
     }
   }
@@ -162,26 +162,26 @@ class TrytonService {
   // Login
   async login(database, username, password) {
     try {
-      
+
       // Guardar base de datos
       this.database = database;
-      
+
       // Primero obtener lista de bases de datos (sin base de datos específica)
       const databases = await this.makeRpcCall('common.db.list');
-      
+
       // Verificar si la base de datos existe
       if (!databases.includes(database)) {
         throw new Error(`La base de datos '${database}' no existe. Bases disponibles: ${databases.join(', ')}`);
       }
-      
+
       // Ahora hacer login en la base de datos específica
-      
+
       const loginParams = [
         username,
         { password: password },
         'en' // Idioma
       ];
-      
+
       const result = await this.makeRpcCall('common.db.login', loginParams);
 
       if (result && result.length >= 2) {
@@ -197,7 +197,7 @@ class TrytonService {
 
         // Cargar contexto del usuario
         await this.loadUserContext();
-        
+
         return this.sessionData;
       } else {
         throw new Error('Credenciales inválidas');
@@ -226,9 +226,9 @@ class TrytonService {
     }
 
     try {
-      
+
       await this.makeRpcCall('common.db.logout');
-      
+
       this.clearSession();
       return { success: true };
     } catch (error) {
@@ -244,7 +244,7 @@ class TrytonService {
     this.sessionData = null;
     this.database = null;
     this.context = {};
-    
+
     // Limpiar localStorage
     try {
       localStorage.removeItem('tryton_session');
@@ -255,20 +255,20 @@ class TrytonService {
 
   // Restaurar sesión desde datos externos
   restoreSession(sessionData) {
-    
+
     if (sessionData && typeof sessionData === 'object') {
       if (!sessionData.sessionId || !sessionData.userId || !sessionData.username || !sessionData.database) {
         console.error('Datos de sesión incompletos:', sessionData);
         this.clearSession();
         return false;
       }
-      
+
       this.sessionData = sessionData;
       this.database = sessionData.database;
-      
-      
+
+
       // NO cargar contexto automáticamente aquí - se hará en getSidebarMenu
-      
+
       return true;
     } else {
       this.clearSession();
@@ -279,10 +279,10 @@ class TrytonService {
   // Verificar conexión
   async checkConnection() {
     try {
-      
+
       // Probar common.db.list (sin base de datos)
       const databases = await this.makeRpcCall('common.db.list');
-      
+
       return {
         connected: true,
         databases: databases,
@@ -291,7 +291,7 @@ class TrytonService {
       };
     } catch (error) {
       console.error('Error verificando conexión:', error);
-      
+
       return {
         connected: false,
         error: error.message,
@@ -313,7 +313,7 @@ class TrytonService {
     }
 
     try {
-      
+
       // Usar true como primer parámetro (contexto completo)
       const preferences = await this.makeRpcCall('model.res.user.get_preferences', [true, {}]);
       return preferences;
@@ -331,35 +331,35 @@ class TrytonService {
       }
       return [];
     }
-    
+
     try {
       console.log(`📁 Obteniendo submenús nivel ${level} para IDs:`, childIds);
-      
+
       const submenuDetails = await this.makeRpcCall('model.ir.ui.menu.read', [
         childIds,
         ['active', 'childs', 'favorite', 'icon', 'name', 'parent', 'icon:string', 'parent.rec_name', 'rec_name', '_timestamp', '_write', '_delete'],
         {}
       ]);
-      
+
       if (submenuDetails && submenuDetails.length > 0) {
         console.log(`✅ Obtenidos ${submenuDetails.length} submenús en nivel ${level}`);
-        
+
         // Procesar cada submenú y obtener sus hijos recursivamente
         const processedSubmenus = await Promise.all(submenuDetails.map(async (submenu) => {
           console.log(`🔍 Procesando submenú: ${submenu.name} (ID: ${submenu.id})`);
-          
+
           // Si tiene hijos, obtenerlos recursivamente
           let childSubmenus = [];
           if (submenu.childs && submenu.childs.length > 0) {
             console.log(`📂 Submenú ${submenu.name} tiene ${submenu.childs.length} hijos:`, submenu.childs);
             childSubmenus = await this.getSubmenus(submenu.childs, level + 1, maxDepth);
           }
-          
+
           return {
             id: submenu.id,
             name: submenu.name || submenu.rec_name || `Submenú ${submenu.id}`,
             icon: submenu.icon || '📋',
-            iconName: submenu['icon:string'] || submenu.icon || 'tryton-list',
+            iconName: submenu['icon:string'] || null,
             model: submenu.model || '',
             description: submenu.description || submenu.name || submenu.rec_name || `Submenú ${submenu.id}`,
             sequence: submenu.sequence || 0,
@@ -368,7 +368,7 @@ class TrytonService {
             parentName: submenu['parent.']?.rec_name || null
           };
         }));
-        
+
         console.log(`✅ Completado nivel ${level} con ${processedSubmenus.length} submenús`);
         return processedSubmenus;
       }
@@ -386,7 +386,7 @@ class TrytonService {
     }
 
     try {
-      
+
       // PRIMERO: Probar una llamada simple para verificar la autenticación
       try {
         const testResult = await this.makeRpcCall('model.ir.module.search_read', [
@@ -397,21 +397,21 @@ class TrytonService {
         console.error('Error de autenticación:', authError);
         throw new Error('Error de autenticación: ' + authError.message);
       }
-      
+
       // SECUENCIA CORRECTA:
       // 1. Recargar contexto
       await this.loadUserContext();
-      
+
       // 2. Obtener preferencias del usuario
       const preferences = await this.getUserPreferences();
-      
-      
+
+
       // 3. Cargar acceso a modelos
       const modelAccess = await this.getModelAccess();
-      
+
       // 4. Cargar iconos disponibles
       const icons = await this.makeRpcCall('model.ir.ui.icon.list_icons', [{}]);
-      
+
       // Crear mapa de iconos para mapear IDs con nombres
       const iconMap = {};
       if (Array.isArray(icons)) {
@@ -421,24 +421,24 @@ class TrytonService {
           }
         });
       }
-      
+
       // 5. Obtener menús
       let menuItems = [];
-      
+
       if (preferences.pyson_menu) {
-        
+
         // Usar el pyson_menu para obtener la acción del menú principal
         // Por ahora, vamos a obtener los menús directamente usando ir.ui.menu
         // pero con la sintaxis correcta que funciona
-        
+
         try {
           // PRIMER PASO: Obtener IDs de menús
           const menuIds = await this.makeRpcCall('model.ir.ui.menu.search_read', [
             [['parent', '=', null]],
             ['id']
           ]);
-          
-          
+
+
           if (menuIds && menuIds.length > 0) {
             // SEGUNDO PASO: Obtener detalles completos con read
             const menuDetails = await this.makeRpcCall('model.ir.ui.menu.read', [
@@ -459,20 +459,20 @@ class TrytonService {
               ],
               {} // Contexto
             ]);
-            
-            
+
+
             if (menuDetails && menuDetails.length > 0) {
               menuItems = await Promise.all(menuDetails.map(async (menu) => {
                 const finalName = menu.name || menu.rec_name || `Menú ${menu.id}`;
-                
+
                 // Obtener submenús si existen
                 const submenus = await this.getSubmenus(menu.childs);
-                
+
                 return {
                   id: menu.id,
                   name: finalName,
                   icon: menu.icon || '📋',
-                  iconName: menu['icon:string'] || menu.icon || 'tryton-list',
+                  iconName: menu['icon:string'] || null,
                   model: menu.model || '',
                   description: menu.description || menu.name || menu.rec_name || `Menú ${menu.id}`,
                   sequence: menu.sequence || 0,
@@ -483,38 +483,36 @@ class TrytonService {
           }
         } catch (menuError) {
           console.warn('Error obteniendo menús con search_read, intentando método alternativo:', menuError.message);
-          
+
           // Método alternativo: obtener solo IDs y luego usar read individual
           try {
             const menuIds = await this.makeRpcCall('model.ir.ui.menu.search_read', [
               [['parent', '=', null]],
               ['id']
             ]);
-            
-            
+
+
             // Usar read individual para cada menú
             for (const menuIdObj of menuIds) {
               try {
                 const menuDetails = await this.makeRpcCall('model.ir.ui.menu.read', [
                   [menuIdObj.id],
-                  ['name', 'icon', 'sequence', 'childs', 'model', 'description']
+                  ['name', 'icon', 'icon:string', 'sequence', 'childs', 'model', 'description']
                 ]);
-                
+
                 if (menuDetails && menuDetails.length > 0) {
                   const menu = menuDetails[0];
-                  // Usar el ID del menú para buscar en el mapa de iconos
-                  const iconName = iconMap[menu.id] || 'tryton-list';
-                  
+
                   // Obtener submenús si existen
                   const submenus = await this.getSubmenus(menu.childs);
-                  
+
                   menuItems.push({
                     id: menu.id,
-                    name: menu.name || iconName || `Menú ${menu.id}`,
-                    icon: menu.id || '📋', // Usar el ID del menú como icono
-                    iconName: iconName,
+                    name: menu.name || `Menú ${menu.id}`,
+                    icon: menu.icon || '📋',
+                    iconName: menu['icon:string'] || null,
                     model: menu.model || '',
-                    description: menu.description || menu.name || iconName || `Menú ${menu.id}`,
+                    description: menu.description || menu.name || `Menú ${menu.id}`,
                     sequence: menu.sequence || 0,
                     childs: submenus
                   });
@@ -522,14 +520,13 @@ class TrytonService {
               } catch (individualError) {
                 console.warn(`Error obteniendo detalles del menú ${menuIdObj.id}:`, individualError.message);
                 // Agregar menú básico como fallback
-                const fallbackIconName = iconMap[menuIdObj.id] || 'tryton-list';
                 menuItems.push({
                   id: menuIdObj.id,
-                  name: fallbackIconName || `Menú ${menuIdObj.id}`,
-                  icon: menuIdObj.id || '📋',
-                  iconName: fallbackIconName,
+                  name: `Menú ${menuIdObj.id}`,
+                  icon: '📋',
+                  iconName: null,
                   model: '',
-                  description: fallbackIconName || `Menú ${menuIdObj.id}`,
+                  description: `Menú ${menuIdObj.id}`,
                   sequence: 0,
                   childs: []
                 });
@@ -546,7 +543,7 @@ class TrytonService {
           }
         }
       } else {
-        
+
         // Intentar cargar menús reales cuando no hay pyson_menu
         try {
           // PRIMER INTENTO: Usar search_read para obtener IDs
@@ -554,8 +551,8 @@ class TrytonService {
             [['parent', '=', null]],
             ['id']
           ]);
-          
-          
+
+
           if (menuIds && menuIds.length > 0) {
             // SEGUNDO INTENTO: Usar read con todos los campos
             const menuDetails = await this.makeRpcCall('model.ir.ui.menu.read', [
@@ -576,20 +573,20 @@ class TrytonService {
               ],
               {} // Contexto
             ]);
-            
-            
+
+
             if (menuDetails && menuDetails.length > 0) {
               menuItems = await Promise.all(menuDetails.map(async (menu) => {
                 const finalName = menu.name || menu.rec_name || `Menú ${menu.id}`;
-                
+
                 // Obtener submenús si existen
                 const submenus = await this.getSubmenus(menu.childs);
-                
+
                 return {
                   id: menu.id,
                   name: finalName,
                   icon: menu.icon || '📋',
-                  iconName: menu['icon:string'] || menu.icon || 'tryton-list',
+                  iconName: menu['icon:string'] || null,
                   model: menu.model || '',
                   description: menu.description || menu.name || menu.rec_name || `Menú ${menu.id}`,
                   sequence: menu.sequence || 0,
@@ -604,10 +601,10 @@ class TrytonService {
           }
         } catch (directMenuError) {
           console.warn('Error cargando menús directamente:', directMenuError.message);
-          
+
           // SEGUNDO INTENTO: Usar los IDs que ya tenemos del array que mostraste
           const knownMenuIds = [59, 51, 132, 49, 118, 350, 69, 354, 260, 1];
-          
+
           try {
             // Usar read con múltiples IDs de una vez
             const menuDetails = await this.makeRpcCall('model.ir.ui.menu.read', [
@@ -628,20 +625,20 @@ class TrytonService {
               ],
               {} // Contexto
             ]);
-            
-            
+
+
             if (menuDetails && menuDetails.length > 0) {
               menuItems = await Promise.all(menuDetails.map(async (menu) => {
                 const finalName = menu.name || menu.rec_name || `Menú ${menu.id}`;
-                
+
                 // Obtener submenús si existen
                 const submenus = await this.getSubmenus(menu.childs);
-                
+
                 return {
                   id: menu.id,
                   name: finalName,
                   icon: menu.icon || '📋',
-                  iconName: menu['icon:string'] || menu.icon || 'tryton-list',
+                  iconName: menu['icon:string'] || null,
                   model: menu.model || '',
                   description: menu.description || menu.name || menu.rec_name || `Menú ${menu.id}`,
                   sequence: menu.sequence || 0,
@@ -653,38 +650,36 @@ class TrytonService {
             }
           } catch (readMultipleError) {
             console.warn('Error con read múltiple:', readMultipleError.message);
-            
+
             // TERCER INTENTO: Obtener solo IDs y luego usar read individual
             try {
               const menuIds = await this.makeRpcCall('model.ir.ui.menu.search_read', [
                 [['parent', '=', null]],
                 ['id']
               ]);
-              
-              
+
+
               // Usar read individual para cada menú
               for (const menuIdObj of menuIds) {
                 try {
                   const menuDetails = await this.makeRpcCall('model.ir.ui.menu.read', [
                     [menuIdObj.id],
-                    ['name', 'icon', 'sequence', 'childs', 'model', 'description']
+                    ['name', 'icon', 'icon:string', 'sequence', 'childs', 'model', 'description']
                   ]);
-                  
+
                   if (menuDetails && menuDetails.length > 0) {
                     const menu = menuDetails[0];
-                    // Usar el ID del menú para buscar en el mapa de iconos
-                    const iconName = iconMap[menu.id] || 'tryton-list';
-                    
+
                     // Obtener submenús si existen
                     const submenus = await this.getSubmenus(menu.childs);
-                    
+
                     menuItems.push({
                       id: menu.id,
-                      name: menu.name || iconName || `Menú ${menu.id}`,
-                      icon: menu.id || '📋', // Usar el ID del menú como icono
-                      iconName: iconName,
+                      name: menu.name || `Menú ${menu.id}`,
+                      icon: menu.icon || '📋',
+                      iconName: menu['icon:string'] || null,
                       model: menu.model || '',
-                      description: menu.description || menu.name || iconName || `Menú ${menu.id}`,
+                      description: menu.description || menu.name || `Menú ${menu.id}`,
                       sequence: menu.sequence || 0,
                       childs: submenus
                     });
@@ -692,14 +687,13 @@ class TrytonService {
                 } catch (individualError) {
                   console.warn(`Error obteniendo detalles del menú ${menuIdObj.id}:`, individualError.message);
                   // Agregar menú básico como fallback
-                  const fallbackIconName = iconMap[menuIdObj.id] || 'tryton-list';
                   menuItems.push({
                     id: menuIdObj.id,
-                    name: fallbackIconName || `Menú ${menuIdObj.id}`,
-                    icon: menuIdObj.id || '📋',
-                    iconName: fallbackIconName,
+                    name: `Menú ${menuIdObj.id}`,
+                    icon: '📋',
+                    iconName: null,
                     model: '',
-                    description: fallbackIconName || `Menú ${menuIdObj.id}`,
+                    description: `Menú ${menuIdObj.id}`,
                     sequence: 0,
                     childs: []
                   });
@@ -717,11 +711,57 @@ class TrytonService {
           }
         }
       }
-      
+
       // Ordenar por sequence
       menuItems.sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
-      
-      
+
+      // Extraer todos los nombres de iconos del menú (recursivamente)
+      const extractIconNames = (items) => {
+        const iconNames = new Set();
+        const traverse = (menuItems) => {
+          for (const item of menuItems) {
+            // Solo agregar si iconName es un string válido (no null, no emoji, no número)
+            if (item.iconName &&
+                typeof item.iconName === 'string' &&
+                item.iconName !== '📋' &&
+                item.iconName.trim() !== '' &&
+                isNaN(Number(item.iconName))) {
+              iconNames.add(item.iconName);
+            }
+            if (item.childs && item.childs.length > 0) {
+              traverse(item.childs);
+            }
+          }
+        };
+        traverse(items);
+        return Array.from(iconNames);
+      };
+
+      // Intentar cargar iconos, pero no fallar si hay error
+      try {
+        const iconNames = extractIconNames(menuItems);
+
+        // Precargar todos los iconos en batch
+        const iconUrls = await this.preloadIcons(iconNames, '#267f82');
+
+        // Agregar URLs de iconos a los elementos del menú (recursivamente)
+        const addIconUrls = (items) => {
+          for (const item of items) {
+            if (item.iconName && iconUrls[item.iconName]) {
+              item.iconUrl = iconUrls[item.iconName];
+            }
+            if (item.childs && item.childs.length > 0) {
+              addIconUrls(item.childs);
+            }
+          }
+        };
+
+        addIconUrls(menuItems);
+      } catch (iconError) {
+        console.warn('⚠️ No se pudieron cargar los iconos SVG, usando iconos por defecto:', iconError.message);
+        // Continuar sin iconos SVG
+      }
+
       return {
         preferences,
         menuItems,
@@ -741,7 +781,7 @@ class TrytonService {
   async getAvailableDatabases() {
     try {
       const databases = await this.makeRpcCall('common.db.list');
-      
+
       if (databases && Array.isArray(databases) && databases.length > 0) {
         return databases;
       } else {
@@ -760,10 +800,10 @@ class TrytonService {
     }
 
     try {
-      
+
       // Intentar una llamada simple para verificar que la sesión sigue siendo válida
       const result = await this.makeRpcCall('model.res.user.get_preferences', [true, {}]);
-      
+
       if (result && typeof result === 'object') {
         // Actualizar el contexto con la respuesta
         this.context = result;
@@ -772,12 +812,12 @@ class TrytonService {
         return false;
       }
     } catch (error) {
-      
+
       // Si es un error de red o 401, la sesión definitivamente no es válida
       if (error.message.includes('401') || error.message.includes('expirado') || error.message.includes('NetworkError')) {
         return false;
       }
-      
+
       // Para otros errores, asumir que la sesión podría ser válida
       return true;
     }
@@ -790,12 +830,12 @@ class TrytonService {
     }
 
     try {
-      
+
       const result = await this.makeRpcCall('model.ir.model.access.search_read', [
         [],
         ['model', 'perm_read', 'perm_write', 'perm_create', 'perm_delete']
       ]);
-      
+
       return result;
     } catch (error) {
       console.error('Error obteniendo acceso a modelos:', error);
@@ -816,25 +856,25 @@ class TrytonService {
 
     try {
       console.log(`Obteniendo información de acción para menú ID: ${menuId}`);
-      
+
       // PASO 1: Obtener la información de la acción del menú
       const actionInfo = await this.makeRpcCall('model.ir.action.keyword.get_keyword', [
         'tree_open',
         ['ir.ui.menu', menuId],
         {}
       ]);
-      
+
       console.log('Información de acción obtenida:', actionInfo);
-      
+
       // PASO 2: Verificar si hay múltiples opciones
       if (actionInfo && actionInfo.length > 0) {
         // Si hay múltiples opciones, usar la seleccionada o la primera por defecto
         const selectedAction = actionInfo[selectedActionIndex] || actionInfo[0];
-        
+
         if (selectedAction.type === 'ir.action.wizard') {
           // CASO: Es un wizard
           console.log(`🧙 Wizard detectado: ${selectedAction.wiz_name}`);
-          
+
           return {
             actionInfo: actionInfo,
             toolbarInfo: null,
@@ -857,7 +897,7 @@ class TrytonService {
         } else if (selectedAction.context_model) {
           // CASO: Hay context_model - múltiples opciones disponibles
           console.log(`⚠️ Múltiples opciones disponibles (${actionInfo.length}). Usando índice ${selectedActionIndex}`);
-          
+
           return {
             actionInfo: actionInfo,
             toolbarInfo: null,
@@ -887,16 +927,16 @@ class TrytonService {
           // CASO: Acción directa sin context_model
           const resModel = selectedAction.res_model;
           const actionName = selectedAction.name || `Menú ${menuId}`;
-        
+
         console.log(`Modelo encontrado: ${resModel}`);
         console.log(`Nombre de acción: ${actionName}`);
-        
+
         // PASO 3: Hacer la llamada view_toolbar_get con el modelo obtenido
         console.log(`Ejecutando view_toolbar_get para modelo: ${resModel}`);
         const toolbarInfo = await this.makeRpcCall(`model.${resModel}.view_toolbar_get`, [{}]);
-        
+
         console.log('Información de toolbar obtenida:', toolbarInfo);
-        
+
         return {
           actionInfo: actionInfo,
           toolbarInfo: toolbarInfo,
@@ -913,7 +953,7 @@ class TrytonService {
           };
         }
       }
-      
+
         console.warn('No se encontró res_model en la respuesta de acción:', actionInfo);
         return {
           actionInfo: actionInfo,
@@ -941,15 +981,15 @@ class TrytonService {
 
     try {
       console.log(`Obteniendo vista de campos para modelo: ${model}, vista: ${viewId}, tipo: ${viewType}`);
-      
+
       const fieldsView = await this.makeRpcCall(`model.${model}.fields_view_get`, [
         viewId,
         viewType,
         {}
       ]);
-      
+
       console.log('Vista de campos obtenida:', fieldsView);
-      
+
       return fieldsView;
     } catch (error) {
       console.error('Error obteniendo vista de campos:', error);
@@ -966,26 +1006,26 @@ class TrytonService {
     try {
       console.log(`Obteniendo datos para modelo: ${model}`);
       console.log('Parámetros:', { domain, fields, limit, offset });
-      
+
       // PASO 1: Obtener IDs con search
       const ids = await this.makeRpcCall(`model.${model}.search`, [domain, offset, limit]);
-      
+
       if (ids.length === 0) {
         console.log('📭 No se encontraron registros');
         return [];
       }
-      
+
       console.log(`Encontrados ${ids.length} registros`);
-      
+
       // PASO 2: Expandir campos para incluir relaciones
       const expandedFields = this.expandFieldsForRelations(fields, model);
       console.log(`Campos expandidos:`, expandedFields);
-      
+
       // PASO 3: Obtener datos con read incluyendo campos relacionados
       const data = await this.makeRpcCall(`model.${model}.read`, [ids, expandedFields, {}]);
-      
+
       console.log('Datos obtenidos:', data);
-      
+
       return data;
     } catch (error) {
       console.error('Error obteniendo datos del modelo:', error);
@@ -996,14 +1036,14 @@ class TrytonService {
   // Expandir campos para incluir relaciones automáticamente
   expandFieldsForRelations(fields, model) {
     const expandedFields = [...fields];
-    
+
     // Campos comunes que suelen tener relaciones
     const relationFields = [
       'party', 'template', 'product', 'company', 'supplier',
       'account_category', 'default_uom', 'purchase_uom', 'lot_sequence',
       'default_uom_category', 'parent', 'category', 'uom', 'tax_group'
     ];
-    
+
     // Agregar campos relacionados para cada campo de relación encontrado
     relationFields.forEach(fieldName => {
       if (fields.includes(fieldName) && !expandedFields.includes(`${fieldName}.rec_name`)) {
@@ -1011,7 +1051,7 @@ class TrytonService {
         console.log(`Agregando campo relacionado: ${fieldName}.rec_name`);
       }
     });
-    
+
     // Agregar campos básicos que siempre queremos
     const basicFields = ['rec_name', '_timestamp', '_write', '_delete'];
     basicFields.forEach(fieldName => {
@@ -1019,7 +1059,7 @@ class TrytonService {
         expandedFields.push(fieldName);
       }
     });
-    
+
     return expandedFields;
   }
 
@@ -1031,18 +1071,18 @@ class TrytonService {
 
     try {
       console.log(`Obteniendo información completa de tabla para modelo: ${model}`);
-      
+
       // PASO 1: Obtener vista de campos
       const fieldsView = await this.getFieldsView(model, viewId, viewType);
-      
+
       // PASO 2: Extraer campos de la vista
       const fields = fieldsView.fields ? Object.keys(fieldsView.fields) : [];
-      
+
       // PASO 3: Obtener datos
       const data = await this.getModelData(model, domain, fields, limit, offset);
-      
+
       console.log('Información completa de tabla obtenida');
-      
+
       return {
         fieldsView,
         data,
@@ -1065,13 +1105,13 @@ class TrytonService {
 
     try {
       console.log(`Obteniendo información completa de formulario para modelo: ${model}`);
-      
+
       // PASO 1: Obtener vista de campos
       const fieldsView = await this.getFieldsView(model, viewId, viewType);
-      
+
       // PASO 2: Extraer campos de la vista
       const fields = fieldsView.fields ? Object.keys(fieldsView.fields) : [];
-      
+
       // PASO 3: Si hay recordId, obtener datos del registro
       let data = null;
       if (recordId) {
@@ -1080,9 +1120,9 @@ class TrytonService {
           data = data[0];
         }
       }
-      
+
       console.log('Información completa de formulario obtenida');
-      
+
       return {
         fieldsView,
         data,
@@ -1106,14 +1146,14 @@ class TrytonService {
 
     try {
       console.log(`Obteniendo datos del registro ${recordId} para modelo: ${model}`);
-      
+
       // Obtener datos del registro específico
       const data = await this.makeRpcCall(`model.${model}.read`, [
         [recordId],
         fields,
         {}
       ]);
-      
+
       if (data && data.length > 0) {
         console.log('✅ Datos del registro obtenidos:', data[0]);
         return data[0];
@@ -1135,10 +1175,10 @@ class TrytonService {
 
     try {
       console.log(`Obteniendo opciones de selection para método: ${methodName} en modelo: ${model}`);
-      
+
       // Llamar al método del modelo que devuelve las opciones
       const options = await this.makeRpcCall(`model.${model}.${methodName}`, [context]);
-      
+
       console.log(`✅ Opciones obtenidas para ${methodName}:`, options);
       return options;
     } catch (error) {
@@ -1155,13 +1195,13 @@ class TrytonService {
 
     try {
       console.log(`Obteniendo opciones de acción para menú ID: ${menuId}`);
-      
+
       const actionInfo = await this.makeRpcCall('model.ir.action.keyword.get_keyword', [
         'tree_open',
         ['ir.ui.menu', menuId],
         {}
       ]);
-      
+
       if (actionInfo && actionInfo.length > 0) {
         // Mapear las opciones a un formato más simple para el modal
         const options = actionInfo.map((option, index) => ({
@@ -1174,7 +1214,7 @@ class TrytonService {
           views: option.views || [],
           description: `${option.name} (${option.res_model})`
         }));
-        
+
         console.log(`✅ Opciones de acción obtenidas:`, options);
         return {
           hasOptions: true,
@@ -1202,20 +1242,20 @@ class TrytonService {
 
     try {
       console.log(`Ejecutando acción seleccionada ${selectedActionIndex} para menú ID: ${menuId}`);
-      
+
       // Obtener la información de la acción con el índice seleccionado
       const actionInfo = await this.getMenuActionInfo(menuId, selectedActionIndex);
-      
+
       if (actionInfo.hasMultipleOptions && actionInfo.selectedOption) {
         const selectedOption = actionInfo.selectedOption;
-        
+
         // Si la opción tiene context_model, mostrar modal con opciones de res_model
         if (selectedOption.contextModel) {
           console.log(`⚠️ La opción seleccionada requiere contexto: ${selectedOption.contextModel}`);
-          
+
           // Obtener todas las opciones disponibles
           const allOptions = actionInfo.options;
-          
+
           return {
             requiresContext: true,
             contextModel: selectedOption.contextModel,
@@ -1227,10 +1267,10 @@ class TrytonService {
         } else {
           // Acción directa sin contexto
           console.log(`✅ Ejecutando acción directa: ${selectedOption.resModel}`);
-          
+
           // Obtener toolbar info para la acción directa
           const toolbarInfo = await this.makeRpcCall(`model.${selectedOption.resModel}.view_toolbar_get`, [{}]);
-          
+
           return {
             requiresContext: false,
             resModel: selectedOption.resModel,
@@ -1257,16 +1297,16 @@ class TrytonService {
 
     try {
       console.log(`Obteniendo información del contexto: ${contextModel}`);
-      
+
       // Obtener la vista de formulario del contexto
       const contextFieldsView = await this.makeRpcCall(`model.${contextModel}.fields_view_get`, [
         null, // view_id - usar vista por defecto
         'form', // view_type
         {} // context
       ]);
-      
+
       console.log(`✅ Vista del contexto obtenida:`, contextFieldsView);
-      
+
       return {
         model: contextModel,
         fieldsView: contextFieldsView,
@@ -1286,19 +1326,19 @@ class TrytonService {
 
     try {
       console.log(`🧙 Creando wizard: ${wizardName}`);
-      
+
       // Crear el wizard
       const createResult = await this.makeRpcCall(`wizard.${wizardName}.create`, []);
-      
+
       console.log(`✅ Wizard creado:`, createResult);
-      
+
       // El resultado debería ser [wizardId, state, ...]
       if (createResult && Array.isArray(createResult) && createResult.length >= 2) {
         const wizardId = createResult[0];
         const state = createResult[1];
-        
+
         console.log(`🎯 Wizard ID: ${wizardId}, Estado: ${state}`);
-        
+
         return {
           wizardId: wizardId,
           state: state,
@@ -1321,7 +1361,7 @@ class TrytonService {
 
     try {
       console.log(`🧙 Obteniendo formulario de wizard: ${wizardName}, ID: ${wizardId}`);
-      
+
       // Ejecutar el wizard para obtener el formulario
       // Los parámetros correctos son: [wizardId, stateName, data]
       // Para obtener el formulario inicial, usamos el estado 'start' y datos vacíos
@@ -1330,12 +1370,12 @@ class TrytonService {
         {},       // data (vacío para el formulario inicial)
         'start'   // state_name
       ]);
-      
+
       console.log(`✅ Formulario de wizard obtenido:`, executeResult);
-      
+
       if (executeResult && executeResult.view) {
         const view = executeResult.view;
-        
+
         return {
           wizardId: wizardId,
           state: executeResult.state || view.state,
@@ -1363,7 +1403,7 @@ class TrytonService {
     try {
       console.log(`🧙 Ejecutando acción de wizard: ${wizardName}, ID: ${wizardId}, Estado: ${buttonState}`);
       console.log(`📝 Valores:`, values);
-      
+
       // Ejecutar la acción del wizard con los valores
       // Los parámetros correctos son: [wizardId, data, stateName]
       const executeResult = await this.makeRpcCall(`wizard.${wizardName}.execute`, [
@@ -1371,9 +1411,9 @@ class TrytonService {
         values,       // data (valores del formulario)
         buttonState   // state_name (ej: 'create_', 'end', etc.)
       ]);
-      
+
       console.log(`✅ Acción de wizard ejecutada:`, executeResult);
-      
+
       return executeResult;
     } catch (error) {
       console.error('Error ejecutando acción de wizard:', error);
@@ -1389,12 +1429,12 @@ class TrytonService {
 
     try {
       console.log(`🧙 Eliminando wizard: ${wizardName}, ID: ${wizardId}`);
-      
+
       // Eliminar el wizard
       const deleteResult = await this.makeRpcCall(`wizard.${wizardName}.delete`, [wizardId]);
-      
+
       console.log(`✅ Wizard eliminado:`, deleteResult);
-      
+
       return deleteResult;
     } catch (error) {
       console.error('Error eliminando wizard:', error);
@@ -1410,12 +1450,12 @@ class TrytonService {
 
     try {
       console.log(`Ejecutando opción de res_model: ${resModelOption.resModel}`);
-      
+
       // PASO 1: Intentar obtener fields_view_get con diferentes estrategias
       let fieldsView = null;
       let viewType = null;
       let viewId = null;
-      
+
       // Estrategia 1: Intentar con 'tree' primero (más común para reportes)
       try {
         fieldsView = await this.makeRpcCall(`model.${resModelOption.resModel}.fields_view_get`, [
@@ -1423,7 +1463,7 @@ class TrytonService {
           'tree', // view_type - intentar tree primero
           {}
         ]);
-        
+
         if (fieldsView && fieldsView.type) {
           viewType = fieldsView.type;
           viewId = fieldsView.view_id || null;
@@ -1432,7 +1472,7 @@ class TrytonService {
       } catch (treeError) {
         console.log(`❌ No hay vista tree disponible para ${resModelOption.resModel}:`, treeError.message);
       }
-      
+
       // Estrategia 2: Si tree falló, intentar con 'form'
       if (!viewType || !fieldsView) {
         try {
@@ -1441,7 +1481,7 @@ class TrytonService {
             'form',
             {}
           ]);
-          
+
           if (fieldsView && fieldsView.type) {
             viewType = fieldsView.type;
             viewId = fieldsView.view_id || null;
@@ -1451,7 +1491,7 @@ class TrytonService {
           console.log(`❌ No hay vista form disponible para ${resModelOption.resModel}:`, formError.message);
         }
       }
-      
+
       // Estrategia 3: Si todo falla, intentar sin especificar view_type
       if (!viewType || !fieldsView) {
         try {
@@ -1460,7 +1500,7 @@ class TrytonService {
             null, // Sin especificar view_type
             {}
           ]);
-          
+
           if (fieldsView && fieldsView.type) {
             viewType = fieldsView.type;
             viewId = fieldsView.view_id || null;
@@ -1470,32 +1510,32 @@ class TrytonService {
           console.log(`❌ No hay vista por defecto disponible para ${resModelOption.resModel}:`, defaultError.message);
         }
       }
-      
+
       console.log(`🎯 Tipo de vista final: ${viewType}, ID: ${viewId}`);
-      
+
       // Si ninguna estrategia funcionó, lanzar error
       if (!viewType || !fieldsView) {
         throw new Error(`No se pudo obtener vista para el modelo ${resModelOption.resModel}. No hay vistas tree, form o por defecto disponibles.`);
       }
-      
+
       // PASO 2: Procesar según el tipo de vista determinado
       let tableData = null;
       let formData = null;
-      
+
       if (viewType === 'tree') {
         console.log(`📊 Procesando como tabla (tree)...`);
-        
+
         // Obtener datos para tabla
         const searchParams = [[], 0, 100, null, {}];
         const ids = await this.makeRpcCall(`model.${resModelOption.resModel}.search`, searchParams);
-        
+
         console.log(`📊 IDs encontrados: ${ids.length}`);
-        
+
         if (ids.length > 0) {
           const fields = Object.keys(fieldsView.fields || {});
           const expandedFields = this.expandFieldsForRelations(fields, resModelOption.resModel);
           const data = await this.makeRpcCall(`model.${resModelOption.resModel}.read`, [ids, expandedFields, {}]);
-          
+
           tableData = {
             fieldsView,
             data,
@@ -1504,7 +1544,7 @@ class TrytonService {
             viewType: viewType,
             fields: expandedFields
           };
-          
+
           console.log(`✅ Datos de tabla preparados: ${data.length} registros`);
         } else {
           // Tabla vacía pero con estructura
@@ -1518,10 +1558,10 @@ class TrytonService {
           };
           console.log(`📊 Tabla vacía preparada`);
         }
-        
+
       } else if (viewType === 'form') {
         console.log(`📝 Procesando como formulario (form)...`);
-        
+
         // Para formularios, crear un formulario vacío
         formData = {
           model: resModelOption.resModel,
@@ -1530,12 +1570,12 @@ class TrytonService {
           fieldsView: fieldsView,
           recordData: null // Formulario vacío
         };
-        
+
         console.log(`✅ Formulario preparado`);
-        
+
       } else {
         console.warn(`⚠️ Tipo de vista no reconocido: ${viewType}, usando como formulario por defecto`);
-        
+
         // Fallback a formulario si no se reconoce el tipo
         formData = {
           model: resModelOption.resModel,
@@ -1545,12 +1585,12 @@ class TrytonService {
           recordData: null
         };
       }
-      
+
       // PASO 3: Obtener toolbar info
       const toolbarInfo = await this.makeRpcCall(`model.${resModelOption.resModel}.view_toolbar_get`, [{}]);
-      
+
       console.log(`✅ Toolbar obtenido para ${resModelOption.resModel}`);
-      
+
       return {
         requiresContext: false,
         resModel: resModelOption.resModel,
@@ -1576,52 +1616,52 @@ class TrytonService {
 
     try {
       console.log(`Ejecutando acción con contexto:`, { actionData, contextValues });
-      
+
       // Obtener toolbar info con el contexto
       const toolbarInfo = await this.makeRpcCall(`model.${actionData.resModel}.view_toolbar_get`, [
         { context: contextValues }
       ]);
-      
+
       console.log(`✅ Toolbar obtenido con contexto:`, toolbarInfo);
-      
+
       // Determinar qué vista mostrar basado en las vistas disponibles
       let finalViewType = 'tree'; // por defecto
       let finalViewId = null;
-      
+
       if (actionData.views && actionData.views.length > 0) {
         // Buscar vista tree primero, luego form
         const treeView = actionData.views.find(view => view[1] === 'tree');
         const formView = actionData.views.find(view => view[1] === 'form');
-        
+
         const selectedView = treeView || formView || actionData.views[0];
         finalViewId = selectedView[0];
         finalViewType = selectedView[1];
       }
-      
+
       console.log(`🎯 Vista final seleccionada: ID ${finalViewId}, Tipo ${finalViewType}`);
-      
+
       // Obtener la vista de campos
       const fieldsView = await this.makeRpcCall(`model.${actionData.resModel}.fields_view_get`, [
         finalViewId,
         finalViewType,
         { context: contextValues }
       ]);
-      
+
       console.log(`✅ Vista de campos obtenida:`, fieldsView);
-      
+
       let tableData = null;
       let formData = null;
-      
+
       if (finalViewType === 'tree') {
         // Obtener datos para tabla
         const searchParams = [[], 0, 100, null, { context: contextValues }];
         const ids = await this.makeRpcCall(`model.${actionData.resModel}.search`, searchParams);
-        
+
         if (ids.length > 0) {
           const fields = Object.keys(fieldsView.fields || {});
           const expandedFields = this.expandFieldsForRelations(fields, actionData.resModel);
           const data = await this.makeRpcCall(`model.${actionData.resModel}.read`, [ids, expandedFields, { context: contextValues }]);
-          
+
           tableData = {
             fieldsView,
             data,
@@ -1643,7 +1683,7 @@ class TrytonService {
           context: contextValues
         };
       }
-      
+
       return {
         requiresContext: false,
         resModel: actionData.resModel,
@@ -1670,9 +1710,9 @@ class TrytonService {
 
     try {
       console.log(`Creando nuevo registro en modelo: ${model}`, values);
-      
+
       const result = await this.makeRpcCall(`model.${model}.create`, [[values]]);
-      
+
       console.log('Registro creado:', result);
       return result;
     } catch (error) {
@@ -1689,9 +1729,9 @@ class TrytonService {
 
     try {
       console.log(`Actualizando registro ${recordId} en modelo: ${model}`, values);
-      
+
       const result = await this.makeRpcCall(`model.${model}.write`, [[recordId], values]);
-      
+
       console.log('Registro actualizado:', result);
       return result;
     } catch (error) {
@@ -1708,9 +1748,9 @@ class TrytonService {
 
     try {
       console.log(`Eliminando registro ${recordId} en modelo: ${model}`);
-      
+
       const result = await this.makeRpcCall(`model.${model}.delete`, [[recordId]]);
-      
+
       console.log('Registro eliminado:', result);
       return result;
     } catch (error) {
@@ -1758,17 +1798,17 @@ class TrytonService {
       if (!this.context || Object.keys(this.context).length === 0) {
         await this.loadUserContext();
       }
-      
+
       // 3) Hacer la búsqueda en dos pasos
       // PASO 1: Obtener IDs de pacientes con search
       const searchParams = [domain, offset, limit, order, {}];
       const patientIds = await this.makeRpcCall(`model.${model}.search`, searchParams);
-      
-      
+
+
       if (patientIds.length === 0) {
         return [];
       }
-      
+
       // PASO 2: Obtener datos completos con read
       const readParams = [patientIds, fields, {}];
       const rows = await this.makeRpcCall(`model.${model}.read`, readParams);
@@ -1778,6 +1818,175 @@ class TrytonService {
       console.error('Error obteniendo pacientes:', error);
       throw error;
     }
+  }
+
+
+  async listIcons() {
+    try {
+      const result = await this.makeRpcCall('model.ir.ui.icon.list_icons', [{}]);
+
+      return result || []; // Returns: [[1, 'tryton-list'], [2, 'tryton-star'], ...]
+    } catch (error) {
+      console.error('❌ Error listing icons:', error);
+      throw error;
+    }
+  }
+
+  async getIconData(iconIds) {
+    if (!iconIds || iconIds.length === 0) {
+      return [];
+    }
+
+    try {
+      const result = await this.makeRpcCall('model.ir.ui.icon.read', [
+        iconIds,
+        ['name', 'icon'],
+        {}
+      ]);
+
+      return result;
+    } catch (error) {
+      console.error('❌ Error getting icon data:', error);
+      throw error;
+    }
+  }
+
+  convertSvgToUrl(svgData, color = '#267f82') {
+    try {
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(svgData, 'image/svg+xml');
+
+      const svgElement = xmlDoc.querySelector('svg');
+      if (svgElement) {
+        svgElement.setAttribute('fill', color);
+      }
+
+      const serializer = new XMLSerializer();
+      const modifiedSvg = serializer.serializeToString(xmlDoc);
+
+      const blob = new Blob([modifiedSvg], { type: 'image/svg+xml' });
+      return URL.createObjectURL(blob);
+    } catch (error) {
+      console.error('Error converting SVG to URL:', error);
+      return '';
+    }
+  }
+
+
+  async getIconUrl(iconName, color = '#267f82') {
+    if (!iconName) {
+      return '';
+    }
+
+    try {
+      // CheQquear si está en caché
+      if (this.iconCache && this.iconCache[iconName]) {
+        return this.iconCache[iconName];
+      }
+
+      // Innicializar caché si no existe
+      if (!this.iconCache) {
+        this.iconCache = {};
+      }
+
+      // Conseguir el icon ID del nombre
+      if (!this.iconNameToId) {
+        const iconList = await this.listIcons();
+        this.iconNameToId = {};
+        iconList.forEach(([id, name]) => {
+          this.iconNameToId[name] = id;
+        });
+      }
+
+      const iconId = this.iconNameToId[iconName];
+      if (!iconId) {
+        console.warn(`Icon not found: ${iconName}`);
+        return '';
+      }
+
+      //  CConseguir la data del SVG
+      const iconData = await this.getIconData([iconId]);
+      if (iconData.length === 0 || !iconData[0].icon) {
+        console.warn(`No SVG data for icon: ${iconName}`);
+        return '';
+      }
+
+      // Convertir a URL y cache
+      const url = this.convertSvgToUrl(iconData[0].icon, color);
+      this.iconCache[iconName] = url;
+
+      return url;
+    } catch (error) {
+      console.error(`Error getting icon URL for ${iconName}:`, error);
+      return '';
+    }
+  }
+
+
+  async preloadIcons(iconNames, color = '#267f82') {
+    if (!iconNames || iconNames.length === 0) {
+      return {};
+    }
+
+    try {
+      console.log(`🔄 Preloading ${iconNames.length} icons...`);
+
+      if (!this.iconNameToId) {
+        const iconList = await this.listIcons();
+        this.iconNameToId = {};
+        iconList.forEach(([id, name]) => {
+          this.iconNameToId[name] = id;
+        });
+      }
+
+      const iconIds = iconNames
+        .map(name => this.iconNameToId[name])
+        .filter(id => id);
+
+      if (iconIds.length === 0) {
+        console.warn('No valid icon IDs found for preloading');
+        return {};
+      }
+
+      // Fetch all SVG data at once
+      const iconsData = await this.getIconData(iconIds);
+
+      // Initialize cache if not exists
+      if (!this.iconCache) {
+        this.iconCache = {};
+      }
+
+      // Convert all to URLs and cache
+      const iconMap = {};
+      iconsData.forEach(iconData => {
+        const url = this.convertSvgToUrl(iconData.icon, color);
+        this.iconCache[iconData.name] = url;
+        iconMap[iconData.name] = url;
+      });
+
+      console.log(`✅ Preloaded ${Object.keys(iconMap).length} icons`);
+      return iconMap;
+    } catch (error) {
+      console.error('Error preloading icons:', error);
+      return {};
+    }
+  }
+
+  /**
+   * Clear icon cache (useful for theme changes)
+   */
+  clearIconCache() {
+    if (this.iconCache) {
+      // Revoke all blob URLs to free memory
+      Object.values(this.iconCache).forEach(url => {
+        if (url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+      });
+      this.iconCache = {};
+    }
+    this.iconNameToId = null;
+    console.log('🧹 Icon cache cleared');
   }
 
 }
