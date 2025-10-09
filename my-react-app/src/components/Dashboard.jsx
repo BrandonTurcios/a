@@ -1110,10 +1110,10 @@ const Dashboard = ({ sessionData, onLogout }) => {
         
         
         // Si hay información de tabla, mostrar la tabla Tryton
-        if (tableInfo && selectedMenuInfo && selectedMenuInfo.resModel) {
+        if (tableInfo && selectedMenuInfo && selectedMenuInfo.resModel && selectedMenuInfo.viewType === 'tree') {
           const actionData = selectedMenuInfo.actionInfo && selectedMenuInfo.actionInfo[0];
           const treeView = actionData?.views?.find(view => view[1] === 'tree') || actionData?.views?.[0];
-          const viewId = treeView?.[0];
+          const viewId = treeView?.[0] || selectedMenuInfo.viewId;
           
           return (
             <div style={{ 
@@ -1134,7 +1134,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
               <TrytonTable
                 model={selectedMenuInfo.resModel}
                 viewId={viewId}
-                viewType="tree"
+                viewType={selectedMenuInfo.viewType}
                 domain={[]}
                 limit={100}
                 title={selectedMenuInfo.actionName}
@@ -1144,7 +1144,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
         }
         
         // Si hay información de formulario, mostrar el formulario Tryton
-        if (formInfo && selectedMenuInfo && selectedMenuInfo.resModel) {
+        if (formInfo && selectedMenuInfo && selectedMenuInfo.resModel && selectedMenuInfo.viewType === 'form') {
           return (
             <div style={{ 
               padding: '24px', 
@@ -1164,7 +1164,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
               <TrytonForm
                 model={formInfo.model}
                 viewId={formInfo.viewId}
-                viewType="form"
+                viewType={selectedMenuInfo.viewType}
                 recordId={formInfo.recordData?.id || null}
                 recordData={formInfo.recordData}
                 title={selectedMenuInfo.actionName}
