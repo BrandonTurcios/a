@@ -1088,9 +1088,17 @@ class TrytonService {
     
     // Agregar campos relacionados para cada campo de relación encontrado
     relationFields.forEach(fieldName => {
-      if (fields.includes(fieldName) && !expandedFields.includes(`${fieldName}.rec_name`)) {
-        expandedFields.push(`${fieldName}.rec_name`);
-        console.log(`Agregando campo relacionado: ${fieldName}.rec_name`);
+      if (fields.includes(fieldName)) {
+        // Agregar campo expandido con punto (formato Tryton: campo.)
+        if (!expandedFields.includes(`${fieldName}.`)) {
+          expandedFields.push(`${fieldName}.`);
+          console.log(`Agregando campo relacionado: ${fieldName}.`);
+        }
+        // También agregar .rec_name para compatibilidad
+        if (!expandedFields.includes(`${fieldName}.rec_name`)) {
+          expandedFields.push(`${fieldName}.rec_name`);
+          console.log(`Agregando campo relacionado: ${fieldName}.rec_name`);
+        }
       }
     });
     
@@ -1208,7 +1216,12 @@ class TrytonService {
     // Recorrer todos los campos y expandir los many2one
     Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
       if (fieldDef.type === 'many2one' && fields.includes(fieldName)) {
-        // Agregar .rec_name para campos many2one
+        // Agregar campo expandido con punto (formato Tryton: campo.)
+        if (!expandedFields.includes(`${fieldName}.`)) {
+          expandedFields.push(`${fieldName}.`);
+          console.log(`Agregando campo relacionado many2one: ${fieldName}.`);
+        }
+        // También agregar .rec_name para compatibilidad
         if (!expandedFields.includes(`${fieldName}.rec_name`)) {
           expandedFields.push(`${fieldName}.rec_name`);
           console.log(`Agregando campo relacionado many2one: ${fieldName}.rec_name`);

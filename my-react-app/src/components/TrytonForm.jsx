@@ -203,30 +203,39 @@ const processMany2OneData = (data, fieldsView) => {
         fieldValueType: typeof fieldValue
       });
 
-      // CASO 1: Formato expandido (fieldValue = ID, fieldRecName = nombre)
-      if (fieldValue !== null && fieldValue !== undefined && fieldRecName) {
-        processedData[fieldName] = {
-          id: fieldValue,
-          rec_name: fieldRecName
-        };
-        console.log(`✅ Procesado many2one ${fieldName} (formato expandido):`, processedData[fieldName]);
-      }
-      // CASO 2: Formato objeto directo (fieldValue = objeto con id, name, rec_name)
-      else if (fieldValue && typeof fieldValue === 'object' && fieldValue.id) {
-        processedData[fieldName] = {
-          id: fieldValue.id,
-          rec_name: fieldValue.rec_name || fieldValue.name || `ID: ${fieldValue.id}`
-        };
-        console.log(`✅ Procesado many2one ${fieldName} (formato objeto):`, processedData[fieldName]);
-      }
-      // CASO 3: Solo ID (sin rec_name)
-      else if (fieldValue !== null && fieldValue !== undefined) {
-        processedData[fieldName] = fieldValue; // Mantener como está, se cargará dinámicamente
-        console.log(`⚠️ Campo ${fieldName} solo tiene ID, se cargará dinámicamente:`, fieldValue);
-      }
-      else {
-        console.log(`⚠️ No se pudo procesar ${fieldName}:`, { fieldValue, fieldRecName });
-      }
+       // CASO 1: Formato expandido de Tryton (fieldValue = ID, fieldExpanded = objeto con rec_name)
+       const fieldExpanded = data[`${fieldName}.`]; // Objeto expandido con rec_name
+       if (fieldValue !== null && fieldValue !== undefined && fieldExpanded && fieldExpanded.rec_name) {
+         processedData[fieldName] = {
+           id: fieldValue,
+           rec_name: fieldExpanded.rec_name
+         };
+         console.log(`✅ Procesado many2one ${fieldName} (formato expandido Tryton):`, processedData[fieldName]);
+       }
+       // CASO 2: Formato expandido manual (fieldValue = ID, fieldRecName = nombre)
+       else if (fieldValue !== null && fieldValue !== undefined && fieldRecName) {
+         processedData[fieldName] = {
+           id: fieldValue,
+           rec_name: fieldRecName
+         };
+         console.log(`✅ Procesado many2one ${fieldName} (formato expandido manual):`, processedData[fieldName]);
+       }
+       // CASO 3: Formato objeto directo (fieldValue = objeto con id, name, rec_name)
+       else if (fieldValue && typeof fieldValue === 'object' && fieldValue.id) {
+         processedData[fieldName] = {
+           id: fieldValue.id,
+           rec_name: fieldValue.rec_name || fieldValue.name || `ID: ${fieldValue.id}`
+         };
+         console.log(`✅ Procesado many2one ${fieldName} (formato objeto):`, processedData[fieldName]);
+       }
+       // CASO 4: Solo ID (sin rec_name)
+       else if (fieldValue !== null && fieldValue !== undefined) {
+         processedData[fieldName] = fieldValue; // Mantener como está, se cargará dinámicamente
+         console.log(`⚠️ Campo ${fieldName} solo tiene ID, se cargará dinámicamente:`, fieldValue);
+       }
+       else {
+         console.log(`⚠️ No se pudo procesar ${fieldName}:`, { fieldValue, fieldExpanded, fieldRecName });
+       }
     }
   });
 
