@@ -1079,10 +1079,15 @@ class TrytonService {
       // PASO 1: Obtener vista de campos
       const fieldsView = await this.getFieldsView(model, viewId, viewType);
       
-      // PASO 2: Extraer campos de la vista
+      // PASO 2: Verificar que la vista es realmente del tipo solicitado
+      if (fieldsView && fieldsView.type && fieldsView.type !== viewType) {
+        throw new Error(`View is not of type "${viewType}" (current type: ${fieldsView.type})`);
+      }
+      
+      // PASO 3: Extraer campos de la vista
       const fields = fieldsView.fields ? Object.keys(fieldsView.fields) : [];
       
-      // PASO 3: Obtener datos
+      // PASO 4: Obtener datos
       const data = await this.getModelData(model, domain, fields, limit, offset);
       
       console.log('Información completa de tabla obtenida');
@@ -1113,10 +1118,15 @@ class TrytonService {
       // PASO 1: Obtener vista de campos
       const fieldsView = await this.getFieldsView(model, viewId, viewType);
       
-      // PASO 2: Extraer campos de la vista
+      // PASO 2: Verificar que la vista es realmente del tipo solicitado
+      if (fieldsView && fieldsView.type && fieldsView.type !== viewType) {
+        throw new Error(`View is not of type "${viewType}" (current type: ${fieldsView.type})`);
+      }
+      
+      // PASO 3: Extraer campos de la vista
       const fields = fieldsView.fields ? Object.keys(fieldsView.fields) : [];
       
-      // PASO 3: Si hay recordId, obtener datos del registro
+      // PASO 4: Si hay recordId, obtener datos del registro
       let data = null;
       if (recordId) {
         data = await this.getModelData(model, [['id', '=', recordId]], fields, 1, 0);

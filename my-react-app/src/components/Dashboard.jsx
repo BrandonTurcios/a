@@ -527,7 +527,11 @@ const Dashboard = ({ sessionData, onLogout }) => {
           
           console.log('🔍 Vista obtenida:', fieldsView);
           
-          if (fieldsView && fieldsView.type === 'tree') {
+          // Usar el tipo real de la vista que devuelve Tryton
+          const realViewType = fieldsView.type;
+          viewType = realViewType; // Actualizar viewType con el tipo real
+          
+          if (realViewType === 'tree') {
             console.log('✅ Vista confirmada como tipo "tree", obteniendo datos...');
             
             tableData = await trytonService.getTableInfo(
@@ -538,7 +542,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
               100
             );
             console.log('✅ Información de tabla obtenida:', tableData);
-          } else if (fieldsView && fieldsView.type === 'form') {
+          } else if (realViewType === 'form') {
             console.log('✅ Vista confirmada como tipo "form", preparando formulario...');
             
             // Para formularios, necesitamos obtener los datos del registro
@@ -691,8 +695,13 @@ const Dashboard = ({ sessionData, onLogout }) => {
         // Si ya tenemos la vista de campos del servicio, usarla
         if (menuInfo.fieldsView && menuInfo.viewType) {
           console.log(`🔍 Usando vista de campos ya obtenida: ${menuInfo.viewType}, ID: ${menuInfo.viewId}`);
+          console.log(`🔍 Tipo real de la vista: ${menuInfo.fieldsView.type}`);
           
-          if (menuInfo.viewType === 'tree') {
+          // Usar el tipo real de la vista, no el que establece el servicio
+          const realViewType = menuInfo.fieldsView.type || menuInfo.viewType;
+          viewType = realViewType; // Actualizar viewType con el tipo real
+          
+          if (realViewType === 'tree') {
             console.log('✅ Vista confirmada como tipo "tree", obteniendo datos...');
             
             tableData = await trytonService.getTableInfo(
@@ -703,7 +712,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
               100
             );
             console.log('✅ Información de tabla obtenida:', tableData);
-          } else if (menuInfo.viewType === 'form') {
+          } else if (realViewType === 'form') {
             console.log('✅ Vista confirmada como tipo "form", preparando formulario...');
             
             // Para formularios, necesitamos obtener los datos del registro
@@ -765,7 +774,11 @@ const Dashboard = ({ sessionData, onLogout }) => {
               
               console.log('🔍 Vista obtenida:', fieldsView);
               
-              if (fieldsView && fieldsView.type === 'tree') {
+              // Usar el tipo real de la vista que devuelve Tryton
+              const realViewType = fieldsView.type;
+              viewType = realViewType; // Actualizar viewType con el tipo real
+              
+              if (realViewType === 'tree') {
                 console.log('✅ Vista confirmada como tipo "tree", obteniendo datos...');
                 
                 tableData = await trytonService.getTableInfo(
@@ -776,7 +789,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                   100
                 );
                 console.log('✅ Información de tabla obtenida:', tableData);
-              } else if (fieldsView && fieldsView.type === 'form') {
+              } else if (realViewType === 'form') {
                 console.log('✅ Vista confirmada como tipo "form", preparando formulario...');
                 
                 // Para formularios, necesitamos obtener los datos del registro
