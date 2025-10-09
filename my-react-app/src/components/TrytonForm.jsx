@@ -16,7 +16,8 @@ import {
   Spin, 
   Alert,
   Tag,
-  Tooltip
+  Tooltip,
+  AutoComplete
 } from 'antd';
 import { 
   SaveOutlined, 
@@ -33,6 +34,139 @@ import trytonService from '../services/trytonService';
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
+
+// Component for many2one fields with autocomplete
+const Many2OneField = ({ name, label, fieldDef, required, readonly, help, form, defaultValue }) => {
+  const [options, setOptions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [inputValue, setInputValue] = useState('');
+  const relation = fieldDef.relation;
+
+  // Function to search options based on text
+  const searchOptions = async (searchText) => {
+    if (!relation || !searchText || searchText.length < 2) {
+      setOptions([]);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      console.log(`🔍 Searching options for ${name} (${relation}) with text: "${searchText}"`);
+      
+      const autocompleteMethod = `model.${relation}.autocomplete`;
+      const autocompleteOptions = await trytonService.makeRpcCall(autocompleteMethod, [
+        searchText,  // text
+        [],          // domain (empty to search all)
+        1000,        // limit
+        null,        // order (null for default order)
+        {}           // context (empty, service will add context automatically)
+      ]);
+      
+      if (autocompleteOptions && Array.isArray(autocompleteOptions)) {
+        const formattedOptions = autocompleteOptions.map(option => ({
+          value: option.id.toString(),
+          label: option.name || option.rec_name || `ID: ${option.id}`,
+          id: option.id,
+          name: option.name || option.rec_name
+        }));
+        
+        setOptions(formattedOptions);
+        console.log(`✅ Options found for "${searchText}": ${formattedOptions.length}`);
+      } else {
+        setOptions([]);
+      }
+    } catch (error) {
+      console.warn(`⚠️ Error searching options for ${name}:`, error.message);
+      setOptions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Function to handle selection
+  const handleSelect = (value, option) => {
+    console.log(`✅ Option selected for ${name}:`, { value, option });
+    setInputValue(option.label || '');
+    // Update form value with the ID (as integer)
+    form.setFieldValue(name, parseInt(value));
+  };
+
+  // Function to handle input change
+  const handleChange = (value) => {
+    setInputValue(value || '');
+    // If user clears the text, also clear the form value
+    if (!value) {
+      form.setFieldValue(name, null);
+    }
+  };
+
+  // Load default value when component mounts
+  useEffect(() => {
+    if (defaultValue && typeof defaultValue === 'object') {
+      // If defaultValue has a rec_name property, use it as display value
+      if (defaultValue.rec_name) {
+        setInputValue(defaultValue.rec_name);
+        // Set the actual ID value in the form
+        const actualId = defaultValue.id || defaultValue;
+        form.setFieldValue(name, actualId);
+      }
+    } else if (defaultValue) {
+      // If defaultValue is just an ID, try to load the record name
+      loadRecordName(defaultValue);
+    }
+  }, [defaultValue, name, form]);
+
+  // Function to load record name for a given ID
+  const loadRecordName = async (recordId) => {
+    if (!relation || !recordId) return;
+    
+    try {
+      const records = await trytonService.getModelData(relation, [['id', '=', recordId]], ['id', 'name', 'rec_name'], 1);
+      if (records && records.length > 0) {
+        const record = records[0];
+        setInputValue(record.name || record.rec_name || `ID: ${record.id}`);
+        form.setFieldValue(name, recordId);
+      }
+    } catch (error) {
+      console.warn(`⚠️ Error loading record name for ${name}:`, error.message);
+    }
+  };
+
+  return (
+    <Form.Item
+      name={name}
+      label={
+        <div className="flex items-center gap-2 font-medium text-gray-700">
+          {required && <span className="text-red-500">*</span>}
+          <SearchOutlined className="text-teal-600" />
+          {label}
+        </div>
+      }
+      rules={[{ required, message: `${label} es requerido` }]}
+      help={help ? <Text type="secondary" className="text-xs">{help}</Text> : null}
+      className="mb-6"
+    >
+      <AutoComplete
+        value={inputValue}
+        options={options}
+        onSearch={searchOptions}
+        onSelect={handleSelect}
+        onChange={handleChange}
+        placeholder={`Buscar ${label.toLowerCase()}...`}
+        disabled={readonly}
+        notFoundContent={loading ? <Spin size="small" /> : null}
+        className="w-full"
+        style={{ width: '100%' }}
+        filterOption={false}
+      >
+        <Input
+          suffix={loading ? <Spin size="small" /> : <SearchOutlined className="text-gray-400" />}
+          className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12"
+        />
+      </AutoComplete>
+    </Form.Item>
+  );
+};
 
 const TrytonForm = ({ 
   model, 
@@ -504,31 +638,17 @@ const TrytonForm = ({
         
       case 'many2one':
         return (
-          <Form.Item 
-            key={name} 
-            {...commonProps}
-            label={
-              <div className="flex items-center gap-2 font-medium text-gray-700">
-                {required && <span className="text-red-500">*</span>}
-                <SearchOutlined className="text-teal-600" />
-                {label}
-              </div>
-            }
-            help={help ? <Text type="secondary" className="text-xs">{help}</Text> : null}
-            className="mb-6"
-          >
-            <Select 
-              placeholder={`Seleccione ${label.toLowerCase()}`}
-              showSearch
-              className="w-full rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12"
-              filterOption={(input, option) =>
-                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-              }
-            >
-              {/* Las opciones se cargarían dinámicamente */}
-              <Option value="loading">Cargando opciones...</Option>
-            </Select>
-          </Form.Item>
+          <Many2OneField
+            key={name}
+            name={name}
+            label={label}
+            fieldDef={fieldDef}
+            required={required}
+            readonly={isReadonly}
+            help={help}
+            form={form}
+            defaultValue={formData[name]}
+          />
         );
         
       case 'multiselection':

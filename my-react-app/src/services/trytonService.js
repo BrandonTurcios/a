@@ -1164,12 +1164,19 @@ class TrytonService {
       // PASO 3: Extraer campos de la vista
       const fields = fieldsView.fields ? Object.keys(fieldsView.fields) : [];
       
-      // PASO 4: Si hay recordId, obtener datos del registro
+      // PASO 4: Expandir campos para incluir relaciones many2one
+      const expandedFields = this.expandFieldsForRelationsFromFieldsView(fields, fieldsView);
+      console.log(`Campos expandidos para formulario:`, expandedFields);
+      
+      // PASO 5: Si hay recordId, obtener datos del registro con campos expandidos
       let data = null;
       if (recordId) {
-        data = await this.getModelData(model, [['id', '=', recordId]], fields, 1, 0);
-        if (data && data.length > 0) {
-          data = data[0];
+        const ids = await this.makeRpcCall(`model.${model}.search`, [[['id', '=', recordId]], 0, 1]);
+        if (ids.length > 0) {
+          const dataArray = await this.makeRpcCall(`model.${model}.read`, [ids, expandedFields, {}]);
+          if (dataArray && dataArray.length > 0) {
+            data = dataArray[0];
+          }
         }
       }
       
@@ -1188,6 +1195,36 @@ class TrytonService {
       console.error('Error obteniendo información completa de formulario:', error);
       throw error;
     }
+  }
+  
+  // Expandir campos para incluir relaciones basándose en fieldsView
+  expandFieldsForRelationsFromFieldsView(fields, fieldsView) {
+    const expandedFields = [...fields];
+    
+    if (!fieldsView.fields) {
+      return expandedFields;
+    }
+    
+    // Recorrer todos los campos y expandir los many2one
+    Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
+      if (fieldDef.type === 'many2one' && fields.includes(fieldName)) {
+        // Agregar .rec_name para campos many2one
+        if (!expandedFields.includes(`${fieldName}.rec_name`)) {
+          expandedFields.push(`${fieldName}.rec_name`);
+          console.log(`Agregando campo relacionado many2one: ${fieldName}.rec_name`);
+        }
+      }
+    });
+    
+    // Agregar campos básicos que siempre queremos
+    const basicFields = ['rec_name', '_timestamp', '_write', '_delete'];
+    basicFields.forEach(fieldName => {
+      if (!expandedFields.includes(fieldName)) {
+        expandedFields.push(fieldName);
+      }
+    });
+    
+    return expandedFields;
   }
 
   // Obtener datos de un registro específico para formularios
