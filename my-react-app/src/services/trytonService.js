@@ -902,39 +902,77 @@ class TrytonService {
         let viewType = null;
         let viewId = null;
         
-        try {
-          // Intentar obtener vista tree primero (más común para tablas)
-          fieldsView = await this.makeRpcCall(`model.${resModel}.fields_view_get`, [
-            null, // view_id - usar vista por defecto
-            'tree', // view_type - intentar tree primero
-            {}
-          ]);
+        // Verificar si hay vistas especificadas en la acción
+        if (selectedAction.views && selectedAction.views.length > 0) {
+          console.log(`📋 Vistas disponibles en la acción:`, selectedAction.views);
           
-          if (fieldsView) {
-            // Usar el tipo real que devuelve Tryton, no el solicitado
-            viewType = fieldsView.type || 'tree';
-            viewId = fieldsView.view_id || null;
-            console.log(`✅ Vista obtenida para ${resModel}: solicitado tree, Tryton devuelve "${fieldsView.type}", usando "${viewType}", ID: ${viewId}`);
-          }
-        } catch (treeError) {
-          console.log(`❌ No hay vista tree disponible para ${resModel}:`, treeError.message);
+          // Buscar vista tree primero, luego form
+          const treeView = selectedAction.views.find(view => view[1] === 'tree');
+          const formView = selectedAction.views.find(view => view[1] === 'form');
           
-          // Si tree falló, intentar con form
+          // Priorizar tree view si existe, sino usar form view
+          const selectedView = treeView || formView || selectedAction.views[0];
+          viewId = selectedView[0];
+          viewType = selectedView[1];
+          
+          console.log(`🎯 Vista seleccionada: ID=${viewId}, tipo="${viewType}"`);
+          
+          // Obtener la vista de campos con el ID y tipo específicos
           try {
             fieldsView = await this.makeRpcCall(`model.${resModel}.fields_view_get`, [
-              null,
-              'form',
+              viewId,
+              viewType,
+              {}
+            ]);
+            
+            if (fieldsView) {
+              // Usar el tipo real que devuelve Tryton
+              const realViewType = fieldsView.type || viewType;
+              viewType = realViewType;
+              viewId = fieldsView.view_id || viewId;
+              console.log(`✅ Vista obtenida para ${resModel}: ID=${viewId}, tipo solicitado="${selectedView[1]}", tipo real="${realViewType}"`);
+            }
+          } catch (viewError) {
+            console.log(`❌ Error obteniendo vista específica:`, viewError.message);
+          }
+        } else {
+          // Fallback al método anterior si no hay vistas especificadas
+          console.log(`⚠️ No hay vistas especificadas en la acción, usando método por defecto`);
+          
+          try {
+            // Intentar obtener vista tree primero (más común para tablas)
+            fieldsView = await this.makeRpcCall(`model.${resModel}.fields_view_get`, [
+              null, // view_id - usar vista por defecto
+              'tree', // view_type - intentar tree primero
               {}
             ]);
             
             if (fieldsView) {
               // Usar el tipo real que devuelve Tryton, no el solicitado
-              viewType = fieldsView.type || 'form';
+              viewType = fieldsView.type || 'tree';
               viewId = fieldsView.view_id || null;
-              console.log(`✅ Vista obtenida para ${resModel}: solicitado form, Tryton devuelve "${fieldsView.type}", usando "${viewType}", ID: ${viewId}`);
+              console.log(`✅ Vista obtenida para ${resModel}: solicitado tree, Tryton devuelve "${fieldsView.type}", usando "${viewType}", ID: ${viewId}`);
             }
-          } catch (formError) {
-            console.log(`❌ No hay vista form disponible para ${resModel}:`, formError.message);
+          } catch (treeError) {
+            console.log(`❌ No hay vista tree disponible para ${resModel}:`, treeError.message);
+            
+            // Si tree falló, intentar con form
+            try {
+              fieldsView = await this.makeRpcCall(`model.${resModel}.fields_view_get`, [
+                null,
+                'form',
+                {}
+              ]);
+              
+              if (fieldsView) {
+                // Usar el tipo real que devuelve Tryton, no el solicitado
+                viewType = fieldsView.type || 'form';
+                viewId = fieldsView.view_id || null;
+                console.log(`✅ Vista obtenida para ${resModel}: solicitado form, Tryton devuelve "${fieldsView.type}", usando "${viewType}", ID: ${viewId}`);
+              }
+            } catch (formError) {
+              console.log(`❌ No hay vista form disponible para ${resModel}:`, formError.message);
+            }
           }
         }
         
