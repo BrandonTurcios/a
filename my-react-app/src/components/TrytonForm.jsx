@@ -53,12 +53,20 @@ const Many2OneField = ({ name, label, fieldDef, required, readonly, help, form, 
       setLoading(true);
       console.log(`🔍 Searching options for ${name} (${relation}) with text: "${searchText}"`);
       
-      // El domain del fieldDef puede contener objetos PYSON que no se pueden evaluar en el cliente
-      // Por ahora, usar domain vacío (como lo hace WizardModal)
-      // TODO: Implementar evaluación de PYSON en el futuro si es necesario
-      const domain = [];
-      
-      console.log(`📋 Using empty domain for ${name} (PYSON evaluation not implemented)`);
+      // Parsear el domain del campo (puede ser una cadena JSON)
+      let domain = [];
+      if (fieldDef.domain) {
+        try {
+          // Si domain es una cadena, intentar parsearla
+          domain = typeof fieldDef.domain === 'string' 
+            ? JSON.parse(fieldDef.domain) 
+            : fieldDef.domain;
+          console.log(`📋 Using domain for ${name}:`, domain);
+        } catch (e) {
+          console.warn(`⚠️ Error parsing domain for ${name}:`, e.message);
+          domain = [];
+        }
+      }
       
       // Usar el método autocomplete del servicio
       const autocompleteOptions = await trytonService.autocomplete(

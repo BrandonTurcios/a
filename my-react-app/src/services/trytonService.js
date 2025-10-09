@@ -1285,16 +1285,21 @@ class TrytonService {
 
     try {
       console.log(`🔍 Autocomplete para modelo: ${model}, búsqueda: "${searchText}"`);
-      console.log(`📋 Domain:`, domain);
+      console.log(`📋 Domain original:`, domain);
+      
+      // Evaluar domain PYSON si es necesario
+      const evaluatedDomain = this.evaluatePysonDomain(domain);
+      console.log(`📋 Domain evaluado:`, evaluatedDomain);
       
       // Llamar al método autocomplete del modelo
-      // El contexto se agrega automáticamente en makeRpcCall
+      // Parámetros: [searchText, domain, limit, order, context]
+      // El contexto se agrega automáticamente en makeRpcCall como último parámetro
       const results = await this.makeRpcCall(`model.${model}.autocomplete`, [
         searchText,
-        domain,
+        evaluatedDomain,
         limit,
-        null // order
-        // NO agregar context aquí, makeRpcCall lo agrega automáticamente
+        null,  // order (null para usar orden por defecto)
+        {}     // context placeholder - makeRpcCall lo mezclará con this.context
       ]);
       
       console.log(`✅ Resultados de autocomplete:`, results);
@@ -1303,6 +1308,66 @@ class TrytonService {
       console.error(`Error en autocomplete para ${model}:`, error);
       throw error;
     }
+  }
+
+  // Evaluar domain PYSON simple (evalúa objetos __class__ comunes)
+  evaluatePysonDomain(domain) {
+    if (!domain || !Array.isArray(domain)) {
+      return domain;
+    }
+
+    const evaluateValue = (value) => {
+      // Si es un objeto PYSON
+      if (value && typeof value === 'object' && value.__class__) {
+        switch (value.__class__) {
+          case 'Get':
+            // Get obtiene un valor del contexto
+            // {"__class__": "Get", "v": {"__class__": "Eval", "v": "context", "d": {}}, "k": "company", "d": -1}
+            // Intenta obtener context[company], si no existe usa el default (d)
+            if (value.k === 'company' && this.context && this.context.company) {
+              return this.context.company;
+            }
+            return value.d; // default value
+          
+          case 'Eval':
+            // Eval evalúa una expresión en el contexto
+            // {"__class__": "Eval", "v": "context", "d": {}}
+            if (value.v === 'context') {
+              return this.context || value.d;
+            }
+            return value.d; // default value
+          
+          default:
+            console.warn(`⚠️ PYSON class no soportada: ${value.__class__}, usando valor por defecto`);
+            return value.d || null;
+        }
+      }
+      
+      // Si es un array, evaluar recursivamente
+      if (Array.isArray(value)) {
+        return value.map(v => evaluateValue(v));
+      }
+      
+      // Valor simple, retornar como está
+      return value;
+    };
+
+    // Evaluar cada cláusula del domain
+    return domain.map(clause => {
+      if (Array.isArray(clause)) {
+        // Una cláusula es [field, operator, value]
+        if (clause.length >= 3) {
+          return [
+            clause[0], // field name
+            clause[1], // operator
+            evaluateValue(clause[2]) // value (evaluar PYSON)
+          ];
+        }
+        // Cláusulas especiales como ['AND', ...] o ['OR', ...]
+        return clause.map(c => evaluateValue(c));
+      }
+      return clause;
+    });
   }
 
   // Obtener opciones de acción cuando hay context_model
