@@ -168,6 +168,61 @@ const Many2OneField = ({ name, label, fieldDef, required, readonly, help, form, 
   );
 };
 
+// Helper function to process many2one data from backend format to component format
+const processMany2OneData = (data, fieldsView) => {
+  if (!data || !fieldsView || !fieldsView.fields) {
+    return data;
+  }
+
+  const processedData = { ...data };
+
+  // Identificar campos many2one y procesarlos
+  Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
+    if (fieldDef.type === 'many2one') {
+      const fieldValue = data[fieldName];
+      const fieldRecName = data[`${fieldName}.rec_name`];
+
+      // Si tenemos el ID y el rec_name, crear un objeto
+      if (fieldValue !== null && fieldValue !== undefined && fieldRecName) {
+        processedData[fieldName] = {
+          id: fieldValue,
+          rec_name: fieldRecName
+        };
+        console.log(`Procesado many2one ${fieldName}:`, processedData[fieldName]);
+      }
+    }
+  });
+
+  return processedData;
+};
+
+// Helper function to extract only the IDs from many2one fields for form values
+const extractFormValues = (data, fieldsView) => {
+  if (!data || !fieldsView || !fieldsView.fields) {
+    return data;
+  }
+
+  const formValues = { ...data };
+
+  // Para campos many2one, extraer solo el ID
+  Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
+    if (fieldDef.type === 'many2one' && data[fieldName]) {
+      if (typeof data[fieldName] === 'object' && data[fieldName].id) {
+        // Si es un objeto, extraer el ID
+        formValues[fieldName] = data[fieldName].id;
+      }
+      // Si ya es un número, dejarlo como está
+    }
+    
+    // Remover campos expandidos (.rec_name) del formulario
+    if (fieldName.includes('.')) {
+      delete formValues[fieldName];
+    }
+  });
+
+  return formValues;
+};
+
 const TrytonForm = ({ 
   model, 
   viewId, 
@@ -208,10 +263,14 @@ const TrytonForm = ({
       // Load dynamic selection options
       loadSelectionOptions(fieldsView);
       
-      // Establecer datos del formulario
-      setFormData(recordData || {});
+      // Procesar datos para many2one antes de establecerlos
+      const processedData = processMany2OneData(recordData || {}, fieldsView);
+      setFormData(processedData);
+      
       if (recordData) {
-        form.setFieldsValue(recordData);
+        // Establecer solo los IDs en el formulario (no los objetos completos)
+        const formValues = extractFormValues(processedData, fieldsView);
+        form.setFieldsValue(formValues);
       }
     } else if (model && viewId) {
       loadFormData();
@@ -241,9 +300,17 @@ const TrytonForm = ({
       // Si hay datos del registro, establecerlos
       if (formInfo.data || recordData) {
         const dataToUse = formInfo.data || recordData;
-        setFormData(dataToUse);
-        form.setFieldsValue(dataToUse);
-        console.log('✅ Datos del registro establecidos:', dataToUse);
+        
+        // Procesar datos para many2one
+        const processedData = processMany2OneData(dataToUse, formInfo.fieldsView);
+        setFormData(processedData);
+        
+        // Establecer solo los IDs en el formulario
+        const formValues = extractFormValues(processedData, formInfo.fieldsView);
+        form.setFieldsValue(formValues);
+        
+        console.log('✅ Datos del registro establecidos:', processedData);
+        console.log('✅ Valores del formulario:', formValues);
       } else {
         // Formulario nuevo - establecer valores por defecto
         const defaultValues = getDefaultValues(formInfo.fieldsView);

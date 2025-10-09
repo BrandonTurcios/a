@@ -1235,6 +1235,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                 viewType={selectedMenuInfo.viewType}
                 recordId={formInfo.recordData?.id || null}
                 recordData={formInfo.recordData}
+                fieldsView={formInfo.fieldsView}
                 title={selectedMenuInfo.actionName}
               />
             </div>
