@@ -1278,21 +1278,23 @@ class TrytonService {
   }
 
   // Autocomplete para campos many2one
-  async autocomplete(model, searchText, domain = [], limit = 1000, context = {}) {
+  async autocomplete(model, searchText, domain = [], limit = 1000) {
     if (!this.sessionData) {
       throw new Error('No hay sesión activa');
     }
 
     try {
       console.log(`🔍 Autocomplete para modelo: ${model}, búsqueda: "${searchText}"`);
+      console.log(`📋 Domain:`, domain);
       
       // Llamar al método autocomplete del modelo
+      // El contexto se agrega automáticamente en makeRpcCall
       const results = await this.makeRpcCall(`model.${model}.autocomplete`, [
         searchText,
         domain,
         limit,
-        null, // order
-        context
+        null // order
+        // NO agregar context aquí, makeRpcCall lo agrega automáticamente
       ]);
       
       console.log(`✅ Resultados de autocomplete:`, results);
