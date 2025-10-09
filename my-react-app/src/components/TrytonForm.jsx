@@ -199,6 +199,7 @@ const processMany2OneData = (data, fieldsView) => {
 
   console.log('🔍 Procesando datos many2one - entrada:', data);
   console.log('🔍 Campos disponibles en fieldsView:', Object.keys(fieldsView.fields));
+  console.log('🔍 TODAS las claves en data:', Object.keys(data));
 
   const processedData = { ...data };
 
@@ -220,6 +221,7 @@ const processMany2OneData = (data, fieldsView) => {
 
        // CASO 1: Formato expandido de Tryton (fieldValue = ID, fieldExpanded = objeto con rec_name)
        const fieldExpanded = data[`${fieldName}.`]; // Objeto expandido con rec_name
+       console.log(`🔍 Buscando clave "${fieldName}." en data:`, fieldExpanded);
        if (fieldValue !== null && fieldValue !== undefined && fieldExpanded && fieldExpanded.rec_name) {
          processedData[fieldName] = {
            id: fieldValue,

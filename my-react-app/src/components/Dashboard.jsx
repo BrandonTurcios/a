@@ -566,10 +566,13 @@ const Dashboard = ({ sessionData, onLogout }) => {
               console.log('🔍 Intentando obtener datos del registro...');
               const recordId = 1; // Para configuraciones, generalmente es el registro 1
               const fields = Object.keys(fieldsView.fields || {});
+              // Expandir campos para incluir many2one.rec_name
+              const expandedFields = trytonService.expandFieldsForRelationsFromFieldsView(fields, fieldsView);
+              console.log('🔍 Campos expandidos para formulario:', expandedFields);
               recordData = await trytonService.getFormRecordData(
                 actionResult.resModel,
                 recordId,
-                fields
+                expandedFields
               );
               
               if (recordData) {
@@ -758,10 +761,13 @@ const Dashboard = ({ sessionData, onLogout }) => {
               console.log('🔍 Intentando obtener datos del registro...');
               const recordId = 1; // Para configuraciones, generalmente es el registro 1
               const fields = Object.keys(menuInfo.fieldsView.fields || {});
+              // Expandir campos para incluir many2one.rec_name
+              const expandedFields = trytonService.expandFieldsForRelationsFromFieldsView(fields, menuInfo.fieldsView);
+              console.log('🔍 Campos expandidos para formulario:', expandedFields);
               recordData = await trytonService.getFormRecordData(
                 menuInfo.resModel,
                 recordId,
-                fields
+                expandedFields
               );
               
               if (recordData) {
@@ -833,17 +839,20 @@ const Dashboard = ({ sessionData, onLogout }) => {
               } else if (realViewType === 'form') {
                 console.log('✅ Vista confirmada como tipo "form", preparando formulario...');
                 
-                // Para formularios, necesitamos obtener los datos del registro
-                let recordData = null;
-                try {
-                  console.log('🔍 Intentando obtener datos del registro...');
-                  const recordId = 1; // Para configuraciones, generalmente es el registro 1
-                  const fields = Object.keys(fieldsView.fields || {});
-                  recordData = await trytonService.getFormRecordData(
-                    menuInfo.resModel,
-                    recordId,
-                    fields
-                  );
+            // Para formularios, necesitamos obtener los datos del registro
+            let recordData = null;
+            try {
+              console.log('🔍 Intentando obtener datos del registro...');
+              const recordId = 1; // Para configuraciones, generalmente es el registro 1
+              const fields = Object.keys(menuInfo.fieldsView.fields || {});
+              // Expandir campos para incluir many2one.rec_name
+              const expandedFields = trytonService.expandFieldsForRelationsFromFieldsView(fields, menuInfo.fieldsView);
+              console.log('🔍 Campos expandidos para formulario:', expandedFields);
+              recordData = await trytonService.getFormRecordData(
+                menuInfo.resModel,
+                recordId,
+                expandedFields
+              );
                   
                   if (recordData) {
                     console.log('✅ Datos del registro obtenidos:', recordData);
