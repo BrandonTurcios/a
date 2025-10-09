@@ -102,17 +102,25 @@ const Many2OneField = ({ name, label, fieldDef, required, readonly, help, form, 
 
   // Load default value when component mounts
   useEffect(() => {
+    console.log(`🔍 Many2OneField ${name} - defaultValue:`, defaultValue);
+    
     if (defaultValue && typeof defaultValue === 'object') {
       // If defaultValue has a rec_name property, use it as display value
       if (defaultValue.rec_name) {
+        console.log(`✅ Setting input value for ${name}:`, defaultValue.rec_name);
         setInputValue(defaultValue.rec_name);
         // Set the actual ID value in the form
         const actualId = defaultValue.id || defaultValue;
         form.setFieldValue(name, actualId);
+      } else {
+        console.log(`⚠️ Object defaultValue for ${name} has no rec_name:`, defaultValue);
       }
     } else if (defaultValue) {
       // If defaultValue is just an ID, try to load the record name
+      console.log(`🔍 Loading record name for ${name} with ID:`, defaultValue);
       loadRecordName(defaultValue);
+    } else {
+      console.log(`⚠️ No defaultValue for ${name}`);
     }
   }, [defaultValue, name, form]);
 
@@ -174,6 +182,9 @@ const processMany2OneData = (data, fieldsView) => {
     return data;
   }
 
+  console.log('🔍 Procesando datos many2one - entrada:', data);
+  console.log('🔍 Campos disponibles en fieldsView:', Object.keys(fieldsView.fields));
+
   const processedData = { ...data };
 
   // Identificar campos many2one y procesarlos
@@ -182,17 +193,44 @@ const processMany2OneData = (data, fieldsView) => {
       const fieldValue = data[fieldName];
       const fieldRecName = data[`${fieldName}.rec_name`];
 
-      // Si tenemos el ID y el rec_name, crear un objeto
+      console.log(`🔍 Procesando campo ${fieldName}:`, {
+        fieldValue,
+        fieldRecName,
+        fieldType: fieldDef.type,
+        relation: fieldDef.relation,
+        hasValue: fieldValue !== null && fieldValue !== undefined,
+        hasRecName: !!fieldRecName,
+        fieldValueType: typeof fieldValue
+      });
+
+      // CASO 1: Formato expandido (fieldValue = ID, fieldRecName = nombre)
       if (fieldValue !== null && fieldValue !== undefined && fieldRecName) {
         processedData[fieldName] = {
           id: fieldValue,
           rec_name: fieldRecName
         };
-        console.log(`Procesado many2one ${fieldName}:`, processedData[fieldName]);
+        console.log(`✅ Procesado many2one ${fieldName} (formato expandido):`, processedData[fieldName]);
+      }
+      // CASO 2: Formato objeto directo (fieldValue = objeto con id, name, rec_name)
+      else if (fieldValue && typeof fieldValue === 'object' && fieldValue.id) {
+        processedData[fieldName] = {
+          id: fieldValue.id,
+          rec_name: fieldValue.rec_name || fieldValue.name || `ID: ${fieldValue.id}`
+        };
+        console.log(`✅ Procesado many2one ${fieldName} (formato objeto):`, processedData[fieldName]);
+      }
+      // CASO 3: Solo ID (sin rec_name)
+      else if (fieldValue !== null && fieldValue !== undefined) {
+        processedData[fieldName] = fieldValue; // Mantener como está, se cargará dinámicamente
+        console.log(`⚠️ Campo ${fieldName} solo tiene ID, se cargará dinámicamente:`, fieldValue);
+      }
+      else {
+        console.log(`⚠️ No se pudo procesar ${fieldName}:`, { fieldValue, fieldRecName });
       }
     }
   });
 
+  console.log('🔍 Procesando datos many2one - salida:', processedData);
   return processedData;
 };
 
@@ -208,10 +246,15 @@ const extractFormValues = (data, fieldsView) => {
   Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
     if (fieldDef.type === 'many2one' && data[fieldName]) {
       if (typeof data[fieldName] === 'object' && data[fieldName].id) {
-        // Si es un objeto, extraer el ID
+        // Si es un objeto procesado, extraer el ID
         formValues[fieldName] = data[fieldName].id;
+        console.log(`✅ Extrayendo ID de ${fieldName}:`, data[fieldName].id);
       }
-      // Si ya es un número, dejarlo como está
+      // Si ya es un número (ID directo), dejarlo como está
+      else if (typeof data[fieldName] === 'number') {
+        formValues[fieldName] = data[fieldName];
+        console.log(`✅ Manteniendo ID directo de ${fieldName}:`, data[fieldName]);
+      }
     }
     
     // Remover campos expandidos (.rec_name) del formulario

@@ -782,6 +782,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
               recordData: recordData
             };
             console.log('✅ Información de formulario preparada:', formData);
+            console.log('🔍 recordData que se pasa a TrytonForm:', recordData);
           }
         } else {
           // Fallback al método anterior si no tenemos la vista de campos
