@@ -542,15 +542,21 @@ const Dashboard = ({ sessionData, onLogout }) => {
           
           if (realViewType === 'tree') {
             console.log('✅ Vista confirmada como tipo "tree", obteniendo datos...');
+            console.log(`🔍 Parámetros: resModel=${actionResult.resModel}, viewId=${viewId}`);
             
-            tableData = await trytonService.getTableInfo(
-              actionResult.resModel,
-              viewId,
-              'tree',
-              [],
-              100
-            );
-            console.log('✅ Información de tabla obtenida:', tableData);
+            // Solo llamar a getTableInfo si tenemos un viewId válido
+            if (viewId) {
+              tableData = await trytonService.getTableInfo(
+                actionResult.resModel,
+                viewId,
+                'tree',
+                [],
+                100
+              );
+              console.log('✅ Información de tabla obtenida:', tableData);
+            } else {
+              console.warn('⚠️ No hay viewId disponible, no se puede obtener información de tabla');
+            }
           } else if (realViewType === 'form') {
             console.log('✅ Vista confirmada como tipo "form", preparando formulario...');
             
@@ -707,6 +713,14 @@ const Dashboard = ({ sessionData, onLogout }) => {
       let viewId = null;
       
       if (menuInfo.resModel && menuInfo.actionInfo && menuInfo.actionInfo.length > 0) {
+        console.log(`🔍 Procesando menuInfo para modelo: ${menuInfo.resModel}`);
+        console.log(`🔍 menuInfo completo:`, {
+          hasFieldsView: !!menuInfo.fieldsView,
+          viewType: menuInfo.viewType,
+          viewId: menuInfo.viewId,
+          fieldsViewType: menuInfo.fieldsView?.type
+        });
+        
         // Si ya tenemos la vista de campos del servicio, usarla
         if (menuInfo.fieldsView && menuInfo.viewType) {
           console.log(`🔍 Usando vista de campos ya obtenida: ${menuInfo.viewType}, ID: ${menuInfo.viewId}`);
@@ -716,19 +730,25 @@ const Dashboard = ({ sessionData, onLogout }) => {
           const realViewType = menuInfo.fieldsView.type || menuInfo.viewType;
           viewType = realViewType; // Actualizar viewType con el tipo real
           
-          console.log(`🔍 Comparando tipos: servicio dice "${menuInfo.viewType}", Tryton dice "${menuInfo.fieldsView.type}"`);
+          console.log(`🔍 Comparando tipos: servicio dice "${menuInfo.viewType}", Tryton dice "${menuInfo.fieldsView.type}", usando "${realViewType}"`);
           
           if (realViewType === 'tree') {
             console.log('✅ Vista confirmada como tipo "tree", obteniendo datos...');
+            console.log(`🔍 Parámetros: resModel=${menuInfo.resModel}, viewId=${menuInfo.viewId}`);
             
-            tableData = await trytonService.getTableInfo(
-              menuInfo.resModel,
-              menuInfo.viewId,
-              'tree',
-              [],
-              100
-            );
-            console.log('✅ Información de tabla obtenida:', tableData);
+            // Solo llamar a getTableInfo si tenemos un viewId válido
+            if (menuInfo.viewId) {
+              tableData = await trytonService.getTableInfo(
+                menuInfo.resModel,
+                menuInfo.viewId,
+                'tree',
+                [],
+                100
+              );
+              console.log('✅ Información de tabla obtenida:', tableData);
+            } else {
+              console.warn('⚠️ No hay viewId disponible, no se puede obtener información de tabla');
+            }
           } else if (realViewType === 'form') {
             console.log('✅ Vista confirmada como tipo "form", preparando formulario...');
             
@@ -794,15 +814,21 @@ const Dashboard = ({ sessionData, onLogout }) => {
               
               if (realViewType === 'tree') {
                 console.log('✅ Vista confirmada como tipo "tree", obteniendo datos...');
+                console.log(`🔍 Parámetros: resModel=${menuInfo.resModel}, viewId=${viewId}`);
                 
-                tableData = await trytonService.getTableInfo(
-                  menuInfo.resModel,
-                  viewId,
-                  'tree',
-                  [],
-                  100
-                );
-                console.log('✅ Información de tabla obtenida:', tableData);
+                // Solo llamar a getTableInfo si tenemos un viewId válido
+                if (viewId) {
+                  tableData = await trytonService.getTableInfo(
+                    menuInfo.resModel,
+                    viewId,
+                    'tree',
+                    [],
+                    100
+                  );
+                  console.log('✅ Información de tabla obtenida:', tableData);
+                } else {
+                  console.warn('⚠️ No hay viewId disponible, no se puede obtener información de tabla');
+                }
               } else if (realViewType === 'form') {
                 console.log('✅ Vista confirmada como tipo "form", preparando formulario...');
                 
@@ -1153,11 +1179,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
         
         // Si hay información de tabla, mostrar la tabla Tryton
         if (tableInfo && selectedMenuInfo && selectedMenuInfo.resModel && selectedMenuInfo.viewType === 'tree') {
-          console.log('✅ Renderizando TrytonTable');
-        
-          const actionData = selectedMenuInfo.actionInfo && selectedMenuInfo.actionInfo[0];
-          const treeView = actionData?.views?.find(view => view[1] === 'tree') || actionData?.views?.[0];
-          const viewId = treeView?.[0] || selectedMenuInfo.viewId;
+          console.log('✅ Renderizando TrytonTable con viewId:', tableInfo.viewId);
           
           return (
             <div style={{ 
@@ -1176,9 +1198,9 @@ const Dashboard = ({ sessionData, onLogout }) => {
               </div>
               
               <TrytonTable
-                model={selectedMenuInfo.resModel}
-                viewId={viewId}
-                viewType={selectedMenuInfo.viewType}
+                model={tableInfo.model}
+                viewId={tableInfo.viewId}
+                viewType={tableInfo.viewType}
                 domain={[]}
                 limit={100}
                 title={selectedMenuInfo.actionName}
