@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Button, Space, message, Spin, Card, Row, Col, AutoComplete, Table, Input, Divider, Typography } from 'antd';
-import { CloseOutlined, CheckOutlined, PlusOutlined, MinusOutlined, SearchOutlined, CalendarOutlined, DollarOutlined } from '@ant-design/icons';
+import { Modal, Form, Button, Space, message, Spin, Card, Row, Col, AutoComplete, Table, Input, Divider, Typography, Checkbox, DatePicker, TimePicker, Select } from 'antd';
+import { CloseOutlined, CheckOutlined, PlusOutlined, MinusOutlined, SearchOutlined, CalendarOutlined, DollarOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import trytonService from '../services/trytonService';
+
+const { Option } = Select;
 
 const { Title, Text } = Typography;
 
@@ -116,6 +118,7 @@ const Many2OneField = ({ name, string, required, help, relation, disabled, form,
         label={string}
         rules={required ? [{ required: true, message: `Field ${string} is required` }] : []}
         help={help}
+        className="mb-6"
       >
         <AutoComplete
           placeholder={`Search ${string.toLowerCase()}...`}
@@ -129,7 +132,7 @@ const Many2OneField = ({ name, string, required, help, relation, disabled, form,
           filterOption={false} // Desactivar filtrado local ya que se hace en el servidor
           showSearch
           allowClear
-          style={{ width: '100%' }}
+          className="w-full rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 transition-colors duration-300 h-12 text-base"
           notFoundContent={loading ? "Searching..." : "No options found"}
         />
       </Form.Item>
@@ -294,6 +297,7 @@ const Many2ManyField = ({ name, string, relation, disabled, form, fieldDef, wiza
           icon={<PlusOutlined />}
           onClick={() => handleAddItem(record)}
           disabled={disabled || selectedItems.find(item => item.id === record.id)}
+          className="rounded-lg border-0 bg-teal-600 hover:bg-teal-700 text-white transition-colors duration-300"
         >
           Add
         </Button>
@@ -319,6 +323,7 @@ const Many2ManyField = ({ name, string, relation, disabled, form, fieldDef, wiza
           icon={<MinusOutlined />}
           onClick={() => handleRemoveItem(record.id)}
           disabled={disabled}
+          className="rounded-lg border-2 border-red-300 hover:border-red-500 hover:bg-red-50 text-red-600 hover:text-red-700 transition-colors duration-300"
         >
           Remove
         </Button>
@@ -327,7 +332,7 @@ const Many2ManyField = ({ name, string, relation, disabled, form, fieldDef, wiza
   ];
 
   return (
-    <div>
+    <div className="space-y-6">
       {/* Search input */}
       <Input
         placeholder={`Search ${string.toLowerCase()}...`}
@@ -335,12 +340,15 @@ const Many2ManyField = ({ name, string, relation, disabled, form, fieldDef, wiza
         value={searchText}
         onChange={(e) => handleSearch(e.target.value)}
         disabled={disabled}
-        style={{ marginBottom: 16 }}
+        className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 transition-colors duration-300 h-12 text-base"
       />
 
       {/* Available options table */}
-      <div style={{ marginBottom: 16 }}>
-        <h4>Available {string}</h4>
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <SearchOutlined className="text-teal-600" />
+          Available {string}
+        </h4>
         <Table
           dataSource={availableOptions}
           columns={availableColumns}
@@ -348,12 +356,16 @@ const Many2ManyField = ({ name, string, relation, disabled, form, fieldDef, wiza
           size="small"
           loading={loading}
           pagination={{ pageSize: 5 }}
+          className="rounded-lg"
         />
       </div>
 
       {/* Selected items */}
-      <div>
-        <h4>Selected {string} ({selectedItems.length})</h4>
+      <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
+        <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <CheckOutlined className="text-green-600" />
+          Selected {string} ({selectedItems.length})
+        </h4>
         {selectedItems.length > 0 ? (
           <Table
             dataSource={selectedItems}
@@ -361,9 +373,10 @@ const Many2ManyField = ({ name, string, relation, disabled, form, fieldDef, wiza
             rowKey="id"
             size="small"
             pagination={false}
+            className="rounded-lg"
           />
         ) : (
-          <p style={{ color: '#999', fontStyle: 'italic' }}>No items selected</p>
+          <p className="text-gray-500 italic text-center py-4">No items selected</p>
         )}
       </div>
     </div>
@@ -581,7 +594,7 @@ const WizardModal = ({
       if (rootFields.length > 0) {
         groups.push({
           id: 'root_fields',
-          title: 'Form Fields',
+          title: '',
           colspan: 4,
           fields: rootFields
         });
@@ -775,11 +788,21 @@ const WizardModal = ({
           <Form.Item
             key={name}
             name={name}
-            label={string}
+            label={
+              <div className="flex items-center gap-2 font-medium text-gray-700">
+                {required && <span className="text-red-500">*</span>}
+                {string}
+              </div>
+            }
             rules={required ? [{ required: true, message: `Field ${string} is required` }] : []}
-            help={fieldDef.help}
+            help={fieldDef.help ? <Text type="secondary" className="text-xs">{fieldDef.help}</Text> : null}
+            className="mb-6"
           >
-            <textarea {...commonProps} rows={4} />
+            <Input.TextArea 
+              {...commonProps} 
+              rows={4}
+              className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 transition-colors duration-300 text-base"
+            />
           </Form.Item>
         );
 
@@ -812,11 +835,22 @@ const WizardModal = ({
           <Form.Item
             key={name}
             name={name}
-            label={string}
+            label={
+              <div className="flex items-center gap-2 font-medium text-gray-700">
+                {required && <span className="text-red-500">*</span>}
+                {string}
+              </div>
+            }
             valuePropName="checked"
-            help={fieldDef.help}
+            help={fieldDef.help ? <Text type="secondary" className="text-xs">{fieldDef.help}</Text> : null}
+            className="mb-6"
           >
-            <input type="checkbox" disabled={readonly || currentLoading} />
+            <Checkbox 
+              disabled={readonly || currentLoading}
+              className="text-base"
+            >
+              {string}
+            </Checkbox>
           </Form.Item>
         );
 
@@ -825,11 +859,22 @@ const WizardModal = ({
           <Form.Item
             key={name}
             name={name}
-            label={string}
+            label={
+              <div className="flex items-center gap-2 font-medium text-gray-700">
+                {required && <span className="text-red-500">*</span>}
+                <CalendarOutlined className="text-teal-600" />
+                {string}
+              </div>
+            }
             rules={required ? [{ required: true, message: `Field ${string} is required` }] : []}
-            help={fieldDef.help}
+            help={fieldDef.help ? <Text type="secondary" className="text-xs">{fieldDef.help}</Text> : null}
+            className="mb-6"
           >
-            <input type="date" {...commonProps} />
+            <DatePicker 
+              {...commonProps} 
+              className="w-full rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 transition-colors duration-300 h-12"
+              format="YYYY-MM-DD"
+            />
           </Form.Item>
         );
 
@@ -838,11 +883,22 @@ const WizardModal = ({
           <Form.Item
             key={name}
             name={name}
-            label={string}
+            label={
+              <div className="flex items-center gap-2 font-medium text-gray-700">
+                {required && <span className="text-red-500">*</span>}
+                <ClockCircleOutlined className="text-teal-600" />
+                {string}
+              </div>
+            }
             rules={required ? [{ required: true, message: `Field ${string} is required` }] : []}
-            help={fieldDef.help}
+            help={fieldDef.help ? <Text type="secondary" className="text-xs">{fieldDef.help}</Text> : null}
+            className="mb-6"
           >
-            <input type="time" {...commonProps} />
+            <TimePicker 
+              {...commonProps} 
+              className="w-full rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 transition-colors duration-300 h-12"
+              format="HH:mm"
+            />
           </Form.Item>
         );
 
@@ -866,9 +922,16 @@ const WizardModal = ({
           <Form.Item
             key={name}
             name={name}
-            label={string}
+            label={
+              <div className="flex items-center gap-2 font-medium text-gray-700">
+                {required && <span className="text-red-500">*</span>}
+                <SearchOutlined className="text-teal-600" />
+                {string}
+              </div>
+            }
             rules={required ? [{ required: true, message: `Field ${string} is required` }] : []}
-            help={fieldDef.help}
+            help={fieldDef.help ? <Text type="secondary" className="text-xs">{fieldDef.help}</Text> : null}
+            className="mb-6"
           >
             <Many2ManyField
               name={name}
@@ -896,6 +959,7 @@ const WizardModal = ({
             }
             rules={required ? [{ required: true, message: `Field ${string} is required` }] : []}
             help={fieldDef.help ? <Text type="secondary" className="text-xs">{fieldDef.help}</Text> : null}
+            className="mb-6"
           >
             <Input 
               type="datetime-local"
@@ -906,16 +970,53 @@ const WizardModal = ({
           </Form.Item>
         );
 
+      case 'selection':
+        return (
+          <Form.Item
+            key={name}
+            name={name}
+            label={
+              <div className="flex items-center gap-2 font-medium text-gray-700">
+                {required && <span className="text-red-500">*</span>}
+                {string}
+              </div>
+            }
+            rules={required ? [{ required: true, message: `Field ${string} is required` }] : []}
+            help={fieldDef.help ? <Text type="secondary" className="text-xs">{fieldDef.help}</Text> : null}
+            className="mb-6"
+          >
+            <Select 
+              {...commonProps}
+              className="w-full rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 transition-colors duration-300 h-12"
+              placeholder={`Select ${string.toLowerCase()}...`}
+              options={fieldDef.selection ? fieldDef.selection.map(([value, label]) => ({
+                value,
+                label
+              })) : []}
+            />
+          </Form.Item>
+        );
+
       default:
         return (
           <Form.Item
             key={name}
             name={name}
-            label={string}
+            label={
+              <div className="flex items-center gap-2 font-medium text-gray-700">
+                {required && <span className="text-red-500">*</span>}
+                {string}
+              </div>
+            }
             rules={required ? [{ required: true, message: `Field ${string} is required` }] : []}
-            help={fieldDef.help}
+            help={fieldDef.help ? <Text type="secondary" className="text-xs">{fieldDef.help}</Text> : null}
+            className="mb-6"
           >
-            <input {...commonProps} placeholder={`Field type ${type}`} />
+            <Input 
+              {...commonProps} 
+              placeholder={`Field type ${type}`}
+              className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 transition-colors duration-300"
+            />
           </Form.Item>
         );
     }
@@ -1006,7 +1107,7 @@ const WizardModal = ({
       open={visible}
       onCancel={handleCancel}
       footer={renderButtons()}
-      width={900}
+      width={800}
       destroyOnClose
       maskClosable={false}
       className="rounded-2xl"
@@ -1042,19 +1143,40 @@ const WizardModal = ({
                          <div className="w-6 h-6 bg-white bg-opacity-20 rounded flex items-center justify-center text-xs font-medium">
                            {groupIndex + 1}
                          </div>
-                         {group.title || 'Form Fields'}
+                         {group.title}
                        </div>
                      }
                    >
-                     <Row gutter={[20, 20]}>
-                       {group.fields.map((field, fieldIndex) => (
-                         <Col 
-                           key={fieldIndex}
-                           span={group.colspan === 4 ? 12 : group.colspan === 2 ? 24 : 8}
-                         >
-                           {renderFormField(field)}
-                         </Col>
-                       ))}
+                     <Row gutter={[24, 16]}>
+                       {group.fields.map((field, fieldIndex) => {
+                         // Ajustar columnas basado en el tipo de campo y cantidad
+                         let colSpan = 24; // Por defecto una columna por fila
+                         
+                         if (group.fields.length <= 2) {
+                           // Si hay 2 campos o menos, usar 2 columnas
+                           colSpan = 12;
+                         } else if (group.fields.length <= 4) {
+                           // Si hay 3-4 campos, usar 2 columnas
+                           colSpan = 12;
+                         } else if (group.fields.length <= 6) {
+                           // Si hay 5-6 campos, usar 3 columnas
+                           colSpan = 8;
+                         } else {
+                           // Si hay más de 6 campos, usar 4 columnas
+                           colSpan = 6;
+                         }
+                         
+                         // Campos especiales que necesitan más espacio
+                         if (field.type === 'many2many' || field.type === 'text') {
+                           colSpan = 24; // Toda la fila
+                         }
+                         
+                         return (
+                           <Col key={fieldIndex} span={colSpan}>
+                             {renderFormField(field)}
+                           </Col>
+                         );
+                       })}
                      </Row>
                    </Card>
                  );
