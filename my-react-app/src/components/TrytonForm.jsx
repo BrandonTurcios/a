@@ -53,14 +53,29 @@ const Many2OneField = ({ name, label, fieldDef, required, readonly, help, form, 
       setLoading(true);
       console.log(`🔍 Searching options for ${name} (${relation}) with text: "${searchText}"`);
       
-      const autocompleteMethod = `model.${relation}.autocomplete`;
-      const autocompleteOptions = await trytonService.makeRpcCall(autocompleteMethod, [
-        searchText,  // text
-        [],          // domain (empty to search all)
-        1000,        // limit
-        null,        // order (null for default order)
-        {}           // context (empty, service will add context automatically)
-      ]);
+      // Parsear el domain del campo (puede ser una cadena JSON)
+      let domain = [];
+      if (fieldDef.domain) {
+        try {
+          // Si domain es una cadena, intentar parsearla
+          domain = typeof fieldDef.domain === 'string' 
+            ? JSON.parse(fieldDef.domain) 
+            : fieldDef.domain;
+          console.log(`📋 Using domain for ${name}:`, domain);
+        } catch (e) {
+          console.warn(`⚠️ Error parsing domain for ${name}:`, e.message);
+          domain = [];
+        }
+      }
+      
+      // Usar el método autocomplete del servicio
+      const autocompleteOptions = await trytonService.autocomplete(
+        relation,
+        searchText,
+        domain,
+        1000,
+        {} // context se agrega automáticamente en makeRpcCall
+      );
       
       if (autocompleteOptions && Array.isArray(autocompleteOptions)) {
         const formattedOptions = autocompleteOptions.map(option => ({

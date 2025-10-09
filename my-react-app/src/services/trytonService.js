@@ -1088,17 +1088,9 @@ class TrytonService {
     
     // Agregar campos relacionados para cada campo de relación encontrado
     relationFields.forEach(fieldName => {
-      if (fields.includes(fieldName)) {
-        // Agregar campo expandido con punto (formato Tryton: campo.)
-        if (!expandedFields.includes(`${fieldName}.`)) {
-          expandedFields.push(`${fieldName}.`);
-          console.log(`Agregando campo relacionado: ${fieldName}.`);
-        }
-        // También agregar .rec_name para compatibilidad
-        if (!expandedFields.includes(`${fieldName}.rec_name`)) {
-          expandedFields.push(`${fieldName}.rec_name`);
-          console.log(`Agregando campo relacionado: ${fieldName}.rec_name`);
-        }
+      if (fields.includes(fieldName) && !expandedFields.includes(`${fieldName}.rec_name`)) {
+        expandedFields.push(`${fieldName}.rec_name`);
+        console.log(`Agregando campo relacionado: ${fieldName}.rec_name`);
       }
     });
     
@@ -1216,12 +1208,8 @@ class TrytonService {
     // Recorrer todos los campos y expandir los many2one
     Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
       if (fieldDef.type === 'many2one' && fields.includes(fieldName)) {
-        // Agregar campo expandido con punto (formato Tryton: campo.)
-        if (!expandedFields.includes(`${fieldName}.`)) {
-          expandedFields.push(`${fieldName}.`);
-          console.log(`Agregando campo relacionado many2one: ${fieldName}.`);
-        }
-        // También agregar .rec_name para compatibilidad
+        // Agregar .rec_name para obtener el nombre legible
+        // Tryton devuelve campo. (con punto) en la respuesta
         if (!expandedFields.includes(`${fieldName}.rec_name`)) {
           expandedFields.push(`${fieldName}.rec_name`);
           console.log(`Agregando campo relacionado many2one: ${fieldName}.rec_name`);
@@ -1285,6 +1273,32 @@ class TrytonService {
       return options;
     } catch (error) {
       console.error(`Error obteniendo opciones de selection para ${methodName}:`, error);
+      throw error;
+    }
+  }
+
+  // Autocomplete para campos many2one
+  async autocomplete(model, searchText, domain = [], limit = 1000, context = {}) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`🔍 Autocomplete para modelo: ${model}, búsqueda: "${searchText}"`);
+      
+      // Llamar al método autocomplete del modelo
+      const results = await this.makeRpcCall(`model.${model}.autocomplete`, [
+        searchText,
+        domain,
+        limit,
+        null, // order
+        context
+      ]);
+      
+      console.log(`✅ Resultados de autocomplete:`, results);
+      return results;
+    } catch (error) {
+      console.error(`Error en autocomplete para ${model}:`, error);
       throw error;
     }
   }
