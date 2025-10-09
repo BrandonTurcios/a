@@ -253,51 +253,42 @@ const TrytonTable = ({
   }
 
   return (
-    <Card 
-      className="rounded-2xl shadow-lg border border-teal-100"
-      headStyle={{
-        background: 'linear-gradient(135deg, #00A88E 0%, #00C4A7 100%)',
-        borderRadius: '16px 16px 0 0',
-        border: 'none',
-        padding: '20px 24px'
-      }}
-      title={null}
-      extra={
+    <div className="rounded-2xl shadow-lg border border-gray-200 bg-white p-6">
+      <div className="mb-4 flex justify-end">
         <Space className="flex flex-wrap gap-2">
           <Button 
             icon={<ReloadOutlined />}
             onClick={handleRefresh}
             title="Update"
-            className="bg-white bg-opacity-20 border border-white border-opacity-30 text-white hover:bg-opacity-30 hover:border-opacity-50 backdrop-blur-sm rounded-lg"
+            className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg"
           >
             Update
           </Button>
           <Button 
             icon={<DownloadOutlined />}
             title="Export"
-            className="bg-white bg-opacity-20 border border-white border-opacity-30 text-white hover:bg-opacity-30 hover:border-opacity-50 backdrop-blur-sm rounded-lg"
+            className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg"
           >
             Export
           </Button>
           <Button 
             icon={<FilterOutlined />}
             title="Filters"
-            className="bg-white bg-opacity-20 border border-white border-opacity-30 text-white hover:bg-opacity-30 hover:border-opacity-50 backdrop-blur-sm rounded-lg"
+            className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg"
           >
             Filters
           </Button>
           <Button 
             icon={<SettingOutlined />}
             title="Configure"
-            className="bg-white bg-opacity-20 border border-white border-opacity-30 text-white hover:bg-opacity-30 hover:border-opacity-50 backdrop-blur-sm rounded-lg"
+            className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg"
           >
             Configure
           </Button>
         </Space>
-      }
-      styles={{ body: { padding: '24px' } }}
-    >
-      <div className="bg-gray-50 rounded-lg p-4 -mx-6 -mb-6">
+      </div>
+      
+      <div className="bg-gray-50 rounded-lg p-4">
         <DataTable
           columns={columns}
           data={data}
@@ -333,7 +324,7 @@ const TrytonTable = ({
           </pre>
         </details>
       )}
-    </Card>
+    </div>
   );
 };
 

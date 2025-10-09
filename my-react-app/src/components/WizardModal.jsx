@@ -903,17 +903,17 @@ const WizardModal = ({
           </Form.Item>
         );
 
-      case 'many2one':
-        return (
-          <Many2OneField
-            key={name}
-            name={name}
-            string={string}
-            required={required}
-            help={fieldDef.help}
-            relation={fieldDef.relation}
-            disabled={readonly || currentLoading}
-            form={form}
+       case 'many2one':
+         return (
+           <Many2OneField
+             key={name}
+             name={name}
+             string={string}
+             required={required}
+             help={fieldDef.help}
+             relation={fieldDef.relation}
+             disabled={readonly || currentLoading}
+             form={form}
             defaultValue={wizardInfo?.defaults?.[name]}
           />
         );
@@ -1118,23 +1118,23 @@ const WizardModal = ({
       <Spin spinning={currentLoading}>
         {wizardInfo ? (
           <div className="bg-gray-50 rounded-lg p-6 min-h-[400px]">
-            <Form
-              form={form}
-              layout="vertical"
-              onFinish={handleSubmit}
-              disabled={currentLoading}
-            >
-              {formFields.map((group, groupIndex) => {
-                // Verificación defensiva
-                if (!group || !group.fields || !Array.isArray(group.fields)) {
-                  console.warn(`⚠️ Grupo ${groupIndex} no tiene campos válidos:`, group);
-                  return null;
-                }
-                
-                 return (
-                   <Card 
-                     key={groupIndex}
-                     size="small"
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={handleSubmit}
+            disabled={currentLoading}
+          >
+            {formFields.map((group, groupIndex) => {
+              // Verificación defensiva
+              if (!group || !group.fields || !Array.isArray(group.fields)) {
+                console.warn(`⚠️ Grupo ${groupIndex} no tiene campos válidos:`, group);
+                return null;
+              }
+              
+               return (
+                 <Card 
+                   key={groupIndex}
+                   size="small"
                      className="mb-5 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-300"
                      headStyle={{
                        background: '#00A88E',
@@ -1177,15 +1177,15 @@ const WizardModal = ({
                          
                          return (
                            <Col key={fieldIndex} span={colSpan}>
-                             {renderFormField(field)}
-                           </Col>
+                         {renderFormField(field)}
+                       </Col>
                          );
                        })}
-                     </Row>
-                   </Card>
-                 );
-              })}
-            </Form>
+                   </Row>
+                 </Card>
+               );
+            })}
+          </Form>
           </div>
         ) : (
           <div style={{ textAlign: 'center', padding: '20px' }}>
