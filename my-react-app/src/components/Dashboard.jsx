@@ -275,15 +275,24 @@ const Dashboard = ({ sessionData, onLogout }) => {
         
         console.log('Resultado de la opción de res_model:', result);
         
-        // Procesar el resultado
-        if (result.tableData) {
+        // Establecer primero tableInfo o formInfo basado en el resultado
+        console.log(`📊 Estableciendo estado de vista desde opción: tipo="${result.viewType}", tableData=${!!result.tableData}, formData=${!!result.formData}`);
+        
+        if (result.tableData && result.viewType === 'tree') {
+          console.log('✅ Estableciendo TrytonTable con tableInfo');
           setTableInfo(result.tableData);
           setFormInfo(null);
-        } else if (result.formData) {
+        } else if (result.formData && result.viewType === 'form') {
+          console.log('✅ Estableciendo TrytonForm con formInfo');
           setFormInfo(result.formData);
           setTableInfo(null);
+        } else {
+          console.log('⚠️ No hay datos válidos, limpiando tableInfo y formInfo');
+          setTableInfo(null);
+          setFormInfo(null);
         }
         
+        // Luego establecer selectedMenuInfo con el viewType correcto
         setSelectedMenuInfo({
           menuItem: pendingMenuItem,
           actionInfo: [result],
@@ -583,6 +592,25 @@ const Dashboard = ({ sessionData, onLogout }) => {
         }
       }
       
+      // Establecer primero tableInfo o formInfo basado en el tipo real de vista
+      console.log(`📊 Estableciendo estado de vista: tipo="${viewType}", tableData=${!!tableData}, formData=${!!formData}`);
+      
+      if (viewType === 'tree' && tableData) {
+        console.log('✅ Estableciendo TrytonTable con tableInfo');
+        setTableInfo(tableData);
+        setFormInfo(null);
+      } else if (viewType === 'form' && formData) {
+        console.log('✅ Estableciendo TrytonForm con formInfo');
+        setFormInfo(formData);
+        setTableInfo(null);
+      } else {
+        // Si no hay datos válidos, limpiar ambos
+        console.log('⚠️ No hay datos válidos, limpiando tableInfo y formInfo');
+        setTableInfo(null);
+        setFormInfo(null);
+      }
+      
+      // Luego establecer selectedMenuInfo con el viewType correcto
       setSelectedMenuInfo({
         menuItem: updatedItem,
         actionInfo: [actionResult],
@@ -593,19 +621,6 @@ const Dashboard = ({ sessionData, onLogout }) => {
         viewId: viewId,
         timestamp: new Date().toISOString()
       });
-      
-      // Establecer solo el tipo de vista correcto
-      if (viewType === 'tree' && tableData) {
-        setTableInfo(tableData);
-        setFormInfo(null);
-      } else if (viewType === 'form' && formData) {
-        setFormInfo(formData);
-        setTableInfo(null);
-      } else {
-        // Si no hay datos válidos, limpiar ambos
-        setTableInfo(null);
-        setFormInfo(null);
-      }
       
       setActiveTab(item.id);
       
@@ -831,6 +846,25 @@ const Dashboard = ({ sessionData, onLogout }) => {
         }
       }
       
+      // Establecer primero tableInfo o formInfo basado en el tipo real de vista
+      console.log(`📊 Estableciendo estado de vista: tipo="${viewType}", tableData=${!!tableData}, formData=${!!formData}`);
+      
+      if (viewType === 'tree' && tableData) {
+        console.log('✅ Estableciendo TrytonTable con tableInfo');
+        setTableInfo(tableData);
+        setFormInfo(null);
+      } else if (viewType === 'form' && formData) {
+        console.log('✅ Estableciendo TrytonForm con formInfo');
+        setFormInfo(formData);
+        setTableInfo(null);
+      } else {
+        // Si no hay datos válidos, limpiar ambos
+        console.log('⚠️ No hay datos válidos, limpiando tableInfo y formInfo');
+        setTableInfo(null);
+        setFormInfo(null);
+      }
+      
+      // Luego establecer selectedMenuInfo con el viewType correcto
       setSelectedMenuInfo({
         menuItem: updatedItem,
         actionInfo: menuInfo.actionInfo,
@@ -841,19 +875,6 @@ const Dashboard = ({ sessionData, onLogout }) => {
         viewId: viewId,
         timestamp: new Date().toISOString()
       });
-      
-      // Establecer solo el tipo de vista correcto
-      if (viewType === 'tree' && tableData) {
-        setTableInfo(tableData);
-        setFormInfo(null);
-      } else if (viewType === 'form' && formData) {
-        setFormInfo(formData);
-        setTableInfo(null);
-      } else {
-        // Si no hay datos válidos, limpiar ambos
-        setTableInfo(null);
-        setFormInfo(null);
-      }
       
       setActiveTab(item.id);
     } catch (error) {
@@ -1120,9 +1141,20 @@ const Dashboard = ({ sessionData, onLogout }) => {
         
         const selectedItem = findSelectedItem(menuItems, activeTab);
         
+        // Log del estado actual para debugging
+        console.log(`🎨 Renderizando contenido: activeTab=${activeTab}`);
+        console.log(`📊 Estado actual:`, {
+          hasTableInfo: !!tableInfo,
+          hasFormInfo: !!formInfo,
+          hasSelectedMenuInfo: !!selectedMenuInfo,
+          viewType: selectedMenuInfo?.viewType,
+          resModel: selectedMenuInfo?.resModel
+        });
         
         // Si hay información de tabla, mostrar la tabla Tryton
         if (tableInfo && selectedMenuInfo && selectedMenuInfo.resModel && selectedMenuInfo.viewType === 'tree') {
+          console.log('✅ Renderizando TrytonTable');
+        
           const actionData = selectedMenuInfo.actionInfo && selectedMenuInfo.actionInfo[0];
           const treeView = actionData?.views?.find(view => view[1] === 'tree') || actionData?.views?.[0];
           const viewId = treeView?.[0] || selectedMenuInfo.viewId;
@@ -1157,6 +1189,8 @@ const Dashboard = ({ sessionData, onLogout }) => {
         
         // Si hay información de formulario, mostrar el formulario Tryton
         if (formInfo && selectedMenuInfo && selectedMenuInfo.resModel && selectedMenuInfo.viewType === 'form') {
+          console.log('✅ Renderizando TrytonForm');
+          
           return (
             <div style={{ 
               padding: '24px', 
