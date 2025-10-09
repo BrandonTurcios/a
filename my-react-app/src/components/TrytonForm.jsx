@@ -156,19 +156,13 @@ const Many2OneField = ({ name, label, fieldDef, required, readonly, help, form, 
   };
 
   return (
-    <Form.Item
-      name={name}
-      label={
-        <div className="flex items-center gap-2 font-medium text-gray-700">
-          {required && <span className="text-red-500">*</span>}
-          <SearchOutlined className="text-teal-600" />
-          {label}
-        </div>
-      }
-      rules={[{ required, message: `${label} es requerido` }]}
-      help={help ? <Text type="secondary" className="text-xs">{help}</Text> : null}
-      className="mb-6"
-    >
+    <div className="mb-6">
+      <div className="flex items-center gap-2 font-medium text-gray-700 mb-2">
+        {required && <span className="text-red-500">*</span>}
+        <SearchOutlined className="text-teal-600" />
+        {label}
+      </div>
+      
       <AutoComplete
         value={inputValue}
         options={options}
@@ -187,7 +181,18 @@ const Many2OneField = ({ name, label, fieldDef, required, readonly, help, form, 
           className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12"
         />
       </AutoComplete>
-    </Form.Item>
+      
+      {/* Campo oculto para almacenar el ID en el formulario */}
+      <Form.Item name={name} hidden rules={[{ required, message: `${label} es requerido` }]}>
+        <Input type="hidden" />
+      </Form.Item>
+      
+      {help && (
+        <div className="mt-1">
+          <Text type="secondary" className="text-xs">{help}</Text>
+        </div>
+      )}
+    </div>
   );
 };
 
