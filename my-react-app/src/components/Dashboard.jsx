@@ -590,8 +590,19 @@ const Dashboard = ({ sessionData, onLogout }) => {
         timestamp: new Date().toISOString()
       });
       
-      setTableInfo(tableData);
-      setFormInfo(formData);
+      // Establecer solo el tipo de vista correcto
+      if (viewType === 'tree' && tableData) {
+        setTableInfo(tableData);
+        setFormInfo(null);
+      } else if (viewType === 'form' && formData) {
+        setFormInfo(formData);
+        setTableInfo(null);
+      } else {
+        // Si no hay datos válidos, limpiar ambos
+        setTableInfo(null);
+        setFormInfo(null);
+      }
+      
       setActiveTab(item.id);
       
     } catch (error) {
@@ -819,8 +830,19 @@ const Dashboard = ({ sessionData, onLogout }) => {
         timestamp: new Date().toISOString()
       });
       
-      setTableInfo(tableData);
-      setFormInfo(formData);
+      // Establecer solo el tipo de vista correcto
+      if (viewType === 'tree' && tableData) {
+        setTableInfo(tableData);
+        setFormInfo(null);
+      } else if (viewType === 'form' && formData) {
+        setFormInfo(formData);
+        setTableInfo(null);
+      } else {
+        // Si no hay datos válidos, limpiar ambos
+        setTableInfo(null);
+        setFormInfo(null);
+      }
+      
       setActiveTab(item.id);
     } catch (error) {
       console.error('Error obteniendo información del menú:', error);
