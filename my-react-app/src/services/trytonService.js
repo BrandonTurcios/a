@@ -1297,6 +1297,26 @@ class TrytonService {
     }
   }
 
+  // Obtener valores por defecto para crear un nuevo registro
+  async getDefaultValues(model) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`Obteniendo valores por defecto para modelo: ${model}`);
+
+      // Obtener valores por defecto
+      const defaultValues = await this.makeRpcCall(`model.${model}.default_get`, [{}]);
+
+      console.log('✅ Valores por defecto obtenidos:', defaultValues);
+      return defaultValues;
+    } catch (error) {
+      console.error('Error obteniendo valores por defecto:', error);
+      throw error;
+    }
+  }
+
   // Obtener opciones de un campo selection que tiene un método
   async getSelectionOptions(model, methodName, context = {}) {
     if (!this.sessionData) {

@@ -503,9 +503,64 @@ const Dashboard = ({ sessionData, onLogout }) => {
     // TODO: Implementar navegación entre registros
   };
 
-  const handleToolbarCreate = () => {
-    console.log('Toolbar create clicked');
-    // TODO: Implementar creación de nuevo registro
+  const handleToolbarCreate = async () => {
+    try {
+      console.log('🔧 Toolbar create clicked - cambiando a vista de formulario');
+      
+      if (!selectedMenuInfo || !selectedMenuInfo.resModel) {
+        console.warn('No hay información del menú seleccionado');
+        return;
+      }
+
+      setLoadingContent(true);
+
+      const model = selectedMenuInfo.resModel;
+      console.log(`📝 Creando nuevo registro para modelo: ${model}`);
+
+      // PASO 1: Obtener vista de formulario
+      console.log('🔍 Obteniendo vista de formulario...');
+      const formFieldsView = await trytonService.getFieldsView(model, null, 'form');
+      
+      if (!formFieldsView) {
+        throw new Error('No se pudo obtener la vista de formulario');
+      }
+
+      // PASO 2: Obtener valores por defecto
+      console.log('🔍 Obteniendo valores por defecto...');
+      const defaultValues = await trytonService.getDefaultValues(model);
+
+      // PASO 3: Preparar datos del formulario
+      const newFormData = {
+        model: model,
+        viewId: formFieldsView.view_id || null,
+        viewType: 'form',
+        fieldsView: formFieldsView,
+        recordData: defaultValues, // Usar valores por defecto como datos iniciales
+        isNew: true // Marcar como nuevo registro
+      };
+
+      console.log('✅ Datos del formulario preparados:', newFormData);
+
+      // PASO 4: Cambiar a vista de formulario
+      setFormInfo(newFormData);
+      setTableInfo(null); // Limpiar tabla
+      
+      // PASO 5: Actualizar selectedMenuInfo para reflejar el cambio a formulario
+      setSelectedMenuInfo({
+        ...selectedMenuInfo,
+        viewType: 'form',
+        viewId: formFieldsView.view_id || null,
+        formData: newFormData
+      });
+
+      console.log('✅ Cambio a vista de formulario completado');
+      setLoadingContent(false);
+
+    } catch (error) {
+      console.error('Error creando nuevo registro:', error);
+      setError('Error creando nuevo registro: ' + error.message);
+      setLoadingContent(false);
+    }
   };
 
   const handleToolbarSave = () => {
@@ -1405,10 +1460,10 @@ const Dashboard = ({ sessionData, onLogout }) => {
                 }}>
                   <div>
                     <Title level={2} style={{ margin: 0, color: '#333333' }}>
-                      {selectedMenuInfo.actionName || selectedItem?.name || 'Form'}
+                      {formInfo.isNew ? 'Crear nuevo registro' : selectedMenuInfo.actionName || selectedItem?.name || 'Form'}
                     </Title>
                     <Paragraph style={{ color: '#6C757D', margin: '8px 0 0 0' }}>
-                      {selectedMenuInfo.resModel} - Form view
+                      {selectedMenuInfo.resModel} - {formInfo.isNew ? 'Nuevo registro' : 'Form view'}
                     </Paragraph>
                   </div>
                   
