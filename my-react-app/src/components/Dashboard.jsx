@@ -51,6 +51,7 @@ import TrytonTable from './TrytonTable';
 import TrytonForm from './TrytonForm';
 import ActionOptionsModal from './ActionOptionsModal';
 import WizardModal from './WizardModal';
+import Toolbar from './Toolbar';
 
 const { Header, Sider, Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
@@ -494,6 +495,57 @@ const Dashboard = ({ sessionData, onLogout }) => {
     setWizardInfo(null);
     setWizardLoading(false);
     setPendingMenuItem(null);
+  };
+
+  // Handlers para el Toolbar
+  const handleToolbarNavigate = (action, value) => {
+    console.log('Toolbar navigate:', action, value);
+    // TODO: Implementar navegación entre registros
+  };
+
+  const handleToolbarCreate = () => {
+    console.log('Toolbar create clicked');
+    // TODO: Implementar creación de nuevo registro
+  };
+
+  const handleToolbarSave = () => {
+    console.log('Toolbar save clicked');
+    // TODO: Implementar guardado de registro
+  };
+
+  const handleToolbarRefresh = () => {
+    console.log('Toolbar refresh clicked');
+    // TODO: Implementar refrescar datos
+  };
+
+  const handleToolbarAttach = () => {
+    console.log('Toolbar attach clicked');
+    // TODO: Implementar adjuntos
+  };
+
+  const handleToolbarComment = () => {
+    console.log('Toolbar comment clicked');
+    // TODO: Implementar comentarios
+  };
+
+  const handleToolbarAction = (actionItem) => {
+    console.log('Toolbar action clicked:', actionItem);
+    // TODO: Implementar acciones del toolbar
+  };
+
+  const handleToolbarRelate = (relateItem) => {
+    console.log('Toolbar relate clicked:', relateItem);
+    // TODO: Implementar relaciones
+  };
+
+  const handleToolbarPrint = (printItem) => {
+    console.log('Toolbar print clicked:', printItem);
+    // TODO: Implementar impresión
+  };
+
+  const handleToolbarEmail = (emailItem) => {
+    console.log('Toolbar email clicked:', emailItem);
+    // TODO: Implementar envío de email
   };
 
 
@@ -1272,28 +1324,49 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
           return (
             <div style={{
-              padding: '24px',
               background: '#F8F9FA',
               minHeight: 'calc(100vh - 64px)',
               overflowY: 'auto'
             }}>
-              <div style={{ marginBottom: '24px' }}>
-                <Title level={2} style={{ margin: 0, color: '#333333' }}>
-                  {selectedMenuInfo.actionName || selectedItem?.name || 'Table'}
-                </Title>
-                <Paragraph style={{ color: '#6C757D', margin: '8px 0 0 0' }}>
-                  {selectedMenuInfo.resModel} - Table view
-                </Paragraph>
-              </div>
+              {/* Toolbar */}
+              {selectedMenuInfo.toolbarInfo && (
+                <Toolbar
+                  toolbarInfo={selectedMenuInfo.toolbarInfo}
+                  currentRecord={1}
+                  totalRecords={1}
+                  onNavigate={handleToolbarNavigate}
+                  onCreate={handleToolbarCreate}
+                  onSave={handleToolbarSave}
+                  onRefresh={handleToolbarRefresh}
+                  onAttach={handleToolbarAttach}
+                  onComment={handleToolbarComment}
+                  onAction={handleToolbarAction}
+                  onRelate={handleToolbarRelate}
+                  onPrint={handleToolbarPrint}
+                  onEmail={handleToolbarEmail}
+                  loading={loadingContent}
+                />
+              )}
 
-              <TrytonTable
-                model={tableInfo.model}
-                viewId={tableInfo.viewId}
-                viewType={tableInfo.viewType}
-                domain={[]}
-                limit={100}
-                title={selectedMenuInfo.actionName}
-              />
+              <div style={{ padding: '24px' }}>
+                <div style={{ marginBottom: '24px' }}>
+                  <Title level={2} style={{ margin: 0, color: '#333333' }}>
+                    {selectedMenuInfo.actionName || selectedItem?.name || 'Table'}
+                  </Title>
+                  <Paragraph style={{ color: '#6C757D', margin: '8px 0 0 0' }}>
+                    {selectedMenuInfo.resModel} - Table view
+                  </Paragraph>
+                </div>
+
+                <TrytonTable
+                  model={tableInfo.model}
+                  viewId={tableInfo.viewId}
+                  viewType={tableInfo.viewType}
+                  domain={[]}
+                  limit={100}
+                  title={selectedMenuInfo.actionName}
+                />
+              </div>
             </div>
           );
         }
@@ -1304,29 +1377,50 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
           return (
             <div style={{
-              padding: '24px',
               background: '#F8F9FA',
               minHeight: 'calc(100vh - 64px)',
               overflowY: 'auto'
             }}>
-              <div style={{ marginBottom: '24px' }}>
-                <Title level={2} style={{ margin: 0, color: '#333333' }}>
-                  {selectedMenuInfo.actionName || selectedItem?.name || 'Form'}
-                </Title>
-                <Paragraph style={{ color: '#6C757D', margin: '8px 0 0 0' }}>
-                  {selectedMenuInfo.resModel} - Form view
-                </Paragraph>
-              </div>
+              {/* Toolbar */}
+              {selectedMenuInfo.toolbarInfo && (
+                <Toolbar
+                  toolbarInfo={selectedMenuInfo.toolbarInfo}
+                  currentRecord={formInfo.recordData?.id || 1}
+                  totalRecords={1}
+                  onNavigate={handleToolbarNavigate}
+                  onCreate={handleToolbarCreate}
+                  onSave={handleToolbarSave}
+                  onRefresh={handleToolbarRefresh}
+                  onAttach={handleToolbarAttach}
+                  onComment={handleToolbarComment}
+                  onAction={handleToolbarAction}
+                  onRelate={handleToolbarRelate}
+                  onPrint={handleToolbarPrint}
+                  onEmail={handleToolbarEmail}
+                  loading={loadingContent}
+                />
+              )}
 
-              <TrytonForm
-                model={formInfo.model}
-                viewId={formInfo.viewId}
-                viewType={selectedMenuInfo.viewType}
-                recordId={formInfo.recordData?.id || null}
-                recordData={formInfo.recordData}
-                fieldsView={formInfo.fieldsView}
-                title={selectedMenuInfo.actionName}
-              />
+              <div style={{ padding: '24px' }}>
+                <div style={{ marginBottom: '24px' }}>
+                  <Title level={2} style={{ margin: 0, color: '#333333' }}>
+                    {selectedMenuInfo.actionName || selectedItem?.name || 'Form'}
+                  </Title>
+                  <Paragraph style={{ color: '#6C757D', margin: '8px 0 0 0' }}>
+                    {selectedMenuInfo.resModel} - Form view
+                  </Paragraph>
+                </div>
+
+                <TrytonForm
+                  model={formInfo.model}
+                  viewId={formInfo.viewId}
+                  viewType={selectedMenuInfo.viewType}
+                  recordId={formInfo.recordData?.id || null}
+                  recordData={formInfo.recordData}
+                  fieldsView={formInfo.fieldsView}
+                  title={selectedMenuInfo.actionName}
+                />
+              </div>
             </div>
           );
         }
@@ -1398,37 +1492,36 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
                 <Col xs={24} lg={8}>
                   <Card
-                    title="Información del Toolbar"
+                    title="Toolbar"
                     style={{ borderRadius: '12px' }}
-                    bodyStyle={{ padding: '24px' }}
+                    bodyStyle={{ padding: '0' }}
                   >
                     {selectedMenuInfo.toolbarInfo ? (
-                      <div style={{
-                        background: '#f8f9fa',
-                        border: '1px solid #e9ecef',
-                        borderRadius: '8px',
-                        padding: '16px',
-                        maxHeight: '300px',
-                        overflowY: 'auto'
-                      }}>
-                        <pre style={{
-                          margin: 0,
-                          fontSize: '12px',
-                          lineHeight: '1.4',
-                          color: '#495057',
-                          whiteSpace: 'pre-wrap',
-                          wordBreak: 'break-word'
-                        }}>
-                          {JSON.stringify(selectedMenuInfo.toolbarInfo, null, 2)}
-                        </pre>
-                      </div>
-                    ) : (
-                      <Alert
-                        message="No hay información de toolbar"
-                        description="Este menú no tiene información de toolbar disponible"
-                        type="info"
-                        showIcon
+                      <Toolbar
+                        toolbarInfo={selectedMenuInfo.toolbarInfo}
+                        currentRecord={1}
+                        totalRecords={1}
+                        onNavigate={handleToolbarNavigate}
+                        onCreate={handleToolbarCreate}
+                        onSave={handleToolbarSave}
+                        onRefresh={handleToolbarRefresh}
+                        onAttach={handleToolbarAttach}
+                        onComment={handleToolbarComment}
+                        onAction={handleToolbarAction}
+                        onRelate={handleToolbarRelate}
+                        onPrint={handleToolbarPrint}
+                        onEmail={handleToolbarEmail}
+                        loading={loadingContent}
                       />
+                    ) : (
+                      <div style={{ padding: '24px' }}>
+                        <Alert
+                          message="No hay información de toolbar"
+                          description="Este menú no tiene información de toolbar disponible"
+                          type="info"
+                          showIcon
+                        />
+                      </div>
                     )}
                   </Card>
                 </Col>
