@@ -32,7 +32,8 @@ const Toolbar = ({
   loading = false,
   viewType = 'tree', // Current view type ('tree' or 'form')
   onSwitchView, // Handler for view switching
-  isDirty = false // Whether there are unsaved changes
+  isDirty = false, // Whether there are unsaved changes
+  isNativeForm = false // Whether this is a native form (not converted from tree)
 }) => {
   if (!toolbarInfo) {
     return null;
@@ -47,11 +48,11 @@ const Toolbar = ({
         <Button 
           icon={<SwapOutlined />} 
           onClick={onSwitchView}
-          disabled={loading || viewType === 'tree'}
+          disabled={loading || viewType === 'tree' || isNativeForm}
           type={isDirty ? 'primary' : 'default'}
         />
       </Tooltip>
-      <Tooltip title="Anterior">
+      <Tooltip title="Previous">
         <Button 
           icon={<LeftOutlined />} 
           onClick={() => onNavigate?.('previous')}
@@ -67,7 +68,7 @@ const Toolbar = ({
         onChange={(value) => onNavigate?.('goto', value)}
         disabled={loading}
       />
-      <Tooltip title="Siguiente">
+      <Tooltip title="Next">
         <Button 
           icon={<RightOutlined />} 
           onClick={() => onNavigate?.('next')}
@@ -80,22 +81,22 @@ const Toolbar = ({
   // Renderizar botones de acción CRUD
   const renderActionButtons = () => (
     <Space.Compact>
-      <Tooltip title="Crear nuevo">
+      <Tooltip title="Create new">
         <Button 
           type="primary"
           icon={<PlusOutlined />} 
           onClick={onCreate}
-          disabled={loading}
+          disabled={loading || (isNativeForm || (viewType === 'form' && !isNativeForm))}
         />
       </Tooltip>
-      <Tooltip title="Guardar">
+      <Tooltip title="Save">
         <Button 
           icon={<SaveOutlined />} 
           onClick={onSave}
-          disabled={loading}
+          disabled={loading || (isNativeForm || (viewType === 'tree'))}
         />
       </Tooltip>
-      <Tooltip title="Actualizar">
+      <Tooltip title="Refresh">
         <Button 
           icon={<ReloadOutlined />} 
           onClick={onRefresh}

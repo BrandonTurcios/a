@@ -1486,6 +1486,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                         viewType={selectedMenuInfo.viewType}
                         onSwitchView={handleToolbarSwitchView}
                         isDirty={false}
+                        isNativeForm={false}
                       />
                     </div>
                   )}
@@ -1554,6 +1555,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                         viewType={selectedMenuInfo.viewType}
                         onSwitchView={handleToolbarSwitchView}
                         isDirty={formDirty}
+                        isNativeForm={!formInfo.isNew}
                       />
                     </div>
                   )}

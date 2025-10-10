@@ -222,7 +222,7 @@ const FormSections = ({
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: '40px' }}>
-        <Text>Loading form...</Text>
+        <Text>Loading...</Text>
       </div>
     );
   }

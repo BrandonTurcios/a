@@ -165,7 +165,7 @@ const Many2OneField = ({ name, label, fieldDef, required, readonly, help, form, 
         {label}
       </div>
       
-      <div style={{ marginBottom: help ? '8px' : '0' }}>
+      <div style={{ marginBottom: help ? '12px' : '0' }}>
         <AutoComplete
           value={inputValue}
           options={options}
@@ -192,7 +192,7 @@ const Many2OneField = ({ name, label, fieldDef, required, readonly, help, form, 
       </Form.Item>
       
       {help && (
-        <div style={{ marginTop: '4px', marginBottom: '16px' }}>
+        <div style={{ marginTop: '8px', marginBottom: '16px' }}>
           <Text type="secondary" style={{ fontSize: '12px', lineHeight: '1.4' }}>{help}</Text>
         </div>
       )}
