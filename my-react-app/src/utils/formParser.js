@@ -45,14 +45,11 @@ export const parseFormSections = (fieldsView) => {
             children: []
           };
 
-          // Extraer campos del grupo
+          // Solo extraer campos del grupo, no procesar sub-elementos recursivamente
+          // para evitar duplicación
           const groupFields = extractFieldsFromElement(child, fields);
           groupSection.fields = groupFields;
           console.log(`🔍 Group "${groupTitle}" extracted fields:`, groupFields);
-
-          // Procesar sub-elementos
-          const groupSubSections = extractSections(child, [...currentPath, groupTitle], level + 1);
-          groupSection.children = groupSubSections;
 
           sections.push(groupSection);
           break;
