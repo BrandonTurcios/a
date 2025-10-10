@@ -208,22 +208,23 @@ const Toolbar = ({
   return (
     <div style={{
       background: '#267f82',
-      padding: '12px 16px',
-      borderRadius: '0',
+      padding: '8px 12px',
+      borderRadius: '8px',
       display: 'flex',
       flexDirection: 'column',
-      gap: '8px',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+      gap: '6px',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      minWidth: 'fit-content'
     }}>
       {/* Primera fila - Navegación y acciones principales */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
         {renderNavigationButtons()}
         {renderActionButtons()}
         {renderAttachmentButtons()}
       </div>
 
       {/* Segunda fila - Acciones secundarias */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
         {renderActionsDropdown()}
         {renderRelateDropdown()}
         {renderPrintDropdown()}

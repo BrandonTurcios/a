@@ -1328,34 +1328,46 @@ const Dashboard = ({ sessionData, onLogout }) => {
               minHeight: 'calc(100vh - 64px)',
               overflowY: 'auto'
             }}>
-              {/* Toolbar */}
-              {selectedMenuInfo.toolbarInfo && (
-                <Toolbar
-                  toolbarInfo={selectedMenuInfo.toolbarInfo}
-                  currentRecord={1}
-                  totalRecords={1}
-                  onNavigate={handleToolbarNavigate}
-                  onCreate={handleToolbarCreate}
-                  onSave={handleToolbarSave}
-                  onRefresh={handleToolbarRefresh}
-                  onAttach={handleToolbarAttach}
-                  onComment={handleToolbarComment}
-                  onAction={handleToolbarAction}
-                  onRelate={handleToolbarRelate}
-                  onPrint={handleToolbarPrint}
-                  onEmail={handleToolbarEmail}
-                  loading={loadingContent}
-                />
-              )}
-
               <div style={{ padding: '24px' }}>
-                <div style={{ marginBottom: '24px' }}>
-                  <Title level={2} style={{ margin: 0, color: '#333333' }}>
-                    {selectedMenuInfo.actionName || selectedItem?.name || 'Table'}
-                  </Title>
-                  <Paragraph style={{ color: '#6C757D', margin: '8px 0 0 0' }}>
-                    {selectedMenuInfo.resModel} - Table view
-                  </Paragraph>
+                {/* Header con título y toolbar alineados horizontalmente */}
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  marginBottom: '24px',
+                  flexWrap: 'wrap',
+                  gap: '16px'
+                }}>
+                  <div>
+                    <Title level={2} style={{ margin: 0, color: '#333333' }}>
+                      {selectedMenuInfo.actionName || selectedItem?.name || 'Table'}
+                    </Title>
+                    <Paragraph style={{ color: '#6C757D', margin: '8px 0 0 0' }}>
+                      {selectedMenuInfo.resModel} - Table view
+                    </Paragraph>
+                  </div>
+                  
+                  {/* Toolbar al lado del título */}
+                  {selectedMenuInfo.toolbarInfo && (
+                    <div style={{ flexShrink: 0 }}>
+                      <Toolbar
+                        toolbarInfo={selectedMenuInfo.toolbarInfo}
+                        currentRecord={1}
+                        totalRecords={1}
+                        onNavigate={handleToolbarNavigate}
+                        onCreate={handleToolbarCreate}
+                        onSave={handleToolbarSave}
+                        onRefresh={handleToolbarRefresh}
+                        onAttach={handleToolbarAttach}
+                        onComment={handleToolbarComment}
+                        onAction={handleToolbarAction}
+                        onRelate={handleToolbarRelate}
+                        onPrint={handleToolbarPrint}
+                        onEmail={handleToolbarEmail}
+                        loading={loadingContent}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <TrytonTable
@@ -1381,34 +1393,46 @@ const Dashboard = ({ sessionData, onLogout }) => {
               minHeight: 'calc(100vh - 64px)',
               overflowY: 'auto'
             }}>
-              {/* Toolbar */}
-              {selectedMenuInfo.toolbarInfo && (
-                <Toolbar
-                  toolbarInfo={selectedMenuInfo.toolbarInfo}
-                  currentRecord={formInfo.recordData?.id || 1}
-                  totalRecords={1}
-                  onNavigate={handleToolbarNavigate}
-                  onCreate={handleToolbarCreate}
-                  onSave={handleToolbarSave}
-                  onRefresh={handleToolbarRefresh}
-                  onAttach={handleToolbarAttach}
-                  onComment={handleToolbarComment}
-                  onAction={handleToolbarAction}
-                  onRelate={handleToolbarRelate}
-                  onPrint={handleToolbarPrint}
-                  onEmail={handleToolbarEmail}
-                  loading={loadingContent}
-                />
-              )}
-
               <div style={{ padding: '24px' }}>
-                <div style={{ marginBottom: '24px' }}>
-                  <Title level={2} style={{ margin: 0, color: '#333333' }}>
-                    {selectedMenuInfo.actionName || selectedItem?.name || 'Form'}
-                  </Title>
-                  <Paragraph style={{ color: '#6C757D', margin: '8px 0 0 0' }}>
-                    {selectedMenuInfo.resModel} - Form view
-                  </Paragraph>
+                {/* Header con título y toolbar alineados horizontalmente */}
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  marginBottom: '24px',
+                  flexWrap: 'wrap',
+                  gap: '16px'
+                }}>
+                  <div>
+                    <Title level={2} style={{ margin: 0, color: '#333333' }}>
+                      {selectedMenuInfo.actionName || selectedItem?.name || 'Form'}
+                    </Title>
+                    <Paragraph style={{ color: '#6C757D', margin: '8px 0 0 0' }}>
+                      {selectedMenuInfo.resModel} - Form view
+                    </Paragraph>
+                  </div>
+                  
+                  {/* Toolbar al lado del título */}
+                  {selectedMenuInfo.toolbarInfo && (
+                    <div style={{ flexShrink: 0 }}>
+                      <Toolbar
+                        toolbarInfo={selectedMenuInfo.toolbarInfo}
+                        currentRecord={formInfo.recordData?.id || 1}
+                        totalRecords={1}
+                        onNavigate={handleToolbarNavigate}
+                        onCreate={handleToolbarCreate}
+                        onSave={handleToolbarSave}
+                        onRefresh={handleToolbarRefresh}
+                        onAttach={handleToolbarAttach}
+                        onComment={handleToolbarComment}
+                        onAction={handleToolbarAction}
+                        onRelate={handleToolbarRelate}
+                        onPrint={handleToolbarPrint}
+                        onEmail={handleToolbarEmail}
+                        loading={loadingContent}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <TrytonForm
