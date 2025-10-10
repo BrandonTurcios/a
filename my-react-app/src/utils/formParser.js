@@ -149,21 +149,6 @@ export const parseFormSections = (fieldsView) => {
           });
           break;
 
-        case 'field':
-          // Si encontramos un campo directamente (no dentro de una sección), crear una sección especial
-          const fieldName = child.getAttribute('name');
-          if (fieldName && fields[fieldName]) {
-            sections.push({
-              type: 'field',
-              title: '',
-              id: fieldName,
-              path: [...currentPath, fieldName],
-              level: level,
-              fields: [fieldName],
-              children: []
-            });
-          }
-          break;
 
         case 'label':
           // Los labels no necesitan procesamiento especial, se saltan

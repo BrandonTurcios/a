@@ -204,21 +204,6 @@ const FormSectionRenderer = ({ section, fields, form, fieldComponents, level = 0
     case 'separator':
       return <SeparatorSection section={section} />;
 
-    case 'field':
-      // Renderizar un campo individual
-      const { fields: fieldNames } = section;
-      if (fieldNames && fieldNames.length > 0) {
-        const fieldName = fieldNames[0];
-        const fieldComponent = fieldComponents[fieldName];
-        if (fieldComponent) {
-          return (
-            <Col key={`field-${fieldName}`} span={12}>
-              {fieldComponent}
-            </Col>
-          );
-        }
-      }
-      return null;
 
     default:
       console.warn('Unknown section type:', section.type);
