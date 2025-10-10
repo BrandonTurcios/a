@@ -382,10 +382,14 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
       setWizardInfo(wizardModalInfo);
       setShowWizardModal(true);
+      
+      // Limpiar el loading ya que el wizard modal se encarga de mostrar el contenido
+      setLoadingContent(false);
 
     } catch (error) {
       console.error('Error manejando wizard:', error);
       setError('Error iniciando wizard: ' + error.message);
+      setLoadingContent(false);
     } finally {
       setWizardLoading(false);
     }
@@ -631,10 +635,14 @@ const Dashboard = ({ sessionData, onLogout }) => {
       });
 
       setActiveTab(item.id);
+      
+      // Limpiar el loading después de procesar la acción exitosamente
+      setLoadingContent(false);
 
     } catch (error) {
       console.error('Error procesando acción directa:', error);
       setError('Error procesando la acción: ' + error.message);
+      setLoadingContent(false);
     }
   };
 
@@ -700,6 +708,9 @@ const Dashboard = ({ sessionData, onLogout }) => {
         setActionOptions(menuInfo.options);
         setPendingMenuItem(item);
         setShowActionOptionsModal(true);
+        
+        // Limpiar el loading ya que el modal se encarga de mostrar las opciones
+        setLoadingContent(false);
         return;
       }
 
@@ -930,6 +941,9 @@ const Dashboard = ({ sessionData, onLogout }) => {
       });
 
       setActiveTab(item.id);
+      
+      // Establecer loading a false después de cargar exitosamente
+      setLoadingContent(false);
     } catch (error) {
       console.error('Error obteniendo información del menú:', error);
       setSelectedMenuInfo({
