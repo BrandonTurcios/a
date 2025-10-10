@@ -1065,44 +1065,13 @@ const TrytonForm = ({
           onValuesChange={handleFormChange}
         >
           {formSections.length > 0 ? (
-            <div>
-              <FormSections
-                sections={formSections}
-                fields={formInfo?.fields || {}}
-                form={form}
-                fieldComponents={createFieldComponents()}
-                loading={currentLoading}
-              />
-              
-              {/* Fallback: Si las secciones no tienen campos, mostrar todos los campos */}
-              {formSections.length > 0 && formSections.every(section => {
-                const hasFields = section.fields && section.fields.length > 0;
-                const hasChildrenWithFields = section.children && section.children.some(child => 
-                  child.fields && child.fields.length > 0
-                );
-                const hasPagesWithFields = section.pages && section.pages.some(page => 
-                  page.fields && page.fields.length > 0
-                );
-                return !hasFields && !hasChildrenWithFields && !hasPagesWithFields;
-              }) && (
-                <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid #e0e0e0' }}>
-                  <Title level={4} style={{ marginBottom: '16px' }}>All Fields</Title>
-                  <Row gutter={[24, 16]}>
-                    {fields.map((field, index) => (
-                      <Col 
-                        key={field.name} 
-                        xs={24} 
-                        sm={12} 
-                        lg={8}
-                        style={{ marginBottom: '16px' }}
-                      >
-                        {renderFormField(field)}
-                      </Col>
-                    ))}
-                  </Row>
-                </div>
-              )}
-            </div>
+            <FormSections
+              sections={formSections}
+              fields={formInfo?.fields || {}}
+              form={form}
+              fieldComponents={createFieldComponents()}
+              loading={currentLoading}
+            />
           ) : (
             <Row gutter={[24, 16]}>
               {fields.map((field, index) => (

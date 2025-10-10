@@ -19,7 +19,11 @@ export const parseFormSections = (fieldsView) => {
 
     if (level > maxLevel) return sections;
 
-    Array.from(element.children).forEach(child => {
+    // Convertir a array para poder procesar secuencialmente
+    const children = Array.from(element.children);
+    
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i];
       const tagName = child.tagName.toLowerCase();
       const attributes = Array.from(child.attributes).reduce((acc, attr) => {
         acc[attr.name] = attr.value;
@@ -96,6 +100,45 @@ export const parseFormSections = (fieldsView) => {
           sections.push(pageSection);
           break;
 
+        case 'separator':
+          // Crear una sección de grupo para el separador
+          const separatorTitle = attributes.string || attributes.id || 'Section';
+          const separatorSection = {
+            type: 'group',
+            title: separatorTitle,
+            id: attributes.id,
+            path: [...currentPath, separatorTitle],
+            level: level,
+            colspan: attributes.colspan,
+            col: attributes.col,
+            fields: [],
+            children: []
+          };
+
+          // Buscar campos que siguen a este separador hasta el siguiente separador o fin
+          const fieldsForSection = [];
+          for (let j = i + 1; j < children.length; j++) {
+            const nextChild = children[j];
+            const nextTagName = nextChild.tagName.toLowerCase();
+            
+            if (nextTagName === 'separator' || nextTagName === 'group' || nextTagName === 'notebook' || nextTagName === 'page') {
+              // Encontramos otro elemento de sección, parar aquí
+              break;
+            } else if (nextTagName === 'field') {
+              const fieldName = nextChild.getAttribute('name');
+              if (fieldName && fields[fieldName]) {
+                fieldsForSection.push(fieldName);
+                console.log(`🔍 Field "${fieldName}" added to section "${separatorTitle}"`);
+              }
+            }
+          }
+
+          separatorSection.fields = fieldsForSection;
+          console.log(`🔍 Separator "${separatorTitle}" extracted fields:`, fieldsForSection);
+          
+          sections.push(separatorSection);
+          break;
+
         case 'newline':
           // Agregar separador
           sections.push({
@@ -106,17 +149,8 @@ export const parseFormSections = (fieldsView) => {
           });
           break;
 
-        case 'separator':
-          sections.push({
-            type: 'separator',
-            title: attributes.string || '',
-            level: level,
-            path: [...currentPath]
-          });
-          break;
-
         case 'field':
-          // Si encontramos un campo directamente (no dentro de un grupo), crear una sección especial
+          // Si encontramos un campo directamente (no dentro de una sección), crear una sección especial
           const fieldName = child.getAttribute('name');
           if (fieldName && fields[fieldName]) {
             sections.push({
@@ -131,13 +165,17 @@ export const parseFormSections = (fieldsView) => {
           }
           break;
 
+        case 'label':
+          // Los labels no necesitan procesamiento especial, se saltan
+          break;
+
         default:
           // Procesar otros elementos recursivamente
           const defaultSubSections = extractSections(child, currentPath, level + 1);
           sections.push(...defaultSubSections);
           break;
       }
-    });
+    }
 
     return sections;
   };
