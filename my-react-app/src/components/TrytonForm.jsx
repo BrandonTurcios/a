@@ -874,18 +874,44 @@ const TrytonForm = ({
           <Form.Item key={name} {...commonProps}>
             <div style={{ 
               padding: '12px', 
-              border: '1px dashed #d9d9d9', 
+              border: '1px solid #d9d9d9', 
               borderRadius: '6px',
-              textAlign: 'center',
-              color: '#8c8c8c'
+              background: '#fafafa'
             }}>
-              <Text type="secondary">
-                Campo de relación uno-a-muchos (one2many)
-              </Text>
-              <br />
-              <Text type="secondary" style={{ fontSize: '12px' }}>
-                Se implementará en futuras versiones
-              </Text>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <Text type="secondary" style={{ fontWeight: '500' }}>
+                  {label} (One2Many)
+                </Text>
+                <Button 
+                  size="small" 
+                  type="primary" 
+                  icon={<PlusOutlined />}
+                  onClick={() => {
+                    console.log(`Opening wizard for one2many field: ${name} (${fieldDef.relation})`);
+                    // TODO: Implementar wizard para editar registros relacionados
+                  }}
+                >
+                  Add
+                </Button>
+              </div>
+              <div style={{ 
+                minHeight: '60px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                color: '#8c8c8c',
+                fontSize: '12px'
+              }}>
+                {formData[name] && formData[name].length > 0 ? (
+                  <Text type="secondary">
+                    {formData[name].length} related record(s) - Click "Add" to manage
+                  </Text>
+                ) : (
+                  <Text type="secondary">
+                    No related records - Click "Add" to create new
+                  </Text>
+                )}
+              </div>
             </div>
           </Form.Item>
         );
@@ -901,11 +927,11 @@ const TrytonForm = ({
               color: '#8c8c8c'
             }}>
               <Text type="secondary">
-                Campo de archivo (binary)
+                File field (binary)
               </Text>
               <br />
               <Text type="secondary" style={{ fontSize: '12px' }}>
-                Se implementará en futuras versiones
+                Will be implemented in future versions
               </Text>
             </div>
           </Form.Item>
