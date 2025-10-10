@@ -527,7 +527,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
       // PASO 2: Obtener valores por defecto
       console.log('🔍 Obteniendo valores por defecto...');
-      const defaultValues = await trytonService.getDefaultValues(model);
+      const defaultValues = await trytonService.getDefaultValues(model, formFieldsView);
 
       // PASO 3: Preparar datos del formulario
       const newFormData = {

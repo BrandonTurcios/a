@@ -1298,7 +1298,7 @@ class TrytonService {
   }
 
   // Obtener valores por defecto para crear un nuevo registro
-  async getDefaultValues(model) {
+  async getDefaultValues(model, fieldsView = null) {
     if (!this.sessionData) {
       throw new Error('No hay sesión activa');
     }
@@ -1306,8 +1306,27 @@ class TrytonService {
     try {
       console.log(`Obteniendo valores por defecto para modelo: ${model}`);
 
-      // Obtener valores por defecto
-      const defaultValues = await this.makeRpcCall(`model.${model}.default_get`, [{}]);
+      // Si no se proporciona fieldsView, obtenerlo
+      let fields = [];
+      if (fieldsView && fieldsView.fields) {
+        fields = Object.keys(fieldsView.fields);
+        console.log('📋 Usando campos de fieldsView proporcionado:', fields);
+      } else {
+        // Obtener vista de formulario para extraer los nombres de campos
+        console.log('📋 Obteniendo vista de formulario para extraer campos...');
+        const formView = await this.getFieldsView(model, null, 'form');
+        if (formView && formView.fields) {
+          fields = Object.keys(formView.fields);
+          console.log('📋 Campos extraídos de vista de formulario:', fields);
+        } else {
+          console.warn('⚠️ No se pudieron obtener campos de la vista, usando lista básica');
+          // Lista básica de campos comunes
+          fields = ['active', 'name', 'rec_name'];
+        }
+      }
+
+      // Obtener valores por defecto pasando los nombres de campos
+      const defaultValues = await this.makeRpcCall(`model.${model}.default_get`, [fields, {}]);
 
       console.log('✅ Valores por defecto obtenidos:', defaultValues);
       return defaultValues;
