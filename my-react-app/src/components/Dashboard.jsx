@@ -701,6 +701,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
       // Si es un wizard, manejarlo directamente
       if (menuInfo.isWizard) {
         console.log('🧙 Wizard detectado en handleMenuClick:', menuInfo.wizardName);
+        setLoadingContent(false);
         await handleWizardAction(menuInfo);
         return;
       }
@@ -715,6 +716,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
         setActionOptions(menuInfo.options);
         setPendingMenuItem(item);
         setShowActionOptionsModal(true);
+        setLoadingContent(false);
         return;
       }
 
@@ -945,8 +947,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
       });
 
       setActiveTab(item.id);
-      
-      // El useEffect se encargará de limpiar el loading cuando todos los datos estén listos
+      setLoadingContent(false);
     } catch (error) {
       console.error('Error obteniendo información del menú:', error);
       setSelectedMenuInfo({
