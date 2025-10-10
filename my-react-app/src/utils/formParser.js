@@ -115,6 +115,22 @@ export const parseFormSections = (fieldsView) => {
           });
           break;
 
+        case 'field':
+          // Si encontramos un campo directamente (no dentro de un grupo), crear una sección especial
+          const fieldName = child.getAttribute('name');
+          if (fieldName && fields[fieldName]) {
+            sections.push({
+              type: 'field',
+              title: '',
+              id: fieldName,
+              path: [...currentPath, fieldName],
+              level: level,
+              fields: [fieldName],
+              children: []
+            });
+          }
+          break;
+
         default:
           // Procesar otros elementos recursivamente
           const defaultSubSections = extractSections(child, currentPath, level + 1);
