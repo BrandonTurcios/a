@@ -30,6 +30,8 @@ import {
   CalendarOutlined
 } from '@ant-design/icons';
 import trytonService from '../services/trytonService';
+import { parseFormSections } from '../utils/formParser';
+import FormSections from './FormSection';
 
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
@@ -324,11 +326,28 @@ const TrytonForm = ({
   const [fields, setFields] = useState([]);
   const [isEditing, setIsEditing] = useState(!readonly && !recordId);
   const [selectionOptions, setSelectionOptions] = useState({});
+  const [formSections, setFormSections] = useState([]);
+
+  // Función para crear componentes de campos para las secciones
+  const createFieldComponents = () => {
+    const fieldComponents = {};
+    
+    fields.forEach(field => {
+      fieldComponents[field.name] = renderFormField(field);
+    });
+    
+    return fieldComponents;
+  };
 
   useEffect(() => {
     if (fieldsView) {
       // Si se proporciona fieldsView directamente, usarlo
       setFormInfo(fieldsView);
+      
+      // Parsear secciones del formulario
+      const parsedSections = parseFormSections(fieldsView);
+      setFormSections(parsedSections.sections);
+      console.log('📋 Secciones parseadas:', parsedSections.sections);
       
       // Generar campos del formulario usando generateFormFields
       const formFields = generateFormFields(fieldsView);
@@ -363,6 +382,11 @@ const TrytonForm = ({
       console.log('🔍 Información de formulario obtenida:', formInfo);
       
       setFormInfo(formInfo.fieldsView);
+      
+      // Parsear secciones del formulario
+      const parsedSections = parseFormSections(formInfo.fieldsView);
+      setFormSections(parsedSections.sections);
+      console.log('📋 Secciones parseadas:', parsedSections.sections);
       
       // Generar campos del formulario
       const formFields = generateFormFields(formInfo.fieldsView);
@@ -1018,19 +1042,29 @@ const TrytonForm = ({
           onFinish={handleSave}
           initialValues={formData}
         >
-          <Row gutter={[24, 16]}>
-            {fields.map((field, index) => (
-              <Col 
-                key={field.name} 
-                xs={24} 
-                sm={12} 
-                lg={8}
-                style={{ marginBottom: '16px' }}
-              >
-                {renderFormField(field)}
-              </Col>
-            ))}
-          </Row>
+          {formSections.length > 0 ? (
+            <FormSections
+              sections={formSections}
+              fields={formInfo?.fields || {}}
+              form={form}
+              fieldComponents={createFieldComponents()}
+              loading={currentLoading}
+            />
+          ) : (
+            <Row gutter={[24, 16]}>
+              {fields.map((field, index) => (
+                <Col 
+                  key={field.name} 
+                  xs={24} 
+                  sm={12} 
+                  lg={8}
+                  style={{ marginBottom: '16px' }}
+                >
+                  {renderFormField(field)}
+                </Col>
+              ))}
+            </Row>
+          )}
           
           {fields.length === 0 && (
             <div className="text-center py-10 text-gray-500">
