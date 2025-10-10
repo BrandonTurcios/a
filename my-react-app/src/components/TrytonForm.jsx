@@ -165,24 +165,26 @@ const Many2OneField = ({ name, label, fieldDef, required, readonly, help, form, 
         {label}
       </div>
       
-      <AutoComplete
-        value={inputValue}
-        options={options}
-        onSearch={searchOptions}
-        onSelect={handleSelect}
-        onChange={handleChange}
-        placeholder={`Search ${label.toLowerCase()}...`}
-        disabled={readonly}
-        notFoundContent={loading ? <Spin size="small" /> : null}
-        className="w-full"
-        style={{ width: '100%' }}
-        filterOption={false}
-      >
-        <Input
-          suffix={loading ? <Spin size="small" /> : <SearchOutlined className="text-gray-400" />}
-          className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12"
-        />
-      </AutoComplete>
+      <div style={{ marginBottom: help ? '8px' : '0' }}>
+        <AutoComplete
+          value={inputValue}
+          options={options}
+          onSearch={searchOptions}
+          onSelect={handleSelect}
+          onChange={handleChange}
+          placeholder={`Search ${label.toLowerCase()}...`}
+          disabled={readonly}
+          notFoundContent={loading ? <Spin size="small" /> : null}
+          className="w-full"
+          style={{ width: '100%' }}
+          filterOption={false}
+        >
+          <Input
+            suffix={loading ? <Spin size="small" /> : <SearchOutlined className="text-gray-400" />}
+            className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12"
+          />
+        </AutoComplete>
+      </div>
       
       {/* Campo oculto para almacenar el ID en el formulario */}
       <Form.Item name={name} hidden rules={[{ required, message: `${label} es requerido` }]}>
@@ -190,8 +192,8 @@ const Many2OneField = ({ name, label, fieldDef, required, readonly, help, form, 
       </Form.Item>
       
       {help && (
-        <div className="mt-1">
-          <Text type="secondary" className="text-xs">{help}</Text>
+        <div style={{ marginTop: '4px', marginBottom: '16px' }}>
+          <Text type="secondary" style={{ fontSize: '12px', lineHeight: '1.4' }}>{help}</Text>
         </div>
       )}
     </div>
@@ -595,7 +597,7 @@ const TrytonForm = ({
             className="mb-6"
           >
             <Input 
-              placeholder={`Ingrese ${label.toLowerCase()}`}
+              placeholder={`Enter ${label.toLowerCase()}`}
               className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 text-base"
             />
           </Form.Item>
@@ -617,7 +619,7 @@ const TrytonForm = ({
           >
             <Input.TextArea 
               rows={4} 
-              placeholder={`Ingrese ${label.toLowerCase()}`}
+              placeholder={`Enter ${label.toLowerCase()}`}
               className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 text-base resize-y"
             />
           </Form.Item>
@@ -640,7 +642,7 @@ const TrytonForm = ({
           >
             <InputNumber 
               style={{ width: '100%' }}
-              placeholder={`Ingrese ${label.toLowerCase()}`}
+              placeholder={`Enter ${label.toLowerCase()}`}
               className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 text-base w-full"
             />
           </Form.Item>
@@ -664,7 +666,7 @@ const TrytonForm = ({
             <InputNumber 
               style={{ width: '100%' }}
               step={0.01}
-              placeholder={`Ingrese ${label.toLowerCase()}`}
+              placeholder={`Enter ${label.toLowerCase()}`}
               className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 text-base w-full"
             />
           </Form.Item>
@@ -706,7 +708,7 @@ const TrytonForm = ({
           >
             <DatePicker 
               style={{ width: '100%' }}
-              placeholder={`Seleccione ${label.toLowerCase()}`}
+              placeholder={`Select ${label.toLowerCase()}`}
               className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 w-full"
             />
           </Form.Item>
@@ -730,7 +732,7 @@ const TrytonForm = ({
             <DatePicker 
               showTime
               style={{ width: '100%' }}
-              placeholder={`Seleccione ${label.toLowerCase()}`}
+              placeholder={`Select ${label.toLowerCase()}`}
               className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 w-full"
             />
           </Form.Item>
@@ -780,7 +782,7 @@ const TrytonForm = ({
               className="mb-6"
             >
               <Select 
-                placeholder={`Seleccione ${label.toLowerCase()}`}
+                placeholder={`Select ${label.toLowerCase()}`}
                 className="w-full rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12"
               >
                 {dynamicOptions.length > 0 ? (
@@ -810,7 +812,7 @@ const TrytonForm = ({
             className="mb-6"
           >
             <Select 
-              placeholder={`Seleccione ${label.toLowerCase()}`}
+              placeholder={`Select ${label.toLowerCase()}`}
               className="w-full rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12"
             >
               {options.map(([value, label]) => (
@@ -843,7 +845,7 @@ const TrytonForm = ({
           <Form.Item key={name} {...commonProps}>
             <Select 
               mode="multiple"
-              placeholder={`Seleccione ${label.toLowerCase()}`}
+              placeholder={`Select ${label.toLowerCase()}`}
               style={{ width: '100%' }}
             >
               {multiselectionOptions.map(([value, label]) => (
@@ -860,7 +862,7 @@ const TrytonForm = ({
           <Form.Item key={name} {...commonProps}>
             <Select 
               mode="multiple"
-              placeholder={`Seleccione ${label.toLowerCase()}`}
+              placeholder={`Select ${label.toLowerCase()}`}
               style={{ width: '100%' }}
             >
               {/* Las opciones se cargarían dinámicamente */}
@@ -940,7 +942,7 @@ const TrytonForm = ({
       default:
         return (
           <Form.Item key={name} {...commonProps}>
-            <Input placeholder={`Ingrese ${label.toLowerCase()}`} />
+            <Input placeholder={`Enter ${label.toLowerCase()}`} />
           </Form.Item>
         );
     }
