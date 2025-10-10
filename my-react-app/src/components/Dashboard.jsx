@@ -1242,7 +1242,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: sidebarOpen ? 'flex-start' : 'center',
-                background: isActive ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
+                background: isActive ? 'rgba(255, 255, 255, 0.35)' : 'transparent',
                 border: 'none',
                 borderRadius: '8px',
                 color: isActive ? 'white' : 'white',
@@ -1255,7 +1255,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
               title={sidebarOpen ? (item.description || item.name) : item.name}
               onMouseEnter={(e) => {
                 if (!isActive) {
-                  e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+                  e.target.style.background = 'rgba(255, 255, 255, 0.15)';
                 }
               }}
               onMouseLeave={(e) => {
