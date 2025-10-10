@@ -78,6 +78,21 @@ const Dashboard = ({ sessionData, onLogout }) => {
     loadSidebarMenu();
   }, []);
 
+  // Efecto para limpiar el loading cuando todos los datos estén listos
+  useEffect(() => {
+    // Si hay datos de tabla o formulario listos, limpiar el loading
+    if (loadingContent && (tableInfo || formInfo) && selectedMenuInfo) {
+      console.log('🎯 Todos los datos están listos, limpiando loading...');
+      setLoadingContent(false);
+    }
+    
+    // Si hay modales abiertos (wizard o action options), también limpiar el loading
+    if (loadingContent && (showWizardModal || showActionOptionsModal)) {
+      console.log('🎯 Modal abierto, limpiando loading...');
+      setLoadingContent(false);
+    }
+  }, [loadingContent, tableInfo, formInfo, selectedMenuInfo, showWizardModal, showActionOptionsModal]);
+
   // Aplicar estilos de scroll personalizados
   useEffect(() => {
     const style = document.createElement('style');
@@ -382,14 +397,10 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
       setWizardInfo(wizardModalInfo);
       setShowWizardModal(true);
-      
-      // Limpiar el loading ya que el wizard modal se encarga de mostrar el contenido
-      setLoadingContent(false);
 
     } catch (error) {
       console.error('Error manejando wizard:', error);
       setError('Error iniciando wizard: ' + error.message);
-      setLoadingContent(false);
     } finally {
       setWizardLoading(false);
     }
@@ -635,14 +646,10 @@ const Dashboard = ({ sessionData, onLogout }) => {
       });
 
       setActiveTab(item.id);
-      
-      // Limpiar el loading después de procesar la acción exitosamente
-      setLoadingContent(false);
 
     } catch (error) {
       console.error('Error procesando acción directa:', error);
       setError('Error procesando la acción: ' + error.message);
-      setLoadingContent(false);
     }
   };
 
@@ -708,9 +715,6 @@ const Dashboard = ({ sessionData, onLogout }) => {
         setActionOptions(menuInfo.options);
         setPendingMenuItem(item);
         setShowActionOptionsModal(true);
-        
-        // Limpiar el loading ya que el modal se encarga de mostrar las opciones
-        setLoadingContent(false);
         return;
       }
 
@@ -942,8 +946,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
       setActiveTab(item.id);
       
-      // Establecer loading a false después de cargar exitosamente
-      setLoadingContent(false);
+      // El useEffect se encargará de limpiar el loading cuando todos los datos estén listos
     } catch (error) {
       console.error('Error obteniendo información del menú:', error);
       setSelectedMenuInfo({
@@ -1250,7 +1253,16 @@ const Dashboard = ({ sessionData, onLogout }) => {
           hasFormInfo: !!formInfo,
           hasSelectedMenuInfo: !!selectedMenuInfo,
           viewType: selectedMenuInfo?.viewType,
-          resModel: selectedMenuInfo?.resModel
+          resModel: selectedMenuInfo?.resModel,
+          loadingContent: loadingContent
+        });
+        
+        console.log(`🔍 Condiciones para renderizar tabla:`, {
+          'tableInfo exists': !!tableInfo,
+          'selectedMenuInfo exists': !!selectedMenuInfo,
+          'resModel exists': !!selectedMenuInfo?.resModel,
+          'viewType is tree': selectedMenuInfo?.viewType === 'tree',
+          'all conditions met': !!(tableInfo && selectedMenuInfo && selectedMenuInfo.resModel && selectedMenuInfo.viewType === 'tree')
         });
 
         // Si hay información de tabla, mostrar la tabla Tryton
