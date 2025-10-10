@@ -83,7 +83,6 @@ const Toolbar = ({
     <Space.Compact>
       <Tooltip title="Create new">
         <Button 
-          type="primary"
           icon={<PlusOutlined />} 
           onClick={onCreate}
           disabled={loading || (isNativeForm || (viewType === 'form' && !isNativeForm))}
