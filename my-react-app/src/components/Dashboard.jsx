@@ -1242,16 +1242,27 @@ const Dashboard = ({ sessionData, onLogout }) => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: sidebarOpen ? 'flex-start' : 'center',
-                background: isActive ? '#007BFF' : 'transparent',
+                background: isActive ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
                 border: 'none',
                 borderRadius: '8px',
                 color: isActive ? 'white' : 'white',
+                transition: 'background-color 0.2s ease',
                 minHeight: '40px',
                 position: 'relative',
                 maxWidth: '100%',
                 overflow: 'hidden'
               }}
               title={sidebarOpen ? (item.description || item.name) : item.name}
+              onMouseEnter={(e) => {
+                if (!isActive) {
+                  e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) {
+                  e.target.style.background = 'transparent';
+                }
+              }}
             >
               {sidebarOpen ? (
                 <Space style={{ width: '100%', minWidth: 0 }}>
