@@ -44,6 +44,7 @@ export const parseFormSections = (fieldsView) => {
           // Extraer campos del grupo
           const groupFields = extractFieldsFromElement(child, fields);
           groupSection.fields = groupFields;
+          console.log(`🔍 Group "${groupTitle}" extracted fields:`, groupFields);
 
           // Procesar sub-elementos
           const groupSubSections = extractSections(child, [...currentPath, groupTitle], level + 1);
@@ -86,6 +87,7 @@ export const parseFormSections = (fieldsView) => {
           // Extraer campos de la página
           const pageFields = extractFieldsFromElement(child, fields);
           pageSection.fields = pageFields;
+          console.log(`🔍 Page "${pageTitle}" extracted fields:`, pageFields);
 
           // Procesar sub-elementos (puede haber grupos dentro de páginas)
           const pageChildren = extractSections(child, [...currentPath, pageTitle], level + 1);
@@ -131,6 +133,7 @@ export const parseFormSections = (fieldsView) => {
       Array.from(el.children).forEach(child => {
         if (child.tagName.toLowerCase() === 'field') {
           const fieldName = child.getAttribute('name');
+          console.log(`🔍 Found field element: ${fieldName}, exists in allFields:`, !!allFields[fieldName]);
           if (fieldName && allFields[fieldName]) {
             fieldNames.push(fieldName);
           }
@@ -140,7 +143,9 @@ export const parseFormSections = (fieldsView) => {
       });
     };
 
+    console.log(`🔍 Extracting fields from element:`, element.tagName, element.children.length, 'children');
     extractFields(element);
+    console.log(`🔍 Extracted field names:`, fieldNames);
     return fieldNames;
   };
 

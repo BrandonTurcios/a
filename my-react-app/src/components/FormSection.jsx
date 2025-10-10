@@ -34,7 +34,11 @@ const GroupSection = ({ section, fields, form, fieldComponents, level = 0 }) => 
         {/* Renderizar campos directos del grupo */}
         {sectionFields?.map((fieldName, index) => {
           const fieldComponent = fieldComponents[fieldName];
-          if (!fieldComponent) return null;
+          console.log(`🔍 Rendering field ${fieldName} in group "${title}":`, { fieldComponent: !!fieldComponent, fieldComponents: Object.keys(fieldComponents) });
+          if (!fieldComponent) {
+            console.warn(`⚠️ No component found for field: ${fieldName}`);
+            return null;
+          }
           
           const fieldSpan = Math.floor(24 / cols);
           

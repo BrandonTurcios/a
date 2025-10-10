@@ -343,10 +343,13 @@ const TrytonForm = ({
   const createFieldComponents = () => {
     const fieldComponents = {};
     
+    console.log('🔍 Creating field components for fields:', fields.map(f => f.name));
     fields.forEach(field => {
       fieldComponents[field.name] = renderFormField(field);
+      console.log(`🔍 Created component for field: ${field.name}`);
     });
     
+    console.log('🔍 Field components created:', Object.keys(fieldComponents));
     return fieldComponents;
   };
 
@@ -359,6 +362,8 @@ const TrytonForm = ({
       const parsedSections = parseFormSections(fieldsView);
       setFormSections(parsedSections.sections);
       console.log('📋 Secciones parseadas:', parsedSections.sections);
+      console.log('📋 Arch XML:', fieldsView.arch);
+      console.log('📋 Fields available:', Object.keys(fieldsView.fields || {}));
       
       // Generar campos del formulario usando generateFormFields
       const formFields = generateFormFields(fieldsView);
