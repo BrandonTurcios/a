@@ -112,6 +112,9 @@ const Dashboard = ({ sessionData, onLogout }) => {
       .sidebar-scroll::-webkit-scrollbar-thumb:hover {
         background: rgba(255,255,255,0.5);
       }
+      .sidebar-item-hover:hover {
+        background-color: rgba(255, 255, 255, 0.15) !important;
+      }
     `;
     document.head.appendChild(style);
 
@@ -1252,17 +1255,8 @@ const Dashboard = ({ sessionData, onLogout }) => {
                 maxWidth: '100%',
                 overflow: 'hidden'
               }}
+              className={!isActive ? 'sidebar-item-hover' : ''}
               title={sidebarOpen ? (item.description || item.name) : item.name}
-              onMouseEnter={(e) => {
-                if (!isActive) {
-                  e.target.style.background = 'rgba(255, 255, 255, 0.15)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive) {
-                  e.target.style.background = 'transparent';
-                }
-              }}
             >
               {sidebarOpen ? (
                 <Space style={{ width: '100%', minWidth: 0 }}>
