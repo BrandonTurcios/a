@@ -74,6 +74,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
   const [wizardInfo, setWizardInfo] = useState(null);
   const [wizardLoading, setWizardLoading] = useState(false);
   const [loadingContent, setLoadingContent] = useState(false);
+  const [formDirty, setFormDirty] = useState(false);
 
   useEffect(() => {
     loadSidebarMenu();
@@ -544,6 +545,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
       // PASO 4: Cambiar a vista de formulario
       setFormInfo(newFormData);
       setTableInfo(null); // Limpiar tabla
+      setFormDirty(false); // Reset dirty state for new record
       
       // PASO 5: Actualizar selectedMenuInfo para reflejar el cambio a formulario
       setSelectedMenuInfo({
@@ -601,6 +603,67 @@ const Dashboard = ({ sessionData, onLogout }) => {
   const handleToolbarEmail = (emailItem) => {
     console.log('Toolbar email clicked:', emailItem);
     // TODO: Implementar envío de email
+  };
+
+  const handleToolbarSwitchView = async () => {
+    try {
+      console.log('🔄 Toolbar switch view clicked');
+      
+      // Check if we're in form view
+      if (selectedMenuInfo?.viewType !== 'form') {
+        console.warn('Switch view is only available in form view');
+        return;
+      }
+
+      // Check for unsaved changes
+      if (formDirty) {
+        const confirmed = window.confirm('You have unsaved changes. Do you want to discard them and switch to list view?');
+        if (!confirmed) {
+          return;
+        }
+      }
+
+      setLoadingContent(true);
+
+      const model = selectedMenuInfo.resModel;
+      console.log(`🔄 Switching from form to tree view for model: ${model}`);
+
+      // Get tree view
+      const treeFieldsView = await trytonService.getFieldsView(model, null, 'tree');
+      
+      if (!treeFieldsView) {
+        throw new Error('Could not get tree view');
+      }
+
+      // Get table data
+      const tableData = await trytonService.getTableInfo(
+        model,
+        treeFieldsView.view_id,
+        'tree',
+        [],
+        100
+      );
+
+      // Update state
+      setTableInfo(tableData);
+      setFormInfo(null);
+      setFormDirty(false);
+      
+      // Update selectedMenuInfo
+      setSelectedMenuInfo({
+        ...selectedMenuInfo,
+        viewType: 'tree',
+        viewId: treeFieldsView.view_id || null
+      });
+
+      console.log('✅ Successfully switched to tree view');
+      setLoadingContent(false);
+
+    } catch (error) {
+      console.error('Error switching view:', error);
+      setError('Error switching view: ' + error.message);
+      setLoadingContent(false);
+    }
   };
 
 
@@ -1420,6 +1483,9 @@ const Dashboard = ({ sessionData, onLogout }) => {
                         onPrint={handleToolbarPrint}
                         onEmail={handleToolbarEmail}
                         loading={loadingContent}
+                        viewType={selectedMenuInfo.viewType}
+                        onSwitchView={handleToolbarSwitchView}
+                        isDirty={false}
                       />
                     </div>
                   )}
@@ -1460,10 +1526,10 @@ const Dashboard = ({ sessionData, onLogout }) => {
                 }}>
                   <div>
                     <Title level={2} style={{ margin: 0, color: '#333333' }}>
-                      {formInfo.isNew ? 'Crear nuevo registro' : selectedMenuInfo.actionName || selectedItem?.name || 'Form'}
+                      {formInfo.isNew ? 'Create new record' : selectedMenuInfo.actionName || selectedItem?.name || 'Form'}
                     </Title>
                     <Paragraph style={{ color: '#6C757D', margin: '8px 0 0 0' }}>
-                      {selectedMenuInfo.resModel} - {formInfo.isNew ? 'Nuevo registro' : 'Form view'}
+                      {selectedMenuInfo.resModel} - {formInfo.isNew ? 'New record' : 'Form view'}
                     </Paragraph>
                   </div>
                   
@@ -1485,6 +1551,9 @@ const Dashboard = ({ sessionData, onLogout }) => {
                         onPrint={handleToolbarPrint}
                         onEmail={handleToolbarEmail}
                         loading={loadingContent}
+                        viewType={selectedMenuInfo.viewType}
+                        onSwitchView={handleToolbarSwitchView}
+                        isDirty={formDirty}
                       />
                     </div>
                   )}
@@ -1498,6 +1567,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
                   recordData={formInfo.recordData}
                   fieldsView={formInfo.fieldsView}
                   title={selectedMenuInfo.actionName}
+                  onFormChange={(isDirty) => setFormDirty(isDirty)}
                 />
               </div>
             </div>

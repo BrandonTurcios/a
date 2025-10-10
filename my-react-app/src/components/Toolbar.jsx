@@ -29,7 +29,10 @@ const Toolbar = ({
   onRelate,
   onPrint,
   onEmail,
-  loading = false
+  loading = false,
+  viewType = 'tree', // Current view type ('tree' or 'form')
+  onSwitchView, // Handler for view switching
+  isDirty = false // Whether there are unsaved changes
 }) => {
   if (!toolbarInfo) {
     return null;
@@ -40,11 +43,12 @@ const Toolbar = ({
   // Renderizar botones de navegación
   const renderNavigationButtons = () => (
     <Space.Compact>
-      <Tooltip title="Reordenar">
+      <Tooltip title={viewType === 'form' ? 'Switch to list view' : 'Switch view'}>
         <Button 
           icon={<SwapOutlined />} 
-          onClick={() => onNavigate?.('reorder')}
-          disabled={loading}
+          onClick={onSwitchView}
+          disabled={loading || viewType === 'tree'}
+          type={isDirty ? 'primary' : 'default'}
         />
       </Tooltip>
       <Tooltip title="Anterior">
@@ -127,7 +131,7 @@ const Toolbar = ({
 
     const menuItems = action.map((item, index) => ({
       key: index,
-      label: item.name || `Acción ${index + 1}`,
+      label: item.name || `Action ${index + 1}`,
       onClick: () => onAction?.(item)
     }));
 
@@ -138,7 +142,7 @@ const Toolbar = ({
         disabled={loading}
       >
         <Button icon={<SettingOutlined />}>
-          Acciones
+          Actions
         </Button>
       </Dropdown>
     );
@@ -150,7 +154,7 @@ const Toolbar = ({
 
     const menuItems = relate.map((item, index) => ({
       key: index,
-      label: item.name || `Relacionar ${index + 1}`,
+      label: item.name || `Relate ${index + 1}`,
       onClick: () => onRelate?.(item)
     }));
 
@@ -161,7 +165,7 @@ const Toolbar = ({
         disabled={loading}
       >
         <Button icon={<LinkOutlined />}>
-          Relacionar
+          Relate
         </Button>
       </Dropdown>
     );
@@ -173,7 +177,7 @@ const Toolbar = ({
 
     const menuItems = print.map((item, index) => ({
       key: index,
-      label: item.name || `Imprimir ${index + 1}`,
+      label: item.name || `Print ${index + 1}`,
       onClick: () => onPrint?.(item)
     }));
 
@@ -184,7 +188,7 @@ const Toolbar = ({
         disabled={loading}
       >
         <Button icon={<PrinterOutlined />}>
-          Imprimir
+          Print
         </Button>
       </Dropdown>
     );

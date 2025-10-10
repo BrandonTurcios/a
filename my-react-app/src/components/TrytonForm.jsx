@@ -70,13 +70,13 @@ const Many2OneField = ({ name, label, fieldDef, required, readonly, help, form, 
         }
       }
       
-      // Usar el método autocomplete del servicio
+      // Use the autocomplete method from the service
       const autocompleteOptions = await trytonService.autocomplete(
         relation,
         searchText,
         domain,
         1000
-        // context se agrega automáticamente en makeRpcCall
+        // context is automatically added in makeRpcCall
       );
       
       if (autocompleteOptions && Array.isArray(autocompleteOptions)) {
@@ -171,7 +171,7 @@ const Many2OneField = ({ name, label, fieldDef, required, readonly, help, form, 
         onSearch={searchOptions}
         onSelect={handleSelect}
         onChange={handleChange}
-        placeholder={`Buscar ${label.toLowerCase()}...`}
+        placeholder={`Search ${label.toLowerCase()}...`}
         disabled={readonly}
         notFoundContent={loading ? <Spin size="small" /> : null}
         className="w-full"
@@ -254,11 +254,11 @@ const processMany2OneData = (data, fieldsView) => {
        }
        // CASO 4: Solo ID (sin rec_name)
        else if (fieldValue !== null && fieldValue !== undefined) {
-         processedData[fieldName] = fieldValue; // Mantener como está, se cargará dinámicamente
-         console.log(`⚠️ Campo ${fieldName} solo tiene ID, se cargará dinámicamente:`, fieldValue);
+         processedData[fieldName] = fieldValue; // Keep as is, will be loaded dynamically
+         console.log(`⚠️ Field ${fieldName} only has ID, will be loaded dynamically:`, fieldValue);
        }
        else {
-         console.log(`⚠️ No se pudo procesar ${fieldName}:`, { fieldValue, fieldExpanded, fieldRecName });
+         console.log(`⚠️ Could not process ${fieldName}:`, { fieldValue, fieldExpanded, fieldRecName });
        }
     }
   });
@@ -283,7 +283,7 @@ const extractFormValues = (data, fieldsView) => {
         formValues[fieldName] = data[fieldName].id;
         console.log(`✅ Extrayendo ID de ${fieldName}:`, data[fieldName].id);
       }
-      // Si ya es un número (ID directo), dejarlo como está
+      // If it's already a number (direct ID), keep it as is
       else if (typeof data[fieldName] === 'number') {
         formValues[fieldName] = data[fieldName];
         console.log(`✅ Manteniendo ID directo de ${fieldName}:`, data[fieldName]);
@@ -305,14 +305,15 @@ const TrytonForm = ({
   viewType = 'form', 
   recordId = null, 
   recordData = null,
-  title = 'Formulario',
+  title = 'Form',
   onSave = null,
   onCancel = null,
   readonly = false,
-  onSubmit = null, // Nueva prop para manejar envío personalizado
-  loading = false, // Nueva prop para estado de carga externo
-  submitButtonText = 'Guardar', // Nueva prop para texto del botón
-  fieldsView = null // Nueva prop para pasar fieldsView directamente
+  onSubmit = null, // New prop to handle custom submission
+  loading = false, // New prop for external loading state
+  submitButtonText = 'Save', // New prop for button text
+  fieldsView = null, // New prop to pass fieldsView directly
+  onFormChange = null // Callback when form changes (dirty detection)
 }) => {
   const [form] = Form.useForm();
   const [internalLoading, setInternalLoading] = useState(false);
@@ -327,8 +328,18 @@ const TrytonForm = ({
   const [isEditing, setIsEditing] = useState(!readonly && !recordId);
   const [selectionOptions, setSelectionOptions] = useState({});
   const [formSections, setFormSections] = useState([]);
+  const [initialValues, setInitialValues] = useState(null);
 
-  // Función para crear componentes de campos para las secciones
+  // Handle form field changes to detect dirty state
+  const handleFormChange = () => {
+    if (onFormChange && initialValues) {
+      const currentValues = form.getFieldsValue();
+      const isDirty = JSON.stringify(currentValues) !== JSON.stringify(initialValues);
+      onFormChange(isDirty);
+    }
+  };
+
+  // Function to create field components for sections
   const createFieldComponents = () => {
     const fieldComponents = {};
     
@@ -364,6 +375,9 @@ const TrytonForm = ({
         // Establecer solo los IDs en el formulario (no los objetos completos)
         const formValues = extractFormValues(processedData, fieldsView);
         form.setFieldsValue(formValues);
+        setInitialValues(formValues);
+      } else {
+        setInitialValues({});
       }
     } else if (model && viewId) {
       loadFormData();
@@ -377,7 +391,7 @@ const TrytonForm = ({
       
       console.log(`🔍 Loading form for model: ${model}, view: ${viewId}`);
       
-      // Obtener información completa del formulario
+      // Get complete form information
       const formInfo = await trytonService.getFormInfo(model, viewId, viewType, recordId);
       console.log('🔍 Información de formulario obtenida:', formInfo);
       
@@ -406,6 +420,7 @@ const TrytonForm = ({
         // Establecer solo los IDs en el formulario
         const formValues = extractFormValues(processedData, formInfo.fieldsView);
         form.setFieldsValue(formValues);
+        setInitialValues(formValues);
         
         console.log('✅ Datos del registro establecidos:', processedData);
         console.log('✅ Valores del formulario:', formValues);
@@ -414,6 +429,7 @@ const TrytonForm = ({
         const defaultValues = getDefaultValues(formInfo.fieldsView);
         setFormData(defaultValues);
         form.setFieldsValue(defaultValues);
+        setInitialValues(defaultValues);
         console.log('✅ Valores por defecto establecidos:', defaultValues);
       }
       
@@ -430,7 +446,7 @@ const TrytonForm = ({
     
     const optionsToLoad = {};
     
-    // Identificar campos selection que tienen métodos
+    // Identify selection fields that have methods
     Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
       if (fieldDef.type === 'selection' && typeof fieldDef.selection === 'string') {
         optionsToLoad[fieldName] = fieldDef.selection;
@@ -465,7 +481,7 @@ const TrytonForm = ({
     const archFields = parseArchFields(fieldsView.arch);
     console.log('🔍 Campos encontrados en arch:', archFields);
     
-    // Procesar campos que están en el arch o son básicos
+    // Process fields that are in arch or are basic
     Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
       const isInArch = archFields.includes(fieldName);
       const isBasicField = ['id', 'name', 'code', 'rec_name', 'active'].includes(fieldName);
@@ -490,12 +506,12 @@ const TrytonForm = ({
   };
 
   const shouldIncludeField = (fieldName, arch) => {
-    // Verificar si el campo está en el arch de la vista
+    // Check if the field is in the view's arch
     if (arch && arch.includes(`name="${fieldName}"`)) {
       return true;
     }
     
-    // Campos básicos que siempre incluir
+    // Basic fields to always include
     const basicFields = ['id', 'name', 'code', 'rec_name', 'active'];
     
     return basicFields.includes(fieldName);
@@ -529,10 +545,10 @@ const TrytonForm = ({
     
     // Validar que fieldDef existe
     if (!fieldDef) {
-      console.warn(`⚠️ Campo ${name} no tiene fieldDef definido`);
+      console.warn(`⚠️ Field ${name} has no fieldDef defined`);
       return (
         <Form.Item key={name} name={name} label={label || name}>
-          <Input disabled placeholder="Campo no disponible" />
+          <Input disabled placeholder="Field not available" />
         </Form.Item>
       );
     }
@@ -720,18 +736,18 @@ const TrytonForm = ({
           <Form.Item key={name} {...commonProps}>
             <div style={{ display: 'flex', gap: '8px' }}>
               <InputNumber 
-                placeholder="Días"
+                placeholder="Days"
                 style={{ flex: 1 }}
                 min={0}
               />
               <InputNumber 
-                placeholder="Horas"
+                placeholder="Hours"
                 style={{ flex: 1 }}
                 min={0}
                 max={23}
               />
               <InputNumber 
-                placeholder="Minutos"
+                placeholder="Minutes"
                 style={{ flex: 1 }}
                 min={0}
                 max={59}
@@ -742,7 +758,7 @@ const TrytonForm = ({
         
       case 'selection':
         const options = fieldDef.selection || [];
-        // Si selection es una función (string), usar opciones cargadas dinámicamente
+        // If selection is a function (string), use dynamically loaded options
         if (typeof fieldDef.selection === 'string') {
           const dynamicOptions = selectionOptions[name] || [];
           return (
@@ -1016,7 +1032,7 @@ const TrytonForm = ({
                     onClick={handleCancel}
                     className="bg-white border-gray-300 text-gray-600 hover:border-teal-600 hover:text-teal-600 rounded-lg"
                   >
-                    Cancelar
+                    Cancel
                   </Button>
                 </>
               ) : (
@@ -1026,7 +1042,7 @@ const TrytonForm = ({
                   onClick={handleEdit}
                   className="bg-teal-600 hover:bg-teal-700 border-teal-600 hover:border-teal-700 text-white rounded-lg shadow-md"
                 >
-                  Editar
+                  Edit
                 </Button>
               )}
             </>
@@ -1041,6 +1057,7 @@ const TrytonForm = ({
           layout="vertical"
           onFinish={handleSave}
           initialValues={formData}
+          onValuesChange={handleFormChange}
         >
           {formSections.length > 0 ? (
             <FormSections
@@ -1068,7 +1085,7 @@ const TrytonForm = ({
           
           {fields.length === 0 && (
             <div className="text-center py-10 text-gray-500">
-              <Text>No hay campos disponibles para este formulario</Text>
+              <Text>No fields available for this form</Text>
             </div>
           )}
         </Form>

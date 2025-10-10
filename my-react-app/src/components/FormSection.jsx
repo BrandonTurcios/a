@@ -217,7 +217,7 @@ const FormSections = ({
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: '40px' }}>
-        <Text>Cargando formulario...</Text>
+        <Text>Loading form...</Text>
       </div>
     );
   }
@@ -225,7 +225,7 @@ const FormSections = ({
   if (!sections || sections.length === 0) {
     return (
       <div style={{ textAlign: 'center', padding: '40px' }}>
-        <Text type="secondary">No hay secciones disponibles</Text>
+        <Text type="secondary">No sections available</Text>
       </div>
     );
   }
