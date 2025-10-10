@@ -4,15 +4,15 @@ import {
   PlusOutlined,
   SaveOutlined,
   ReloadOutlined,
-  PaperclipOutlined,
+  LinkOutlined,
   CommentOutlined,
   SettingOutlined,
-  LinkOutlined,
   PrinterOutlined,
   MailOutlined,
   LeftOutlined,
   RightOutlined,
-  SwapOutlined
+  SwapOutlined,
+  FileOutlined
 } from '@ant-design/icons';
 
 const Toolbar = ({ 
@@ -106,7 +106,7 @@ const Toolbar = ({
     <Space.Compact>
       <Tooltip title="Adjuntos">
         <Button 
-          icon={<PaperclipOutlined />} 
+          icon={<FileOutlined />} 
           onClick={onAttach}
           disabled={loading}
         />
