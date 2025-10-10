@@ -165,7 +165,6 @@ const Toolbar = ({
         disabled={loading}
       >
         <Button icon={<LinkOutlined />}>
-          Relate
         </Button>
       </Dropdown>
     );
