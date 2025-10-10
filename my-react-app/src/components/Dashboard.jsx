@@ -669,28 +669,28 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
   const processDirectAction = async (item, actionResult) => {
     try {
-      // Actualizar el nombre del menú con la acción seleccionada
+      // Mantener el nombre original del menú (no actualizar con actionName)
       let updatedItem = { ...item };
-      if (actionResult.actionName) {
-        updatedItem.name = actionResult.actionName;
-        console.log(`🔄 Actualizando nombre del menú ${item.id} a "${actionResult.actionName}"`);
+      // if (actionResult.actionName) {
+      //   updatedItem.name = actionResult.actionName;
+      //   console.log(`🔄 Actualizando nombre del menú ${item.id} a "${actionResult.actionName}"`);
 
-        // Actualizar el estado del menú con el nuevo nombre
-        setMenuItems(prevItems => {
-          const updateMenuItems = (items) => {
-            return items.map(menuItem => {
-              if (menuItem.id === item.id) {
-                return { ...menuItem, name: actionResult.actionName };
-              }
-              if (menuItem.childs && menuItem.childs.length > 0) {
-                return { ...menuItem, childs: updateMenuItems(menuItem.childs) };
-              }
-              return menuItem;
-            });
-          };
-          return updateMenuItems(prevItems);
-        });
-      }
+      //   // Actualizar el estado del menú con el nuevo nombre
+      //   setMenuItems(prevItems => {
+      //     const updateMenuItems = (items) => {
+      //       return items.map(menuItem => {
+      //         if (menuItem.id === item.id) {
+      //           return { ...menuItem, name: actionResult.actionName };
+      //         }
+      //         if (menuItem.childs && menuItem.childs.length > 0) {
+      //           return { ...menuItem, childs: updateMenuItems(menuItem.childs) };
+      //         }
+      //         return menuItem;
+      //       });
+      //     };
+      //     return updateMenuItems(prevItems);
+      //   });
+      // }
 
       // Procesar la vista y obtener datos como en el flujo normal
       let tableData = null;
@@ -890,28 +890,28 @@ const Dashboard = ({ sessionData, onLogout }) => {
         return;
       }
 
-      // Actualizar el nombre del menú si se obtuvo un actionName
+      // Mantener el nombre original del menú (no actualizar con actionName)
       let updatedItem = { ...item };
-      if (menuInfo.actionName) {
-        updatedItem.name = menuInfo.actionName;
-        console.log(`🔄 Actualizando nombre del menú ${item.id} de "${item.name}" a "${menuInfo.actionName}"`);
+      // if (menuInfo.actionName) {
+      //   updatedItem.name = menuInfo.actionName;
+      //   console.log(`🔄 Actualizando nombre del menú ${item.id} de "${item.name}" a "${menuInfo.actionName}"`);
 
-        // Actualizar el estado del menú con el nuevo nombre
-        setMenuItems(prevItems => {
-          const updateMenuItems = (items) => {
-            return items.map(menuItem => {
-              if (menuItem.id === item.id) {
-                return { ...menuItem, name: menuInfo.actionName };
-              }
-              if (menuItem.childs && menuItem.childs.length > 0) {
-                return { ...menuItem, childs: updateMenuItems(menuItem.childs) };
-              }
-              return menuItem;
-            });
-          };
-          return updateMenuItems(prevItems);
-        });
-      }
+      //   // Actualizar el estado del menú con el nuevo nombre
+      //   setMenuItems(prevItems => {
+      //     const updateMenuItems = (items) => {
+      //       return items.map(menuItem => {
+      //         if (menuItem.id === item.id) {
+      //           return { ...menuItem, name: menuInfo.actionName };
+      //         }
+      //         if (menuItem.childs && menuItem.childs.length > 0) {
+      //           return { ...menuItem, childs: updateMenuItems(menuItem.childs) };
+      //         }
+      //         return menuItem;
+      //       });
+      //     };
+      //     return updateMenuItems(prevItems);
+      //   });
+      // }
 
       // Si tenemos un modelo, obtener información de la vista (tree o form)
       let tableData = null;
