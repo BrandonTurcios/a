@@ -239,7 +239,42 @@ const Dashboard = ({ sessionData, onLogout }) => {
         isOpen={actionOptions.showModal}
         options={actionOptions.options}
         onClose={actionOptions.closeModal}
-        onSelect={actionOptions.handleSelectOption}
+        onSelectOption={async (_selectedIndex, selectedOption) => {
+          try {
+            menuActions.setLoadingContent(true);
+            const result = await actionOptions.handleSelectOption(selectedOption);
+
+            if (result.success && result.result) {
+              const actionResult = result.result;
+
+              if (actionResult.viewType === 'tree' && actionResult.tableData) {
+                menuActions.setTableInfo(actionResult.tableData);
+                menuActions.setFormInfo(null);
+              } else if (actionResult.viewType === 'form' && actionResult.formData) {
+                menuActions.setFormInfo(actionResult.formData);
+                menuActions.setTableInfo(null);
+              }
+
+              menuActions.setSelectedMenuInfo({
+                menuItem: actionOptions.pendingMenuItem,
+                actionInfo: [selectedOption],
+                toolbarInfo: actionResult.toolbarInfo,
+                resModel: actionResult.resModel,
+                actionName: actionResult.actionName,
+                viewType: actionResult.viewType,
+                viewId: actionResult.viewId,
+                timestamp: new Date().toISOString()
+              });
+
+              menuActions.setActiveTab(actionOptions.pendingMenuItem?.id || 'content');
+            }
+
+            menuActions.setLoadingContent(false);
+          } catch (error) {
+            console.error('Error handling selected option:', error);
+            menuActions.setLoadingContent(false);
+          }
+        }}
       />
 
       <WizardModal

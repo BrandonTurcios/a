@@ -229,6 +229,7 @@ export const useMenuActions = () => {
     setLoadingContent,
     setFormInfo,
     setTableInfo,
-    setSelectedMenuInfo
+    setSelectedMenuInfo,
+    setActiveTab
   };
 };
