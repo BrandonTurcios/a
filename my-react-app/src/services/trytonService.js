@@ -62,8 +62,15 @@ class TrytonService {
         rpcParams.push({ ...this.context });
       } else {
         // Para otros métodos, mezclar con el último parámetro como antes
-      const lastParam = rpcParams.pop() || {};
-      rpcParams.push({ ...this.context, ...lastParam });
+        const lastParam = rpcParams.pop() || {};
+        // Solo mezclar si el último parámetro es un objeto
+        if (typeof lastParam === 'object' && lastParam !== null) {
+          rpcParams.push({ ...this.context, ...lastParam });
+        } else {
+          // Si el último parámetro no es un objeto, agregar el contexto al final
+          rpcParams.push(lastParam);
+          rpcParams.push({ ...this.context });
+        }
       }
     }
 
