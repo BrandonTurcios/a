@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import Login from './components/Login'
-import Dashboard from './components/Dashboard'
+import Dashboard from './app/dashboard/Dashboard'
 
 function App() {
   const [sessionData, setSessionData] = useState(null);

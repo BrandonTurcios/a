@@ -386,7 +386,6 @@ class TrytonService {
     }
 
     try {
-
       // PRIMERO: Probar una llamada simple para verificar la autenticación
       try {
         const testResult = await this.makeRpcCall('model.ir.module.search_read', [
@@ -1236,15 +1235,15 @@ class TrytonService {
       throw error;
     }
   }
-  
+
   // Expandir campos para incluir relaciones basándose en fieldsView
   expandFieldsForRelationsFromFieldsView(fields, fieldsView) {
     const expandedFields = [...fields];
-    
+
     if (!fieldsView.fields) {
       return expandedFields;
     }
-    
+
     // Recorrer todos los campos y expandir los many2one
     Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
       if (fieldDef.type === 'many2one' && fields.includes(fieldName)) {
@@ -1256,7 +1255,7 @@ class TrytonService {
         }
       }
     });
-    
+
     // Agregar campos básicos que siempre queremos
     const basicFields = ['rec_name', '_timestamp', '_write', '_delete'];
     basicFields.forEach(fieldName => {
@@ -1264,7 +1263,7 @@ class TrytonService {
         expandedFields.push(fieldName);
       }
     });
-    
+
     return expandedFields;
   }
 
@@ -1365,11 +1364,11 @@ class TrytonService {
     try {
       console.log(`🔍 Autocomplete para modelo: ${model}, búsqueda: "${searchText}"`);
       console.log(`📋 Domain original:`, domain);
-      
+
       // Evaluar domain PYSON si es necesario
       const evaluatedDomain = this.evaluatePysonDomain(domain);
       console.log(`📋 Domain evaluado:`, evaluatedDomain);
-      
+
       // Llamar al método autocomplete del modelo
       // Parámetros: [searchText, domain, limit, order, context]
       // El contexto se agrega automáticamente en makeRpcCall como último parámetro
@@ -1380,7 +1379,7 @@ class TrytonService {
         null,  // order (null para usar orden por defecto)
         {}     // context placeholder - makeRpcCall lo mezclará con this.context
       ]);
-      
+
       console.log(`✅ Resultados de autocomplete:`, results);
       return results;
     } catch (error) {
@@ -1407,7 +1406,7 @@ class TrytonService {
               return this.context.company;
             }
             return value.d; // default value
-          
+
           case 'Eval':
             // Eval evalúa una expresión en el contexto
             // {"__class__": "Eval", "v": "context", "d": {}}
@@ -1415,18 +1414,18 @@ class TrytonService {
               return this.context || value.d;
             }
             return value.d; // default value
-          
+
           default:
             console.warn(`⚠️ PYSON class no soportada: ${value.__class__}, usando valor por defecto`);
             return value.d || null;
         }
       }
-      
+
       // Si es un array, evaluar recursivamente
       if (Array.isArray(value)) {
         return value.map(v => evaluateValue(v));
       }
-      
+
       // Valor simple, retornar como está
       return value;
     };
@@ -1629,7 +1628,6 @@ class TrytonService {
 
     try {
       console.log(`🧙 Obteniendo formulario de wizard: ${wizardName}, ID: ${wizardId}`);
-
       // Obtener el estado actual del wizard (el que devolvió el .create)
       const currentState = await this.getCurrentWizardState(wizardName, wizardId);
 
@@ -1738,33 +1736,33 @@ class TrytonService {
 
     try {
       console.log(`🔍 Obteniendo estado actual del wizard: ${wizardName}, ID: ${wizardId}`);
-      
+
       // Primero intentar obtener el estado guardado del .create
       if (this.wizardStates && this.wizardStates.has(wizardId)) {
         const savedState = this.wizardStates.get(wizardId);
         console.log(`✅ Estado guardado del wizard: ${savedState}`);
         return savedState;
       }
-      
+
       // Si no hay estado guardado, intentar con diferentes estados comunes
       const possibleStates = ['start', 'test', 'request', 'end'];
-      
+
       for (const state of possibleStates) {
         try {
           console.log(`🔍 Probando estado: ${state}`);
-          
+
           const result = await this.makeRpcCall(`wizard.${wizardName}.execute`, [
             wizardId,
             {},       // data vacío
             state     // probar este estado
           ]);
-          
+
           console.log(`✅ Estado ${state} funcionó:`, result);
-          
+
           // Si no hay error, este es el estado correcto
           // El estado actual está en result.state o en el segundo elemento del array
           let currentState = state;
-          
+
           if (result && typeof result === 'object') {
             if (result.state) {
               currentState = result.state;
@@ -1777,26 +1775,26 @@ class TrytonService {
               }
             }
           }
-          
+
           // Guardar el estado encontrado para futuras referencias
           if (!this.wizardStates) {
             this.wizardStates = new Map();
           }
           this.wizardStates.set(wizardId, currentState);
-          
+
           console.log(`✅ Estado actual del wizard: ${currentState}`);
           return currentState;
-          
+
         } catch (stateError) {
           console.log(`❌ Estado ${state} falló:`, stateError.message);
           // Continuar con el siguiente estado
         }
       }
-      
+
       // Si todos los estados fallaron, usar fallback
       console.warn('Todos los estados fallaron, usando fallback "start"');
       return 'start';
-      
+
     } catch (error) {
       console.warn('Error obteniendo estado del wizard, usando fallback "start":', error.message);
       return 'start'; // fallback por defecto

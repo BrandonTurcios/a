@@ -1005,13 +1005,13 @@ const TrytonForm = ({
     }
   };
 
-  if (currentLoading) {
+  if (currentLoading || !formInfo || fields.length === 0) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        minHeight: '200px' 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '200px'
       }}>
         <Spin size="large" />
         <Text style={{ marginLeft: '16px' }}>Cargando formulario...</Text>
@@ -1092,7 +1092,7 @@ const TrytonForm = ({
           initialValues={formData}
           onValuesChange={handleFormChange}
         >
-          {formSections.length > 0 ? (
+          {formSections.length > 0 && formSections.some(s => s.fields && s.fields.length > 0) ? (
             <FormSections
               sections={formSections}
               fields={formInfo?.fields || {}}
@@ -1102,11 +1102,11 @@ const TrytonForm = ({
             />
           ) : (
             <Row gutter={[24, 16]}>
-              {fields.map((field, index) => (
-                <Col 
-                  key={field.name} 
-                  xs={24} 
-                  sm={12} 
+              {fields.map((field) => (
+                <Col
+                  key={field.name}
+                  xs={24}
+                  sm={12}
                   lg={8}
                   style={{ marginBottom: '16px' }}
                 >
