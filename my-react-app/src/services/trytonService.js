@@ -178,7 +178,7 @@ class TrytonService {
 
       const loginParams = [
         username,
-        { password: password },
+        password,
         'en' // Idioma
       ];
 
