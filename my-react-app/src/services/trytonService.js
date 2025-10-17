@@ -186,7 +186,8 @@ class TrytonService {
       const loginParams = [
         username,
         password,
-        'en' // Idioma
+        'en', // Idioma
+        {} // Contexto vacío
       ];
 
       const result = await this.makeRpcCall('common.db.login', loginParams);
