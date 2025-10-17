@@ -188,9 +188,11 @@ class TrytonService {
 
       const loginParams = [
         username,
-        password,
-        'en', // Idioma
-        {} // Contexto vacío
+        {
+          device_cookie: "a8e18b090c9c40989af64040c0ec9f1f",
+          password: password
+        },
+        'en' // Idioma
       ];
 
       const result = await this.makeRpcCall('common.db.login', loginParams);
