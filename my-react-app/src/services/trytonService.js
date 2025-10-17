@@ -60,6 +60,9 @@ class TrytonService {
       if (method.startsWith('wizard.')) {
         // Para wizards, simplemente agregar el contexto al final
         rpcParams.push({ ...this.context });
+      } else if (method === 'common.db.login') {
+        // Para login, NO agregar contexto adicional - ya tiene el formato correcto
+        // El login ya tiene sus 4 parámetros: username, password, language, context
       } else {
         // Para otros métodos, mezclar con el último parámetro como antes
         const lastParam = rpcParams.pop() || {};
