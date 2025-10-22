@@ -4,6 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
+## Original Tryton Code
+
+ original tryton code is in: /home/gnuhealth/Downloads/package/
+
+ feel free to check it out always.
+
 React web application for GNU Health Tryton. Provides authentication, session management, and full access to Tryton ERP/Health system functionality through a modern UI.
 
 ## Development Commands

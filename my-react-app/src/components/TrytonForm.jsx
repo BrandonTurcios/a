@@ -1,34 +1,35 @@
 import { useState, useEffect } from 'react';
-import { 
-  Card, 
-  Form, 
-  Input, 
-  Button, 
-  Select, 
-  DatePicker, 
-  Switch, 
-  InputNumber, 
-  Row, 
-  Col, 
-  Space, 
-  Typography, 
-  Divider, 
-  Spin, 
+import {
+  Card,
+  Form,
+  Input,
+  Button,
+  Select,
+  DatePicker,
+  Switch,
+  InputNumber,
+  Row,
+  Col,
+  Space,
+  Typography,
+  Divider,
+  Spin,
   Alert,
   Tag,
   Tooltip,
   AutoComplete
 } from 'antd';
-import { 
-  SaveOutlined, 
-  EditOutlined, 
-  EyeOutlined, 
+import {
+  SaveOutlined,
+  EditOutlined,
+  EyeOutlined,
   DeleteOutlined,
   PlusOutlined,
   MinusOutlined,
   SearchOutlined,
   CalendarOutlined
 } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import trytonService from '../services/trytonService';
 import { parseFormSections } from '../utils/formParser';
 import FormSections from './FormSection';
@@ -54,14 +55,14 @@ const Many2OneField = ({ name, label, fieldDef, required, readonly, help, form, 
     try {
       setLoading(true);
       console.log(`🔍 Searching options for ${name} (${relation}) with text: "${searchText}"`);
-      
+
       // Parsear el domain del campo (puede ser una cadena JSON)
       let domain = [];
       if (fieldDef.domain) {
         try {
           // Si domain es una cadena, intentar parsearla
-          domain = typeof fieldDef.domain === 'string' 
-            ? JSON.parse(fieldDef.domain) 
+          domain = typeof fieldDef.domain === 'string'
+            ? JSON.parse(fieldDef.domain)
             : fieldDef.domain;
           console.log(`📋 Using domain for ${name}:`, domain);
         } catch (e) {
@@ -69,7 +70,7 @@ const Many2OneField = ({ name, label, fieldDef, required, readonly, help, form, 
           domain = [];
         }
       }
-      
+
       // Use the autocomplete method from the service
       const autocompleteOptions = await trytonService.autocomplete(
         relation,
@@ -78,7 +79,7 @@ const Many2OneField = ({ name, label, fieldDef, required, readonly, help, form, 
         1000
         // context is automatically added in makeRpcCall
       );
-      
+
       if (autocompleteOptions && Array.isArray(autocompleteOptions)) {
         const formattedOptions = autocompleteOptions.map(option => ({
           value: option.id.toString(),
@@ -86,7 +87,7 @@ const Many2OneField = ({ name, label, fieldDef, required, readonly, help, form, 
           id: option.id,
           name: option.name || option.rec_name
         }));
-        
+
         setOptions(formattedOptions);
         console.log(`✅ Options found for "${searchText}": ${formattedOptions.length}`);
       } else {
@@ -120,7 +121,7 @@ const Many2OneField = ({ name, label, fieldDef, required, readonly, help, form, 
   // Load default value when component mounts
   useEffect(() => {
     console.log(`🔍 Many2OneField ${name} - defaultValue:`, defaultValue);
-    
+
     if (defaultValue && typeof defaultValue === 'object') {
       // If defaultValue has a rec_name property, use it as display value
       if (defaultValue.rec_name) {
@@ -144,7 +145,7 @@ const Many2OneField = ({ name, label, fieldDef, required, readonly, help, form, 
   // Function to load record name for a given ID
   const loadRecordName = async (recordId) => {
     if (!relation || !recordId) return;
-    
+
     try {
       const records = await trytonService.getModelData(relation, [['id', '=', recordId]], ['id', 'name', 'rec_name'], 1);
       if (records && records.length > 0) {
@@ -164,7 +165,7 @@ const Many2OneField = ({ name, label, fieldDef, required, readonly, help, form, 
         <SearchOutlined className="text-teal-600" />
         {label}
       </div>
-      
+
       <div style={{ marginBottom: help ? '12px' : '0' }}>
         <AutoComplete
           value={inputValue}
@@ -185,12 +186,12 @@ const Many2OneField = ({ name, label, fieldDef, required, readonly, help, form, 
           />
         </AutoComplete>
       </div>
-      
+
       {/* Campo oculto para almacenar el ID en el formulario */}
       <Form.Item name={name} hidden rules={[{ required, message: `${label} es requerido` }]}>
         <Input type="hidden" />
       </Form.Item>
-      
+
       {help && (
         <div style={{ marginTop: '8px', marginBottom: '16px' }}>
           <Text type="secondary" style={{ fontSize: '12px', lineHeight: '1.4' }}>{help}</Text>
@@ -218,6 +219,11 @@ const processMany2OneData = (data, fieldsView) => {
       const fieldValue = data[fieldName];
       const fieldRecName = data[`${fieldName}.rec_name`];
 
+      // Skip null/undefined values - no need to process or log them
+      if (fieldValue === null || fieldValue === undefined) {
+        return;
+      }
+
       console.log(`🔍 Procesando campo ${fieldName}:`, {
         fieldValue,
         fieldRecName,
@@ -231,7 +237,7 @@ const processMany2OneData = (data, fieldsView) => {
        // CASO 1: Formato expandido de Tryton (fieldValue = ID, fieldExpanded = objeto con rec_name)
        const fieldExpanded = data[`${fieldName}.`]; // Objeto expandido con rec_name
        console.log(`🔍 Buscando clave "${fieldName}." en data:`, fieldExpanded);
-       if (fieldValue !== null && fieldValue !== undefined && fieldExpanded && fieldExpanded.rec_name) {
+       if (fieldExpanded && fieldExpanded.rec_name) {
          processedData[fieldName] = {
            id: fieldValue,
            rec_name: fieldExpanded.rec_name
@@ -239,7 +245,7 @@ const processMany2OneData = (data, fieldsView) => {
          console.log(`✅ Procesado many2one ${fieldName} (formato expandido Tryton):`, processedData[fieldName]);
        }
        // CASO 2: Formato expandido manual (fieldValue = ID, fieldRecName = nombre)
-       else if (fieldValue !== null && fieldValue !== undefined && fieldRecName) {
+       else if (fieldRecName) {
          processedData[fieldName] = {
            id: fieldValue,
            rec_name: fieldRecName
@@ -247,7 +253,7 @@ const processMany2OneData = (data, fieldsView) => {
          console.log(`✅ Procesado many2one ${fieldName} (formato expandido manual):`, processedData[fieldName]);
        }
        // CASO 3: Formato objeto directo (fieldValue = objeto con id, name, rec_name)
-       else if (fieldValue && typeof fieldValue === 'object' && fieldValue.id) {
+       else if (typeof fieldValue === 'object' && fieldValue.id) {
          processedData[fieldName] = {
            id: fieldValue.id,
            rec_name: fieldValue.rec_name || fieldValue.name || `ID: ${fieldValue.id}`
@@ -255,18 +261,55 @@ const processMany2OneData = (data, fieldsView) => {
          console.log(`✅ Procesado many2one ${fieldName} (formato objeto):`, processedData[fieldName]);
        }
        // CASO 4: Solo ID (sin rec_name)
-       else if (fieldValue !== null && fieldValue !== undefined) {
+       else {
          processedData[fieldName] = fieldValue; // Keep as is, will be loaded dynamically
          console.log(`⚠️ Field ${fieldName} only has ID, will be loaded dynamically:`, fieldValue);
-       }
-       else {
-         console.log(`⚠️ Could not process ${fieldName}:`, { fieldValue, fieldExpanded, fieldRecName });
        }
     }
   });
 
   console.log('🔍 Procesando datos many2one - salida:', processedData);
   return processedData;
+};
+
+// Helper function to convert Tryton date/datetime objects to dayjs
+const parseTrytonDate = (value) => {
+  if (!value) return null;
+
+  // If it's already a dayjs object, return it
+  if (dayjs.isDayjs(value)) return value;
+
+  // If it's a string, parse it
+  if (typeof value === 'string') {
+    const parsed = dayjs(value);
+    return parsed.isValid() ? parsed : null;
+  }
+
+  // If it's a Tryton date object: { __class__: 'date', year, month, day }
+  if (typeof value === 'object' && value.__class__ === 'date') {
+    try {
+      const iso = `${String(value.year).padStart(4, '0')}-${String(value.month).padStart(2, '0')}-${String(value.day).padStart(2, '0')}`;
+      const parsed = dayjs(iso);
+      return parsed.isValid() ? parsed : null;
+    } catch (e) {
+      console.warn('Error parsing Tryton date:', value, e);
+      return null;
+    }
+  }
+
+  // If it's a Tryton datetime object: { __class__: 'datetime', year, month, day, hour, minute, second }
+  if (typeof value === 'object' && value.__class__ === 'datetime') {
+    try {
+      const iso = `${String(value.year).padStart(4, '0')}-${String(value.month).padStart(2, '0')}-${String(value.day).padStart(2, '0')}T${String(value.hour || 0).padStart(2, '0')}:${String(value.minute || 0).padStart(2, '0')}:${String(value.second || 0).padStart(2, '0')}`;
+      const parsed = dayjs(iso);
+      return parsed.isValid() ? parsed : null;
+    } catch (e) {
+      console.warn('Error parsing Tryton datetime:', value, e);
+      return null;
+    }
+  }
+
+  return null;
 };
 
 // Helper function to extract only the IDs from many2one fields for form values
@@ -277,8 +320,9 @@ const extractFormValues = (data, fieldsView) => {
 
   const formValues = { ...data };
 
-  // Para campos many2one, extraer solo el ID
+  // Process each field based on its type
   Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
+    // Para campos many2one, extraer solo el ID
     if (fieldDef.type === 'many2one' && data[fieldName]) {
       if (typeof data[fieldName] === 'object' && data[fieldName].id) {
         // Si es un objeto procesado, extraer el ID
@@ -291,7 +335,19 @@ const extractFormValues = (data, fieldsView) => {
         console.log(`✅ Manteniendo ID directo de ${fieldName}:`, data[fieldName]);
       }
     }
-    
+
+    // Para campos date/datetime, convertir a dayjs
+    if ((fieldDef.type === 'date' || fieldDef.type === 'datetime') && data[fieldName]) {
+      const parsed = parseTrytonDate(data[fieldName]);
+      if (parsed) {
+        formValues[fieldName] = parsed;
+        console.log(`✅ Convirtiendo fecha ${fieldName}:`, data[fieldName], '→', parsed.format('YYYY-MM-DD'));
+      } else {
+        formValues[fieldName] = null;
+        console.warn(`⚠️ Could not parse date for ${fieldName}:`, data[fieldName]);
+      }
+    }
+
     // Remover campos expandidos (.rec_name) del formulario
     if (fieldName.includes('.')) {
       delete formValues[fieldName];
@@ -301,11 +357,11 @@ const extractFormValues = (data, fieldsView) => {
   return formValues;
 };
 
-const TrytonForm = ({ 
-  model, 
-  viewId, 
-  viewType = 'form', 
-  recordId = null, 
+const TrytonForm = ({
+  model,
+  viewId,
+  viewType = 'form',
+  recordId = null,
   recordData = null,
   title = 'Form',
   onSave = null,
@@ -322,7 +378,7 @@ const TrytonForm = ({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [formInfo, setFormInfo] = useState(null);
-  
+
   // Usar loading externo si se proporciona, sino usar el interno
   const currentLoading = loading || internalLoading;
   const [formData, setFormData] = useState({});
@@ -332,8 +388,24 @@ const TrytonForm = ({
   const [formSections, setFormSections] = useState([]);
   const [initialValues, setInitialValues] = useState(null);
 
-  // Handle form field changes to detect dirty state
-  const handleFormChange = () => {
+  // Rastrear campos modificados (solo se envían al servidor los campos que cambian)
+  const [modifiedFields, setModifiedFields] = useState({});
+
+  // Manejar cambios en campos del formulario
+  const handleFormChange = (changedValues, allValues) => {
+    // Rastrear qué campos han sido modificados
+    if (changedValues && Object.keys(changedValues).length > 0) {
+      setModifiedFields(prev => {
+        const updated = { ...prev };
+        Object.keys(changedValues).forEach(fieldName => {
+          updated[fieldName] = true;
+        });
+        console.log('📝 Campo modificado:', Object.keys(changedValues)[0]);
+        return updated;
+      });
+    }
+
+    // Detectar dirty state para componente padre
     if (onFormChange && initialValues) {
       const currentValues = form.getFieldsValue();
       const isDirty = JSON.stringify(currentValues) !== JSON.stringify(initialValues);
@@ -344,13 +416,13 @@ const TrytonForm = ({
   // Function to create field components for sections
   const createFieldComponents = () => {
     const fieldComponents = {};
-    
+
     console.log('🔍 Creating field components for fields:', fields.map(f => f.name));
     fields.forEach(field => {
       fieldComponents[field.name] = renderFormField(field);
       console.log(`🔍 Created component for field: ${field.name}`);
     });
-    
+
     console.log('🔍 Field components created:', Object.keys(fieldComponents));
     return fieldComponents;
   };
@@ -359,32 +431,34 @@ const TrytonForm = ({
     if (fieldsView) {
       // Si se proporciona fieldsView directamente, usarlo
       setFormInfo(fieldsView);
-      
+
       // Parsear secciones del formulario
       const parsedSections = parseFormSections(fieldsView);
       setFormSections(parsedSections.sections);
       console.log('📋 Secciones parseadas:', parsedSections.sections);
       console.log('📋 Arch XML:', fieldsView.arch);
       console.log('📋 Fields available:', Object.keys(fieldsView.fields || {}));
-      
+
       // Generar campos del formulario usando generateFormFields
       const formFields = generateFormFields(fieldsView);
       setFields(formFields);
-      
+
       // Load dynamic selection options
       loadSelectionOptions(fieldsView);
-      
+
       // Procesar datos para many2one antes de establecerlos
       const processedData = processMany2OneData(recordData || {}, fieldsView);
       setFormData(processedData);
-      
+
       if (recordData) {
         // Establecer solo los IDs en el formulario (no los objetos completos)
         const formValues = extractFormValues(processedData, fieldsView);
         form.setFieldsValue(formValues);
         setInitialValues(formValues);
+        setModifiedFields({});
       } else {
         setInitialValues({});
+        setModifiedFields({});
       }
     } else if (model && viewId) {
       loadFormData();
@@ -395,40 +469,40 @@ const TrytonForm = ({
     try {
       setInternalLoading(true);
       setError(null);
-      
+
       console.log(`🔍 Loading form for model: ${model}, view: ${viewId}`);
-      
+
       // Get complete form information
       const formInfo = await trytonService.getFormInfo(model, viewId, viewType, recordId);
       console.log('🔍 Información de formulario obtenida:', formInfo);
-      
+
       setFormInfo(formInfo.fieldsView);
-      
+
       // Parsear secciones del formulario
       const parsedSections = parseFormSections(formInfo.fieldsView);
       setFormSections(parsedSections.sections);
       console.log('📋 Secciones parseadas:', parsedSections.sections);
-      
+
       // Generar campos del formulario
       const formFields = generateFormFields(formInfo.fieldsView);
       setFields(formFields);
-      
+
       // Load dynamic selection options
       await loadSelectionOptions(formInfo.fieldsView);
-      
+
       // Si hay datos del registro, establecerlos
       if (formInfo.data || recordData) {
         const dataToUse = formInfo.data || recordData;
-        
+
         // Procesar datos para many2one
         const processedData = processMany2OneData(dataToUse, formInfo.fieldsView);
         setFormData(processedData);
-        
+
         // Establecer solo los IDs en el formulario
         const formValues = extractFormValues(processedData, formInfo.fieldsView);
         form.setFieldsValue(formValues);
         setInitialValues(formValues);
-        
+
         console.log('✅ Datos del registro establecidos:', processedData);
         console.log('✅ Valores del formulario:', formValues);
       } else {
@@ -439,7 +513,7 @@ const TrytonForm = ({
         setInitialValues(defaultValues);
         console.log('✅ Valores por defecto establecidos:', defaultValues);
       }
-      
+
     } catch (error) {
       console.error('❌ Error loading form:', error);
       setError(error.message);
@@ -450,16 +524,16 @@ const TrytonForm = ({
 
   const loadSelectionOptions = async (fieldsView) => {
     if (!fieldsView.fields) return;
-    
+
     const optionsToLoad = {};
-    
+
     // Identify selection fields that have methods
     Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
       if (fieldDef.type === 'selection' && typeof fieldDef.selection === 'string') {
         optionsToLoad[fieldName] = fieldDef.selection;
       }
     });
-    
+
     // Load options for each field
     for (const [fieldName, methodName] of Object.entries(optionsToLoad)) {
       try {
@@ -479,22 +553,22 @@ const TrytonForm = ({
 
   const generateFormFields = (fieldsView) => {
     const formFields = [];
-    
+
     if (!fieldsView.fields) {
       return formFields;
     }
-    
+
     // Obtener campos del arch XML
     const archFields = parseArchFields(fieldsView.arch);
     console.log('🔍 Campos encontrados en arch:', archFields);
-    
+
     // Process fields that are in arch or are basic
     Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
       const isInArch = archFields.includes(fieldName);
       const isBasicField = ['id', 'name', 'code', 'rec_name', 'active'].includes(fieldName);
-      
+
       if (isInArch || isBasicField) {
-        console.log(`✅ Incluyendo campo: ${fieldName} (tipo: ${fieldDef.type})`);
+        console.log(`✅ Incluyendo campo: ${fieldName} (tipo: ${fieldDef.type}, readonly: ${fieldDef.readonly})`);
         formFields.push({
           name: fieldName,
           label: fieldDef.string || fieldName,
@@ -507,7 +581,7 @@ const TrytonForm = ({
         console.log(`⏭️ Omitiendo campo: ${fieldName} (no está en arch ni es básico)`);
       }
     });
-    
+
     console.log(`📋 Total de campos del formulario: ${formFields.length}`);
     return formFields;
   };
@@ -517,25 +591,25 @@ const TrytonForm = ({
     if (arch && arch.includes(`name="${fieldName}"`)) {
       return true;
     }
-    
+
     // Basic fields to always include
     const basicFields = ['id', 'name', 'code', 'rec_name', 'active'];
-    
+
     return basicFields.includes(fieldName);
   };
 
   const parseArchFields = (arch) => {
     if (!arch) return [];
-    
+
     const fieldMatches = arch.match(/name="([^"]+)"/g);
     if (!fieldMatches) return [];
-    
+
     return fieldMatches.map(match => match.replace(/name="([^"]+)"/, '$1'));
   };
 
   const getDefaultValues = (fieldsView) => {
     const defaults = {};
-    
+
     if (fieldsView.fields) {
       Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
         if (fieldDef.default) {
@@ -543,13 +617,13 @@ const TrytonForm = ({
         }
       });
     }
-    
+
     return defaults;
   };
 
   const renderFormField = (field) => {
     const { name, label, fieldDef, required, readonly, help } = field;
-    
+
     // Validar que fieldDef existe
     if (!fieldDef) {
       console.warn(`⚠️ Field ${name} has no fieldDef defined`);
@@ -559,10 +633,10 @@ const TrytonForm = ({
         </Form.Item>
       );
     }
-    
+
     const fieldType = fieldDef.type;
     const isReadonly = readonly || !isEditing;
-    
+
     const commonProps = {
       name,
       label: help ? (
@@ -584,8 +658,8 @@ const TrytonForm = ({
       case 'char':
       case 'varchar':
         return (
-          <Form.Item 
-            key={name} 
+          <Form.Item
+            key={name}
             {...commonProps}
             label={
               <div className="flex items-center gap-2 font-medium text-gray-700">
@@ -596,17 +670,17 @@ const TrytonForm = ({
             help={help ? <Text type="secondary" className="text-xs">{help}</Text> : null}
             className="mb-6"
           >
-            <Input 
+            <Input
               placeholder={`Enter ${label.toLowerCase()}`}
               className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 text-base"
             />
           </Form.Item>
         );
-        
+
       case 'text':
         return (
-          <Form.Item 
-            key={name} 
+          <Form.Item
+            key={name}
             {...commonProps}
             label={
               <div className="flex items-center gap-2 font-medium text-gray-700">
@@ -617,19 +691,19 @@ const TrytonForm = ({
             help={help ? <Text type="secondary" className="text-xs">{help}</Text> : null}
             className="mb-6"
           >
-            <Input.TextArea 
-              rows={4} 
+            <Input.TextArea
+              rows={4}
               placeholder={`Enter ${label.toLowerCase()}`}
               className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 text-base resize-y"
             />
           </Form.Item>
         );
-        
+
       case 'integer':
       case 'bigint':
         return (
-          <Form.Item 
-            key={name} 
+          <Form.Item
+            key={name}
             {...commonProps}
             label={
               <div className="flex items-center gap-2 font-medium text-gray-700">
@@ -640,19 +714,19 @@ const TrytonForm = ({
             help={help ? <Text type="secondary" className="text-xs">{help}</Text> : null}
             className="mb-6"
           >
-            <InputNumber 
+            <InputNumber
               style={{ width: '100%' }}
               placeholder={`Enter ${label.toLowerCase()}`}
               className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 text-base w-full"
             />
           </Form.Item>
         );
-        
+
       case 'float':
       case 'numeric':
         return (
-          <Form.Item 
-            key={name} 
+          <Form.Item
+            key={name}
             {...commonProps}
             label={
               <div className="flex items-center gap-2 font-medium text-gray-700">
@@ -663,7 +737,7 @@ const TrytonForm = ({
             help={help ? <Text type="secondary" className="text-xs">{help}</Text> : null}
             className="mb-6"
           >
-            <InputNumber 
+            <InputNumber
               style={{ width: '100%' }}
               step={0.01}
               placeholder={`Enter ${label.toLowerCase()}`}
@@ -671,12 +745,12 @@ const TrytonForm = ({
             />
           </Form.Item>
         );
-        
+
       case 'boolean':
         return (
-          <Form.Item 
-            key={name} 
-            {...commonProps} 
+          <Form.Item
+            key={name}
+            {...commonProps}
             valuePropName="checked"
             label={
               <div className="flex items-center gap-2 font-medium text-gray-700">
@@ -690,11 +764,11 @@ const TrytonForm = ({
             <Switch className="[&.ant-switch-checked]:bg-teal-600 [&.ant-switch-checked]:shadow-teal-200" />
           </Form.Item>
         );
-        
+
       case 'date':
         return (
-          <Form.Item 
-            key={name} 
+          <Form.Item
+            key={name}
             {...commonProps}
             label={
               <div className="flex items-center gap-2 font-medium text-gray-700">
@@ -706,18 +780,18 @@ const TrytonForm = ({
             help={help ? <Text type="secondary" className="text-xs">{help}</Text> : null}
             className="mb-6"
           >
-            <DatePicker 
+            <DatePicker
               style={{ width: '100%' }}
               placeholder={`Select ${label.toLowerCase()}`}
               className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 w-full"
             />
           </Form.Item>
         );
-        
+
       case 'datetime':
         return (
-          <Form.Item 
-            key={name} 
+          <Form.Item
+            key={name}
             {...commonProps}
             label={
               <div className="flex items-center gap-2 font-medium text-gray-700">
@@ -729,7 +803,7 @@ const TrytonForm = ({
             help={help ? <Text type="secondary" className="text-xs">{help}</Text> : null}
             className="mb-6"
           >
-            <DatePicker 
+            <DatePicker
               showTime
               style={{ width: '100%' }}
               placeholder={`Select ${label.toLowerCase()}`}
@@ -737,23 +811,23 @@ const TrytonForm = ({
             />
           </Form.Item>
         );
-        
+
       case 'timedelta':
         return (
           <Form.Item key={name} {...commonProps}>
             <div style={{ display: 'flex', gap: '8px' }}>
-              <InputNumber 
+              <InputNumber
                 placeholder="Days"
                 style={{ flex: 1 }}
                 min={0}
               />
-              <InputNumber 
+              <InputNumber
                 placeholder="Hours"
                 style={{ flex: 1 }}
                 min={0}
                 max={23}
               />
-              <InputNumber 
+              <InputNumber
                 placeholder="Minutes"
                 style={{ flex: 1 }}
                 min={0}
@@ -762,15 +836,15 @@ const TrytonForm = ({
             </div>
           </Form.Item>
         );
-        
+
       case 'selection':
         const options = fieldDef.selection || [];
         // If selection is a function (string), use dynamically loaded options
         if (typeof fieldDef.selection === 'string') {
           const dynamicOptions = selectionOptions[name] || [];
           return (
-            <Form.Item 
-              key={name} 
+            <Form.Item
+              key={name}
               {...commonProps}
               label={
                 <div className="flex items-center gap-2 font-medium text-gray-700">
@@ -781,7 +855,7 @@ const TrytonForm = ({
               help={help ? <Text type="secondary" className="text-xs">{help}</Text> : null}
               className="mb-6"
             >
-              <Select 
+              <Select
                 placeholder={`Select ${label.toLowerCase()}`}
                 className="w-full rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12"
               >
@@ -799,8 +873,8 @@ const TrytonForm = ({
           );
         }
         return (
-          <Form.Item 
-            key={name} 
+          <Form.Item
+            key={name}
             {...commonProps}
             label={
               <div className="flex items-center gap-2 font-medium text-gray-700">
@@ -811,7 +885,7 @@ const TrytonForm = ({
             help={help ? <Text type="secondary" className="text-xs">{help}</Text> : null}
             className="mb-6"
           >
-            <Select 
+            <Select
               placeholder={`Select ${label.toLowerCase()}`}
               className="w-full rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12"
             >
@@ -823,7 +897,7 @@ const TrytonForm = ({
             </Select>
           </Form.Item>
         );
-        
+
       case 'many2one':
         return (
           <Many2OneField
@@ -838,12 +912,12 @@ const TrytonForm = ({
             defaultValue={formData[name]}
           />
         );
-        
+
       case 'multiselection':
         const multiselectionOptions = fieldDef.selection || [];
         return (
           <Form.Item key={name} {...commonProps}>
-            <Select 
+            <Select
               mode="multiple"
               placeholder={`Select ${label.toLowerCase()}`}
               style={{ width: '100%' }}
@@ -856,11 +930,11 @@ const TrytonForm = ({
             </Select>
           </Form.Item>
         );
-        
+
       case 'many2many':
         return (
           <Form.Item key={name} {...commonProps}>
-            <Select 
+            <Select
               mode="multiple"
               placeholder={`Select ${label.toLowerCase()}`}
               style={{ width: '100%' }}
@@ -870,13 +944,13 @@ const TrytonForm = ({
             </Select>
           </Form.Item>
         );
-        
+
       case 'one2many':
         return (
           <Form.Item key={name} {...commonProps}>
-            <div style={{ 
-              padding: '12px', 
-              border: '1px solid #d9d9d9', 
+            <div style={{
+              padding: '12px',
+              border: '1px solid #d9d9d9',
               borderRadius: '6px',
               background: '#fafafa'
             }}>
@@ -884,9 +958,9 @@ const TrytonForm = ({
                 <Text type="secondary" style={{ fontWeight: '500' }}>
                   {label} (One2Many)
                 </Text>
-                <Button 
-                  size="small" 
-                  type="primary" 
+                <Button
+                  size="small"
+                  type="primary"
                   icon={<PlusOutlined />}
                   onClick={() => {
                     console.log(`Opening wizard for one2many field: ${name} (${fieldDef.relation})`);
@@ -896,10 +970,10 @@ const TrytonForm = ({
                   Add
                 </Button>
               </div>
-              <div style={{ 
-                minHeight: '60px', 
-                display: 'flex', 
-                alignItems: 'center', 
+              <div style={{
+                minHeight: '60px',
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'center',
                 color: '#8c8c8c',
                 fontSize: '12px'
@@ -917,13 +991,13 @@ const TrytonForm = ({
             </div>
           </Form.Item>
         );
-        
+
       case 'binary':
         return (
           <Form.Item key={name} {...commonProps}>
-            <div style={{ 
-              padding: '12px', 
-              border: '1px dashed #d9d9d9', 
+            <div style={{
+              padding: '12px',
+              border: '1px dashed #d9d9d9',
               borderRadius: '6px',
               textAlign: 'center',
               color: '#8c8c8c'
@@ -938,7 +1012,7 @@ const TrytonForm = ({
             </div>
           </Form.Item>
         );
-        
+
       default:
         return (
           <Form.Item key={name} {...commonProps}>
@@ -952,32 +1026,122 @@ const TrytonForm = ({
     try {
       setSaving(true);
       setError(null);
-      
-      console.log('💾 Guardando formulario:', values);
-      
+
+      // Solo enviar campos modificados O todos si es registro nuevo
+      const isNewRecord = !recordId || recordId < 0;
+      const writableValues = {};
+
+      if (formInfo && formInfo.fields) {
+        Object.entries(values).forEach(([fieldName, fieldValue]) => {
+          const fieldDef = formInfo.fields[fieldName];
+
+          if (!fieldDef) {
+            if (isNewRecord || modifiedFields[fieldName]) {
+              writableValues[fieldName] = fieldValue;
+            }
+            return;
+          }
+
+          // Excluir campos readonly (excepto one2many y many2many)
+          if (fieldDef.readonly &&
+              !(fieldDef.type === 'one2many' || fieldDef.type === 'many2many')) {
+            return;
+          }
+
+          // Solo incluir campos modificados (o todos si es registro nuevo)
+          if (!isNewRecord && !modifiedFields[fieldName]) {
+            return;
+          }
+
+          // Excluir campos calculados comunes
+          const computedFields = ['age', 'rec_name', '_timestamp', '_write', '_delete'];
+          if (computedFields.includes(fieldName)) {
+            console.log(`⏭️ Omitiendo campo computado: ${fieldName}`);
+            return;
+          }
+
+          // Convertir fechas de dayjs a string
+          if ((fieldDef.type === 'date' || fieldDef.type === 'datetime') && fieldValue) {
+            if (dayjs.isDayjs(fieldValue)) {
+              if (fieldDef.type === 'date') {
+                writableValues[fieldName] = fieldValue.format('YYYY-MM-DD');
+              } else {
+                writableValues[fieldName] = fieldValue.toISOString();
+              }
+            } else {
+              writableValues[fieldName] = fieldValue;
+            }
+            return;
+          }
+
+          // Incluir campo
+          writableValues[fieldName] = fieldValue;
+          console.log(`✅ Incluyendo campo modificado: ${fieldName}`, fieldValue);
+        });
+      } else {
+        Object.assign(writableValues, values);
+      }
+
+      console.log('💾 Guardando formulario (valores escribibles):', writableValues);
+
       // Si se proporciona onSubmit, usarlo en lugar del flujo normal
       if (onSubmit) {
-        await onSubmit(values);
+        await onSubmit(writableValues);
         return;
       }
-      
+
+      let savedRecordId = recordId;
+
       if (recordId) {
         // Actualizar registro existente
-        await trytonService.updateRecord(model, recordId, values);
+        await trytonService.updateRecord(model, recordId, writableValues);
         console.log('✅ Registro actualizado');
       } else {
         // Crear nuevo registro
-        const newId = await trytonService.createRecord(model, values);
+        const newId = await trytonService.createRecord(model, writableValues);
         console.log('✅ Nuevo registro creado:', newId);
-        setFormData({ ...formData, id: newId[0] });
+        savedRecordId = newId[0];
+        setFormData({ ...formData, id: savedRecordId });
       }
-      
+
+      // 🔄 RECARGAR DATOS DEL SERVIDOR para obtener campos calculados actualizados
+      if (savedRecordId && formInfo) {
+        const fields = Object.keys(formInfo.fields || {});
+        const expandedFields = trytonService.expandFieldsForRelationsFromFieldsView(
+          fields,
+          formInfo
+        );
+
+        const reloadedData = await trytonService.getFormRecordData(
+          model,
+          savedRecordId,
+          expandedFields
+        );
+
+        // Procesar datos para many2one
+        const processedData = processMany2OneData(reloadedData, formInfo);
+        setFormData(processedData);
+
+        // Establecer valores en el formulario
+        const formValues = extractFormValues(processedData, formInfo);
+        form.setFieldsValue(formValues);
+        setInitialValues(formValues);
+      }
+
       setIsEditing(false);
-      
-      if (onSave) {
-        onSave(values, recordId);
+
+      // Limpiar campos modificados después de guardar
+      setModifiedFields({});
+
+      // Resetear estado dirty
+      if (onFormChange) {
+        onFormChange(false);
       }
-      
+
+      if (onSave) {
+        onSave(writableValues, savedRecordId);
+      }
+
     } catch (error) {
       console.error('❌ Error guardando formulario:', error);
       setError(`Error guardando: ${error.message}`);
@@ -999,7 +1163,7 @@ const TrytonForm = ({
       // Limpiar formulario
       form.resetFields();
     }
-    
+
     if (onCancel) {
       onCancel();
     }
@@ -1036,7 +1200,7 @@ const TrytonForm = ({
   }
 
   return (
-    <Card 
+    <Card
       className="rounded-2xl shadow-lg border border-teal-100"
       headStyle={{
         background: 'linear-gradient(135deg, #00A88E 0%, #00C4A7 100%)',
@@ -1051,16 +1215,19 @@ const TrytonForm = ({
             <>
               {isEditing ? (
                 <>
-                  <Button 
-                    type="primary" 
+                  <Button
+                    type="primary"
                     icon={<SaveOutlined />}
                     loading={saving}
-                    onClick={() => form.submit()}
+                    onClick={() => {
+                      console.log('🖱️ Save button clicked!');
+                      form.submit();
+                    }}
                     className="bg-teal-600 hover:bg-teal-700 border-teal-600 hover:border-teal-700 text-white rounded-lg shadow-md"
                   >
                     {submitButtonText}
                   </Button>
-                  <Button 
+                  <Button
                     icon={<MinusOutlined />}
                     onClick={handleCancel}
                     className="bg-white border-gray-300 text-gray-600 hover:border-teal-600 hover:text-teal-600 rounded-lg"
@@ -1069,8 +1236,8 @@ const TrytonForm = ({
                   </Button>
                 </>
               ) : (
-                <Button 
-                  type="primary" 
+                <Button
+                  type="primary"
                   icon={<EditOutlined />}
                   onClick={handleEdit}
                   className="bg-teal-600 hover:bg-teal-700 border-teal-600 hover:border-teal-700 text-white rounded-lg shadow-md"
@@ -1115,7 +1282,7 @@ const TrytonForm = ({
               ))}
             </Row>
           )}
-          
+
           {fields.length === 0 && (
             <div className="text-center py-10 text-gray-500">
               <Text>No fields available for this form</Text>
@@ -1123,7 +1290,7 @@ const TrytonForm = ({
           )}
         </Form>
       </div>
-      
+
       {formInfo && (
         <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #f0f0f0' }}>
           <Text type="secondary" style={{ fontSize: '12px' }}>

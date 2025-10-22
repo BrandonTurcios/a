@@ -5,7 +5,15 @@ import Toolbar from '../../components/Toolbar';
 
 const { Title, Paragraph } = Typography;
 
-const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, toolbarHandlers }) => {
+const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, toolbarHandlers, onRecordClick }) => {
+
+  const handleRowClick = (record) => {
+    console.log('🖱️ Row clicked:', record);
+    if (onRecordClick && record.id) {
+      onRecordClick(record.id, record);
+    }
+  };
+
   return (
     <div style={{
       padding: '24px',
@@ -63,6 +71,7 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
         domain={[]}
         limit={100}
         title={selectedMenuInfo?.actionName}
+        onRowClick={handleRowClick}
       />
     </div>
   );

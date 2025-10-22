@@ -2105,7 +2105,13 @@ class TrytonService {
     try {
       console.log(`Actualizando registro ${recordId} en modelo: ${model}`, values);
 
-      const result = await this.makeRpcCall(`model.${model}.write`, [[recordId], values]);
+      // Tryton write() expects: write(records, values, context)
+      // where records is a list of IDs and values is a dictionary
+      const result = await this.makeRpcCall(`model.${model}.write`, [
+        [recordId],  // Lista de IDs
+        values,      // Diccionario de valores
+        {}           // Contexto (se agregará automáticamente en makeRpcCall)
+      ]);
 
       console.log('Registro actualizado:', result);
       return result;

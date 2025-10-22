@@ -16,9 +16,18 @@ const ContentArea = ({
   sessionData,
   formDirty,
   onFormChange,
-  toolbarHandlers
+  toolbarHandlers,
+  onRecordClick
 }) => {
   const renderContent = () => {
+    console.log('🎨 ContentArea renderContent:', {
+      loadingContent,
+      activeTab,
+      hasTableInfo: !!tableInfo,
+      hasFormInfo: !!formInfo,
+      viewType: selectedMenuInfo?.viewType
+    });
+
     // Loading
     if (loadingContent) {
       return <LoadingView />;
@@ -29,21 +38,9 @@ const ContentArea = ({
       return <DashboardHome sessionData={sessionData} />;
     }
 
-    // Table view
-    if (tableInfo && selectedMenuInfo && selectedMenuInfo.viewType === 'tree') {
-      return (
-        <TableView
-          tableInfo={tableInfo}
-          selectedMenuInfo={selectedMenuInfo}
-          loadingContent={loadingContent}
-          formDirty={formDirty}
-          toolbarHandlers={toolbarHandlers}
-        />
-      );
-    }
-
-    // Form view
+    // Form view - CHECK THIS FIRST to prioritize form over table
     if (formInfo && selectedMenuInfo && selectedMenuInfo.viewType === 'form') {
+      console.log('🎨 Rendering FormView');
       return (
         <FormView
           formInfo={formInfo}
@@ -56,7 +53,23 @@ const ContentArea = ({
       );
     }
 
+    // Table view
+    if (tableInfo && selectedMenuInfo && selectedMenuInfo.viewType === 'tree') {
+      console.log('🎨 Rendering TableView');
+      return (
+        <TableView
+          tableInfo={tableInfo}
+          selectedMenuInfo={selectedMenuInfo}
+          loadingContent={loadingContent}
+          formDirty={formDirty}
+          toolbarHandlers={toolbarHandlers}
+          onRecordClick={onRecordClick}
+        />
+      );
+    }
+
     // Empty state
+    console.log('🎨 Rendering DashboardHome (fallback)');
     return <DashboardHome sessionData={sessionData} />;
   };
 

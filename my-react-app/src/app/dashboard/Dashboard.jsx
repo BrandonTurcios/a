@@ -179,6 +179,78 @@ const Dashboard = ({ sessionData, onLogout }) => {
     }
   };
 
+  const handleRecordClick = async (recordId, record) => {
+    try {
+      console.log('📝 Record clicked:', recordId, record);
+
+      if (formDirty) {
+        const confirmed = window.confirm('You have unsaved changes. Do you want to discard them and open this record?');
+        if (!confirmed) {
+          return;
+        }
+      }
+
+      if (!menuActions.selectedMenuInfo || !menuActions.selectedMenuInfo.resModel) {
+        console.warn('No model information available');
+        return;
+      }
+
+      menuActions.setLoadingContent(true);
+
+      const model = menuActions.selectedMenuInfo.resModel;
+      console.log(`📝 Opening record ${recordId} for model: ${model}`);
+
+      // Obtener vista de formulario
+      const formFieldsView = await trytonService.getFieldsView(model, null, 'form');
+
+      if (!formFieldsView) {
+        throw new Error('Could not get form view');
+      }
+
+      // Obtener campos expandidos para relaciones
+      const fields = Object.keys(formFieldsView.fields || {});
+      const expandedFields = trytonService.expandFieldsForRelationsFromFieldsView(
+        fields,
+        formFieldsView
+      );
+
+      // Obtener datos del registro
+      const recordData = await trytonService.getFormRecordData(
+        model,
+        recordId,
+        expandedFields
+      );
+
+      const formData = {
+        model: model,
+        viewId: formFieldsView.view_id,
+        recordData: recordData,
+        fieldsView: formFieldsView,
+        isNew: false
+      };
+
+      console.log('✅ formData created:', formData);
+      console.log('✅ Setting formInfo with:', formData);
+      menuActions.setFormInfo(formData);
+
+      console.log('✅ Clearing tableInfo');
+      menuActions.setTableInfo(null);
+
+      console.log('✅ Updating selectedMenuInfo to form view');
+      menuActions.setSelectedMenuInfo(prev => ({
+        ...prev,
+        viewType: 'form'
+      }));
+
+      setFormDirty(false);
+      menuActions.setLoadingContent(false);
+      console.log('✅ Record opened successfully, should show form now');
+    } catch (error) {
+      console.error('Error opening record:', error);
+      menuActions.setLoadingContent(false);
+    }
+  };
+
   return (
     <Layout style={{ minHeight: '100vh' }}>
       {/* Header fijo */}
@@ -217,6 +289,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
             sessionData={sessionData}
             formDirty={formDirty}
             onFormChange={setFormDirty}
+            onRecordClick={handleRecordClick}
             toolbarHandlers={{
               onNavigate: handleToolbarNavigate,
               onCreate: handleToolbarCreate,

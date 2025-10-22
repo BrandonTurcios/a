@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Spin, Alert, Button, Space, Typography } from 'antd';
-import { 
+import { Card, Spin, Alert, Button, Space, Typography, Checkbox } from 'antd';
+import {
   ReloadOutlined,
   DownloadOutlined,
   FilterOutlined,
@@ -11,13 +11,14 @@ import trytonService from '../services/trytonService';
 
 const { Title, Text } = Typography;
 
-const TrytonTable = ({ 
-  model, 
-  viewId, 
-  viewType = 'tree', 
-  domain = [], 
+const TrytonTable = ({
+  model,
+  viewId,
+  viewType = 'tree',
+  domain = [],
   limit = 100,
-  title = null 
+  title = null,
+  onRowClick = null
 }) => {
   const [tableInfo, setTableInfo] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -145,25 +146,42 @@ const TrytonTable = ({
     if (value === null || value === undefined) {
       return '-';
     }
-    
+
     // Handle complex objects (relations with rec_name)
     if (typeof value === 'object' && value.rec_name) {
       return value.rec_name;
     }
-    
+
     // Handle arrays (many2many, one2many)
     if (Array.isArray(value)) {
       return value.length > 0 ? `${value.length} element(s)` : '-';
     }
-    
+
     // Handle decimal numbers
     if (fieldDef.type === 'numeric' && typeof value === 'object' && value.decimal) {
       return parseFloat(value.decimal).toFixed(4);
     }
-    
-    // Handle booleans
+
+    // Handle booleans - mostrar checkbox más visible
     if (fieldDef.type === 'boolean') {
-      return value ? 'Yes' : 'No';
+      return (
+        <Checkbox
+          checked={value}
+          disabled
+          style={{
+            pointerEvents: 'none',
+          }}
+          className={value ? 'checkbox-visible' : 'checkbox-unchecked'}
+        />
+      );
+    }
+
+    // Handle gender field - convertir m/f a Male/Female
+    if (fieldDef.name === 'gender' && fieldDef.type === 'selection') {
+      if (value === 'm') return 'Male';
+      if (value === 'f') return 'Female';
+      if (value === 'm-f') return 'Male-Female';
+      return value;
     }
     
     // Handle dates
@@ -295,6 +313,7 @@ const TrytonTable = ({
           searchable={true}
           pagination={true}
           pageSize={20}
+          onRowClick={onRowClick}
         />
       </div>
       
