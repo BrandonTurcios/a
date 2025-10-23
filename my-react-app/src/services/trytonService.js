@@ -2394,15 +2394,15 @@ class TrytonService {
   }
 
   // Get default email template
-  async getEmailTemplateDefault(model) {
+  async getEmailTemplateDefault(model, recordId) {
     if (!this.sessionData) {
       throw new Error('No hay sesión activa');
     }
 
     try {
-      console.log(`📧 Getting default email template for: ${model}`);
+      console.log(`📧 Getting default email template for: ${model} - ${recordId}`);
       
-      const templateData = await this.makeRpcCall('model.ir.email.template.get_default', [model]);
+      const templateData = await this.makeRpcCall('model.ir.email.template.get_default', [model, recordId]);
       
       console.log('✅ Email template data:', templateData);
       return templateData;

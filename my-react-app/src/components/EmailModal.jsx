@@ -34,7 +34,7 @@ const EmailModal = ({
       const recordData = await trytonService.getRecordData(model, selectedRecord.id, ['id', 'rec_name']);
       
       // Get default email template
-      const templateData = await trytonService.getEmailTemplateDefault(model);
+      const templateData = await trytonService.getEmailTemplateDefault(model, selectedRecord.id);
       
       // Pre-fill form with template data
       form.setFieldsValue({
