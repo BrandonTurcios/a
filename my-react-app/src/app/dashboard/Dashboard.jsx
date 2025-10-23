@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from 'antd';
 import DashboardHeader from './DashboardHeader';
 import Sidebar from '../layout/Sidebar';
 import ContentArea from '../layout/ContentArea';
+import TabsBar from '../layout/TabsBar';
 import ActionOptionsModal from '../../components/ActionOptionsModal';
 import WizardModal from '../../components/WizardModal';
 import { useMenuData } from '../hooks/useMenuData';
 import { useMenuActions } from '../hooks/useMenuActions';
 import { useWizards } from '../hooks/useWizards';
 import { useActionOptions } from '../hooks/useActionOptions';
+import { useTabs } from '../hooks/useTabs';
 import trytonService from '../../services/trytonService';
 
 /**
@@ -20,6 +22,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
   const menuActions = useMenuActions();
   const wizards = useWizards();
   const actionOptions = useActionOptions();
+  const tabs = useTabs();
 
   // Estado para rastrear cambios en formularios
   const [formDirty, setFormDirty] = useState(false);
@@ -32,6 +35,29 @@ const Dashboard = ({ sessionData, onLogout }) => {
       await wizards.handleWizardAction(result.data.wizardName, result.data.actionName);
     } else if (result?.type === 'multipleOptions') {
       actionOptions.showActionOptions(result.data, result.item);
+    } else if (result?.type === 'success') {
+      // Crear nueva tab cuando se abre un contenido exitosamente
+      const tabId = `tab-${item.id}-${Date.now()}`;
+      tabs.createTab({
+        id: tabId,
+        title: item.name,
+        type: 'content',
+        data: {
+          menuItem: item,
+          selectedMenuInfo: menuActions.selectedMenuInfo,
+          tableInfo: menuActions.tableInfo,
+          formInfo: menuActions.formInfo
+        }
+      });
+      
+      // Actualizar la tab con los datos actuales
+      setTimeout(() => {
+        tabs.updateTabData(tabId, {
+          selectedMenuInfo: menuActions.selectedMenuInfo,
+          tableInfo: menuActions.tableInfo,
+          formInfo: menuActions.formInfo
+        });
+      }, 100);
     }
   };
 
@@ -251,6 +277,55 @@ const Dashboard = ({ sessionData, onLogout }) => {
     }
   };
 
+  // Manejadores para tabs
+  const handleTabChange = (tabId) => {
+    tabs.activateTab(tabId);
+    
+    if (tabId === 'dashboard') {
+      menuActions.setActiveTab('dashboard');
+      menuActions.clearState();
+    } else {
+      const tab = tabs.getActiveTab();
+      if (tab && tab.data) {
+        // Restaurar estado de la tab
+        menuActions.setSelectedMenuInfo(tab.data.selectedMenuInfo);
+        menuActions.setTableInfo(tab.data.tableInfo);
+        menuActions.setFormInfo(tab.data.formInfo);
+        menuActions.setActiveTab(tab.data.menuItem?.id || 'content');
+      }
+    }
+  };
+
+  const handleCloseTab = (tabId) => {
+    tabs.closeTab(tabId);
+    
+    // Si se cerró la tab activa, volver al dashboard
+    if (tabId === tabs.activeTabId) {
+      menuActions.setActiveTab('dashboard');
+      menuActions.clearState();
+    }
+  };
+
+  const handleCloseAllTabs = () => {
+    tabs.closeAllTabs();
+    menuActions.setActiveTab('dashboard');
+    menuActions.clearState();
+  };
+
+  // Sincronizar datos de la tab activa cuando cambien los datos del menú
+  useEffect(() => {
+    if (tabs.activeTabId !== 'dashboard') {
+      const activeTab = tabs.getActiveTab();
+      if (activeTab && activeTab.data) {
+        tabs.updateTabData(tabs.activeTabId, {
+          selectedMenuInfo: menuActions.selectedMenuInfo,
+          tableInfo: menuActions.tableInfo,
+          formInfo: menuActions.formInfo
+        });
+      }
+    }
+  }, [menuActions.selectedMenuInfo, menuActions.tableInfo, menuActions.formInfo, tabs.activeTabId]);
+
   return (
     <Layout style={{ minHeight: '100vh' }}>
       {/* Header fijo */}
@@ -280,8 +355,17 @@ const Dashboard = ({ sessionData, onLogout }) => {
           marginTop: 64,
           transition: 'margin-left 0.2s'
         }}>
+          {/* Tabs Bar */}
+          <TabsBar
+            tabs={tabs.tabs}
+            activeTabId={tabs.activeTabId}
+            onTabChange={handleTabChange}
+            onCloseTab={handleCloseTab}
+            onCloseAllTabs={handleCloseAllTabs}
+          />
+          
           <ContentArea
-            activeTab={menuActions.activeTab}
+            activeTab={tabs.activeTabId}
             selectedMenuInfo={menuActions.selectedMenuInfo}
             tableInfo={menuActions.tableInfo}
             formInfo={menuActions.formInfo}

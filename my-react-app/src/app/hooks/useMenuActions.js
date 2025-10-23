@@ -35,18 +35,17 @@ export const useMenuActions = () => {
         setActiveTab(item.id);
         clearState();
         setLoadingContent(false);
-        return;
+        return { type: 'dashboard' };
       }
 
       // Items con hijos: solo expandir/contraer
       const hasChildren = item.childs && item.childs.length > 0;
       if (hasChildren) {
         toggleExpansion(item.id);
-        return;
+        return { type: 'expand' };
       }
 
       // Items hoja: cargar contenido
-      setActiveTab(item.id);
       setLoadingContent(true);
       clearState();
 
@@ -212,8 +211,6 @@ export const useMenuActions = () => {
       viewId: viewId,
       timestamp: new Date().toISOString()
     });
-
-    setActiveTab(item.id);
   };
 
   return {
