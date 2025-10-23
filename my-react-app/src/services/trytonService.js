@@ -2413,15 +2413,15 @@ class TrytonService {
   }
 
   // Get email completion suggestions
-  async getEmailComplete(query) {
+  async getEmailComplete(query, limit = 1000) {
     if (!this.sessionData) {
       throw new Error('No hay sesión activa');
     }
 
     try {
-      console.log(`📧 Getting email completions for: ${query}`);
+      console.log(`📧 Getting email completions for: ${query} (limit: ${limit})`);
       
-      const completions = await this.makeRpcCall('model.ir.email.complete', [query]);
+      const completions = await this.makeRpcCall('model.ir.email.complete', [query, limit]);
       
       console.log('✅ Email completions:', completions);
       return completions;
