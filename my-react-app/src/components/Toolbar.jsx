@@ -196,13 +196,15 @@ const Toolbar = ({
 
   // Renderizar botón de email
   const renderEmailButton = () => {
-    if (!emails || emails.length === 0) return null;
+    // Always show email button for table views, even if emails array is empty
+    // This allows us to handle email functionality manually
+    if (viewType !== 'tree') return null;
 
     return (
       <Tooltip title={hasSelectedRecord ? "Enviar por email" : "Selecciona un registro para enviar email"}>
         <Button 
           icon={<MailOutlined />} 
-          onClick={() => onEmail?.(emails[0])}
+          onClick={() => onEmail?.()}
           disabled={loading || !hasSelectedRecord}
         />
       </Tooltip>

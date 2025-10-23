@@ -36,11 +36,45 @@ export function DataTable({
   onRowDoubleClick = null,
   onRowSelect = null,
   enableRowSelection = false,
+  selectedRecord = null, // Pass the currently selected record
 }) {
   const [sorting, setSorting] = React.useState([])
   const [columnFilters, setColumnFilters] = React.useState([])
   const [rowSelection, setRowSelection] = React.useState({})
   const [globalFilter, setGlobalFilter] = React.useState("")
+
+  // Update row selection when selectedRecord changes
+  React.useEffect(() => {
+    if (selectedRecord && data.length > 0) {
+      // Find the row index of the selected record
+      const rowIndex = data.findIndex(row => row.id === selectedRecord.id);
+      if (rowIndex !== -1) {
+        setRowSelection({ [rowIndex]: true });
+      }
+    } else if (!selectedRecord) {
+      setRowSelection({});
+    }
+  }, [selectedRecord, data]);
+
+  // Handle row selection changes
+  const handleRowSelectionChange = (updaterOrValue) => {
+    const newSelection = typeof updaterOrValue === 'function' 
+      ? updaterOrValue(rowSelection) 
+      : updaterOrValue;
+    
+    setRowSelection(newSelection);
+    
+    // Notify parent component about selection changes
+    if (onRowSelect) {
+      const selectedRowIndex = Object.keys(newSelection).find(key => newSelection[key]);
+      if (selectedRowIndex !== undefined) {
+        const selectedRow = data[parseInt(selectedRowIndex)];
+        onRowSelect(selectedRow, true);
+      } else {
+        onRowSelect(null, false);
+      }
+    }
+  };
 
   // Add selection column if row selection is enabled
   const columnsWithSelection = React.useMemo(() => {
@@ -60,9 +94,6 @@ export function DataTable({
           checked={row.getIsSelected()}
           onChange={(e) => {
             row.toggleSelected(e.target.checked);
-            if (onRowSelect) {
-              onRowSelect(row.original, e.target.checked);
-            }
           }}
         />
       ),
@@ -82,7 +113,7 @@ export function DataTable({
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    onRowSelectionChange: setRowSelection,
+    onRowSelectionChange: handleRowSelectionChange,
     onGlobalFilterChange: setGlobalFilter,
     globalFilterFn: "includesString",
     enableRowSelection: enableRowSelection,

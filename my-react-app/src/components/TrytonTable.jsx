@@ -21,7 +21,8 @@ const TrytonTable = ({
   onRowClick = null,
   onRowDoubleClick = null,
   onRowSelect = null,
-  enableRowSelection = false
+  enableRowSelection = false,
+  selectedRecord = null
 }) => {
   const [tableInfo, setTableInfo] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -320,6 +321,7 @@ const TrytonTable = ({
           onRowDoubleClick={onRowDoubleClick}
           onRowSelect={onRowSelect}
           enableRowSelection={enableRowSelection}
+          selectedRecord={selectedRecord}
         />
       </div>
       

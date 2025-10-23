@@ -28,6 +28,10 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
     }
   };
 
+  // Debug: Log toolbar info
+  console.log('🔧 TableView - toolbarInfo:', selectedMenuInfo?.toolbarInfo);
+  console.log('🔧 TableView - selectedRecord:', selectedRecord);
+
   return (
     <div style={{
       padding: '24px',
@@ -90,6 +94,7 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
         onRowDoubleClick={handleRowDoubleClick}
         onRowSelect={handleRowSelect}
         enableRowSelection={true}
+        selectedRecord={selectedRecord}
       />
     </div>
   );
