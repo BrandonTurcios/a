@@ -27,6 +27,9 @@ const Dashboard = ({ sessionData, onLogout }) => {
   // Estado para rastrear cambios en formularios
   const [formDirty, setFormDirty] = useState(false);
 
+  // Estado para rastrear el item del menú pendiente de crear tab
+  const [pendingTabCreation, setPendingTabCreation] = useState(null);
+
   // Manejar clicks del menú con lógica de wizards y opciones
   const handleMenuClick = async (item) => {
     const result = await menuActions.handleMenuClick(item);
@@ -36,30 +39,8 @@ const Dashboard = ({ sessionData, onLogout }) => {
     } else if (result?.type === 'multipleOptions') {
       actionOptions.showActionOptions(result.data, result.item);
     } else if (result?.type === 'success') {
-      // Crear nueva tab cuando se abre un contenido exitosamente
-      const tabId = `tab-${item.id}-${Date.now()}`;
-      
-      // Crear la tab inmediatamente con los datos actuales
-      tabs.createTab({
-        id: tabId,
-        title: item.name,
-        type: 'content',
-        data: {
-          menuItem: item,
-          selectedMenuInfo: menuActions.selectedMenuInfo,
-          tableInfo: menuActions.tableInfo,
-          formInfo: menuActions.formInfo
-        }
-      });
-      
-      // Actualizar la tab con los datos más recientes después de un breve delay
-      setTimeout(() => {
-        tabs.updateTabData(tabId, {
-          selectedMenuInfo: menuActions.selectedMenuInfo,
-          tableInfo: menuActions.tableInfo,
-          formInfo: menuActions.formInfo
-        });
-      }, 100);
+      // Marcar que hay una tab pendiente de crear
+      setPendingTabCreation(item);
     }
   };
 
@@ -340,6 +321,32 @@ const Dashboard = ({ sessionData, onLogout }) => {
       activeTab: 'dashboard'
     };
   }, [tabs.activeTabId, tabs.tabs]);
+
+  // Crear tab cuando los datos estén listos
+  useEffect(() => {
+    if (pendingTabCreation && menuActions.selectedMenuInfo && 
+        (menuActions.tableInfo || menuActions.formInfo)) {
+      
+      console.log('✅ Datos listos, creando tab para:', pendingTabCreation.name);
+      
+      const tabId = `tab-${pendingTabCreation.id}-${Date.now()}`;
+      
+      tabs.createTab({
+        id: tabId,
+        title: pendingTabCreation.name,
+        type: 'content',
+        data: {
+          menuItem: pendingTabCreation,
+          selectedMenuInfo: menuActions.selectedMenuInfo,
+          tableInfo: menuActions.tableInfo,
+          formInfo: menuActions.formInfo
+        }
+      });
+      
+      // Limpiar el estado pendiente
+      setPendingTabCreation(null);
+    }
+  }, [pendingTabCreation, menuActions.selectedMenuInfo, menuActions.tableInfo, menuActions.formInfo, tabs]);
 
   // Sincronizar datos de la tab activa cuando cambien los datos del menú
   // Solo actualizar si estamos en una tab de contenido
