@@ -2381,10 +2381,12 @@ class TrytonService {
     try {
       console.log(`📧 Getting record data for email: ${model} - ${recordId}`);
       
-      const recordData = await this.makeRpcCall(`model.${model}.read`, [recordId, fields, {}]);
+      // model.read expects a list of IDs, not a single ID
+      const recordData = await this.makeRpcCall(`model.${model}.read`, [[recordId], fields, {}]);
       
       console.log('✅ Record data for email:', recordData);
-      return recordData;
+      // Return the first (and only) record from the array
+      return recordData[0];
     } catch (error) {
       console.error('Error getting record data for email:', error);
       throw error;
