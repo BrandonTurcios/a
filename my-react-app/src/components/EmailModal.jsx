@@ -57,9 +57,10 @@ const EmailModal = ({
     try {
       const results = await trytonService.getEmailComplete(value);
       
+      // Results format: [score, name, email]
       const options = results.map(result => ({
-        value: result.email,
-        label: `${result.name} <${result.email}>`
+        value: result[2], // email is at index 2
+        label: result[1]  // name is at index 1
       }));
       
       switch (field) {
