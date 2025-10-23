@@ -5,12 +5,26 @@ import Toolbar from '../../components/Toolbar';
 
 const { Title, Paragraph } = Typography;
 
-const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, toolbarHandlers, onRecordClick }) => {
+const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, toolbarHandlers, onRecordClick, selectedRecord, onRecordSelect }) => {
 
   const handleRowClick = (record) => {
     console.log('🖱️ Row clicked:', record);
     if (onRecordClick && record.id) {
       onRecordClick(record.id, record);
+    }
+  };
+
+  const handleRowDoubleClick = (record) => {
+    console.log('🖱️ Row double clicked:', record);
+    if (onRecordClick && record.id) {
+      onRecordClick(record.id, record);
+    }
+  };
+
+  const handleRowSelect = (record, isSelected) => {
+    console.log('✅ Row selected:', record, isSelected);
+    if (onRecordSelect) {
+      onRecordSelect(record, isSelected);
     }
   };
 
@@ -59,6 +73,7 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
               onSwitchView={toolbarHandlers.onSwitchView}
               isDirty={false}
               isNativeForm={false}
+              hasSelectedRecord={!!selectedRecord}
             />
           </div>
         )}
@@ -72,6 +87,9 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
         limit={100}
         title={selectedMenuInfo?.actionName}
         onRowClick={handleRowClick}
+        onRowDoubleClick={handleRowDoubleClick}
+        onRowSelect={handleRowSelect}
+        enableRowSelection={true}
       />
     </div>
   );

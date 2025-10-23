@@ -6,6 +6,7 @@ import ContentArea from '../layout/ContentArea';
 import TabsBar from '../layout/TabsBar';
 import ActionOptionsModal from '../../components/ActionOptionsModal';
 import WizardModal from '../../components/WizardModal';
+import EmailModal from '../../components/EmailModal';
 import { useMenuData } from '../hooks/useMenuData';
 import { useMenuActions } from '../hooks/useMenuActions';
 import { useWizards } from '../hooks/useWizards';
@@ -32,6 +33,12 @@ const Dashboard = ({ sessionData, onLogout }) => {
   
   // Estado para evitar conflictos durante el cambio de tab
   const [isChangingTab, setIsChangingTab] = useState(false);
+
+  // Estado para rastrear el registro seleccionado en la tabla
+  const [selectedRecord, setSelectedRecord] = useState(null);
+
+  // Estado para el modal de email
+  const [emailModalVisible, setEmailModalVisible] = useState(false);
 
   // Manejar clicks del menú con lógica de wizards y opciones
   const handleMenuClick = async (item) => {
@@ -136,8 +143,14 @@ const Dashboard = ({ sessionData, onLogout }) => {
   };
 
   const handleToolbarEmail = (emailItem) => {
-    console.log('Toolbar email clicked:', emailItem);
-    // TODO: Implementar envío de email
+    console.log('📧 Toolbar email clicked:', emailItem);
+    
+    if (!selectedRecord) {
+      console.warn('No record selected for email');
+      return;
+    }
+    
+    setEmailModalVisible(true);
   };
 
   const handleToolbarSwitchView = async () => {
@@ -260,6 +273,15 @@ const Dashboard = ({ sessionData, onLogout }) => {
     } catch (error) {
       console.error('Error opening record:', error);
       menuActions.setLoadingContent(false);
+    }
+  };
+
+  const handleRecordSelect = (record, isSelected) => {
+    console.log('✅ Record selection changed:', record, isSelected);
+    if (isSelected) {
+      setSelectedRecord(record);
+    } else {
+      setSelectedRecord(null);
     }
   };
 
@@ -440,6 +462,8 @@ const Dashboard = ({ sessionData, onLogout }) => {
             formDirty={formDirty}
             onFormChange={setFormDirty}
             onRecordClick={handleRecordClick}
+            selectedRecord={selectedRecord}
+            onRecordSelect={handleRecordSelect}
             toolbarHandlers={{
               onNavigate: handleToolbarNavigate,
               onCreate: handleToolbarCreate,
@@ -507,6 +531,14 @@ const Dashboard = ({ sessionData, onLogout }) => {
         onClose={wizards.closeWizard}
         onCancel={wizards.handleWizardCancel}
         onSubmit={wizards.handleWizardSubmit}
+      />
+
+      <EmailModal
+        visible={emailModalVisible}
+        onClose={() => setEmailModalVisible(false)}
+        selectedRecord={selectedRecord}
+        model={menuActions.selectedMenuInfo?.resModel}
+        loading={menuActions.loadingContent}
       />
     </Layout>
   );

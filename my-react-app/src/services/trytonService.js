@@ -2370,6 +2370,65 @@ class TrytonService {
     console.log('🧹 Icon cache cleared');
   }
 
+  // Email-related methods
+
+  // Get record data for email (id and rec_name)
+  async getRecordData(model, recordId, fields = ['id', 'rec_name']) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`📧 Getting record data for email: ${model} - ${recordId}`);
+      
+      const recordData = await this.makeRpcCall(`model.${model}.read`, [recordId, fields, {}]);
+      
+      console.log('✅ Record data for email:', recordData);
+      return recordData;
+    } catch (error) {
+      console.error('Error getting record data for email:', error);
+      throw error;
+    }
+  }
+
+  // Get default email template
+  async getEmailTemplateDefault(model) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`📧 Getting default email template for: ${model}`);
+      
+      const templateData = await this.makeRpcCall('model.ir.email.template.get_default', [model]);
+      
+      console.log('✅ Email template data:', templateData);
+      return templateData;
+    } catch (error) {
+      console.error('Error getting email template:', error);
+      throw error;
+    }
+  }
+
+  // Get email completion suggestions
+  async getEmailComplete(query) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`📧 Getting email completions for: ${query}`);
+      
+      const completions = await this.makeRpcCall('model.ir.email.complete', [query]);
+      
+      console.log('✅ Email completions:', completions);
+      return completions;
+    } catch (error) {
+      console.error('Error getting email completions:', error);
+      throw error;
+    }
+  }
+
 }
 
 export default new TrytonService();

@@ -18,7 +18,10 @@ const TrytonTable = ({
   domain = [],
   limit = 100,
   title = null,
-  onRowClick = null
+  onRowClick = null,
+  onRowDoubleClick = null,
+  onRowSelect = null,
+  enableRowSelection = false
 }) => {
   const [tableInfo, setTableInfo] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -314,6 +317,9 @@ const TrytonTable = ({
           pagination={true}
           pageSize={20}
           onRowClick={onRowClick}
+          onRowDoubleClick={onRowDoubleClick}
+          onRowSelect={onRowSelect}
+          enableRowSelection={enableRowSelection}
         />
       </div>
       

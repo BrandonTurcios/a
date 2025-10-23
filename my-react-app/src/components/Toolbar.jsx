@@ -33,7 +33,8 @@ const Toolbar = ({
   viewType = 'tree', // Current view type ('tree' or 'form')
   onSwitchView, // Handler for view switching
   isDirty = false, // Whether there are unsaved changes
-  isNativeForm = false // Whether this is a native form (not converted from tree)
+  isNativeForm = false, // Whether this is a native form (not converted from tree)
+  hasSelectedRecord = false // Whether a record is selected (for email button)
 }) => {
   if (!toolbarInfo) {
     return null;
@@ -198,11 +199,11 @@ const Toolbar = ({
     if (!emails || emails.length === 0) return null;
 
     return (
-      <Tooltip title="Enviar por email">
+      <Tooltip title={hasSelectedRecord ? "Enviar por email" : "Selecciona un registro para enviar email"}>
         <Button 
           icon={<MailOutlined />} 
           onClick={() => onEmail?.(emails[0])}
-          disabled={loading}
+          disabled={loading || !hasSelectedRecord}
         />
       </Tooltip>
     );

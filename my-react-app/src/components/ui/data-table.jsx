@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "./table"
-import { Button, Input } from "antd"
+import { Button, Input, Checkbox } from "antd"
 import { 
   LeftOutlined,
   RightOutlined,
@@ -33,15 +33,49 @@ export function DataTable({
   pagination = true,
   pageSize = 10,
   onRowClick = null,
+  onRowDoubleClick = null,
+  onRowSelect = null,
+  enableRowSelection = false,
 }) {
   const [sorting, setSorting] = React.useState([])
   const [columnFilters, setColumnFilters] = React.useState([])
   const [rowSelection, setRowSelection] = React.useState({})
   const [globalFilter, setGlobalFilter] = React.useState("")
 
+  // Add selection column if row selection is enabled
+  const columnsWithSelection = React.useMemo(() => {
+    if (!enableRowSelection) return columns;
+    
+    const selectionColumn = {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected()}
+          indeterminate={table.getIsSomePageRowsSelected()}
+          onChange={(e) => table.toggleAllPageRowsSelected(e.target.checked)}
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onChange={(e) => {
+            row.toggleSelected(e.target.checked);
+            if (onRowSelect) {
+              onRowSelect(row.original, e.target.checked);
+            }
+          }}
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    };
+    
+    return [selectionColumn, ...columns];
+  }, [columns, enableRowSelection, onRowSelect]);
+
   const table = useReactTable({
     data,
-    columns,
+    columns: columnsWithSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -51,6 +85,7 @@ export function DataTable({
     onRowSelectionChange: setRowSelection,
     onGlobalFilterChange: setGlobalFilter,
     globalFilterFn: "includesString",
+    enableRowSelection: enableRowSelection,
     state: {
       sorting,
       columnFilters,
@@ -106,8 +141,17 @@ export function DataTable({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  onClick={() => onRowClick && onRowClick(row.original)}
-                  className={onRowClick ? "cursor-pointer hover:bg-gray-100" : ""}
+                  onClick={(e) => {
+                    // Prevent click if clicking on checkbox
+                    if (e.target.type === 'checkbox') return;
+                    if (onRowClick) onRowClick(row.original);
+                  }}
+                  onDoubleClick={(e) => {
+                    // Prevent double click if clicking on checkbox
+                    if (e.target.type === 'checkbox') return;
+                    if (onRowDoubleClick) onRowDoubleClick(row.original);
+                  }}
+                  className={(onRowClick || onRowDoubleClick) ? "cursor-pointer hover:bg-gray-100" : ""}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
