@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Layout } from 'antd';
 import DashboardHeader from './DashboardHeader';
 import Sidebar from '../layout/Sidebar';
@@ -285,7 +285,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
       menuActions.setActiveTab('dashboard');
       menuActions.clearState();
     } else {
-      const tab = tabs.getActiveTab();
+      const tab = tabs.tabs.find(t => t.id === tabId);
       if (tab && tab.data) {
         // Restaurar estado de la tab
         menuActions.setSelectedMenuInfo(tab.data.selectedMenuInfo);
@@ -311,6 +311,35 @@ const Dashboard = ({ sessionData, onLogout }) => {
     menuActions.setActiveTab('dashboard');
     menuActions.clearState();
   };
+
+  // Obtener datos de la tab activa usando useMemo para optimización
+  const activeTabData = useMemo(() => {
+    if (tabs.activeTabId === 'dashboard') {
+      return {
+        selectedMenuInfo: null,
+        tableInfo: null,
+        formInfo: null,
+        activeTab: 'dashboard'
+      };
+    }
+    
+    const activeTab = tabs.tabs.find(t => t.id === tabs.activeTabId);
+    if (activeTab && activeTab.data) {
+      return {
+        selectedMenuInfo: activeTab.data.selectedMenuInfo,
+        tableInfo: activeTab.data.tableInfo,
+        formInfo: activeTab.data.formInfo,
+        activeTab: activeTab.data.menuItem?.id || 'content'
+      };
+    }
+    
+    return {
+      selectedMenuInfo: null,
+      tableInfo: null,
+      formInfo: null,
+      activeTab: 'dashboard'
+    };
+  }, [tabs.activeTabId, tabs.tabs]);
 
   // Sincronizar datos de la tab activa cuando cambien los datos del menú
   useEffect(() => {
@@ -365,10 +394,10 @@ const Dashboard = ({ sessionData, onLogout }) => {
           />
           
           <ContentArea
-            activeTab={tabs.activeTabId}
-            selectedMenuInfo={menuActions.selectedMenuInfo}
-            tableInfo={menuActions.tableInfo}
-            formInfo={menuActions.formInfo}
+            activeTab={activeTabData.activeTab}
+            selectedMenuInfo={activeTabData.selectedMenuInfo}
+            tableInfo={activeTabData.tableInfo}
+            formInfo={activeTabData.formInfo}
             loadingContent={menuActions.loadingContent}
             sessionData={sessionData}
             formDirty={formDirty}
