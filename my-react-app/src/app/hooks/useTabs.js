@@ -4,17 +4,8 @@ import { useState, useCallback } from 'react';
  * Hook para manejar el sistema de tabs
  */
 export const useTabs = () => {
-  const [tabs, setTabs] = useState([
-    {
-      id: 'dashboard',
-      title: 'Dashboard',
-      type: 'dashboard',
-      closable: false,
-      active: true,
-      data: null
-    }
-  ]);
-  const [activeTabId, setActiveTabId] = useState('dashboard');
+  const [tabs, setTabs] = useState([]);
+  const [activeTabId, setActiveTabId] = useState(null);
 
   // Crear nueva tab
   const createTab = useCallback((tabData) => {
@@ -51,19 +42,22 @@ export const useTabs = () => {
 
   // Cerrar tab
   const closeTab = useCallback((tabId) => {
-    if (tabId === 'dashboard') return; // No se puede cerrar el dashboard
-
     setTabs(prevTabs => {
       const filteredTabs = prevTabs.filter(tab => tab.id !== tabId);
       
-      // Si se cerró la tab activa, activar otra
-      if (activeTabId === tabId && filteredTabs.length > 0) {
-        const lastTab = filteredTabs[filteredTabs.length - 1];
-        setActiveTabId(lastTab.id);
-        return filteredTabs.map(tab => ({
-          ...tab,
-          active: tab.id === lastTab.id
-        }));
+      // Si se cerró la tab activa, activar otra o limpiar
+      if (activeTabId === tabId) {
+        if (filteredTabs.length > 0) {
+          const lastTab = filteredTabs[filteredTabs.length - 1];
+          setActiveTabId(lastTab.id);
+          return filteredTabs.map(tab => ({
+            ...tab,
+            active: tab.id === lastTab.id
+          }));
+        } else {
+          setActiveTabId(null);
+          return filteredTabs;
+        }
       }
       
       return filteredTabs;
@@ -81,10 +75,10 @@ export const useTabs = () => {
     );
   }, []);
 
-  // Cerrar todas las tabs excepto el dashboard
+  // Cerrar todas las tabs
   const closeAllTabs = useCallback(() => {
-    setTabs(prevTabs => prevTabs.filter(tab => tab.id === 'dashboard'));
-    setActiveTabId('dashboard');
+    setTabs([]);
+    setActiveTabId(null);
   }, []);
 
   // Obtener tab activa

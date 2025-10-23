@@ -26,9 +26,9 @@ const TabsBar = ({
         Cerrar
       </Menu.Item>
       <Menu.Item key="closeOthers" onClick={() => {
-        // Cerrar todas excepto esta y dashboard
+        // Cerrar todas excepto esta
         tabs.forEach(tab => {
-          if (tab.id !== tabId && tab.id !== 'dashboard') {
+          if (tab.id !== tabId) {
             onCloseTab(tab.id);
           }
         });

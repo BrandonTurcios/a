@@ -39,20 +39,27 @@ const Dashboard = ({ sessionData, onLogout }) => {
       // Crear nueva tab cuando se abre un contenido exitosamente
       const tabId = `tab-${item.id}-${Date.now()}`;
       
-      // Esperar a que los datos estén listos antes de crear la tab
+      // Crear la tab inmediatamente con los datos actuales
+      tabs.createTab({
+        id: tabId,
+        title: item.name,
+        type: 'content',
+        data: {
+          menuItem: item,
+          selectedMenuInfo: menuActions.selectedMenuInfo,
+          tableInfo: menuActions.tableInfo,
+          formInfo: menuActions.formInfo
+        }
+      });
+      
+      // Actualizar la tab con los datos más recientes después de un breve delay
       setTimeout(() => {
-        tabs.createTab({
-          id: tabId,
-          title: item.name,
-          type: 'content',
-          data: {
-            menuItem: item,
-            selectedMenuInfo: menuActions.selectedMenuInfo,
-            tableInfo: menuActions.tableInfo,
-            formInfo: menuActions.formInfo
-          }
+        tabs.updateTabData(tabId, {
+          selectedMenuInfo: menuActions.selectedMenuInfo,
+          tableInfo: menuActions.tableInfo,
+          formInfo: menuActions.formInfo
         });
-      }, 50);
+      }, 100);
     }
   };
 
@@ -277,19 +284,14 @@ const Dashboard = ({ sessionData, onLogout }) => {
     console.log('🔄 Cambiando a tab:', tabId);
     tabs.activateTab(tabId);
     
-    if (tabId === 'dashboard') {
-      menuActions.setActiveTab('dashboard');
-      menuActions.clearState();
-    } else {
-      const tab = tabs.tabs.find(t => t.id === tabId);
-      if (tab && tab.data) {
-        console.log('📋 Restaurando datos de tab:', tab.data);
-        // Restaurar estado de la tab
-        menuActions.setSelectedMenuInfo(tab.data.selectedMenuInfo);
-        menuActions.setTableInfo(tab.data.tableInfo);
-        menuActions.setFormInfo(tab.data.formInfo);
-        menuActions.setActiveTab(tab.data.menuItem?.id || 'content');
-      }
+    const tab = tabs.tabs.find(t => t.id === tabId);
+    if (tab && tab.data) {
+      console.log('📋 Restaurando datos de tab:', tab.data);
+      // Restaurar estado de la tab
+      menuActions.setSelectedMenuInfo(tab.data.selectedMenuInfo);
+      menuActions.setTableInfo(tab.data.tableInfo);
+      menuActions.setFormInfo(tab.data.formInfo);
+      menuActions.setActiveTab(tab.data.menuItem?.id || 'content');
     }
   };
 
@@ -311,7 +313,8 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
   // Obtener datos de la tab activa usando useMemo para optimización
   const activeTabData = useMemo(() => {
-    if (tabs.activeTabId === 'dashboard') {
+    // Si no hay tab activa, mostrar dashboard
+    if (!tabs.activeTabId || tabs.tabs.length === 0) {
       return {
         selectedMenuInfo: null,
         tableInfo: null,
@@ -339,11 +342,9 @@ const Dashboard = ({ sessionData, onLogout }) => {
   }, [tabs.activeTabId, tabs.tabs]);
 
   // Sincronizar datos de la tab activa cuando cambien los datos del menú
-  // Solo actualizar si estamos en una tab de contenido (no dashboard)
-  // y si los datos han cambiado realmente
+  // Solo actualizar si estamos en una tab de contenido
   useEffect(() => {
-    // Solo sincronizar si no estamos cambiando de tab activamente
-    if (tabs.activeTabId !== 'dashboard' && menuActions.selectedMenuInfo) {
+    if (tabs.activeTabId && menuActions.selectedMenuInfo) {
       const activeTab = tabs.getActiveTab();
       if (activeTab && activeTab.data) {
         // Solo actualizar si los datos han cambiado realmente
@@ -395,14 +396,16 @@ const Dashboard = ({ sessionData, onLogout }) => {
           marginTop: 64,
           transition: 'margin-left 0.2s'
         }}>
-          {/* Tabs Bar */}
-          <TabsBar
-            tabs={tabs.tabs}
-            activeTabId={tabs.activeTabId}
-            onTabChange={handleTabChange}
-            onCloseTab={handleCloseTab}
-            onCloseAllTabs={handleCloseAllTabs}
-          />
+          {/* Tabs Bar - Solo mostrar si hay tabs */}
+          {tabs.tabs.length > 0 && (
+            <TabsBar
+              tabs={tabs.tabs}
+              activeTabId={tabs.activeTabId}
+              onTabChange={handleTabChange}
+              onCloseTab={handleCloseTab}
+              onCloseAllTabs={handleCloseAllTabs}
+            />
+          )}
           
           <ContentArea
             activeTab={activeTabData.activeTab}
