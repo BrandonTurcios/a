@@ -38,26 +38,21 @@ const Dashboard = ({ sessionData, onLogout }) => {
     } else if (result?.type === 'success') {
       // Crear nueva tab cuando se abre un contenido exitosamente
       const tabId = `tab-${item.id}-${Date.now()}`;
-      tabs.createTab({
-        id: tabId,
-        title: item.name,
-        type: 'content',
-        data: {
-          menuItem: item,
-          selectedMenuInfo: menuActions.selectedMenuInfo,
-          tableInfo: menuActions.tableInfo,
-          formInfo: menuActions.formInfo
-        }
-      });
       
-      // Actualizar la tab con los datos actuales
+      // Esperar a que los datos estén listos antes de crear la tab
       setTimeout(() => {
-        tabs.updateTabData(tabId, {
-          selectedMenuInfo: menuActions.selectedMenuInfo,
-          tableInfo: menuActions.tableInfo,
-          formInfo: menuActions.formInfo
+        tabs.createTab({
+          id: tabId,
+          title: item.name,
+          type: 'content',
+          data: {
+            menuItem: item,
+            selectedMenuInfo: menuActions.selectedMenuInfo,
+            tableInfo: menuActions.tableInfo,
+            formInfo: menuActions.formInfo
+          }
         });
-      }, 100);
+      }, 50);
     }
   };
 
@@ -279,6 +274,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
   // Manejadores para tabs
   const handleTabChange = (tabId) => {
+    console.log('🔄 Cambiando a tab:', tabId);
     tabs.activateTab(tabId);
     
     if (tabId === 'dashboard') {
@@ -287,6 +283,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
     } else {
       const tab = tabs.tabs.find(t => t.id === tabId);
       if (tab && tab.data) {
+        console.log('📋 Restaurando datos de tab:', tab.data);
         // Restaurar estado de la tab
         menuActions.setSelectedMenuInfo(tab.data.selectedMenuInfo);
         menuActions.setTableInfo(tab.data.tableInfo);
@@ -342,18 +339,32 @@ const Dashboard = ({ sessionData, onLogout }) => {
   }, [tabs.activeTabId, tabs.tabs]);
 
   // Sincronizar datos de la tab activa cuando cambien los datos del menú
+  // Solo actualizar si estamos en una tab de contenido (no dashboard)
+  // y si los datos han cambiado realmente
   useEffect(() => {
-    if (tabs.activeTabId !== 'dashboard') {
+    // Solo sincronizar si no estamos cambiando de tab activamente
+    if (tabs.activeTabId !== 'dashboard' && menuActions.selectedMenuInfo) {
       const activeTab = tabs.getActiveTab();
       if (activeTab && activeTab.data) {
-        tabs.updateTabData(tabs.activeTabId, {
-          selectedMenuInfo: menuActions.selectedMenuInfo,
-          tableInfo: menuActions.tableInfo,
-          formInfo: menuActions.formInfo
-        });
+        // Solo actualizar si los datos han cambiado realmente
+        const currentData = activeTab.data;
+        const hasChanged = (
+          currentData.selectedMenuInfo !== menuActions.selectedMenuInfo ||
+          currentData.tableInfo !== menuActions.tableInfo ||
+          currentData.formInfo !== menuActions.formInfo
+        );
+        
+        if (hasChanged) {
+          console.log('🔄 Actualizando datos de tab activa');
+          tabs.updateTabData(tabs.activeTabId, {
+            selectedMenuInfo: menuActions.selectedMenuInfo,
+            tableInfo: menuActions.tableInfo,
+            formInfo: menuActions.formInfo
+          });
+        }
       }
     }
-  }, [menuActions.selectedMenuInfo, menuActions.tableInfo, menuActions.formInfo, tabs.activeTabId]);
+  }, [menuActions.selectedMenuInfo, menuActions.tableInfo, menuActions.formInfo]);
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
