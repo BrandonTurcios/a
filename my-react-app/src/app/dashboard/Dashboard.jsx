@@ -29,6 +29,9 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
   // Estado para rastrear el item del menú pendiente de crear tab
   const [pendingTabCreation, setPendingTabCreation] = useState(null);
+  
+  // Estado para evitar conflictos durante el cambio de tab
+  const [isChangingTab, setIsChangingTab] = useState(false);
 
   // Manejar clicks del menú con lógica de wizards y opciones
   const handleMenuClick = async (item) => {
@@ -263,6 +266,10 @@ const Dashboard = ({ sessionData, onLogout }) => {
   // Manejadores para tabs
   const handleTabChange = (tabId) => {
     console.log('🔄 Cambiando a tab:', tabId);
+    
+    // Marcar que estamos cambiando de tab para evitar conflictos
+    setIsChangingTab(true);
+    
     tabs.activateTab(tabId);
     
     const tab = tabs.tabs.find(t => t.id === tabId);
@@ -348,10 +355,19 @@ const Dashboard = ({ sessionData, onLogout }) => {
     }
   }, [pendingTabCreation, menuActions.selectedMenuInfo, menuActions.tableInfo, menuActions.formInfo, tabs]);
 
-  // Sincronizar datos de la tab activa cuando cambien los datos del menú
-  // Solo actualizar si estamos en una tab de contenido
+  // Detectar cuando se completa el cambio de tab
   useEffect(() => {
-    if (tabs.activeTabId && menuActions.selectedMenuInfo) {
+    if (isChangingTab && menuActions.selectedMenuInfo) {
+      // El cambio de tab se completó, permitir sincronización
+      console.log('✅ Cambio de tab completado, permitiendo sincronización');
+      setIsChangingTab(false);
+    }
+  }, [isChangingTab, menuActions.selectedMenuInfo]);
+
+  // Sincronizar datos de la tab activa cuando cambien los datos del menú
+  // Solo actualizar si estamos en una tab de contenido y no hay conflictos
+  useEffect(() => {
+    if (tabs.activeTabId && menuActions.selectedMenuInfo && !pendingTabCreation && !isChangingTab) {
       const activeTab = tabs.getActiveTab();
       if (activeTab && activeTab.data) {
         // Solo actualizar si los datos han cambiado realmente
@@ -372,7 +388,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
         }
       }
     }
-  }, [menuActions.selectedMenuInfo, menuActions.tableInfo, menuActions.formInfo]);
+  }, [menuActions.selectedMenuInfo, menuActions.tableInfo, menuActions.formInfo, pendingTabCreation, isChangingTab]);
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
