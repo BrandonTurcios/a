@@ -5,7 +5,7 @@ import Toolbar from '../../components/Toolbar';
 
 const { Title, Paragraph } = Typography;
 
-const TableView = React.memo(({ tableInfo, selectedMenuInfo, loadingContent, formDirty, toolbarHandlers, onRecordClick, selectedRecord, onRecordSelect }) => {
+const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, toolbarHandlers, onRecordClick, selectedRecord, onRecordSelect }) => {
 
   const handleRowClick = useCallback((record) => {
     console.log('🖱️ Row clicked:', record);
@@ -98,6 +98,6 @@ const TableView = React.memo(({ tableInfo, selectedMenuInfo, loadingContent, for
       />
     </div>
   );
-});
+};
 
 export default TableView;

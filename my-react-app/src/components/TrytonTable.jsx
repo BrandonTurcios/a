@@ -11,7 +11,7 @@ import trytonService from '../services/trytonService';
 
 const { Title, Text } = Typography;
 
-const TrytonTable = React.memo(({
+const TrytonTable = ({
   model,
   viewId,
   viewType = 'tree',
@@ -353,6 +353,6 @@ const TrytonTable = React.memo(({
       )}
     </div>
   );
-});
+};
 
 export default TrytonTable;
