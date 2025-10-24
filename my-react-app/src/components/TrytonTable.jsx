@@ -38,15 +38,18 @@ const TrytonTable = ({
 
   useEffect(() => {
     loadTableData();
-  }, [model, viewId, viewType, domain, limit]);
+  }, [loadTableData]);
 
-  const loadTableData = async () => {
+  // Don't reload data when selectedRecord changes - this is just for UI state
+  // The selectedRecord prop is only used for highlighting, not for data loading
+
+  const loadTableData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
       console.log(`🔍 Loading table for model: ${model}`);
-      console.log(`🔧 loadTableData called - selectedRecord:`, selectedRecord?.id);
+      // Removed selectedRecord log as it's not relevant for data loading
       
       // First verify the view type
       const fieldsView = await trytonService.getFieldsView(model, viewId, viewType);
@@ -83,7 +86,7 @@ const TrytonTable = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [model, viewId, viewType, domain, limit]);
 
   const generateColumns = (fieldsView) => {
     if (!fieldsView.fields) return [];

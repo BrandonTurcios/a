@@ -287,6 +287,33 @@ const Dashboard = ({ sessionData, onLogout }) => {
     }
   }, []);
 
+  // Memoize the toolbar handlers to prevent unnecessary re-renders
+  const toolbarHandlers = useMemo(() => ({
+    onNavigate: handleToolbarNavigate,
+    onCreate: handleToolbarCreate,
+    onSave: handleToolbarSave,
+    onRefresh: handleToolbarRefresh,
+    onAttach: handleToolbarAttach,
+    onComment: handleToolbarComment,
+    onAction: handleToolbarAction,
+    onRelate: handleToolbarRelate,
+    onPrint: handleToolbarPrint,
+    onEmail: handleToolbarEmail,
+    onSwitchView: handleToolbarSwitchView
+  }), [
+    handleToolbarNavigate,
+    handleToolbarCreate,
+    handleToolbarSave,
+    handleToolbarRefresh,
+    handleToolbarAttach,
+    handleToolbarComment,
+    handleToolbarAction,
+    handleToolbarRelate,
+    handleToolbarPrint,
+    handleToolbarEmail,
+    handleToolbarSwitchView
+  ]);
+
   // Debug: Log current state
   console.log('🔧 Dashboard - selectedRecord:', selectedRecord);
   console.log('🔧 Dashboard - emailModalVisible:', emailModalVisible);
@@ -479,19 +506,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
             onRecordClick={handleRecordClick}
             selectedRecord={selectedRecord}
             onRecordSelect={handleRecordSelect}
-            toolbarHandlers={{
-              onNavigate: handleToolbarNavigate,
-              onCreate: handleToolbarCreate,
-              onSave: handleToolbarSave,
-              onRefresh: handleToolbarRefresh,
-              onAttach: handleToolbarAttach,
-              onComment: handleToolbarComment,
-              onAction: handleToolbarAction,
-              onRelate: handleToolbarRelate,
-              onPrint: handleToolbarPrint,
-              onEmail: handleToolbarEmail,
-              onSwitchView: handleToolbarSwitchView
-            }}
+            toolbarHandlers={toolbarHandlers}
           />
         </Layout>
       </Layout>

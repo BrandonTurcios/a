@@ -72,6 +72,25 @@ export function DataTable({
     }
   }, [rowSelection, onRowSelect, data]);
 
+  // Sync row selection with selectedRecord prop
+  React.useEffect(() => {
+    if (selectedRecord && enableRowSelection) {
+      // Find the index of the selected record in the data
+      const recordIndex = data.findIndex(record => record.id === selectedRecord.id);
+      if (recordIndex !== -1) {
+        const newSelection = { [recordIndex]: true };
+        if (JSON.stringify(newSelection) !== JSON.stringify(rowSelection)) {
+          setRowSelection(newSelection);
+        }
+      }
+    } else if (!selectedRecord && enableRowSelection) {
+      // Clear selection if no record is selected
+      if (Object.keys(rowSelection).length > 0) {
+        setRowSelection({});
+      }
+    }
+  }, [selectedRecord, data, enableRowSelection, rowSelection]);
+
   // Add selection column if row selection is enabled
   const columnsWithSelection = React.useMemo(() => {
     if (!enableRowSelection) return columns;
@@ -287,7 +306,7 @@ export function DataTable({
 // Exportar también el componente memoizado con comparación personalizada
 export const MemoizedDataTable = React.memo(DataTable, (prevProps, nextProps) => {
   // Solo re-renderizar si las props realmente importantes han cambiado
-  return (
+  const propsEqual = (
     prevProps.columns === nextProps.columns &&
     prevProps.data === nextProps.data &&
     prevProps.searchable === nextProps.searchable &&
@@ -301,4 +320,11 @@ export const MemoizedDataTable = React.memo(DataTable, (prevProps, nextProps) =>
     prevProps.onRowDoubleClick === nextProps.onRowDoubleClick &&
     prevProps.onRowSelect === nextProps.onRowSelect
   );
+  
+  // Debug log to see when re-renders happen
+  if (!propsEqual) {
+    console.log('🔄 DataTable will re-render due to prop changes');
+  }
+  
+  return propsEqual;
 });
