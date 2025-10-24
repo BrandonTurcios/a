@@ -48,30 +48,6 @@ export function DataTable({
   const [rowSelection, setRowSelection] = React.useState({})
   const [globalFilter, setGlobalFilter] = React.useState("")
 
-  // Update row selection when selectedRecord changes (but avoid infinite loops)
-  React.useEffect(() => {
-    if (selectedRecord && data.length > 0) {
-      // Find the row index of the selected record
-      const rowIndex = data.findIndex(row => row.id === selectedRecord.id);
-      if (rowIndex !== -1) {
-        // Only update if the selection is actually different
-        const newSelection = { [rowIndex]: true };
-        setRowSelection(prevSelection => {
-          if (JSON.stringify(prevSelection) !== JSON.stringify(newSelection)) {
-            return newSelection;
-          }
-          return prevSelection;
-        });
-      }
-    } else if (!selectedRecord) {
-      setRowSelection(prevSelection => {
-        if (Object.keys(prevSelection).length > 0) {
-          return {};
-        }
-        return prevSelection;
-      });
-    }
-  }, [selectedRecord, data]);
 
   // Handle row selection changes
   const handleRowSelectionChange = React.useCallback((updaterOrValue) => {
