@@ -421,7 +421,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
         }
       }
     }
-  }, [menuActions.selectedMenuInfo, menuActions.tableInfo, menuActions.formInfo, pendingTabCreation, isChangingTab]);
+  }, [menuActions.selectedMenuInfo, menuActions.tableInfo, menuActions.formInfo, pendingTabCreation, isChangingTab, tabs.activeTabId]);
 
   return (
     <Layout style={{ minHeight: '100vh' }}>

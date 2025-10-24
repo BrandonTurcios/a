@@ -301,5 +301,21 @@ export function DataTable({
   )
 }
 
-// Exportar también el componente memoizado simple
-export const MemoizedDataTable = React.memo(DataTable);
+// Exportar también el componente memoizado con comparación personalizada
+export const MemoizedDataTable = React.memo(DataTable, (prevProps, nextProps) => {
+  // Solo re-renderizar si las props realmente importantes han cambiado
+  return (
+    prevProps.columns === nextProps.columns &&
+    prevProps.data === nextProps.data &&
+    prevProps.searchable === nextProps.searchable &&
+    prevProps.pagination === nextProps.pagination &&
+    prevProps.pageSize === nextProps.pageSize &&
+    prevProps.enableRowSelection === nextProps.enableRowSelection &&
+    // Para selectedRecord, comparar por ID en lugar de referencia
+    (prevProps.selectedRecord?.id === nextProps.selectedRecord?.id) &&
+    // Para las funciones, solo comparar si son las mismas referencias
+    prevProps.onRowClick === nextProps.onRowClick &&
+    prevProps.onRowDoubleClick === nextProps.onRowDoubleClick &&
+    prevProps.onRowSelect === nextProps.onRowSelect
+  );
+});
