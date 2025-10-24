@@ -38,39 +38,60 @@ export function DataTable({
   enableRowSelection = false,
   selectedRecord = null, // Pass the currently selected record
 }) {
-  console.log('🔧 DataTable render:', {
-    dataLength: data.length,
-    selectedRecord: selectedRecord?.id,
-    enableRowSelection
-  });
   const [sorting, setSorting] = React.useState([])
   const [columnFilters, setColumnFilters] = React.useState([])
   const [rowSelection, setRowSelection] = React.useState({})
   const [globalFilter, setGlobalFilter] = React.useState("")
 
+  // Update row selection when selectedRecord changes (but avoid infinite loops)
+  React.useEffect(() => {
+    if (selectedRecord && data.length > 0) {
+      // Find the row index of the selected record
+      const rowIndex = data.findIndex(row => row.id === selectedRecord.id);
+      if (rowIndex !== -1) {
+        // Only update if the selection is actually different
+        const newSelection = { [rowIndex]: true };
+        setRowSelection(prevSelection => {
+          if (JSON.stringify(prevSelection) !== JSON.stringify(newSelection)) {
+            return newSelection;
+          }
+          return prevSelection;
+        });
+      }
+    } else if (!selectedRecord) {
+      setRowSelection(prevSelection => {
+        if (Object.keys(prevSelection).length > 0) {
+          return {};
+        }
+        return prevSelection;
+      });
+    }
+  }, [selectedRecord, data]);
 
   // Handle row selection changes
   const handleRowSelectionChange = React.useCallback((updaterOrValue) => {
-    const newSelection = typeof updaterOrValue === 'function' 
-      ? updaterOrValue(rowSelection) 
-      : updaterOrValue;
-    
-    // Only update if selection actually changed
-    if (JSON.stringify(newSelection) !== JSON.stringify(rowSelection)) {
-      setRowSelection(newSelection);
+    setRowSelection(prevSelection => {
+      const newSelection = typeof updaterOrValue === 'function' 
+        ? updaterOrValue(prevSelection) 
+        : updaterOrValue;
       
-      // Notify parent component about selection changes
-      if (onRowSelect) {
-        const selectedRowIndex = Object.keys(newSelection).find(key => newSelection[key]);
-        if (selectedRowIndex !== undefined) {
-          const selectedRow = data[parseInt(selectedRowIndex)];
-          onRowSelect(selectedRow, true);
-        } else {
-          onRowSelect(null, false);
+      // Only update if selection actually changed
+      if (JSON.stringify(newSelection) !== JSON.stringify(prevSelection)) {
+        // Notify parent component about selection changes
+        if (onRowSelect) {
+          const selectedRowIndex = Object.keys(newSelection).find(key => newSelection[key]);
+          if (selectedRowIndex !== undefined) {
+            const selectedRow = data[parseInt(selectedRowIndex)];
+            onRowSelect(selectedRow, true);
+          } else {
+            onRowSelect(null, false);
+          }
         }
+        return newSelection;
       }
-    }
-  }, [rowSelection, onRowSelect, data]);
+      return prevSelection;
+    });
+  }, [onRowSelect, data]);
 
   // Add selection column if row selection is enabled
   const columnsWithSelection = React.useMemo(() => {
@@ -92,10 +113,7 @@ export function DataTable({
           <Checkbox
             checked={table.getIsAllPageRowsSelected()}
             indeterminate={table.getIsSomePageRowsSelected()}
-            onChange={(e) => {
-              e.stopPropagation();
-              table.toggleAllPageRowsSelected(e.target.checked);
-            }}
+            onChange={(e) => table.toggleAllPageRowsSelected(e.target.checked)}
           />
         </div>
       ),
@@ -113,7 +131,6 @@ export function DataTable({
           <Checkbox
             checked={row.getIsSelected()}
             onChange={(e) => {
-              e.stopPropagation();
               row.toggleSelected(e.target.checked);
             }}
           />

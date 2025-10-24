@@ -291,6 +291,10 @@ const Dashboard = ({ sessionData, onLogout }) => {
   console.log('🔧 Dashboard - selectedRecord:', selectedRecord);
   console.log('🔧 Dashboard - emailModalVisible:', emailModalVisible);
 
+  // Clear selection when switching views or tabs
+  useEffect(() => {
+    setSelectedRecord(null);
+  }, [menuActions.selectedMenuInfo?.viewType, tabs.activeTabId]);
 
   // Manejadores para tabs
   const handleTabChange = (tabId) => {
@@ -396,14 +400,6 @@ const Dashboard = ({ sessionData, onLogout }) => {
   // Sincronizar datos de la tab activa cuando cambien los datos del menú
   // Solo actualizar si estamos en una tab de contenido y no hay conflictos
   useEffect(() => {
-    console.log('🔧 useEffect sync tabs triggered:', {
-      activeTabId: tabs.activeTabId,
-      hasSelectedMenuInfo: !!menuActions.selectedMenuInfo,
-      pendingTabCreation,
-      isChangingTab,
-      loadingContent: menuActions.loadingContent
-    });
-    
     if (tabs.activeTabId && menuActions.selectedMenuInfo && !pendingTabCreation && !isChangingTab) {
       const activeTab = tabs.getActiveTab();
       if (activeTab && activeTab.data) {

@@ -24,12 +24,6 @@ const TrytonTable = ({
   enableRowSelection = false,
   selectedRecord = null
 }) => {
-  console.log('🔧 TrytonTable render:', {
-    model,
-    viewId,
-    selectedRecord: selectedRecord?.id,
-    enableRowSelection
-  });
   const [tableInfo, setTableInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -46,7 +40,6 @@ const TrytonTable = ({
       setError(null);
       
       console.log(`🔍 Loading table for model: ${model}`);
-      console.log(`🔧 loadTableData called - selectedRecord:`, selectedRecord?.id);
       
       // First verify the view type
       const fieldsView = await trytonService.getFieldsView(model, viewId, viewType);
@@ -362,21 +355,4 @@ const TrytonTable = ({
   );
 };
 
-export default React.memo(TrytonTable, (prevProps, nextProps) => {
-  // Solo re-renderizar si las props realmente importantes han cambiado
-  return (
-    prevProps.model === nextProps.model &&
-    prevProps.viewId === nextProps.viewId &&
-    prevProps.viewType === nextProps.viewType &&
-    JSON.stringify(prevProps.domain) === JSON.stringify(nextProps.domain) &&
-    prevProps.limit === nextProps.limit &&
-    prevProps.title === nextProps.title &&
-    prevProps.enableRowSelection === nextProps.enableRowSelection &&
-    // Para selectedRecord, comparar por ID en lugar de referencia
-    (prevProps.selectedRecord?.id === nextProps.selectedRecord?.id) &&
-    // Para las funciones, solo comparar si son las mismas referencias
-    prevProps.onRowClick === nextProps.onRowClick &&
-    prevProps.onRowDoubleClick === nextProps.onRowDoubleClick &&
-    prevProps.onRowSelect === nextProps.onRowSelect
-  );
-});
+export default TrytonTable;
