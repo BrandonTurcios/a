@@ -24,6 +24,12 @@ const TrytonTable = ({
   enableRowSelection = false,
   selectedRecord = null
 }) => {
+  console.log('🔧 TrytonTable render:', {
+    model,
+    viewId,
+    selectedRecord: selectedRecord?.id,
+    enableRowSelection
+  });
   const [tableInfo, setTableInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

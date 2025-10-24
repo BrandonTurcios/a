@@ -38,6 +38,11 @@ export function DataTable({
   enableRowSelection = false,
   selectedRecord = null, // Pass the currently selected record
 }) {
+  console.log('🔧 DataTable render:', {
+    dataLength: data.length,
+    selectedRecord: selectedRecord?.id,
+    enableRowSelection
+  });
   const [sorting, setSorting] = React.useState([])
   const [columnFilters, setColumnFilters] = React.useState([])
   const [rowSelection, setRowSelection] = React.useState({})

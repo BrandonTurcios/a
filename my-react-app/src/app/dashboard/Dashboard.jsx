@@ -280,12 +280,13 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
   const handleRecordSelect = useCallback((record, isSelected) => {
     console.log('✅ Record selection changed:', record, isSelected);
+    console.log('🔧 Current loadingContent state:', menuActions.loadingContent);
     if (isSelected) {
       setSelectedRecord(record);
     } else {
       setSelectedRecord(null);
     }
-  }, []);
+  }, [menuActions.loadingContent]);
 
   // Debug: Log current state
   console.log('🔧 Dashboard - selectedRecord:', selectedRecord);
@@ -400,6 +401,14 @@ const Dashboard = ({ sessionData, onLogout }) => {
   // Sincronizar datos de la tab activa cuando cambien los datos del menú
   // Solo actualizar si estamos en una tab de contenido y no hay conflictos
   useEffect(() => {
+    console.log('🔧 useEffect sync tabs triggered:', {
+      activeTabId: tabs.activeTabId,
+      hasSelectedMenuInfo: !!menuActions.selectedMenuInfo,
+      pendingTabCreation,
+      isChangingTab,
+      loadingContent: menuActions.loadingContent
+    });
+    
     if (tabs.activeTabId && menuActions.selectedMenuInfo && !pendingTabCreation && !isChangingTab) {
       const activeTab = tabs.getActiveTab();
       if (activeTab && activeTab.data) {
