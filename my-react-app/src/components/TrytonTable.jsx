@@ -367,7 +367,7 @@ const TrytonTable = ({
 
 export default React.memo(TrytonTable, (prevProps, nextProps) => {
   // Solo re-renderizar si las props realmente importantes han cambiado
-  return (
+  const propsEqual = (
     prevProps.model === nextProps.model &&
     prevProps.viewId === nextProps.viewId &&
     prevProps.viewType === nextProps.viewType &&
@@ -382,4 +382,11 @@ export default React.memo(TrytonTable, (prevProps, nextProps) => {
     prevProps.onRowDoubleClick === nextProps.onRowDoubleClick &&
     prevProps.onRowSelect === nextProps.onRowSelect
   );
+  
+  // Debug log to see when re-renders happen
+  if (!propsEqual) {
+    console.log('🔄 TrytonTable will re-render due to prop changes');
+  }
+  
+  return propsEqual;
 });
