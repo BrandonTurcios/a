@@ -1629,6 +1629,10 @@ class TrytonService {
     // Extraer nombres de modelos
     const contextModelName = contextModel.split('.').pop();
     const relatedModelName = relatedModel.split('.').pop();
+    
+    console.log(`📋 Context model name: ${contextModelName}`);
+    console.log(`📋 Related model name: ${relatedModelName}`);
+    console.log(`✅ Is context model name valid field: ${this.isValidFieldName(contextModelName)}`);
 
     // Estrategia 1: Campo directo por nombre del modelo contexto
     // Ejemplo: gnuhealth.patient -> gnuhealth.appointment (campo: patient)
@@ -1757,6 +1761,9 @@ class TrytonService {
   // Crear dominio por defecto basado en el tipo de relación
   createDefaultDomain(relatedModel, contextModel, contextId, relationType) {
     console.log(`🔗 Creating default domain for relation type:`, relationType);
+    console.log(`📋 Related model: ${relatedModel}`);
+    console.log(`📋 Context model: ${contextModel}`);
+    console.log(`📋 Context ID: ${contextId}`);
 
     // Si relationType es un objeto con type y field
     if (typeof relationType === 'object' && relationType.type) {
@@ -2880,7 +2887,10 @@ class TrytonService {
 
         // Determinar el tipo de relación basado en el modelo relacionado
         const relationType = this.detectRelationType(resModel, contextModel);
-        console.log(`🔗 Relation type detected: ${relationType}`);
+        console.log(`🔗 Relation type detected:`, relationType);
+        console.log(`📋 Res model: ${resModel}`);
+        console.log(`📋 Context model: ${contextModel}`);
+        console.log(`📋 Context ID: ${contextId}`);
 
         // Evaluar dominio PYSON si está disponible en relateItem
         if (relateItem.pyson_domain) {
