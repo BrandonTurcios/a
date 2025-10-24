@@ -83,22 +83,45 @@ export function DataTable({
     const selectionColumn = {
       id: "select",
       header: ({ table }) => (
-        <Checkbox
-          checked={table.getIsAllPageRowsSelected()}
-          indeterminate={table.getIsSomePageRowsSelected()}
-          onChange={(e) => table.toggleAllPageRowsSelected(e.target.checked)}
-        />
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          height: '100%',
+          borderRight: '2px solid #D1D5DB',
+          marginRight: '12px',
+          paddingRight: '8px',
+          background: 'rgba(255, 255, 255, 0.1)'
+        }}>
+          <Checkbox
+            checked={table.getIsAllPageRowsSelected()}
+            indeterminate={table.getIsSomePageRowsSelected()}
+            onChange={(e) => table.toggleAllPageRowsSelected(e.target.checked)}
+          />
+        </div>
       ),
       cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onChange={(e) => {
-            row.toggleSelected(e.target.checked);
-          }}
-        />
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          height: '100%',
+          borderRight: '2px solid #E5E7EB',
+          marginRight: '12px',
+          paddingRight: '8px',
+          background: 'rgba(248, 249, 250, 0.5)'
+        }}>
+          <Checkbox
+            checked={row.getIsSelected()}
+            onChange={(e) => {
+              row.toggleSelected(e.target.checked);
+            }}
+          />
+        </div>
       ),
       enableSorting: false,
       enableHiding: false,
+      size: 50, // Fixed width for selection column
     };
     
     return [selectionColumn, ...columns];
