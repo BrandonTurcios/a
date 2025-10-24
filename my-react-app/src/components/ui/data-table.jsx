@@ -113,7 +113,10 @@ export function DataTable({
           <Checkbox
             checked={table.getIsAllPageRowsSelected()}
             indeterminate={table.getIsSomePageRowsSelected()}
-            onChange={(e) => table.toggleAllPageRowsSelected(e.target.checked)}
+            onChange={(e) => {
+              e.stopPropagation();
+              table.toggleAllPageRowsSelected(e.target.checked);
+            }}
           />
         </div>
       ),
@@ -131,6 +134,7 @@ export function DataTable({
           <Checkbox
             checked={row.getIsSelected()}
             onChange={(e) => {
+              e.stopPropagation();
               row.toggleSelected(e.target.checked);
             }}
           />
