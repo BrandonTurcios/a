@@ -46,6 +46,7 @@ const TrytonTable = ({
       setError(null);
       
       console.log(`🔍 Loading table for model: ${model}`);
+      console.log(`🔧 loadTableData called - selectedRecord:`, selectedRecord?.id);
       
       // First verify the view type
       const fieldsView = await trytonService.getFieldsView(model, viewId, viewType);
