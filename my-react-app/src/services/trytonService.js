@@ -1588,23 +1588,18 @@ class TrytonService {
     }
   }
 
-  // Detectar el tipo de relación entre modelos
+  // Detectar el tipo de relación entre modelos de forma dinámica
   detectRelationType(relatedModel, contextModel) {
     if (!contextModel) {
       return 'none';
     }
 
-    // Mapeo de tipos de relación comunes
+    // Mapeo de tipos de relación comunes (solo para casos especiales)
     const relationMappings = {
-      // Email relacionado con cualquier modelo
       'ir.email': 'email',
-      // Archivos adjuntos
       'ir.attachment': 'attachment',
-      // Comentarios
       'ir.comment': 'comment',
-      // Historial de cambios
       'ir.model.log': 'log',
-      // Notas
       'ir.note': 'note'
     };
 
@@ -1613,26 +1608,181 @@ class TrytonService {
       return relationMappings[relatedModel];
     }
 
-    // Verificar si hay una relación directa por nombre de campo
-    const commonRelationFields = [
-      'patient', 'appointment', 'disease', 'diagnosis', 'treatment',
-      'party', 'company', 'user', 'template', 'product'
-    ];
-
-    // Buscar si el modelo relacionado tiene un campo que coincida con el contexto
-    const contextModelName = contextModel.split('.').pop();
-    if (commonRelationFields.includes(contextModelName)) {
-      return 'direct';
+    // Detección dinámica de relaciones
+    const relationField = this.detectRelationField(relatedModel, contextModel);
+    
+    if (relationField) {
+      return {
+        type: 'dynamic',
+        field: relationField
+      };
     }
 
     // Por defecto, usar relación genérica
     return 'generic';
   }
 
+  // Detectar el campo de relación de forma completamente dinámica
+  detectRelationField(relatedModel, contextModel) {
+    console.log(`🔍 Detecting relation field between ${contextModel} and ${relatedModel}`);
+
+    // Extraer nombres de modelos
+    const contextModelName = contextModel.split('.').pop();
+    const relatedModelName = relatedModel.split('.').pop();
+
+    // Estrategia 1: Campo directo por nombre del modelo contexto
+    // Ejemplo: gnuhealth.patient -> gnuhealth.appointment (campo: patient)
+    if (this.isValidFieldName(contextModelName)) {
+      console.log(`🎯 Strategy 1: Using context model name as field: ${contextModelName}`);
+      return contextModelName;
+    }
+
+    // Estrategia 2: Campo por nombre del modelo relacionado
+    // Ejemplo: product.template -> product.product (campo: template)
+    if (this.isValidFieldName(relatedModelName)) {
+      console.log(`🎯 Strategy 2: Using related model name as field: ${relatedModelName}`);
+      return relatedModelName;
+    }
+
+    // Estrategia 3: Análisis dinámico de palabras clave
+    const contextKeywords = this.extractKeywords(contextModel);
+    const relatedKeywords = this.extractKeywords(relatedModel);
+    
+    // Buscar palabras clave que coincidan entre ambos modelos
+    const sharedKeywords = contextKeywords.filter(keyword => 
+      relatedKeywords.includes(keyword) && this.isValidFieldName(keyword)
+    );
+
+    if (sharedKeywords.length > 0) {
+      // Usar la palabra clave más específica (más larga)
+      const bestKeyword = sharedKeywords.reduce((a, b) => a.length > b.length ? a : b);
+      console.log(`🎯 Strategy 3: Using shared keyword: ${bestKeyword}`);
+      return bestKeyword;
+    }
+
+    // Estrategia 4: Inferir del contexto
+    // Si el modelo relacionado es más específico que el contexto
+    if (relatedModel.includes(contextModelName)) {
+      console.log(`🎯 Strategy 4: Using context model name from related model: ${contextModelName}`);
+      return contextModelName;
+    }
+
+    // Estrategia 5: Análisis de jerarquía de modelos
+    const hierarchyField = this.analyzeModelHierarchy(contextModel, relatedModel);
+    if (hierarchyField) {
+      console.log(`🎯 Strategy 5: Using hierarchy analysis: ${hierarchyField}`);
+      return hierarchyField;
+    }
+
+    console.log(`⚠️ No relation field detected`);
+    return null;
+  }
+
+  // Extraer palabras clave de un nombre de modelo
+  extractKeywords(modelName) {
+    // Dividir por puntos y guiones bajos para obtener palabras
+    const parts = modelName.split(/[._]/);
+    const keywords = [];
+    
+    for (const part of parts) {
+      // Convertir camelCase a palabras separadas
+      const camelCaseWords = part.replace(/([A-Z])/g, ' $1').toLowerCase().trim().split(' ');
+      
+      for (const word of camelCaseWords) {
+        if (word.length > 2 && this.isValidFieldName(word)) {
+          keywords.push(word);
+        }
+      }
+    }
+    
+    return keywords;
+  }
+
+  // Analizar jerarquía de modelos para inferir relaciones
+  analyzeModelHierarchy(contextModel, relatedModel) {
+    // Si el modelo relacionado es una extensión del contexto
+    // Ejemplo: gnuhealth.patient -> gnuhealth.patient.disease
+    if (relatedModel.startsWith(contextModel + '.')) {
+      const contextName = contextModel.split('.').pop();
+      if (this.isValidFieldName(contextName)) {
+        return contextName;
+      }
+    }
+
+    // Si el contexto es una extensión del relacionado
+    // Ejemplo: gnuhealth.patient.disease -> gnuhealth.patient
+    if (contextModel.startsWith(relatedModel + '.')) {
+      const relatedName = relatedModel.split('.').pop();
+      if (this.isValidFieldName(relatedName)) {
+        return relatedName;
+      }
+    }
+
+    // Buscar patrones comunes en la estructura
+    const contextParts = contextModel.split('.');
+    const relatedParts = relatedModel.split('.');
+    
+    // Si tienen el mismo prefijo, usar la diferencia
+    if (contextParts[0] === relatedParts[0]) {
+      const contextSuffix = contextParts.slice(1).join('_');
+      const relatedSuffix = relatedParts.slice(1).join('_');
+      
+      if (contextSuffix && this.isValidFieldName(contextSuffix)) {
+        return contextSuffix;
+      }
+      if (relatedSuffix && this.isValidFieldName(relatedSuffix)) {
+        return relatedSuffix;
+      }
+    }
+
+    return null;
+  }
+
+  // Verificar si un nombre de campo es válido
+  isValidFieldName(fieldName) {
+    // Excluir nombres que no son campos válidos
+    const invalidFields = [
+      'model', 'view', 'action', 'menu', 'icon', 'template', 'wizard',
+      'report', 'rule', 'sequence', 'domain', 'context', 'field'
+    ];
+
+    if (invalidFields.includes(fieldName)) {
+      return false;
+    }
+
+    // Verificar que sea un nombre de campo válido
+    return /^[a-z][a-z0-9_]*$/.test(fieldName);
+  }
+
   // Crear dominio por defecto basado en el tipo de relación
   createDefaultDomain(relatedModel, contextModel, contextId, relationType) {
-    console.log(`🔗 Creating default domain for relation type: ${relationType}`);
+    console.log(`🔗 Creating default domain for relation type:`, relationType);
 
+    // Si relationType es un objeto con type y field
+    if (typeof relationType === 'object' && relationType.type) {
+      switch (relationType.type) {
+        case 'specific':
+          // Usar el campo específico mapeado
+          console.log(`🎯 Using specific field mapping: ${relationType.field} = ${contextId}`);
+          return [[relationType.field, '=', contextId]];
+
+        case 'direct':
+          // Usar el campo directo
+          console.log(`🎯 Using direct field: ${relationType.field} = ${contextId}`);
+          return [[relationType.field, '=', contextId]];
+
+        case 'dynamic':
+          // Usar el campo detectado dinámicamente
+          console.log(`🎯 Using dynamic field: ${relationType.field} = ${contextId}`);
+          return [[relationType.field, '=', contextId]];
+
+        default:
+          console.log(`⚠️ Unknown relation type object:`, relationType);
+          return [];
+      }
+    }
+
+    // Si relationType es un string (método anterior)
     switch (relationType) {
       case 'email':
         // Para emails, usar resource field
@@ -1653,11 +1803,6 @@ class TrytonService {
       case 'note':
         // Para notas, usar resource field
         return [['resource', '=', [contextModel, contextId]]];
-
-      case 'direct':
-        // Para relaciones directas, intentar usar el nombre del modelo como campo
-        const contextModelName = contextModel.split('.').pop();
-        return [[contextModelName, '=', contextId]];
 
       case 'generic':
         // Para relaciones genéricas, usar un dominio más simple
