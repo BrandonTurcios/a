@@ -1428,6 +1428,33 @@ class TrytonService {
             }
             return value.d; // default value
 
+          case 'If':
+            // If evalúa una condición y devuelve un valor u otro
+            // {"__class__": "If", "c": condition, "t": true_value, "e": false_value}
+            const condition = evaluateValue(value.c);
+            if (condition) {
+              return evaluateValue(value.t);
+            } else {
+              return evaluateValue(value.e);
+            }
+
+          case 'Equal':
+            // Equal compara dos valores
+            // {"__class__": "Equal", "s1": value1, "s2": value2}
+            const s1 = evaluateValue(value.s1);
+            const s2 = evaluateValue(value.s2);
+            return s1 === s2;
+
+          case 'In':
+            // In verifica si un valor está en una lista
+            // {"__class__": "In", "s1": value, "s2": list}
+            const searchValue = evaluateValue(value.s1);
+            const searchList = evaluateValue(value.s2);
+            if (Array.isArray(searchList)) {
+              return searchList.includes(searchValue);
+            }
+            return false;
+
           default:
             console.warn(`⚠️ PYSON class no soportada: ${value.__class__}, usando valor por defecto`);
             return value.d || null;
@@ -2427,6 +2454,202 @@ class TrytonService {
       return completions;
     } catch (error) {
       console.error('Error getting email completions:', error);
+      throw error;
+    }
+  }
+
+  // Handle relate action - get toolbar info and fields view for related model
+  async handleRelateAction(relateItem, contextModel = null, contextId = null) {
+    if (!this.sessionData) {
+      throw new Error('No hay sesión activa');
+    }
+
+    try {
+      console.log(`🔗 Handling relate action:`, relateItem);
+      console.log(`📋 Context model: ${contextModel}, Context ID: ${contextId}`);
+
+      const resModel = relateItem.res_model;
+      const actionName = relateItem.name || `Relate ${resModel}`;
+
+      // PASO 1: Obtener toolbar info del modelo relacionado
+      console.log(`🔍 Getting toolbar info for model: ${resModel}`);
+      const toolbarInfo = await this.makeRpcCall(`model.${resModel}.view_toolbar_get`, [{}]);
+
+      console.log('✅ Toolbar info obtained:', toolbarInfo);
+
+      // PASO 2: Obtener fields_view_get del modelo relacionado
+      let fieldsView = null;
+      let viewType = null;
+      let viewId = null;
+
+      // Intentar obtener vista tree primero (más común para relaciones)
+      try {
+        fieldsView = await this.makeRpcCall(`model.${resModel}.fields_view_get`, [
+          null, // view_id - usar vista por defecto
+          'tree', // view_type - intentar tree primero
+          {}
+        ]);
+
+        if (fieldsView) {
+          viewType = fieldsView.type || 'tree';
+          viewId = fieldsView.view_id || null;
+          console.log(`✅ Tree view obtained for ${resModel}: ${viewType}, ID: ${viewId}`);
+        }
+      } catch (treeError) {
+        console.log(`❌ No tree view available for ${resModel}:`, treeError.message);
+      }
+
+      // Si tree falló, intentar con form
+      if (!fieldsView) {
+        try {
+          fieldsView = await this.makeRpcCall(`model.${resModel}.fields_view_get`, [
+            null,
+            'form',
+            {}
+          ]);
+
+          if (fieldsView) {
+            viewType = fieldsView.type || 'form';
+            viewId = fieldsView.view_id || null;
+            console.log(`✅ Form view obtained for ${resModel}: ${viewType}, ID: ${viewId}`);
+          }
+        } catch (formError) {
+          console.log(`❌ No form view available for ${resModel}:`, formError.message);
+        }
+      }
+
+      if (!fieldsView) {
+        throw new Error(`No se pudo obtener vista para el modelo relacionado ${resModel}`);
+      }
+
+      // PASO 3: Procesar según el tipo de vista
+      let tableData = null;
+      let formData = null;
+
+      if (viewType === 'tree') {
+        console.log(`📊 Processing as table view for related model: ${resModel}`);
+
+        // Construir dominio basado en el contexto y las opciones de relate
+        let domain = [];
+        let context = {};
+
+        // Si hay contexto, agregarlo
+        if (contextModel && contextId) {
+          context = {
+            active_id: contextId,
+            active_ids: [contextId],
+            active_model: contextModel
+          };
+          console.log(`🔍 Using context:`, context);
+        }
+
+        // Evaluar dominio PYSON si está disponible en relateItem
+        if (relateItem.pyson_domain) {
+          try {
+            console.log(`🔍 Evaluating PYSON domain:`, relateItem.pyson_domain);
+            
+            // Crear contexto temporal para la evaluación
+            const tempContext = {
+              ...this.context,
+              ...context,
+              active_id: contextId,
+              active_ids: contextId ? [contextId] : [],
+              active_model: contextModel
+            };
+            
+            // Guardar contexto original y usar el temporal
+            const originalContext = this.context;
+            this.context = tempContext;
+            
+            domain = this.evaluatePysonDomain(relateItem.pyson_domain);
+            
+            // Restaurar contexto original
+            this.context = originalContext;
+            
+            console.log(`✅ Evaluated domain:`, domain);
+          } catch (domainError) {
+            console.warn(`⚠️ Error evaluating PYSON domain:`, domainError.message);
+            // Usar dominio por defecto si falla la evaluación
+            if (contextModel && contextId) {
+              domain = [['resource', '=', [contextModel, contextId]]];
+            }
+          }
+        } else if (contextModel && contextId) {
+          // Crear dominio por defecto para filtrar registros relacionados
+          domain = [['resource', '=', [contextModel, contextId]]];
+          console.log(`🔍 Using default context domain:`, domain);
+        }
+
+        // Obtener datos para tabla
+        const searchParams = [domain, 0, 100, null, context];
+        const ids = await this.makeRpcCall(`model.${resModel}.search`, searchParams);
+
+        console.log(`📊 Found ${ids.length} related records`);
+
+        if (ids.length > 0) {
+          const fields = Object.keys(fieldsView.fields || {});
+          const expandedFields = this.expandFieldsForRelations(fields, resModel);
+          const data = await this.makeRpcCall(`model.${resModel}.read`, [ids, expandedFields, {}]);
+
+          tableData = {
+            fieldsView,
+            data,
+            model: resModel,
+            viewId: viewId,
+            viewType: viewType,
+            fields: expandedFields,
+            contextModel: contextModel,
+            contextId: contextId
+          };
+
+          console.log(`✅ Related table data prepared: ${data.length} records`);
+        } else {
+          // Tabla vacía pero con estructura
+          tableData = {
+            fieldsView,
+            data: [],
+            model: resModel,
+            viewId: viewId,
+            viewType: viewType,
+            fields: Object.keys(fieldsView.fields || {}),
+            contextModel: contextModel,
+            contextId: contextId
+          };
+          console.log(`📊 Empty related table prepared`);
+        }
+
+      } else if (viewType === 'form') {
+        console.log(`📝 Processing as form view for related model: ${resModel}`);
+
+        // Para formularios relacionados, crear un formulario vacío
+        formData = {
+          model: resModel,
+          viewId: viewId,
+          viewType: 'form',
+          fieldsView: fieldsView,
+          recordData: null, // Formulario vacío
+          contextModel: contextModel,
+          contextId: contextId
+        };
+
+        console.log(`✅ Related form prepared`);
+      }
+
+      return {
+        success: true,
+        actionName: actionName,
+        resModel: resModel,
+        toolbarInfo: toolbarInfo,
+        viewType: viewType,
+        viewId: viewId,
+        tableData: tableData,
+        formData: formData,
+        contextModel: contextModel,
+        contextId: contextId
+      };
+
+    } catch (error) {
+      console.error('Error handling relate action:', error);
       throw error;
     }
   }

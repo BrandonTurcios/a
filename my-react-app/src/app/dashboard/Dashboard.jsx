@@ -133,9 +133,91 @@ const Dashboard = ({ sessionData, onLogout }) => {
     // TODO: Implementar acciones del toolbar
   };
 
-  const handleToolbarRelate = (relateItem) => {
-    console.log('Toolbar relate clicked:', relateItem);
-    // TODO: Implementar relaciones
+  const handleToolbarRelate = async (relateItem) => {
+    try {
+      console.log('🔗 Toolbar relate clicked:', relateItem);
+
+      if (!menuActions.selectedMenuInfo || !menuActions.selectedMenuInfo.resModel) {
+        console.warn('No hay información del menú seleccionado');
+        return;
+      }
+
+      menuActions.setLoadingContent(true);
+
+      // Obtener información del contexto actual
+      const currentModel = menuActions.selectedMenuInfo.resModel;
+      const currentRecordId = selectedRecord?.id || null;
+
+      console.log(`🔗 Opening relate view for: ${relateItem.name}`);
+      console.log(`📋 From model: ${currentModel}, Record ID: ${currentRecordId}`);
+
+      // Llamar al servicio para manejar la acción relate
+      const relateResult = await trytonService.handleRelateAction(
+        relateItem,
+        currentModel,
+        currentRecordId
+      );
+
+      if (relateResult.success) {
+        console.log('✅ Relate action successful:', relateResult);
+
+        // Crear nueva tab con la vista relacionada
+        const tabId = `relate-${relateItem.id}-${Date.now()}`;
+        const tabTitle = relateResult.actionName || relateItem.name;
+
+        // Preparar datos para la nueva tab
+        const newTabData = {
+          menuItem: {
+            id: `relate-${relateItem.id}`,
+            name: tabTitle,
+            icon: '🔗',
+            model: relateResult.resModel,
+            description: `Relate: ${tabTitle}`
+          },
+          selectedMenuInfo: {
+            menuItem: {
+              id: `relate-${relateItem.id}`,
+              name: tabTitle,
+              icon: '🔗',
+              model: relateResult.resModel
+            },
+            actionInfo: [relateItem],
+            toolbarInfo: relateResult.toolbarInfo,
+            resModel: relateResult.resModel,
+            actionName: relateResult.actionName,
+            viewType: relateResult.viewType,
+            viewId: relateResult.viewId,
+            timestamp: new Date().toISOString()
+          },
+          tableInfo: relateResult.tableData,
+          formInfo: relateResult.formData
+        };
+
+        // Crear la nueva tab
+        tabs.createTab({
+          id: tabId,
+          title: tabTitle,
+          type: 'content',
+          data: newTabData
+        });
+
+        // Activar la nueva tab
+        tabs.activateTab(tabId);
+
+        // Actualizar el estado del menú para la nueva tab
+        menuActions.setSelectedMenuInfo(newTabData.selectedMenuInfo);
+        menuActions.setTableInfo(relateResult.tableData);
+        menuActions.setFormInfo(relateResult.formData);
+        menuActions.setActiveTab(`relate-${relateItem.id}`);
+
+        console.log(`✅ New relate tab created: ${tabTitle}`);
+      }
+
+      menuActions.setLoadingContent(false);
+    } catch (error) {
+      console.error('Error handling relate action:', error);
+      menuActions.setLoadingContent(false);
+    }
   };
 
   const handleToolbarPrint = (printItem) => {
