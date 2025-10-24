@@ -72,24 +72,30 @@ export function DataTable({
     }
   }, [rowSelection, onRowSelect, data]);
 
-  // Sync row selection with selectedRecord prop
+  // Sync row selection with selectedRecord prop - optimized to prevent loops
   React.useEffect(() => {
-    if (selectedRecord && enableRowSelection) {
+    if (!enableRowSelection) return;
+    
+    if (selectedRecord) {
       // Find the index of the selected record in the data
       const recordIndex = data.findIndex(record => record.id === selectedRecord.id);
       if (recordIndex !== -1) {
         const newSelection = { [recordIndex]: true };
-        if (JSON.stringify(newSelection) !== JSON.stringify(rowSelection)) {
+        // Only update if the selection is actually different
+        const currentSelection = Object.keys(rowSelection).length === 1 && 
+          rowSelection[recordIndex] === true ? rowSelection : null;
+        
+        if (!currentSelection) {
           setRowSelection(newSelection);
         }
       }
-    } else if (!selectedRecord && enableRowSelection) {
+    } else {
       // Clear selection if no record is selected
       if (Object.keys(rowSelection).length > 0) {
         setRowSelection({});
       }
     }
-  }, [selectedRecord, data, enableRowSelection, rowSelection]);
+  }, [selectedRecord?.id, data, enableRowSelection]); // Removed rowSelection from deps to prevent loops
 
   // Add selection column if row selection is enabled
   const columnsWithSelection = React.useMemo(() => {

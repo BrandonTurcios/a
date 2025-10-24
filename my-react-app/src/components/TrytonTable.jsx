@@ -36,13 +36,62 @@ const TrytonTable = ({
   const [columns, setColumns] = useState([]);
   const [data, setData] = useState([]);
 
+  // Separate initial load from refresh functionality
+  useEffect(() => {
+    const loadTableData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        console.log(`🔍 Loading table for model: ${model}`);
+        
+        // First verify the view type
+        const fieldsView = await trytonService.getFieldsView(model, viewId, viewType);
+        console.log('🔍 View obtained:', fieldsView);
+        
+        // Only proceed if it's a "tree" type view
+        if (!fieldsView || fieldsView.type !== 'tree') {
+          throw new Error(`View is not of type "tree" (current type: ${fieldsView?.type || 'unknown'})`);
+        }
+        
+        const info = await trytonService.getTableInfo(
+          model, 
+          viewId, 
+          viewType, 
+          domain, 
+          limit
+        );
+        
+        console.log('✅ Table information loaded:', info);
+        
+        setTableInfo(info);
+        
+        // Generate columns dynamically based on the view
+        const generatedColumns = generateColumns(info.fieldsView);
+        setColumns(generatedColumns);
+        
+        // Process data
+        const processedData = processData(info.data);
+        setData(processedData);
+        
+      } catch (error) {
+        console.error('❌ Error loading table:', error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTableData();
+  }, [model, viewId, viewType, domain, limit]);
+
+  // Separate refresh function that can be called manually
   const loadTableData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
-      console.log(`🔍 Loading table for model: ${model}`);
-      // Removed selectedRecord log as it's not relevant for data loading
+      console.log(`🔍 Refreshing table for model: ${model}`);
       
       // First verify the view type
       const fieldsView = await trytonService.getFieldsView(model, viewId, viewType);
@@ -80,10 +129,6 @@ const TrytonTable = ({
       setLoading(false);
     }
   }, [model, viewId, viewType, domain, limit]);
-
-  useEffect(() => {
-    loadTableData();
-  }, [loadTableData]);
 
   // Don't reload data when selectedRecord changes - this is just for UI state
   // The selectedRecord prop is only used for highlighting, not for data loading
