@@ -22,7 +22,9 @@ const TrytonTable = ({
   onRowDoubleClick = null,
   onRowSelect = null,
   enableRowSelection = false,
-  selectedRecord = null
+  selectedRecord = null,
+  tableData = null, // Datos pre-cargados (para tablas relacionadas)
+  filtered = false // Indicar si está filtrado
 }) => {
   const [tableInfo, setTableInfo] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -31,8 +33,25 @@ const TrytonTable = ({
   const [data, setData] = useState([]);
 
   useEffect(() => {
-    loadTableData();
-  }, [model, viewId, viewType, domain, limit]);
+    // Si tenemos datos pre-cargados (tabla relacionada), usarlos directamente
+    if (tableData && filtered) {
+      console.log('🔗 Using pre-loaded filtered data');
+      setTableInfo(tableData);
+      
+      // Generate columns dynamically based on the view
+      const generatedColumns = generateColumns(tableData.fieldsView);
+      setColumns(generatedColumns);
+      
+      // Process data
+      const processedData = processData(tableData.data);
+      setData(processedData);
+      
+      setLoading(false);
+    } else {
+      // Cargar datos normalmente
+      loadTableData();
+    }
+}, [model, viewId, viewType, domain, limit, tableData, filtered]);
 
   const loadTableData = async () => {
     try {

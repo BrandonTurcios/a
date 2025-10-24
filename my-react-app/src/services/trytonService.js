@@ -2957,16 +2957,18 @@ class TrytonService {
           const expandedFields = this.expandFieldsForRelations(fields, resModel);
           const data = await this.makeRpcCall(`model.${resModel}.read`, [ids, expandedFields, {}]);
 
-          tableData = {
-            fieldsView,
-            data,
-            model: resModel,
-            viewId: viewId,
-            viewType: viewType,
-            fields: expandedFields,
-            contextModel: contextModel,
-            contextId: contextId
-          };
+                        tableData = {
+                          fieldsView,
+                          data,
+                          model: resModel,
+                          viewId: viewId,
+                          viewType: viewType,
+                          fields: expandedFields,
+                          contextModel: contextModel,
+                          contextId: contextId,
+                          domain: domain, // Preservar el dominio filtrado
+                          filtered: true // Indicar que está filtrado
+                        };
 
           console.log(`✅ Related table data prepared: ${data.length} records`);
         } else {
@@ -2979,7 +2981,9 @@ class TrytonService {
             viewType: viewType,
             fields: Object.keys(fieldsView.fields || {}),
             contextModel: contextModel,
-            contextId: contextId
+            contextId: contextId,
+            domain: domain, // Preservar el dominio filtrado
+            filtered: true // Indicar que está filtrado
           };
           console.log(`📊 Empty related table prepared`);
         }

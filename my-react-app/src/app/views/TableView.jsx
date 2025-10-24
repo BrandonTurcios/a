@@ -87,7 +87,7 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
         model={tableInfo.model}
         viewId={tableInfo.viewId}
         viewType={tableInfo.viewType}
-        domain={[]}
+        domain={tableInfo.domain || []}
         limit={100}
         title={selectedMenuInfo?.actionName}
         onRowClick={handleRowClick}
@@ -95,6 +95,8 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
         onRowSelect={handleRowSelect}
         enableRowSelection={true}
         selectedRecord={selectedRecord}
+        tableData={tableInfo.filtered ? tableInfo : null}
+        filtered={tableInfo.filtered || false}
       />
     </div>
   );
