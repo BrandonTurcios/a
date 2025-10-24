@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Layout } from 'antd';
 import DashboardHeader from './DashboardHeader';
 import Sidebar from '../layout/Sidebar';
@@ -36,7 +36,6 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
   // Estado para rastrear el registro seleccionado en la tabla
   const [selectedRecord, setSelectedRecord] = useState(null);
-  const selectedRecordRef = useRef(null);
 
   // Estado para el modal de email
   const [emailModalVisible, setEmailModalVisible] = useState(false);
@@ -282,10 +281,8 @@ const Dashboard = ({ sessionData, onLogout }) => {
   const handleRecordSelect = useCallback((record, isSelected) => {
     console.log('✅ Record selection changed:', record, isSelected);
     if (isSelected) {
-      selectedRecordRef.current = record;
       setSelectedRecord(record);
     } else {
-      selectedRecordRef.current = null;
       setSelectedRecord(null);
     }
   }, []);
@@ -577,16 +574,4 @@ const Dashboard = ({ sessionData, onLogout }) => {
   );
 };
 
-export default React.memo(Dashboard, (prevProps, nextProps) => {
-  // Only re-render if sessionData or onLogout changes
-  const propsEqual = (
-    prevProps.sessionData === nextProps.sessionData &&
-    prevProps.onLogout === nextProps.onLogout
-  );
-  
-  if (!propsEqual) {
-    console.log('🔄 Dashboard will re-render due to prop changes');
-  }
-  
-  return propsEqual;
-});
+export default Dashboard;

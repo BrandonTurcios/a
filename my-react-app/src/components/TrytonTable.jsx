@@ -36,9 +36,10 @@ const TrytonTable = ({
   const [columns, setColumns] = useState([]);
   const [data, setData] = useState([]);
 
-  // Separate initial load from refresh functionality
+
+  // Solo cargar datos cuando cambien los parámetros de la tabla, NO cuando cambie selectedRecord
   useEffect(() => {
-    const loadTableData = async () => {
+    const loadData = async () => {
       try {
         setLoading(true);
         setError(null);
@@ -82,58 +83,13 @@ const TrytonTable = ({
       }
     };
 
-    loadTableData();
-  }, [model, viewId, viewType, domain, limit]);
-
-  // Separate refresh function that can be called manually
-  const loadTableData = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      console.log(`🔍 Refreshing table for model: ${model}`);
-      
-      // First verify the view type
-      const fieldsView = await trytonService.getFieldsView(model, viewId, viewType);
-      console.log('🔍 View obtained:', fieldsView);
-      
-      // Only proceed if it's a "tree" type view
-      if (!fieldsView || fieldsView.type !== 'tree') {
-        throw new Error(`View is not of type "tree" (current type: ${fieldsView?.type || 'unknown'})`);
-      }
-      
-      const info = await trytonService.getTableInfo(
-        model, 
-        viewId, 
-        viewType, 
-        domain, 
-        limit
-      );
-      
-      console.log('✅ Table information loaded:', info);
-      
-      setTableInfo(info);
-      
-      // Generate columns dynamically based on the view
-      const generatedColumns = generateColumns(info.fieldsView);
-      setColumns(generatedColumns);
-      
-      // Process data
-      const processedData = processData(info.data);
-      setData(processedData);
-      
-    } catch (error) {
-      console.error('❌ Error loading table:', error);
-      setError(error.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [model, viewId, viewType, domain, limit]);
+    loadData();
+  }, [model, viewId, viewType, domain, limit, generateColumns, processData]);
 
   // Don't reload data when selectedRecord changes - this is just for UI state
   // The selectedRecord prop is only used for highlighting, not for data loading
 
-  const generateColumns = (fieldsView) => {
+  const generateColumns = useCallback((fieldsView) => {
     if (!fieldsView.fields) return [];
     
     const cols = [];
@@ -159,9 +115,9 @@ const TrytonTable = ({
     });
     
     return cols;
-  };
+  }, []);
 
-  const shouldIncludeField = (fieldName, arch) => {
+  const shouldIncludeField = useCallback((fieldName, arch) => {
     // Check if the field is in the view arch
     if (arch && arch.includes(`name="${fieldName}"`)) {
       return true;
@@ -174,9 +130,9 @@ const TrytonTable = ({
     const relatedFields = ['party', 'template', 'product', 'company', 'supplier'];
     
     return basicFields.includes(fieldName) || relatedFields.includes(fieldName);
-  };
+  }, []);
 
-  const parseTrytonDateTime = (value) => {
+  const parseTrytonDateTime = useCallback((value) => {
     if (!value || typeof value !== 'object') return null;
     if (value.__class__ === 'datetime') {
       const { year, month, day, hour = 0, minute = 0, second = 0, microsecond = 0 } = value;
@@ -199,9 +155,9 @@ const TrytonTable = ({
       }
     }
     return null;
-  };
+  }, []);
 
-  const formatCellValue = (value, fieldDef, record = null) => {
+  const formatCellValue = useCallback((value, fieldDef, record = null) => {
     if (value === null || value === undefined) {
       return '-';
     }
@@ -282,18 +238,58 @@ const TrytonTable = ({
     }
     
     return String(value);
-  };
+  }, [parseTrytonDateTime]);
 
-  const processData = (rawData) => {
+  const processData = useCallback((rawData) => {
     return rawData.map((record, index) => ({
       ...record,
       _index: index + 1
     }));
-  };
+  }, []);
 
-  const handleRefresh = () => {
-    loadTableData();
-  };
+  const handleRefresh = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log(`🔍 Refreshing table for model: ${model}`);
+      
+      // First verify the view type
+      const fieldsView = await trytonService.getFieldsView(model, viewId, viewType);
+      console.log('🔍 View obtained:', fieldsView);
+      
+      // Only proceed if it's a "tree" type view
+      if (!fieldsView || fieldsView.type !== 'tree') {
+        throw new Error(`View is not of type "tree" (current type: ${fieldsView?.type || 'unknown'})`);
+      }
+      
+      const info = await trytonService.getTableInfo(
+        model, 
+        viewId, 
+        viewType, 
+        domain, 
+        limit
+      );
+      
+      console.log('✅ Table information loaded:', info);
+      
+      setTableInfo(info);
+      
+      // Generate columns dynamically based on the view
+      const generatedColumns = generateColumns(info.fieldsView);
+      setColumns(generatedColumns);
+      
+      // Process data
+      const processedData = processData(info.data);
+      setData(processedData);
+      
+    } catch (error) {
+      console.error('❌ Error loading table:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [model, viewId, viewType, domain, limit, generateColumns, processData]);
 
   if (loading) {
     return (
@@ -412,7 +408,7 @@ const TrytonTable = ({
 
 export default React.memo(TrytonTable, (prevProps, nextProps) => {
   // Solo re-renderizar si las props realmente importantes han cambiado
-  const propsEqual = (
+  return (
     prevProps.model === nextProps.model &&
     prevProps.viewId === nextProps.viewId &&
     prevProps.viewType === nextProps.viewType &&
@@ -427,11 +423,4 @@ export default React.memo(TrytonTable, (prevProps, nextProps) => {
     prevProps.onRowDoubleClick === nextProps.onRowDoubleClick &&
     prevProps.onRowSelect === nextProps.onRowSelect
   );
-  
-  // Debug log to see when re-renders happen
-  if (!propsEqual) {
-    console.log('🔄 TrytonTable will re-render due to prop changes');
-  }
-  
-  return propsEqual;
 });

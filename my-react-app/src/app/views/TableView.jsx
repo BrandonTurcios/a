@@ -100,23 +100,4 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
   );
 };
 
-export default React.memo(TableView, (prevProps, nextProps) => {
-  // Only re-render if important props have changed
-  const propsEqual = (
-    prevProps.tableInfo === nextProps.tableInfo &&
-    prevProps.selectedMenuInfo === nextProps.selectedMenuInfo &&
-    prevProps.loadingContent === nextProps.loadingContent &&
-    prevProps.formDirty === nextProps.formDirty &&
-    prevProps.toolbarHandlers === nextProps.toolbarHandlers &&
-    prevProps.onRecordClick === nextProps.onRecordClick &&
-    prevProps.onRecordSelect === nextProps.onRecordSelect &&
-    // Compare selectedRecord by ID
-    (prevProps.selectedRecord?.id === nextProps.selectedRecord?.id)
-  );
-  
-  if (!propsEqual) {
-    console.log('🔄 TableView will re-render due to prop changes');
-  }
-  
-  return propsEqual;
-});
+export default TableView;
