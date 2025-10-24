@@ -51,28 +51,26 @@ export function DataTable({
 
   // Handle row selection changes
   const handleRowSelectionChange = React.useCallback((updaterOrValue) => {
-    setRowSelection(prevSelection => {
-      const newSelection = typeof updaterOrValue === 'function' 
-        ? updaterOrValue(prevSelection) 
-        : updaterOrValue;
+    const newSelection = typeof updaterOrValue === 'function' 
+      ? updaterOrValue(rowSelection) 
+      : updaterOrValue;
+    
+    // Only update if selection actually changed
+    if (JSON.stringify(newSelection) !== JSON.stringify(rowSelection)) {
+      setRowSelection(newSelection);
       
-      // Only update if selection actually changed
-      if (JSON.stringify(newSelection) !== JSON.stringify(prevSelection)) {
-        // Notify parent component about selection changes
-        if (onRowSelect) {
-          const selectedRowIndex = Object.keys(newSelection).find(key => newSelection[key]);
-          if (selectedRowIndex !== undefined) {
-            const selectedRow = data[parseInt(selectedRowIndex)];
-            onRowSelect(selectedRow, true);
-          } else {
-            onRowSelect(null, false);
-          }
+      // Notify parent component about selection changes
+      if (onRowSelect) {
+        const selectedRowIndex = Object.keys(newSelection).find(key => newSelection[key]);
+        if (selectedRowIndex !== undefined) {
+          const selectedRow = data[parseInt(selectedRowIndex)];
+          onRowSelect(selectedRow, true);
+        } else {
+          onRowSelect(null, false);
         }
-        return newSelection;
       }
-      return prevSelection;
-    });
-  }, [onRowSelect, data]);
+    }
+  }, [rowSelection, onRowSelect, data]);
 
   // Add selection column if row selection is enabled
   const columnsWithSelection = React.useMemo(() => {
