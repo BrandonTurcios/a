@@ -90,7 +90,8 @@ const Dashboard = ({ sessionData, onLogout }) => {
         viewId: formFieldsView.view_id,
         recordData: defaultValues,
         fieldsView: formFieldsView,
-        isNew: true
+        isNew: true,
+        isNativeForm: false // This form was created from table context, not natively
       };
 
       menuActions.setFormInfo(formData);
@@ -251,7 +252,8 @@ const Dashboard = ({ sessionData, onLogout }) => {
         viewId: formFieldsView.view_id,
         recordData: recordData,
         fieldsView: formFieldsView,
-        isNew: false
+        isNew: false,
+        isNativeForm: false // This form was opened from table, not natively
       };
 
       console.log('✅ formData created:', formData);

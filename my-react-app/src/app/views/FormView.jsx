@@ -50,7 +50,7 @@ const FormView = ({ formInfo, selectedMenuInfo, loadingContent, formDirty, onFor
               viewType={selectedMenuInfo.viewType}
               onSwitchView={toolbarHandlers.onSwitchView}
               isDirty={formDirty}
-              isNativeForm={!formInfo?.isNew}
+              isNativeForm={formInfo?.isNativeForm || false}
             />
           </div>
         )}

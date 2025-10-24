@@ -129,7 +129,8 @@ export const useMenuActions = () => {
           viewId: menuInfo.viewId,
           viewType: 'form',
           fieldsView: menuInfo.fieldsView,
-          recordData: recordData
+          recordData: recordData,
+          isNativeForm: true // This is a native form opened from menu
         };
       }
     } else {
@@ -183,7 +184,8 @@ export const useMenuActions = () => {
             viewId: viewId,
             viewType: 'form',
             fieldsView: fieldsView,
-            recordData: recordData
+            recordData: recordData,
+            isNativeForm: true // This is a native form opened from menu
           };
         }
       }
