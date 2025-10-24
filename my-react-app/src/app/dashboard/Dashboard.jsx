@@ -205,7 +205,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
     }
   };
 
-  const handleRecordClick = async (recordId, record) => {
+  const handleRecordClick = useCallback(async (recordId, record) => {
     try {
       console.log('📝 Record clicked:', recordId, record);
 
@@ -276,16 +276,16 @@ const Dashboard = ({ sessionData, onLogout }) => {
       console.error('Error opening record:', error);
       menuActions.setLoadingContent(false);
     }
-  };
+  }, [formDirty, menuActions]);
 
-  const handleRecordSelect = (record, isSelected) => {
+  const handleRecordSelect = useCallback((record, isSelected) => {
     console.log('✅ Record selection changed:', record, isSelected);
     if (isSelected) {
       setSelectedRecord(record);
     } else {
       setSelectedRecord(null);
     }
-  };
+  }, []);
 
   // Debug: Log current state
   console.log('🔧 Dashboard - selectedRecord:', selectedRecord);

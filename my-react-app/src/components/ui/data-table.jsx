@@ -61,7 +61,7 @@ export function DataTable({
   }, [selectedRecord, data, rowSelection]);
 
   // Handle row selection changes
-  const handleRowSelectionChange = (updaterOrValue) => {
+  const handleRowSelectionChange = React.useCallback((updaterOrValue) => {
     const newSelection = typeof updaterOrValue === 'function' 
       ? updaterOrValue(rowSelection) 
       : updaterOrValue;
@@ -81,7 +81,7 @@ export function DataTable({
         }
       }
     }
-  };
+  }, [rowSelection, onRowSelect, data]);
 
   // Add selection column if row selection is enabled
   const columnsWithSelection = React.useMemo(() => {

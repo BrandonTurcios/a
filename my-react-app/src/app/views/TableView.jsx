@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Typography } from 'antd';
 import TrytonTable from '../../components/TrytonTable';
 import Toolbar from '../../components/Toolbar';
@@ -7,26 +7,26 @@ const { Title, Paragraph } = Typography;
 
 const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, toolbarHandlers, onRecordClick, selectedRecord, onRecordSelect }) => {
 
-  const handleRowClick = (record) => {
+  const handleRowClick = useCallback((record) => {
     console.log('🖱️ Row clicked:', record);
     if (onRecordClick && record.id) {
       onRecordClick(record.id, record);
     }
-  };
+  }, [onRecordClick]);
 
-  const handleRowDoubleClick = (record) => {
+  const handleRowDoubleClick = useCallback((record) => {
     console.log('🖱️ Row double clicked:', record);
     if (onRecordClick && record.id) {
       onRecordClick(record.id, record);
     }
-  };
+  }, [onRecordClick]);
 
-  const handleRowSelect = (record, isSelected) => {
+  const handleRowSelect = useCallback((record, isSelected) => {
     console.log('✅ Row selected:', record, isSelected);
     if (onRecordSelect) {
       onRecordSelect(record, isSelected);
     }
-  };
+  }, [onRecordSelect]);
 
   // Debug: Log toolbar info
   console.log('🔧 TableView - toolbarInfo:', selectedMenuInfo?.toolbarInfo);
