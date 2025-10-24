@@ -51,37 +51,47 @@ export function DataTable({
       if (rowIndex !== -1) {
         // Only update if the selection is actually different
         const newSelection = { [rowIndex]: true };
-        if (JSON.stringify(rowSelection) !== JSON.stringify(newSelection)) {
-          setRowSelection(newSelection);
-        }
+        setRowSelection(prevSelection => {
+          if (JSON.stringify(prevSelection) !== JSON.stringify(newSelection)) {
+            return newSelection;
+          }
+          return prevSelection;
+        });
       }
-    } else if (!selectedRecord && Object.keys(rowSelection).length > 0) {
-      setRowSelection({});
+    } else if (!selectedRecord) {
+      setRowSelection(prevSelection => {
+        if (Object.keys(prevSelection).length > 0) {
+          return {};
+        }
+        return prevSelection;
+      });
     }
-  }, [selectedRecord, data, rowSelection]);
+  }, [selectedRecord, data]);
 
   // Handle row selection changes
   const handleRowSelectionChange = React.useCallback((updaterOrValue) => {
-    const newSelection = typeof updaterOrValue === 'function' 
-      ? updaterOrValue(rowSelection) 
-      : updaterOrValue;
-    
-    // Only update if selection actually changed
-    if (JSON.stringify(newSelection) !== JSON.stringify(rowSelection)) {
-      setRowSelection(newSelection);
+    setRowSelection(prevSelection => {
+      const newSelection = typeof updaterOrValue === 'function' 
+        ? updaterOrValue(prevSelection) 
+        : updaterOrValue;
       
-      // Notify parent component about selection changes
-      if (onRowSelect) {
-        const selectedRowIndex = Object.keys(newSelection).find(key => newSelection[key]);
-        if (selectedRowIndex !== undefined) {
-          const selectedRow = data[parseInt(selectedRowIndex)];
-          onRowSelect(selectedRow, true);
-        } else {
-          onRowSelect(null, false);
+      // Only update if selection actually changed
+      if (JSON.stringify(newSelection) !== JSON.stringify(prevSelection)) {
+        // Notify parent component about selection changes
+        if (onRowSelect) {
+          const selectedRowIndex = Object.keys(newSelection).find(key => newSelection[key]);
+          if (selectedRowIndex !== undefined) {
+            const selectedRow = data[parseInt(selectedRowIndex)];
+            onRowSelect(selectedRow, true);
+          } else {
+            onRowSelect(null, false);
+          }
         }
+        return newSelection;
       }
-    }
-  }, [rowSelection, onRowSelect, data]);
+      return prevSelection;
+    });
+  }, [onRowSelect, data]);
 
   // Add selection column if row selection is enabled
   const columnsWithSelection = React.useMemo(() => {
