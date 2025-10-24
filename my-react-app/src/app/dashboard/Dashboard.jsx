@@ -280,13 +280,12 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
   const handleRecordSelect = useCallback((record, isSelected) => {
     console.log('✅ Record selection changed:', record, isSelected);
-    console.log('🔧 Current loadingContent state:', menuActions.loadingContent);
     if (isSelected) {
       setSelectedRecord(record);
     } else {
       setSelectedRecord(null);
     }
-  }, [menuActions.loadingContent]);
+  }, []);
 
   // Debug: Log current state
   console.log('🔧 Dashboard - selectedRecord:', selectedRecord);
