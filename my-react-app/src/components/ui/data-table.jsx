@@ -26,7 +26,7 @@ import {
 
 const { Search } = Input;
 
-function DataTableComponent({
+export function DataTable({
   columns,
   data,
   searchable = true,
@@ -61,7 +61,7 @@ function DataTableComponent({
   }, [selectedRecord, data, rowSelection]);
 
   // Handle row selection changes
-  const handleRowSelectionChange = React.useCallback((updaterOrValue) => {
+  const handleRowSelectionChange = (updaterOrValue) => {
     const newSelection = typeof updaterOrValue === 'function' 
       ? updaterOrValue(rowSelection) 
       : updaterOrValue;
@@ -81,7 +81,7 @@ function DataTableComponent({
         }
       }
     }
-  }, [rowSelection, onRowSelect, data]);
+  };
 
   // Add selection column if row selection is enabled
   const columnsWithSelection = React.useMemo(() => {
@@ -290,5 +290,3 @@ function DataTableComponent({
     </div>
   )
 }
-
-export const DataTable = React.memo(DataTableComponent);
