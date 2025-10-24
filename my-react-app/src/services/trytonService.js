@@ -1588,6 +1588,96 @@ class TrytonService {
     }
   }
 
+  // Detectar el tipo de relación entre modelos
+  detectRelationType(relatedModel, contextModel) {
+    if (!contextModel) {
+      return 'none';
+    }
+
+    // Mapeo de tipos de relación comunes
+    const relationMappings = {
+      // Email relacionado con cualquier modelo
+      'ir.email': 'email',
+      // Archivos adjuntos
+      'ir.attachment': 'attachment',
+      // Comentarios
+      'ir.comment': 'comment',
+      // Historial de cambios
+      'ir.model.log': 'log',
+      // Notas
+      'ir.note': 'note'
+    };
+
+    // Verificar si es un tipo de relación conocido
+    if (relationMappings[relatedModel]) {
+      return relationMappings[relatedModel];
+    }
+
+    // Verificar si hay una relación directa por nombre de campo
+    const commonRelationFields = [
+      'patient', 'appointment', 'disease', 'diagnosis', 'treatment',
+      'party', 'company', 'user', 'template', 'product'
+    ];
+
+    // Buscar si el modelo relacionado tiene un campo que coincida con el contexto
+    const contextModelName = contextModel.split('.').pop();
+    if (commonRelationFields.includes(contextModelName)) {
+      return 'direct';
+    }
+
+    // Por defecto, usar relación genérica
+    return 'generic';
+  }
+
+  // Crear dominio por defecto basado en el tipo de relación
+  createDefaultDomain(relatedModel, contextModel, contextId, relationType) {
+    console.log(`🔗 Creating default domain for relation type: ${relationType}`);
+
+    switch (relationType) {
+      case 'email':
+        // Para emails, usar resource field
+        return [['resource', '=', [contextModel, contextId]]];
+
+      case 'attachment':
+        // Para archivos adjuntos, usar resource field
+        return [['resource', '=', [contextModel, contextId]]];
+
+      case 'comment':
+        // Para comentarios, usar resource field
+        return [['resource', '=', [contextModel, contextId]]];
+
+      case 'log':
+        // Para logs, usar resource field
+        return [['resource', '=', [contextModel, contextId]]];
+
+      case 'note':
+        // Para notas, usar resource field
+        return [['resource', '=', [contextModel, contextId]]];
+
+      case 'direct':
+        // Para relaciones directas, intentar usar el nombre del modelo como campo
+        const contextModelName = contextModel.split('.').pop();
+        return [[contextModelName, '=', contextId]];
+
+      case 'generic':
+        // Para relaciones genéricas, usar un dominio más simple
+        // Intentar usar campos comunes de relación
+        const commonFields = ['patient', 'party', 'company', 'user'];
+        for (const field of commonFields) {
+          // Verificar si el modelo relacionado podría tener este campo
+          if (relatedModel.includes(field) || contextModel.includes(field)) {
+            return [[field, '=', contextId]];
+          }
+        }
+        // Si no hay coincidencia, usar dominio vacío
+        return [];
+
+      default:
+        // Sin relación, mostrar todos los registros
+        return [];
+    }
+  }
+
   // Obtener opciones de acción cuando hay context_model
   async getActionOptions(menuId) {
     if (!this.sessionData) {
@@ -2643,6 +2733,10 @@ class TrytonService {
           console.log(`🔍 Using context:`, context);
         }
 
+        // Determinar el tipo de relación basado en el modelo relacionado
+        const relationType = this.detectRelationType(resModel, contextModel);
+        console.log(`🔗 Relation type detected: ${relationType}`);
+
         // Evaluar dominio PYSON si está disponible en relateItem
         if (relateItem.pyson_domain) {
           try {
@@ -2673,19 +2767,19 @@ class TrytonService {
             } else {
               console.warn(`⚠️ Evaluated domain is empty or invalid, using fallback`);
               if (contextModel && contextId) {
-                domain = [['resource', '=', [contextModel, contextId]]];
+                domain = this.createDefaultDomain(resModel, contextModel, contextId, relationType);
               }
             }
           } catch (domainError) {
             console.warn(`⚠️ Error evaluating PYSON domain:`, domainError.message);
             // Usar dominio por defecto si falla la evaluación
             if (contextModel && contextId) {
-              domain = [['resource', '=', [contextModel, contextId]]];
+              domain = this.createDefaultDomain(resModel, contextModel, contextId, relationType);
             }
           }
         } else if (contextModel && contextId) {
-          // Crear dominio por defecto para filtrar registros relacionados
-          domain = [['resource', '=', [contextModel, contextId]]];
+          // Crear dominio por defecto basado en el tipo de relación
+          domain = this.createDefaultDomain(resModel, contextModel, contextId, relationType);
           console.log(`🔍 Using default context domain:`, domain);
         }
 
