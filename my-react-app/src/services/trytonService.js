@@ -1407,85 +1407,185 @@ class TrytonService {
       return domain;
     }
 
-    const evaluateValue = (value) => {
-      // Si es un objeto PYSON
-      if (value && typeof value === 'object' && value.__class__) {
-        switch (value.__class__) {
-          case 'Get':
-            // Get obtiene un valor del contexto
-            // {"__class__": "Get", "v": {"__class__": "Eval", "v": "context", "d": {}}, "k": "company", "d": -1}
-            // Intenta obtener context[company], si no existe usa el default (d)
-            if (value.k === 'company' && this.context && this.context.company) {
-              return this.context.company;
-            }
-            return value.d; // default value
+    // Contador de recursión para evitar bucles infinitos
+    const maxDepth = 50;
+    let currentDepth = 0;
+    const visited = new Set();
 
-          case 'Eval':
-            // Eval evalúa una expresión en el contexto
-            // {"__class__": "Eval", "v": "context", "d": {}}
-            if (value.v === 'context') {
-              return this.context || value.d;
-            }
-            return value.d; // default value
+    const evaluateValue = (value, depth = 0) => {
+      // Prevenir recursión infinita
+      if (depth > maxDepth) {
+        console.warn(`⚠️ Máxima profundidad alcanzada (${maxDepth}) en evaluación PYSON`);
+        return null;
+      }
 
-          case 'If':
-            // If evalúa una condición y devuelve un valor u otro
-            // {"__class__": "If", "c": condition, "t": true_value, "e": false_value}
-            const condition = evaluateValue(value.c);
-            if (condition) {
-              return evaluateValue(value.t);
-            } else {
-              return evaluateValue(value.e);
-            }
+      // Crear clave única para detectar ciclos
+      const valueKey = JSON.stringify(value);
+      if (visited.has(valueKey)) {
+        console.warn(`⚠️ Ciclo detectado en evaluación PYSON`);
+        return null;
+      }
 
-          case 'Equal':
-            // Equal compara dos valores
-            // {"__class__": "Equal", "s1": value1, "s2": value2}
-            const s1 = evaluateValue(value.s1);
-            const s2 = evaluateValue(value.s2);
-            return s1 === s2;
+      visited.add(valueKey);
 
-          case 'In':
-            // In verifica si un valor está en una lista
-            // {"__class__": "In", "s1": value, "s2": list}
-            const searchValue = evaluateValue(value.s1);
-            const searchList = evaluateValue(value.s2);
-            if (Array.isArray(searchList)) {
-              return searchList.includes(searchValue);
-            }
-            return false;
+      try {
+        // Si es un objeto PYSON
+        if (value && typeof value === 'object' && value.__class__) {
+          switch (value.__class__) {
+            case 'Get':
+              // Get obtiene un valor del contexto
+              if (value.k === 'company' && this.context && this.context.company) {
+                return this.context.company;
+              }
+              return value.d; // default value
 
-          default:
-            console.warn(`⚠️ PYSON class no soportada: ${value.__class__}, usando valor por defecto`);
-            return value.d || null;
+            case 'Eval':
+              // Eval evalúa una expresión en el contexto
+              if (value.v === 'context') {
+                return this.context || value.d;
+              }
+              if (value.v === 'active_id' && this.context && this.context.active_id) {
+                return this.context.active_id;
+              }
+              if (value.v === 'active_ids' && this.context && this.context.active_ids) {
+                return this.context.active_ids;
+              }
+              if (value.v === 'active_model' && this.context && this.context.active_model) {
+                return this.context.active_model;
+              }
+              return value.d; // default value
+
+            case 'If':
+              // If evalúa una condición y devuelve un valor u otro
+              const condition = evaluateValue(value.c, depth + 1);
+              if (condition) {
+                return evaluateValue(value.t, depth + 1);
+              } else {
+                return evaluateValue(value.e, depth + 1);
+              }
+
+            case 'Equal':
+              // Equal compara dos valores
+              const s1 = evaluateValue(value.s1, depth + 1);
+              const s2 = evaluateValue(value.s2, depth + 1);
+              return s1 === s2;
+
+            case 'In':
+              // In verifica si un valor está en una lista
+              const searchValue = evaluateValue(value.s1, depth + 1);
+              const searchList = evaluateValue(value.s2, depth + 1);
+              if (Array.isArray(searchList)) {
+                return searchList.includes(searchValue);
+              }
+              return false;
+
+            default:
+              console.warn(`⚠️ PYSON class no soportada: ${value.__class__}, usando valor por defecto`);
+              return value.d || null;
+          }
         }
-      }
 
-      // Si es un array, evaluar recursivamente
-      if (Array.isArray(value)) {
-        return value.map(v => evaluateValue(v));
-      }
+        // Si es un array, evaluar recursivamente
+        if (Array.isArray(value)) {
+          return value.map(v => evaluateValue(v, depth + 1));
+        }
 
-      // Valor simple, retornar como está
-      return value;
+        // Valor simple, retornar como está
+        return value;
+      } finally {
+        visited.delete(valueKey);
+      }
     };
 
-    // Evaluar cada cláusula del domain
-    return domain.map(clause => {
-      if (Array.isArray(clause)) {
-        // Una cláusula es [field, operator, value]
-        if (clause.length >= 3) {
-          return [
-            clause[0], // field name
-            clause[1], // operator
-            evaluateValue(clause[2]) // value (evaluar PYSON)
-          ];
+    try {
+      // Evaluar cada cláusula del domain
+      const result = domain.map(clause => {
+        if (Array.isArray(clause)) {
+          // Una cláusula es [field, operator, value]
+          if (clause.length >= 3) {
+            return [
+              clause[0], // field name
+              clause[1], // operator
+              evaluateValue(clause[2], 0) // value (evaluar PYSON)
+            ];
+          }
+          // Cláusulas especiales como ['AND', ...] o ['OR', ...]
+          return clause.map(c => evaluateValue(c, 0));
         }
-        // Cláusulas especiales como ['AND', ...] o ['OR', ...]
-        return clause.map(c => evaluateValue(c));
+        return clause;
+      });
+
+      // Validar que el resultado no tenga estructuras circulares
+      this.validateDomain(result);
+      
+      return result;
+    } catch (error) {
+      console.error('Error evaluating PYSON domain:', error);
+      // Retornar dominio vacío en caso de error
+      return [];
+    }
+  }
+
+  // Validar que el dominio no tenga estructuras problemáticas
+  validateDomain(domain) {
+    if (!Array.isArray(domain)) {
+      return;
+    }
+
+    const validateValue = (value, depth = 0) => {
+      if (depth > 100) {
+        throw new Error('Domain structure too deep');
       }
-      return clause;
-    });
+
+      if (Array.isArray(value)) {
+        value.forEach(v => validateValue(v, depth + 1));
+      }
+    };
+
+    validateValue(domain);
+  }
+
+  // Verificar si un dominio es válido para enviar a Tryton
+  isDomainValid(domain) {
+    if (!Array.isArray(domain)) {
+      return false;
+    }
+
+    try {
+      // Verificar que no tenga estructuras circulares
+      this.validateDomain(domain);
+      
+      // Verificar que no tenga valores problemáticos
+      const hasValidValues = (value, depth = 0) => {
+        if (depth > 50) {
+          return false;
+        }
+
+        if (value === null || value === undefined) {
+          return true;
+        }
+
+        if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+          return true;
+        }
+
+        if (Array.isArray(value)) {
+          return value.every(v => hasValidValues(v, depth + 1));
+        }
+
+        if (typeof value === 'object') {
+          // Objetos complejos pueden causar problemas
+          return false;
+        }
+
+        return true;
+      };
+
+      return hasValidValues(domain);
+    } catch (error) {
+      console.warn('Domain validation failed:', error.message);
+      return false;
+    }
   }
 
   // Obtener opciones de acción cuando hay context_model
@@ -2561,12 +2661,21 @@ class TrytonService {
             const originalContext = this.context;
             this.context = tempContext;
             
-            domain = this.evaluatePysonDomain(relateItem.pyson_domain);
+            const evaluatedDomain = this.evaluatePysonDomain(relateItem.pyson_domain);
             
             // Restaurar contexto original
             this.context = originalContext;
             
-            console.log(`✅ Evaluated domain:`, domain);
+            // Validar que el dominio evaluado sea válido
+            if (evaluatedDomain && Array.isArray(evaluatedDomain) && evaluatedDomain.length > 0) {
+              domain = evaluatedDomain;
+              console.log(`✅ Evaluated domain:`, domain);
+            } else {
+              console.warn(`⚠️ Evaluated domain is empty or invalid, using fallback`);
+              if (contextModel && contextId) {
+                domain = [['resource', '=', [contextModel, contextId]]];
+              }
+            }
           } catch (domainError) {
             console.warn(`⚠️ Error evaluating PYSON domain:`, domainError.message);
             // Usar dominio por defecto si falla la evaluación
@@ -2578,6 +2687,14 @@ class TrytonService {
           // Crear dominio por defecto para filtrar registros relacionados
           domain = [['resource', '=', [contextModel, contextId]]];
           console.log(`🔍 Using default context domain:`, domain);
+        }
+
+        // Validar dominio antes de enviar a Tryton
+        if (this.isDomainValid(domain)) {
+          console.log(`🔍 Domain is valid, proceeding with search`);
+        } else {
+          console.warn(`⚠️ Domain is invalid, using empty domain`);
+          domain = [];
         }
 
         // Obtener datos para tabla
