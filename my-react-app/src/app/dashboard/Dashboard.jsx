@@ -291,10 +291,6 @@ const Dashboard = ({ sessionData, onLogout }) => {
   console.log('🔧 Dashboard - selectedRecord:', selectedRecord);
   console.log('🔧 Dashboard - emailModalVisible:', emailModalVisible);
 
-  // Clear selection when switching views or tabs
-  useEffect(() => {
-    setSelectedRecord(null);
-  }, [menuActions.selectedMenuInfo?.viewType, tabs.activeTabId]);
 
   // Manejadores para tabs
   const handleTabChange = (tabId) => {
