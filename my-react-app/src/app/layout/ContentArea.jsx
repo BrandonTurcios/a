@@ -84,4 +84,27 @@ const ContentArea = ({
   );
 };
 
-export default ContentArea;
+export default React.memo(ContentArea, (prevProps, nextProps) => {
+  // Only re-render if important props have changed
+  const propsEqual = (
+    prevProps.activeTab === nextProps.activeTab &&
+    prevProps.selectedMenuInfo === nextProps.selectedMenuInfo &&
+    prevProps.tableInfo === nextProps.tableInfo &&
+    prevProps.formInfo === nextProps.formInfo &&
+    prevProps.loadingContent === nextProps.loadingContent &&
+    prevProps.sessionData === nextProps.sessionData &&
+    prevProps.formDirty === nextProps.formDirty &&
+    prevProps.onFormChange === nextProps.onFormChange &&
+    prevProps.toolbarHandlers === nextProps.toolbarHandlers &&
+    prevProps.onRecordClick === nextProps.onRecordClick &&
+    prevProps.onRecordSelect === nextProps.onRecordSelect &&
+    // Compare selectedRecord by ID only
+    (prevProps.selectedRecord?.id === nextProps.selectedRecord?.id)
+  );
+  
+  if (!propsEqual) {
+    console.log('🔄 ContentArea will re-render due to prop changes');
+  }
+  
+  return propsEqual;
+});
