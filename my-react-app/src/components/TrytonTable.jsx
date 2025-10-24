@@ -36,87 +36,7 @@ const TrytonTable = ({
   const [columns, setColumns] = useState([]);
   const [data, setData] = useState([]);
 
-
-  // Solo cargar datos cuando cambien los parámetros de la tabla, NO cuando cambie selectedRecord
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        console.log(`🔍 Loading table for model: ${model}`);
-        
-        // First verify the view type
-        const fieldsView = await trytonService.getFieldsView(model, viewId, viewType);
-        console.log('🔍 View obtained:', fieldsView);
-        
-        // Only proceed if it's a "tree" type view
-        if (!fieldsView || fieldsView.type !== 'tree') {
-          throw new Error(`View is not of type "tree" (current type: ${fieldsView?.type || 'unknown'})`);
-        }
-        
-        const info = await trytonService.getTableInfo(
-          model, 
-          viewId, 
-          viewType, 
-          domain, 
-          limit
-        );
-        
-        console.log('✅ Table information loaded:', info);
-        
-        setTableInfo(info);
-        
-        // Generate columns dynamically based on the view
-        const generatedColumns = generateColumns(info.fieldsView);
-        setColumns(generatedColumns);
-        
-        // Process data
-        const processedData = processData(info.data);
-        setData(processedData);
-        
-      } catch (error) {
-        console.error('❌ Error loading table:', error);
-        setError(error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, [model, viewId, viewType, domain, limit, generateColumns, processData]);
-
-  // Don't reload data when selectedRecord changes - this is just for UI state
-  // The selectedRecord prop is only used for highlighting, not for data loading
-
-  const generateColumns = useCallback((fieldsView) => {
-    if (!fieldsView.fields) return [];
-    
-    const cols = [];
-    
-    // Process view fields
-    Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
-      // Only include fields that are in the tree view
-      if (shouldIncludeField(fieldName, fieldsView.arch)) {
-        cols.push({
-          accessorKey: fieldName,
-          header: fieldDef.string || fieldName,
-          cell: ({ getValue, row }) => {
-            const value = getValue();
-            const record = row.original;
-            return formatCellValue(value, fieldDef, record);
-          },
-          meta: {
-            fieldDef,
-            fieldName
-          }
-        });
-      }
-    });
-    
-    return cols;
-  }, []);
-
+  // Definir funciones auxiliares PRIMERO
   const shouldIncludeField = useCallback((fieldName, arch) => {
     // Check if the field is in the view arch
     if (arch && arch.includes(`name="${fieldName}"`)) {
@@ -240,12 +160,92 @@ const TrytonTable = ({
     return String(value);
   }, [parseTrytonDateTime]);
 
+  const generateColumns = useCallback((fieldsView) => {
+    if (!fieldsView.fields) return [];
+    
+    const cols = [];
+    
+    // Process view fields
+    Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
+      // Only include fields that are in the tree view
+      if (shouldIncludeField(fieldName, fieldsView.arch)) {
+        cols.push({
+          accessorKey: fieldName,
+          header: fieldDef.string || fieldName,
+          cell: ({ getValue, row }) => {
+            const value = getValue();
+            const record = row.original;
+            return formatCellValue(value, fieldDef, record);
+          },
+          meta: {
+            fieldDef,
+            fieldName
+          }
+        });
+      }
+    });
+    
+    return cols;
+  }, [shouldIncludeField, formatCellValue]);
+
   const processData = useCallback((rawData) => {
     return rawData.map((record, index) => ({
       ...record,
       _index: index + 1
     }));
   }, []);
+
+  // Solo cargar datos cuando cambien los parámetros de la tabla, NO cuando cambie selectedRecord
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        console.log(`🔍 Loading table for model: ${model}`);
+        
+        // First verify the view type
+        const fieldsView = await trytonService.getFieldsView(model, viewId, viewType);
+        console.log('🔍 View obtained:', fieldsView);
+        
+        // Only proceed if it's a "tree" type view
+        if (!fieldsView || fieldsView.type !== 'tree') {
+          throw new Error(`View is not of type "tree" (current type: ${fieldsView?.type || 'unknown'})`);
+        }
+        
+        const info = await trytonService.getTableInfo(
+          model, 
+          viewId, 
+          viewType, 
+          domain, 
+          limit
+        );
+        
+        console.log('✅ Table information loaded:', info);
+        
+        setTableInfo(info);
+        
+        // Generate columns dynamically based on the view
+        const generatedColumns = generateColumns(info.fieldsView);
+        setColumns(generatedColumns);
+        
+        // Process data
+        const processedData = processData(info.data);
+        setData(processedData);
+        
+      } catch (error) {
+        console.error('❌ Error loading table:', error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [model, viewId, viewType, domain, limit, generateColumns, processData]);
+
+  // Don't reload data when selectedRecord changes - this is just for UI state
+  // The selectedRecord prop is only used for highlighting, not for data loading
 
   const handleRefresh = useCallback(async () => {
     try {
