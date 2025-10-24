@@ -6,12 +6,12 @@ import {
   FilterOutlined,
   SettingOutlined
 } from '@ant-design/icons';
-import { DataTable } from './ui/data-table';
+import { MemoizedDataTable } from './ui/data-table';
 import trytonService from '../services/trytonService';
 
 const { Title, Text } = Typography;
 
-const TrytonTable = ({
+const TrytonTable = React.memo(({
   model,
   viewId,
   viewType = 'tree',
@@ -311,7 +311,7 @@ const TrytonTable = ({
       </div>
       
       <div className="bg-gray-50 rounded-lg p-4">
-        <DataTable
+        <MemoizedDataTable
           columns={columns}
           data={data}
           searchable={true}
@@ -353,6 +353,6 @@ const TrytonTable = ({
       )}
     </div>
   );
-};
+});
 
 export default TrytonTable;

@@ -290,3 +290,20 @@ export function DataTable({
     </div>
   )
 }
+
+// Memoizar el componente con comparación personalizada
+export const MemoizedDataTable = React.memo(DataTable, (prevProps, nextProps) => {
+  // Solo re-renderizar si las props importantes han cambiado
+  return (
+    prevProps.data === nextProps.data &&
+    prevProps.columns === nextProps.columns &&
+    prevProps.enableRowSelection === nextProps.enableRowSelection &&
+    prevProps.searchable === nextProps.searchable &&
+    prevProps.pagination === nextProps.pagination &&
+    prevProps.pageSize === nextProps.pageSize &&
+    prevProps.selectedRecord === nextProps.selectedRecord &&
+    prevProps.onRowClick === nextProps.onRowClick &&
+    prevProps.onRowDoubleClick === nextProps.onRowDoubleClick &&
+    prevProps.onRowSelect === nextProps.onRowSelect
+  );
+});
