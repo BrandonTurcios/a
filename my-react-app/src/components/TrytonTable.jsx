@@ -36,13 +36,6 @@ const TrytonTable = ({
   const [columns, setColumns] = useState([]);
   const [data, setData] = useState([]);
 
-  useEffect(() => {
-    loadTableData();
-  }, [loadTableData]);
-
-  // Don't reload data when selectedRecord changes - this is just for UI state
-  // The selectedRecord prop is only used for highlighting, not for data loading
-
   const loadTableData = useCallback(async () => {
     try {
       setLoading(true);
@@ -87,6 +80,13 @@ const TrytonTable = ({
       setLoading(false);
     }
   }, [model, viewId, viewType, domain, limit]);
+
+  useEffect(() => {
+    loadTableData();
+  }, [loadTableData]);
+
+  // Don't reload data when selectedRecord changes - this is just for UI state
+  // The selectedRecord prop is only used for highlighting, not for data loading
 
   const generateColumns = (fieldsView) => {
     if (!fieldsView.fields) return [];
