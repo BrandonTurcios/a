@@ -26,7 +26,7 @@ import {
 
 const { Search } = Input;
 
-export const DataTable = React.memo(function DataTable({
+function DataTableComponent({
   columns,
   data,
   searchable = true,
@@ -289,4 +289,6 @@ export const DataTable = React.memo(function DataTable({
       )}
     </div>
   )
-});
+}
+
+export const DataTable = React.memo(DataTableComponent);
