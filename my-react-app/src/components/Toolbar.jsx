@@ -56,6 +56,7 @@ const Toolbar = ({
   const [attachmentsLoading, setAttachmentsLoading] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewItem, setPreviewItem] = useState(null);
+  const [currentPreviewIndex, setCurrentPreviewIndex] = useState(-1);
   const fileInputRef = useRef(null);
 
   const resourceKey = useMemo(() => {
@@ -116,12 +117,19 @@ const Toolbar = ({
     }
   };
 
-  const handlePreviewAttachment = async (attachmentId) => {
+  const handlePreviewAttachment = async (attachmentId, indexHint = null) => {
     try {
       const data = await trytonService.readAttachmentData([attachmentId], { preview: true });
       const item = data?.[0];
       if (!item?.data?.base64) throw new Error('No data');
       setPreviewItem(item);
+      // resolve index for navigation
+      if (indexHint !== null && indexHint !== undefined) {
+        setCurrentPreviewIndex(indexHint);
+      } else {
+        const idx = attachments.findIndex((a) => a.id === attachmentId);
+        setCurrentPreviewIndex(idx);
+      }
       setPreviewOpen(true);
     } catch (e) {
       console.error(e);
@@ -417,7 +425,7 @@ const Toolbar = ({
           <List.Item
             actions={[
               <Button key="download" icon={<DownloadOutlined />} onClick={() => handleDownloadAttachment(it.id, it.name)}>Download</Button>,
-              <Button key="preview" icon={<EyeOutlined />} onClick={() => handlePreviewAttachment(it.id)}>Preview</Button>,
+              <Button key="preview" icon={<EyeOutlined />} onClick={() => handlePreviewAttachment(it.id, attachments.findIndex(a => a.id === it.id))}>Preview</Button>,
             ]}
           >
             <List.Item.Meta
@@ -440,10 +448,27 @@ const Toolbar = ({
     {/* Preview Modal */}
     <Modal
       open={previewOpen}
-      title={previewItem?.name || 'Preview'}
+      title={`${previewItem?.name || 'Preview'}${attachments?.length ? `  (${currentPreviewIndex + 1}/${attachments.length})` : ''}`}
       onCancel={() => setPreviewOpen(false)}
-      footer={null}
+      footer={[
+        <Button key="prev" disabled={currentPreviewIndex <= 0} onClick={async () => {
+          if (currentPreviewIndex > 0) {
+            const prev = attachments[currentPreviewIndex - 1];
+            await handlePreviewAttachment(prev.id, currentPreviewIndex - 1);
+          }
+        }}>Previous</Button>,
+        <Button key="next" type="primary" disabled={!(attachments && currentPreviewIndex < attachments.length - 1)} onClick={async () => {
+          if (attachments && currentPreviewIndex < attachments.length - 1) {
+            const next = attachments[currentPreviewIndex + 1];
+            await handlePreviewAttachment(next.id, currentPreviewIndex + 1);
+          }
+        }}>Next</Button>,
+        <Button key="close" onClick={() => setPreviewOpen(false)}>Close</Button>
+      ]}
       width={900}
+      zIndex={4000}
+      maskStyle={{ zIndex: 3999 }}
+      getContainer={document.body}
     >
       {(() => {
         if (!previewItem?.data?.base64) {
