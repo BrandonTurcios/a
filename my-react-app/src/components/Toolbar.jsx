@@ -118,7 +118,7 @@ const Toolbar = ({
 
   const handlePreviewAttachment = async (attachmentId) => {
     try {
-      const data = await trytonService.readAttachmentData([attachmentId]);
+      const data = await trytonService.readAttachmentData([attachmentId], { preview: true });
       const item = data?.[0];
       if (!item?.data?.base64) throw new Error('No data');
       setPreviewItem(item);
@@ -445,15 +445,44 @@ const Toolbar = ({
       footer={null}
       width={900}
     >
-      {previewItem?.data?.base64 ? (
-        <Image
-          src={`data:application/octet-stream;base64,${previewItem.data.base64}`}
-          alt={previewItem?.name}
-          style={{ maxHeight: '70vh', objectFit: 'contain' }}
-        />
-      ) : (
-        <Typography.Text>No preview available.</Typography.Text>
-      )}
+      {(() => {
+        if (!previewItem?.data?.base64) {
+          return <Typography.Text>No preview available.</Typography.Text>;
+        }
+        const name = previewItem?.name || '';
+        const ext = name.split('.').pop()?.toLowerCase();
+        const imageExts = ['png','jpg','jpeg','gif','bmp','webp','svg'];
+        if (imageExts.includes(ext)) {
+          const mime = ext === 'svg' ? 'image/svg+xml' : `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+          return (
+            <Image
+              src={`data:${mime};base64,${previewItem.data.base64}`}
+              alt={name}
+              style={{ maxHeight: '70vh', objectFit: 'contain' }}
+            />
+          );
+        }
+        const textExts = ['txt','csv','log','json','md','xml','yaml','yml'];
+        if (textExts.includes(ext)) {
+          let decoded = '';
+          try {
+            decoded = atob(previewItem.data.base64);
+          } catch (e) {
+            decoded = '[Unable to decode text]';
+          }
+          return (
+            <pre style={{ maxHeight: '70vh', overflow: 'auto', background: '#f8f9fa', padding: 12, borderRadius: 6 }}>
+              {decoded}
+            </pre>
+          );
+        }
+        // Fallback: show generic note and offer download via button
+        return (
+          <div>
+            <Typography.Text>Preview not supported for this file type. Use Download in Manage list.</Typography.Text>
+          </div>
+        );
+      })()}
     </Modal>
     </>
   );

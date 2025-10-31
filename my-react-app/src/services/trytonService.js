@@ -51,12 +51,12 @@ class TrytonService {
     return list;
   }
 
-  async readAttachmentData(ids) {
-    // Returns bytes (base64) for data
+  async readAttachmentData(ids, { preview = false } = {}) {
+    // Returns bytes (base64) for data; when preview=true, server may optimize content
     const data = await this.makeRpcCall("model.ir.attachment.read", [
       ids,
       ["data", "name", "type"],
-      {},
+      preview ? { preview: true } : {},
     ]);
     return data;
   }
