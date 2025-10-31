@@ -224,13 +224,14 @@ const Toolbar = ({
 
   return (
     <div style={{
-      background: 'transparent',
+      background: '#f3f4f6',
       padding: '8px 12px',
       borderRadius: '8px',
+      border: '1px solid #e5e7eb',
       display: 'flex',
       flexDirection: 'row',
       gap: '6px',
-      boxShadow: 'none',
+      boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
       minWidth: 'fit-content'
     }}>
       {/* Primera fila - Navegación y acciones principales */}
