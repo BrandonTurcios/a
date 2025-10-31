@@ -76,6 +76,25 @@ class TrytonService {
     return result;
   }
 
+  async getAttachmentDefaults() {
+    const fields = [
+      "data",
+      "description",
+      "last_modification",
+      "last_user",
+      "link",
+      "name",
+      "resource",
+      "summary",
+      "type",
+    ];
+    const defaults = await this.makeRpcCall("model.ir.attachment.default_get", [
+      fields,
+      {},
+    ]);
+    return defaults;
+  }
+
   // Función utoa
   utoa(str) {
     return window.btoa(unescape(encodeURIComponent(str)));

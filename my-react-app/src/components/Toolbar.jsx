@@ -147,7 +147,22 @@ const Toolbar = ({
       message.warning('No record selected');
       return;
     }
-    fileInputRef.current?.click();
+    (async () => {
+      try {
+        // Optional pre-read to mimic flow: read one attachment with size context
+        const ids = await trytonService.searchAttachments(resourceKey);
+        if (ids?.length) {
+          await trytonService.readAttachments([ids[0]]);
+        }
+        // Get defaults before creating
+        await trytonService.getAttachmentDefaults();
+      } catch (e) {
+        // Non-fatal
+        console.warn('Pre-add preparation failed:', e?.message || e);
+      } finally {
+        fileInputRef.current?.click();
+      }
+    })();
   };
 
   const onFileChosen = async (e) => {
@@ -169,6 +184,8 @@ const Toolbar = ({
       message.error('Failed to add attachment');
     } finally {
       e.target.value = '';
+      // Refresh after add regardless of modal state
+      await fetchAttachments();
     }
   };
 
@@ -388,7 +405,7 @@ const Toolbar = ({
     <Modal
       open={attachmentsOpen}
       title="Manage Attachments"
-      onCancel={() => setAttachmentsOpen(false)}
+      onCancel={async () => { setAttachmentsOpen(false); await fetchAttachments(); }}
       footer={null}
       width={720}
     >
