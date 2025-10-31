@@ -357,6 +357,7 @@ const Toolbar = ({
   };
 
   return (
+    <>
     <div style={{
       background: '#f3f4f6',
       padding: '8px 12px',
@@ -437,6 +438,7 @@ const Toolbar = ({
         <Typography.Text>No preview available.</Typography.Text>
       )}
     </Modal>
+    </>
   );
 };
 
