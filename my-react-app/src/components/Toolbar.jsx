@@ -467,7 +467,7 @@ const Toolbar = ({
     <Modal
       open={previewOpen}
       title={
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'space-between', width: '100%', paddingRight: '44px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
             <Button 
               type="text" 
@@ -494,7 +494,7 @@ const Toolbar = ({
                   await handlePreviewAttachment(next.id, currentPreviewIndex + 1);
                 }
               }}
-              style={{ padding: '4px 8px' }}
+              style={{ padding: '4px 8px', marginRight: '24px' }}
             />
           </div>
         </div>
