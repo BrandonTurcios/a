@@ -78,6 +78,8 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
               isDirty={false}
               isNativeForm={false}
               hasSelectedRecord={!!selectedRecord}
+              contextModel={selectedMenuInfo?.resModel}
+              contextId={selectedRecord?.id}
             />
           </div>
         )}

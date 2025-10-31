@@ -1,5 +1,5 @@
-import React from 'react';
-import { Button, Space, InputNumber, Tooltip, Dropdown, Menu } from 'antd';
+import React, { useMemo, useRef, useState } from 'react';
+import { Button, Space, InputNumber, Tooltip, Dropdown, Modal, List, Typography, Tag, message, Upload, Image } from 'antd';
 import {
   PlusOutlined,
   SaveOutlined,
@@ -12,8 +12,12 @@ import {
   LeftOutlined,
   RightOutlined,
   SwapOutlined,
-  FileOutlined
+  FileOutlined,
+  EyeOutlined,
+  DownloadOutlined,
+  UploadOutlined
 } from '@ant-design/icons';
+import trytonService from '../services/trytonService';
 
 const Toolbar = ({ 
   toolbarInfo, 
@@ -34,7 +38,9 @@ const Toolbar = ({
   onSwitchView, // Handler for view switching
   isDirty = false, // Whether there are unsaved changes
   isNativeForm = false, // Whether this is a native form (not converted from tree)
-  hasSelectedRecord = false // Whether a record is selected (for email button)
+  hasSelectedRecord = false, // Whether a record is selected (for email button)
+  contextModel = null,
+  contextId = null
 }) => {
   if (!toolbarInfo) {
     return null;
@@ -43,6 +49,128 @@ const Toolbar = ({
   const { action = [], relate = [], print = [], emails = [] } = toolbarInfo;
 
   const disabledVisualStyle = { opacity: 0.35, filter: 'grayscale(60%)', cursor: 'not-allowed' };
+
+  // Attachments state
+  const [attachmentsOpen, setAttachmentsOpen] = useState(false);
+  const [attachments, setAttachments] = useState([]);
+  const [attachmentsLoading, setAttachmentsLoading] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewItem, setPreviewItem] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const resourceKey = useMemo(() => {
+    if (!contextModel || !contextId) return null;
+    return `${contextModel},${contextId}`;
+  }, [contextModel, contextId]);
+
+  const fetchAttachments = async () => {
+    if (!resourceKey) {
+      message.warning('No record selected');
+      return;
+    }
+    try {
+      setAttachmentsLoading(true);
+      const ids = await trytonService.searchAttachments(resourceKey);
+      if (!ids || ids.length === 0) {
+        setAttachments([]);
+        return;
+      }
+      const list = await trytonService.readAttachments(ids);
+      setAttachments(list || []);
+    } catch (e) {
+      console.error(e);
+      message.error('Failed to load attachments');
+    } finally {
+      setAttachmentsLoading(false);
+    }
+  };
+
+  const handleManageAttachments = async () => {
+    await fetchAttachments();
+    setAttachmentsOpen(true);
+  };
+
+  const handleDownloadAttachment = async (attachmentId, name) => {
+    try {
+      const data = await trytonService.readAttachmentData([attachmentId]);
+      const base64 = data?.[0]?.data?.base64;
+      if (!base64) throw new Error('No data');
+      const byteCharacters = atob(base64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray]);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name || 'attachment';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error(e);
+      message.error('Download failed');
+    }
+  };
+
+  const handlePreviewAttachment = async (attachmentId) => {
+    try {
+      const data = await trytonService.readAttachmentData([attachmentId]);
+      const item = data?.[0];
+      if (!item?.data?.base64) throw new Error('No data');
+      setPreviewItem(item);
+      setPreviewOpen(true);
+    } catch (e) {
+      console.error(e);
+      message.error('Preview failed');
+    }
+  };
+
+  const handleQuickPreview = async () => {
+    if (!resourceKey) {
+      message.warning('No record selected');
+      return;
+    }
+    const ids = await trytonService.searchAttachments(resourceKey);
+    if (!ids?.length) {
+      message.info('No attachments');
+      return;
+    }
+    await handlePreviewAttachment(ids[0]);
+  };
+
+  const handleAddAttachment = () => {
+    if (!resourceKey) {
+      message.warning('No record selected');
+      return;
+    }
+    fileInputRef.current?.click();
+  };
+
+  const onFileChosen = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+      await trytonService.createAttachment({
+        name: file.name,
+        resource: resourceKey,
+        dataBase64: base64,
+      });
+      message.success('Attachment added');
+      // Refresh list if modal open
+      if (attachmentsOpen) await fetchAttachments();
+    } catch (err) {
+      console.error(err);
+      message.error('Failed to add attachment');
+    } finally {
+      e.target.value = '';
+    }
+  };
 
   // Renderizar botones de navegación
   const renderNavigationButtons = () => (
@@ -114,27 +242,33 @@ const Toolbar = ({
     </Space.Compact>
   );
 
-  // Renderizar botones de adjuntos y comentarios
-  const renderAttachmentButtons = () => (
-    <Space.Compact>
-      <Tooltip title="Adjuntos">
-        <Button 
-          icon={<FileOutlined />} 
-          onClick={onAttach}
-          disabled={loading}
-          style={loading ? disabledVisualStyle : undefined}
-        />
-      </Tooltip>
-      <Tooltip title="Comentarios">
-        <Button 
-          icon={<CommentOutlined />} 
-          onClick={onComment}
-          disabled={loading}
-          style={loading ? disabledVisualStyle : undefined}
-        />
-      </Tooltip>
-    </Space.Compact>
-  );
+  // Attachments dropdown (Add, Manage, Preview) + Comments button
+  const renderAttachmentDropdown = () => {
+    const disabled = loading || !resourceKey;
+    const items = [
+      { key: 'add', label: 'Add', icon: <UploadOutlined />, onClick: handleAddAttachment },
+      { key: 'manage', label: 'Manage', icon: <SettingOutlined />, onClick: handleManageAttachments },
+      { key: 'preview', label: 'Preview', icon: <EyeOutlined />, onClick: handleQuickPreview }
+    ];
+    return (
+      <Space.Compact>
+        <Dropdown menu={{ items }} trigger={['click']} disabled={loading}>
+          <Button icon={<FileOutlined />} disabled={disabled} style={disabled ? disabledVisualStyle : undefined}>
+            Attachments
+          </Button>
+        </Dropdown>
+        <Tooltip title="Comentarios">
+          <Button 
+            icon={<CommentOutlined />} 
+            onClick={onComment}
+            disabled={loading}
+            style={loading ? disabledVisualStyle : undefined}
+          />
+        </Tooltip>
+        <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={onFileChosen} />
+      </Space.Compact>
+    );
+  };
 
   // Renderizar dropdown de acciones
   const renderActionsDropdown = () => {
@@ -238,7 +372,7 @@ const Toolbar = ({
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
         {renderNavigationButtons()}
         {renderActionButtons()}
-        {renderAttachmentButtons()}
+        {renderAttachmentDropdown()}
       </div>
 
       {/* Segunda fila - Acciones secundarias */}
@@ -249,6 +383,60 @@ const Toolbar = ({
         {renderEmailButton()}
       </div>
     </div>
+    {/* Manage Attachments Modal */}
+    <Modal
+      open={attachmentsOpen}
+      title="Manage Attachments"
+      onCancel={() => setAttachmentsOpen(false)}
+      footer={null}
+      width={720}
+    >
+      <List
+        loading={attachmentsLoading}
+        dataSource={attachments}
+        rowKey={(it) => it.id}
+        renderItem={(it) => (
+          <List.Item
+            actions={[
+              <Button key="download" icon={<DownloadOutlined />} onClick={() => handleDownloadAttachment(it.id, it.name)}>Download</Button>,
+              <Button key="preview" icon={<EyeOutlined />} onClick={() => handlePreviewAttachment(it.id)}>Preview</Button>,
+            ]}
+          >
+            <List.Item.Meta
+              title={<Typography.Text>{it.name}</Typography.Text>}
+              description={
+                <Space size={8} wrap>
+                  <Tag>{it['type:string'] || it.type}</Tag>
+                  {typeof it.data === 'number' ? <Tag color="blue">{`${(it.data/1024).toFixed(1)} KB`}</Tag> : null}
+                  {it.last_user ? <Tag color="default">{it.last_user}</Tag> : null}
+                  {it.last_modification ? <Tag color="default">{new Date(it.last_modification.year, (it.last_modification.month||1)-1, it.last_modification.day || 1).toLocaleDateString()}</Tag> : null}
+                  {it['resource.rec_name'] ? <Tag color="purple">{it['resource.rec_name']}</Tag> : null}
+                </Space>
+              }
+            />
+          </List.Item>
+        )}
+      />
+    </Modal>
+
+    {/* Preview Modal */}
+    <Modal
+      open={previewOpen}
+      title={previewItem?.name || 'Preview'}
+      onCancel={() => setPreviewOpen(false)}
+      footer={null}
+      width={900}
+    >
+      {previewItem?.data?.base64 ? (
+        <Image
+          src={`data:application/octet-stream;base64,${previewItem.data.base64}`}
+          alt={previewItem?.name}
+          style={{ maxHeight: '70vh', objectFit: 'contain' }}
+        />
+      ) : (
+        <Typography.Text>No preview available.</Typography.Text>
+      )}
+    </Modal>
   );
 };
 

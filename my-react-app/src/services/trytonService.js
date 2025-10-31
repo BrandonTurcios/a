@@ -10,6 +10,72 @@ class TrytonService {
     this.rpcId = 0;
   }
 
+  // Attachments helpers
+  async searchAttachments(resourceKey, offset = 0, limit = 1000) {
+    // resourceKey example: "gnuhealth.patient,2"
+    const ids = await this.makeRpcCall("model.ir.attachment.search", [
+      [["resource", "=", resourceKey]],
+      offset,
+      limit,
+      null,
+      {},
+    ]);
+    return ids;
+  }
+
+  async readAttachments(ids) {
+    if (!ids || ids.length === 0) return [];
+    const fields = [
+      "data",
+      "description",
+      "last_modification",
+      "last_user",
+      "link",
+      "name",
+      "resource",
+      "summary",
+      "type",
+      "resource.rec_name",
+      "type:string",
+      "rec_name",
+      "_timestamp",
+      "_write",
+      "_delete",
+    ];
+    // Ask for size only (not bytes) to avoid big payloads
+    const list = await this.makeRpcCall("model.ir.attachment.read", [
+      ids,
+      fields,
+      { "ir.attachment.data": "size" },
+    ]);
+    return list;
+  }
+
+  async readAttachmentData(ids) {
+    // Returns bytes (base64) for data
+    const data = await this.makeRpcCall("model.ir.attachment.read", [
+      ids,
+      ["data", "name", "type"],
+      {},
+    ]);
+    return data;
+  }
+
+  async createAttachment({ name, resource, dataBase64, description = "", type = "data" }) {
+    // Tryton expects bytes for data field
+    const vals = {
+      name,
+      resource,
+      type,
+      data: { __class__: "bytes", base64: dataBase64 },
+      description,
+      link: "",
+      summary: "",
+    };
+    const result = await this.makeRpcCall("model.ir.attachment.create", [[vals], {}]);
+    return result;
+  }
+
   // Función utoa
   utoa(str) {
     return window.btoa(unescape(encodeURIComponent(str)));
