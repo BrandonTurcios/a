@@ -162,14 +162,23 @@ class TrytonService {
     return result;
   }
 
-  async deleteNote(id, timestamp = null) {
-    // Build timestamp context
+  async deleteNote(ids, timestampMap = {}) {
+    // ids can be a single id or array of ids
+    // timestampMap can be { id: timestamp } or single timestamp for backward compatibility
+    const idsArray = Array.isArray(ids) ? ids : [ids];
     const timestampContext = {};
-    if (timestamp) {
-      timestampContext[`ir.note,${id}`] = timestamp;
+    
+    if (timestampMap && typeof timestampMap === 'object') {
+      // Handle map of id -> timestamp
+      idsArray.forEach(id => {
+        if (timestampMap[id]) {
+          timestampContext[`ir.note,${id}`] = timestampMap[id];
+        }
+      });
     }
+    
     const result = await this.makeRpcCall("model.ir.note.delete", [
-      [id],
+      idsArray,
       { _timestamp: timestampContext }
     ]);
     return result;

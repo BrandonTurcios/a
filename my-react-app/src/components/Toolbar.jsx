@@ -288,10 +288,17 @@ const Toolbar = ({
       return;
     }
     try {
-      for (const noteId of selectedNotes) {
+      // Build timestamp map from selected notes
+      const timestampMap = {};
+      selectedNotes.forEach(noteId => {
         const note = notes.find(n => n.id === noteId);
-        await trytonService.deleteNote(noteId, note?._timestamp);
-      }
+        if (note?._timestamp) {
+          timestampMap[noteId] = note._timestamp;
+        }
+      });
+      
+      // Delete all selected notes in one call
+      await trytonService.deleteNote(selectedNotes, timestampMap);
       message.success(`${selectedNotes.length} note(s) deleted successfully`);
       setSelectedNotes([]);
       await fetchNotes();
@@ -759,16 +766,18 @@ const Toolbar = ({
           </Typography.Text>
           <Space>
             <Button onClick={handleCloseNotesModal}>Cancel</Button>
-            <Popconfirm
-              title="Delete selected notes"
-              description="Are you sure you want to delete these notes?"
-              onConfirm={handleDeleteNotes}
-              okText="Yes"
-              cancelText="No"
-              okButtonProps={{ style: { background: '#00A88E', borderColor: '#00A88E' } }}
-            >
-              <Button danger disabled={selectedNotes.length === 0}>Delete</Button>
-            </Popconfirm>
+            {selectedNotes.length > 0 && (
+              <Popconfirm
+                title="Delete selected notes"
+                description="Are you sure you want to delete these notes?"
+                onConfirm={handleDeleteNotes}
+                okText="Yes"
+                cancelText="No"
+                okButtonProps={{ style: { background: '#00A88E', borderColor: '#00A88E' } }}
+              >
+                <Button danger>Delete</Button>
+              </Popconfirm>
+            )}
           </Space>
         </div>
       }
