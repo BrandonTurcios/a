@@ -417,13 +417,13 @@ const Toolbar = ({
       <Space.Compact>
         <Dropdown menu={{ items }} trigger={['click']} disabled={loading}>
           <Tooltip title="Attachments">
-            <Badge count={attachmentsCount} size="small" offset={[-12, 8]}>
+            <Badge count={attachmentsCount} size="small" offset={[-12, 8]} style={{ zIndex: 100 }} color="#00A88E">
               <Button icon={<FileOutlined />} disabled={disabled} style={disabled ? disabledVisualStyle : undefined} />
             </Badge>
           </Tooltip>
         </Dropdown>
         <Tooltip title="Note">
-          <Badge count={notesBadgeText} size="small" offset={[-12, 8]}>
+          <Badge count={notesBadgeText} size="small" offset={[-12, 8]} style={{ zIndex: 100 }} color="#00A88E">
             <Button 
               icon={<CommentOutlined />} 
               onClick={handleManageNotes}
