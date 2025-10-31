@@ -15,7 +15,8 @@ import {
   FileOutlined,
   EyeOutlined,
   DownloadOutlined,
-  UploadOutlined
+  UploadOutlined,
+  CloseOutlined
 } from '@ant-design/icons';
 import trytonService from '../services/trytonService';
 
@@ -504,6 +505,18 @@ const Toolbar = ({
       zIndex={4000}
       maskStyle={{ zIndex: 3999 }}
       getContainer={document.body}
+      closeIcon={
+        <span style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '10px 14px',
+          marginRight: '-6px',
+          marginTop: '-6px'
+        }}>
+          <CloseOutlined />
+        </span>
+      }
     >
       {(() => {
         if (!previewItem?.data?.base64) {
