@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
-import { Button, Space, InputNumber, Tooltip, Dropdown, Modal, List, Typography, Tag, message, Upload, Image, Input, Checkbox, Badge } from 'antd';
+import { Button, Space, InputNumber, Tooltip, Dropdown, Modal, List, Typography, Tag, message, Upload, Image, Input, Checkbox, Badge, Popconfirm } from 'antd';
 import {
   PlusOutlined,
   SaveOutlined,
@@ -17,7 +17,8 @@ import {
   DownloadOutlined,
   UploadOutlined,
   CloseOutlined,
-  FileTextOutlined
+  FileTextOutlined,
+  DeleteOutlined
 } from '@ant-design/icons';
 import trytonService from '../services/trytonService';
 
@@ -67,6 +68,7 @@ const Toolbar = ({
   const [notesLoading, setNotesLoading] = useState(false);
   const [newNoteMessage, setNewNoteMessage] = useState('');
   const [newNoteUnread, setNewNoteUnread] = useState(true);
+  const [selectedNotes, setSelectedNotes] = useState([]);
 
   const resourceKey = useMemo(() => {
     if (!contextModel || !contextId) return null;
@@ -276,7 +278,35 @@ const Toolbar = ({
     setNotesOpen(false);
     setNewNoteMessage('');
     setNewNoteUnread(true);
+    setSelectedNotes([]);
     await fetchNotes();
+  };
+
+  const handleDeleteNotes = async () => {
+    if (!selectedNotes || selectedNotes.length === 0) {
+      message.warning('No notes selected');
+      return;
+    }
+    try {
+      for (const noteId of selectedNotes) {
+        const note = notes.find(n => n.id === noteId);
+        await trytonService.deleteNote(noteId, note?._timestamp);
+      }
+      message.success(`${selectedNotes.length} note(s) deleted successfully`);
+      setSelectedNotes([]);
+      await fetchNotes();
+    } catch (e) {
+      console.error(e);
+      message.error('Failed to delete notes');
+    }
+  };
+
+  const handleNoteSelect = (noteId, checked) => {
+    if (checked) {
+      setSelectedNotes([...selectedNotes, noteId]);
+    } else {
+      setSelectedNotes(selectedNotes.filter(id => id !== noteId));
+    }
   };
 
   // Load counts when resourceKey changes
@@ -722,7 +752,26 @@ const Toolbar = ({
         </div>
       }
       onCancel={handleCloseNotesModal}
-      footer={null}
+      footer={
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px' }}>
+          <Typography.Text>
+            {selectedNotes.length > 0 ? `${selectedNotes.length} note(s) selected` : 'No notes selected'}
+          </Typography.Text>
+          <Space>
+            <Button onClick={handleCloseNotesModal}>Cancel</Button>
+            <Popconfirm
+              title="Delete selected notes"
+              description="Are you sure you want to delete these notes?"
+              onConfirm={handleDeleteNotes}
+              okText="Yes"
+              cancelText="No"
+              okButtonProps={{ style: { background: '#00A88E', borderColor: '#00A88E' } }}
+            >
+              <Button danger disabled={selectedNotes.length === 0}>Delete</Button>
+            </Popconfirm>
+          </Space>
+        </div>
+      }
       width={720}
       centered
       styles={{
@@ -760,6 +809,11 @@ const Toolbar = ({
         rowKey={(it) => it.id}
         renderItem={(it) => (
           <List.Item>
+            <Checkbox
+              checked={selectedNotes.includes(it.id)}
+              onChange={(e) => handleNoteSelect(it.id, e.target.checked)}
+              style={{ marginRight: '12px' }}
+            />
             <List.Item.Meta
               title={
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

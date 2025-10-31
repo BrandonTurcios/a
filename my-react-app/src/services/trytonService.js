@@ -162,6 +162,19 @@ class TrytonService {
     return result;
   }
 
+  async deleteNote(id, timestamp = null) {
+    // Build timestamp context
+    const timestampContext = {};
+    if (timestamp) {
+      timestampContext[`ir.note,${id}`] = timestamp;
+    }
+    const result = await this.makeRpcCall("model.ir.note.delete", [
+      [[id]],
+      { _timestamp: timestampContext }
+    ]);
+    return result;
+  }
+
   // Función utoa
   utoa(str) {
     return window.btoa(unescape(encodeURIComponent(str)));
