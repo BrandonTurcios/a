@@ -417,15 +417,13 @@ const Toolbar = ({
       <Space.Compact>
         <Dropdown menu={{ items }} trigger={['click']} disabled={loading}>
           <Tooltip title="Attachments">
-            <Badge count={attachmentsCount} size="small">
-              <Button icon={<FileOutlined />} disabled={disabled} style={disabled ? disabledVisualStyle : undefined}>
-                Attachments
-              </Button>
+            <Badge count={attachmentsCount} size="small" offset={[-5, 5]}>
+              <Button icon={<FileOutlined />} disabled={disabled} style={disabled ? disabledVisualStyle : undefined} />
             </Badge>
           </Tooltip>
         </Dropdown>
         <Tooltip title="Note">
-          <Badge count={notesBadgeText} size="small" style={{ minWidth: '40px' }}>
+          <Badge count={notesBadgeText} size="small" offset={[-5, 5]}>
             <Button 
               icon={<CommentOutlined />} 
               onClick={handleManageNotes}
@@ -505,9 +503,7 @@ const Toolbar = ({
         disabled={loading}
       >
         <Tooltip title="Print">
-          <Button icon={<PrinterOutlined />} disabled={loading} style={loading ? disabledVisualStyle : undefined}>
-            Print
-          </Button>
+          <Button icon={<PrinterOutlined />} disabled={loading} style={loading ? disabledVisualStyle : undefined} />
         </Tooltip>
       </Dropdown>
     );
@@ -562,10 +558,24 @@ const Toolbar = ({
     {/* Manage Attachments Modal */}
     <Modal
       open={attachmentsOpen}
-      title="Manage Attachments"
+      title={
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 0', borderBottom: '2px solid #00A88E' }}>
+          <div style={{ width: '40px', height: '40px', background: '#00A88E', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '18px', fontWeight: 'bold' }}>
+            A
+          </div>
+          <div>
+            <Typography.Title level={3} style={{ margin: 0, color: '#00A88E' }}>Manage Attachments</Typography.Title>
+            <Typography.Text type="secondary" style={{ fontSize: '14px' }}>View and manage file attachments</Typography.Text>
+          </div>
+        </div>
+      }
       onCancel={async () => { setAttachmentsOpen(false); await fetchAttachments(); }}
       footer={null}
       width={720}
+      centered
+      styles={{
+        content: { borderRadius: '16px' }
+      }}
     >
       <List
         loading={attachmentsLoading}
@@ -700,10 +710,24 @@ const Toolbar = ({
     {/* Manage Notes Modal */}
     <Modal
       open={notesOpen}
-      title="Manage Notes"
+      title={
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 0', borderBottom: '2px solid #00A88E' }}>
+          <div style={{ width: '40px', height: '40px', background: '#00A88E', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '18px', fontWeight: 'bold' }}>
+            N
+          </div>
+          <div>
+            <Typography.Title level={3} style={{ margin: 0, color: '#00A88E' }}>Manage Notes</Typography.Title>
+            <Typography.Text type="secondary" style={{ fontSize: '14px' }}>View and add notes</Typography.Text>
+          </div>
+        </div>
+      }
       onCancel={handleCloseNotesModal}
       footer={null}
       width={720}
+      centered
+      styles={{
+        content: { borderRadius: '16px' }
+      }}
     >
       {/* New Note Form */}
       <div style={{ marginBottom: '24px', padding: '16px', background: '#f8f9fa', borderRadius: '8px' }}>
@@ -720,7 +744,11 @@ const Toolbar = ({
             Mark as unread
           </Checkbox>
         </Space>
-        <Button type="primary" onClick={handleSaveNote} block>
+        <Button type="primary" onClick={handleSaveNote} block style={{ 
+          background: '#00A88E', 
+          borderColor: '#00A88E',
+          borderRadius: '8px'
+        }}>
           Save Note
         </Button>
       </div>
