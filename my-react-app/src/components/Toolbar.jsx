@@ -465,23 +465,41 @@ const Toolbar = ({
     {/* Preview Modal */}
     <Modal
       open={previewOpen}
-      title={`${previewItem?.name || 'Preview'}${attachments?.length ? `  (${currentPreviewIndex + 1}/${attachments.length})` : ''}`}
+      title={
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+            <Button 
+              type="text" 
+              icon={<LeftOutlined />} 
+              disabled={currentPreviewIndex <= 0} 
+              onClick={async () => {
+                if (currentPreviewIndex > 0) {
+                  const prev = attachments[currentPreviewIndex - 1];
+                  await handlePreviewAttachment(prev.id, currentPreviewIndex - 1);
+                }
+              }}
+              style={{ padding: '4px 8px' }}
+            />
+            <span style={{ flex: 1, textAlign: 'center' }}>
+              {previewItem?.name || 'Preview'}{attachments?.length ? ` (${currentPreviewIndex + 1}/${attachments.length})` : ''}
+            </span>
+            <Button 
+              type="text" 
+              icon={<RightOutlined />} 
+              disabled={!(attachments && currentPreviewIndex < attachments.length - 1)} 
+              onClick={async () => {
+                if (attachments && currentPreviewIndex < attachments.length - 1) {
+                  const next = attachments[currentPreviewIndex + 1];
+                  await handlePreviewAttachment(next.id, currentPreviewIndex + 1);
+                }
+              }}
+              style={{ padding: '4px 8px' }}
+            />
+          </div>
+        </div>
+      }
       onCancel={() => setPreviewOpen(false)}
-      footer={[
-        <Button key="prev" disabled={currentPreviewIndex <= 0} onClick={async () => {
-          if (currentPreviewIndex > 0) {
-            const prev = attachments[currentPreviewIndex - 1];
-            await handlePreviewAttachment(prev.id, currentPreviewIndex - 1);
-          }
-        }}>Previous</Button>,
-        <Button key="next" type="primary" disabled={!(attachments && currentPreviewIndex < attachments.length - 1)} onClick={async () => {
-          if (attachments && currentPreviewIndex < attachments.length - 1) {
-            const next = attachments[currentPreviewIndex + 1];
-            await handlePreviewAttachment(next.id, currentPreviewIndex + 1);
-          }
-        }}>Next</Button>,
-        <Button key="close" onClick={() => setPreviewOpen(false)}>Close</Button>
-      ]}
+      footer={null}
       width={900}
       zIndex={4000}
       maskStyle={{ zIndex: 3999 }}
