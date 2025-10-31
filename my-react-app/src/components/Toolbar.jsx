@@ -1,5 +1,5 @@
-import React, { useMemo, useRef, useState } from 'react';
-import { Button, Space, InputNumber, Tooltip, Dropdown, Modal, List, Typography, Tag, message, Upload, Image } from 'antd';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
+import { Button, Space, InputNumber, Tooltip, Dropdown, Modal, List, Typography, Tag, message, Upload, Image, Input, Checkbox, Badge } from 'antd';
 import {
   PlusOutlined,
   SaveOutlined,
@@ -65,6 +65,8 @@ const Toolbar = ({
   const [notesOpen, setNotesOpen] = useState(false);
   const [notes, setNotes] = useState([]);
   const [notesLoading, setNotesLoading] = useState(false);
+  const [newNoteMessage, setNewNoteMessage] = useState('');
+  const [newNoteUnread, setNewNoteUnread] = useState(true);
 
   const resourceKey = useMemo(() => {
     if (!contextModel || !contextId) return null;
@@ -249,6 +251,85 @@ const Toolbar = ({
     setNotesOpen(true);
   };
 
+  const handleSaveNote = async () => {
+    if (!resourceKey || !newNoteMessage.trim()) {
+      message.warning('Please enter a message');
+      return;
+    }
+    try {
+      await trytonService.createNote({
+        message: newNoteMessage,
+        resource: resourceKey,
+        unread: newNoteUnread
+      });
+      message.success('Note created successfully');
+      setNewNoteMessage('');
+      setNewNoteUnread(true);
+      await fetchNotes();
+    } catch (e) {
+      console.error(e);
+      message.error('Failed to create note');
+    }
+  };
+
+  const handleCloseNotesModal = async () => {
+    setNotesOpen(false);
+    setNewNoteMessage('');
+    setNewNoteUnread(true);
+    await fetchNotes();
+  };
+
+  // Load counts when resourceKey changes
+  useEffect(() => {
+    const fetchAttachmentsCount = async () => {
+      if (!resourceKey) {
+        return;
+      }
+      try {
+        const ids = await trytonService.searchAttachments(resourceKey);
+        if (!ids || ids.length === 0) {
+          setAttachments([]);
+          return;
+        }
+        // Update attachments list if modal is not open to avoid unnecessary updates
+        if (!attachmentsOpen) {
+          const list = await trytonService.readAttachments(ids);
+          setAttachments(list || []);
+        }
+      } catch (e) {
+        console.error('Failed to load attachments count:', e);
+      }
+    };
+
+    const fetchNotesCount = async () => {
+      if (!resourceKey) {
+        return;
+      }
+      try {
+        const ids = await trytonService.searchNotes(resourceKey);
+        if (!ids || ids.length === 0) {
+          setNotes([]);
+          return;
+        }
+        // Update notes list if modal is not open to avoid unnecessary updates
+        if (!notesOpen) {
+          const list = await trytonService.readNotes(ids);
+          setNotes(list || []);
+        }
+      } catch (e) {
+        console.error('Failed to load notes count:', e);
+      }
+    };
+
+    if (resourceKey) {
+      fetchAttachmentsCount();
+      fetchNotesCount();
+    } else {
+      setAttachments([]);
+      setNotes([]);
+    }
+  }, [resourceKey, attachmentsOpen, notesOpen]);
+
   // Renderizar botones de navegación
   const renderNavigationButtons = () => (
     <Space.Compact>
@@ -327,22 +408,31 @@ const Toolbar = ({
       { key: 'manage', label: 'Manage', icon: <SettingOutlined />, onClick: handleManageAttachments },
       { key: 'preview', label: 'Preview', icon: <EyeOutlined />, onClick: handleQuickPreview }
     ];
+    const attachmentsCount = attachments.length;
+    const notesCount = notes.length;
+    const unreadNotesCount = notes.filter(n => n.unread).length;
+    const notesBadgeText = notesCount > 0 ? `${unreadNotesCount}/${notesCount}` : null;
+    
     return (
       <Space.Compact>
         <Dropdown menu={{ items }} trigger={['click']} disabled={loading}>
           <Tooltip title="Attachments">
-            <Button icon={<FileOutlined />} disabled={disabled} style={disabled ? disabledVisualStyle : undefined}>
-              Attachments
-            </Button>
+            <Badge count={attachmentsCount} size="small">
+              <Button icon={<FileOutlined />} disabled={disabled} style={disabled ? disabledVisualStyle : undefined}>
+                Attachments
+              </Button>
+            </Badge>
           </Tooltip>
         </Dropdown>
         <Tooltip title="Note">
-          <Button 
-            icon={<CommentOutlined />} 
-            onClick={handleManageNotes}
-            disabled={loading || !resourceKey}
-            style={(loading || !resourceKey) ? disabledVisualStyle : undefined}
-          />
+          <Badge count={notesBadgeText} size="small" style={{ minWidth: '40px' }}>
+            <Button 
+              icon={<CommentOutlined />} 
+              onClick={handleManageNotes}
+              disabled={loading || !resourceKey}
+              style={(loading || !resourceKey) ? disabledVisualStyle : undefined}
+            />
+          </Badge>
         </Tooltip>
         <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={onFileChosen} />
       </Space.Compact>
@@ -611,10 +701,31 @@ const Toolbar = ({
     <Modal
       open={notesOpen}
       title="Manage Notes"
-      onCancel={async () => { setNotesOpen(false); await fetchNotes(); }}
+      onCancel={handleCloseNotesModal}
       footer={null}
       width={720}
     >
+      {/* New Note Form */}
+      <div style={{ marginBottom: '24px', padding: '16px', background: '#f8f9fa', borderRadius: '8px' }}>
+        <Typography.Text strong style={{ display: 'block', marginBottom: '8px' }}>New Note</Typography.Text>
+        <Input.TextArea
+          rows={4}
+          placeholder="Enter your message..."
+          value={newNoteMessage}
+          onChange={(e) => setNewNoteMessage(e.target.value)}
+          style={{ marginBottom: '12px' }}
+        />
+        <Space style={{ marginBottom: '12px' }}>
+          <Checkbox checked={newNoteUnread} onChange={(e) => setNewNoteUnread(e.target.checked)}>
+            Mark as unread
+          </Checkbox>
+        </Space>
+        <Button type="primary" onClick={handleSaveNote} block>
+          Save Note
+        </Button>
+      </div>
+
+      {/* Existing Notes List */}
       <List
         loading={notesLoading}
         dataSource={notes}

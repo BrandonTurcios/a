@@ -149,6 +149,19 @@ class TrytonService {
     return list;
   }
 
+  async createNote({ message, resource, unread }) {
+    const vals = {
+      message,
+      resource,
+      unread
+    };
+    const result = await this.makeRpcCall("model.ir.note.create", [
+      [vals],
+      this.context
+    ]);
+    return result;
+  }
+
   // Función utoa
   utoa(str) {
     return window.btoa(unescape(encodeURIComponent(str)));
