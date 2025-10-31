@@ -98,6 +98,28 @@ class TrytonService {
     return defaults;
   }
 
+  async deleteAttachment(ids, timestampMap = {}) {
+    // ids can be a single id or array of ids
+    // timestampMap can be { id: timestamp } or single timestamp for backward compatibility
+    const idsArray = Array.isArray(ids) ? ids : [ids];
+    const timestampContext = {};
+    
+    if (timestampMap && typeof timestampMap === 'object') {
+      // Handle map of id -> timestamp
+      idsArray.forEach(id => {
+        if (timestampMap[id]) {
+          timestampContext[`ir.attachment,${id}`] = timestampMap[id];
+        }
+      });
+    }
+    
+    const result = await this.makeRpcCall("model.ir.attachment.delete", [
+      idsArray,
+      { _timestamp: timestampContext }
+    ]);
+    return result;
+  }
+
   // Note helpers
   async getNoteFieldsView() {
     const fieldsView = await this.makeRpcCall("model.ir.note.fields_view_get", [

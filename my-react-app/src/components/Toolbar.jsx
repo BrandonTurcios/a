@@ -60,6 +60,7 @@ const Toolbar = ({
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewItem, setPreviewItem] = useState(null);
   const [currentPreviewIndex, setCurrentPreviewIndex] = useState(-1);
+  const [selectedAttachments, setSelectedAttachments] = useState([]);
   const fileInputRef = useRef(null);
 
   // Notes state
@@ -100,6 +101,46 @@ const Toolbar = ({
   const handleManageAttachments = async () => {
     await fetchAttachments();
     setAttachmentsOpen(true);
+  };
+
+  const handleCloseAttachmentsModal = async () => {
+    setAttachmentsOpen(false);
+    setSelectedAttachments([]);
+    await fetchAttachments();
+  };
+
+  const handleDeleteAttachments = async () => {
+    if (!selectedAttachments || selectedAttachments.length === 0) {
+      message.warning('No attachments selected');
+      return;
+    }
+    try {
+      // Build timestamp map from selected attachments
+      const timestampMap = {};
+      selectedAttachments.forEach(attachmentId => {
+        const attachment = attachments.find(a => a.id === attachmentId);
+        if (attachment?._timestamp) {
+          timestampMap[attachmentId] = attachment._timestamp;
+        }
+      });
+      
+      // Delete all selected attachments in one call
+      await trytonService.deleteAttachment(selectedAttachments, timestampMap);
+      message.success(`${selectedAttachments.length} attachment(s) deleted successfully`);
+      setSelectedAttachments([]);
+      await fetchAttachments();
+    } catch (e) {
+      console.error(e);
+      message.error('Failed to delete attachments');
+    }
+  };
+
+  const handleAttachmentSelect = (attachmentId, checked) => {
+    if (checked) {
+      setSelectedAttachments([...selectedAttachments, attachmentId]);
+    } else {
+      setSelectedAttachments(selectedAttachments.filter(id => id !== attachmentId));
+    }
   };
 
   const handleDownloadAttachment = async (attachmentId, name) => {
@@ -606,8 +647,29 @@ const Toolbar = ({
           </div>
         </div>
       }
-      onCancel={async () => { setAttachmentsOpen(false); await fetchAttachments(); }}
-      footer={null}
+      onCancel={handleCloseAttachmentsModal}
+      footer={
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px' }}>
+          <Typography.Text>
+            {selectedAttachments.length > 0 ? `${selectedAttachments.length} attachment(s) selected` : 'No attachments selected'}
+          </Typography.Text>
+          <Space>
+            <Button onClick={handleCloseAttachmentsModal}>Cancel</Button>
+            {selectedAttachments.length > 0 && (
+              <Popconfirm
+                title="Delete selected attachments"
+                description="Are you sure you want to delete these attachments?"
+                onConfirm={handleDeleteAttachments}
+                okText="Yes"
+                cancelText="No"
+                okButtonProps={{ style: { background: '#00A88E', borderColor: '#00A88E' } }}
+              >
+                <Button danger>Delete</Button>
+              </Popconfirm>
+            )}
+          </Space>
+        </div>
+      }
       width={720}
       centered
       styles={{
@@ -625,6 +687,11 @@ const Toolbar = ({
               <Button key="preview" icon={<EyeOutlined />} onClick={() => handlePreviewAttachment(it.id, attachments.findIndex(a => a.id === it.id))}>Preview</Button>,
             ]}
           >
+            <Checkbox
+              checked={selectedAttachments.includes(it.id)}
+              onChange={(e) => handleAttachmentSelect(it.id, e.target.checked)}
+              style={{ marginRight: '12px' }}
+            />
             <List.Item.Meta
               title={<Typography.Text>{it.name}</Typography.Text>}
               description={
