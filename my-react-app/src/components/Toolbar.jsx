@@ -16,7 +16,8 @@ import {
   EyeOutlined,
   DownloadOutlined,
   UploadOutlined,
-  CloseOutlined
+  CloseOutlined,
+  FileTextOutlined
 } from '@ant-design/icons';
 import trytonService from '../services/trytonService';
 
@@ -59,6 +60,11 @@ const Toolbar = ({
   const [previewItem, setPreviewItem] = useState(null);
   const [currentPreviewIndex, setCurrentPreviewIndex] = useState(-1);
   const fileInputRef = useRef(null);
+
+  // Notes state
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [notes, setNotes] = useState([]);
+  const [notesLoading, setNotesLoading] = useState(false);
 
   const resourceKey = useMemo(() => {
     if (!contextModel || !contextId) return null;
@@ -215,6 +221,34 @@ const Toolbar = ({
     }
   };
 
+  // Notes handlers
+  const fetchNotes = async () => {
+    if (!resourceKey) {
+      message.warning('No record selected');
+      return;
+    }
+    try {
+      setNotesLoading(true);
+      const ids = await trytonService.searchNotes(resourceKey);
+      if (!ids || ids.length === 0) {
+        setNotes([]);
+        return;
+      }
+      const list = await trytonService.readNotes(ids);
+      setNotes(list || []);
+    } catch (e) {
+      console.error(e);
+      message.error('Failed to load notes');
+    } finally {
+      setNotesLoading(false);
+    }
+  };
+
+  const handleManageNotes = async () => {
+    await fetchNotes();
+    setNotesOpen(true);
+  };
+
   // Renderizar botones de navegación
   const renderNavigationButtons = () => (
     <Space.Compact>
@@ -296,16 +330,18 @@ const Toolbar = ({
     return (
       <Space.Compact>
         <Dropdown menu={{ items }} trigger={['click']} disabled={loading}>
-          <Button icon={<FileOutlined />} disabled={disabled} style={disabled ? disabledVisualStyle : undefined}>
-            Attachments
-          </Button>
+          <Tooltip title="Attachments">
+            <Button icon={<FileOutlined />} disabled={disabled} style={disabled ? disabledVisualStyle : undefined}>
+              Attachments
+            </Button>
+          </Tooltip>
         </Dropdown>
-        <Tooltip title="Comentarios">
+        <Tooltip title="Note">
           <Button 
             icon={<CommentOutlined />} 
-            onClick={onComment}
-            disabled={loading}
-            style={loading ? disabledVisualStyle : undefined}
+            onClick={handleManageNotes}
+            disabled={loading || !resourceKey}
+            style={(loading || !resourceKey) ? disabledVisualStyle : undefined}
           />
         </Tooltip>
         <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={onFileChosen} />
@@ -329,9 +365,11 @@ const Toolbar = ({
         trigger={['click']}
         disabled={loading}
       >
-        <Button icon={<SettingOutlined />} disabled={loading} style={loading ? disabledVisualStyle : undefined}>
-          Actions
-        </Button>
+        <Tooltip title="Actions">
+          <Button icon={<SettingOutlined />} disabled={loading} style={loading ? disabledVisualStyle : undefined}>
+            Actions
+          </Button>
+        </Tooltip>
       </Dropdown>
     );
   };
@@ -352,8 +390,10 @@ const Toolbar = ({
         trigger={['click']}
         disabled={loading}
       >
-        <Button icon={<LinkOutlined />} disabled={loading} style={loading ? disabledVisualStyle : undefined}>
-        </Button>
+        <Tooltip title="Relate">
+          <Button icon={<LinkOutlined />} disabled={loading} style={loading ? disabledVisualStyle : undefined}>
+          </Button>
+        </Tooltip>
       </Dropdown>
     );
   };
@@ -374,9 +414,11 @@ const Toolbar = ({
         trigger={['click']}
         disabled={loading}
       >
-        <Button icon={<PrinterOutlined />} disabled={loading} style={loading ? disabledVisualStyle : undefined}>
-          Print
-        </Button>
+        <Tooltip title="Print">
+          <Button icon={<PrinterOutlined />} disabled={loading} style={loading ? disabledVisualStyle : undefined}>
+            Print
+          </Button>
+        </Tooltip>
       </Dropdown>
     );
   };
@@ -563,6 +605,51 @@ const Toolbar = ({
           </div>
         );
       })()}
+    </Modal>
+
+    {/* Manage Notes Modal */}
+    <Modal
+      open={notesOpen}
+      title="Manage Notes"
+      onCancel={async () => { setNotesOpen(false); await fetchNotes(); }}
+      footer={null}
+      width={720}
+    >
+      <List
+        loading={notesLoading}
+        dataSource={notes}
+        rowKey={(it) => it.id}
+        renderItem={(it) => (
+          <List.Item>
+            <List.Item.Meta
+              title={
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Tag color={it.unread ? "orange" : "default"}>
+                    {it.unread ? "Unread" : "Read"}
+                  </Tag>
+                  <Typography.Text strong>{it['resource.rec_name'] || 'Unknown Resource'}</Typography.Text>
+                </div>
+              }
+              description={
+                <div>
+                  <Typography.Paragraph style={{ margin: '8px 0' }}>
+                    {it.message_wrapped || 'No message'}
+                  </Typography.Paragraph>
+                  <Space size={8} wrap>
+                    {it.last_user ? <Tag color="default">By: {it.last_user}</Tag> : null}
+                    {it.last_modification ? (
+                      <Tag color="default">
+                        {new Date(it.last_modification.year, (it.last_modification.month || 1) - 1, it.last_modification.day || 1).toLocaleDateString()} {' '}
+                        {it.last_modification.hour}:{String(it.last_modification.minute || 0).padStart(2, '0')}
+                      </Tag>
+                    ) : null}
+                  </Space>
+                </div>
+              }
+            />
+          </List.Item>
+        )}
+      />
     </Modal>
     </>
   );

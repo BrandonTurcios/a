@@ -98,6 +98,57 @@ class TrytonService {
     return defaults;
   }
 
+  // Note helpers
+  async getNoteFieldsView() {
+    const fieldsView = await this.makeRpcCall("model.ir.note.fields_view_get", [
+      null,
+      "tree",
+      this.context
+    ]);
+    return fieldsView;
+  }
+
+  async getNoteModels() {
+    const models = await this.makeRpcCall("model.ir.note.get_models", [
+      this.context
+    ]);
+    return models;
+  }
+
+  async searchNotes(resourceKey, offset = 0, limit = 1000) {
+    // resourceKey example: "gnuhealth.patient,2"
+    const ids = await this.makeRpcCall("model.ir.note.search", [
+      [["resource", "=", resourceKey]],
+      offset,
+      limit,
+      null,
+      {}
+    ]);
+    return ids;
+  }
+
+  async readNotes(ids) {
+    if (!ids || ids.length === 0) return [];
+    const fields = [
+      "last_modification",
+      "last_user",
+      "message_wrapped",
+      "resource",
+      "unread",
+      "resource.rec_name",
+      "rec_name",
+      "_timestamp",
+      "_write",
+      "_delete"
+    ];
+    const list = await this.makeRpcCall("model.ir.note.read", [
+      ids,
+      fields,
+      this.context
+    ]);
+    return list;
+  }
+
   // Función utoa
   utoa(str) {
     return window.btoa(unescape(encodeURIComponent(str)));
