@@ -61,17 +61,20 @@ class TrytonService {
     return data;
   }
 
-  async createAttachment({ name, resource, dataBase64, description = "", type = "data" }) {
-    // Tryton expects bytes for data field
+  async createAttachment({ name, resource, dataBase64, description = "", type = "data", link = "" }) {
+    // Tryton expects bytes for data field. Do NOT send function-only fields like 'summary'.
     const vals = {
       name,
       resource,
       type,
       data: { __class__: "bytes", base64: dataBase64 },
-      description,
-      link: "",
-      summary: "",
     };
+    if (description !== undefined && description !== null) {
+      vals.description = description;
+    }
+    if (link !== undefined && link !== null) {
+      vals.link = link;
+    }
     const result = await this.makeRpcCall("model.ir.attachment.create", [[vals], {}]);
     return result;
   }
