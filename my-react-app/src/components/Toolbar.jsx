@@ -510,11 +510,18 @@ const Toolbar = ({
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '10px 14px',
-          marginRight: '-6px',
-          marginTop: '-6px'
-        }}>
-          <CloseOutlined />
+          width: '44px',
+          height: '44px',
+          marginRight: '-12px',
+          marginTop: '-12px',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          transition: 'background-color 0.2s'
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.06)'}
+        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+        >
+          <CloseOutlined style={{ fontSize: '16px' }} />
         </span>
       }
     >
