@@ -142,12 +142,29 @@ const Toolbar = ({
       message.warning('No record selected');
       return;
     }
-    const ids = await trytonService.searchAttachments(resourceKey);
+    // Ensure attachments list is loaded so preview modal can navigate
+    let ids = [];
+    try {
+      setAttachmentsLoading(true);
+      ids = await trytonService.searchAttachments(resourceKey);
+      if (ids?.length) {
+        const list = await trytonService.readAttachments(ids);
+        setAttachments(list || []);
+      } else {
+        setAttachments([]);
+      }
+    } catch (e) {
+      console.error(e);
+      message.error('Failed to load attachments');
+      return;
+    } finally {
+      setAttachmentsLoading(false);
+    }
     if (!ids?.length) {
       message.info('No attachments');
       return;
     }
-    await handlePreviewAttachment(ids[0]);
+    await handlePreviewAttachment(ids[0], 0);
   };
 
   const handleAddAttachment = () => {
