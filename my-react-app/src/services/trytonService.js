@@ -169,7 +169,7 @@ class TrytonService {
       timestampContext[`ir.note,${id}`] = timestamp;
     }
     const result = await this.makeRpcCall("model.ir.note.delete", [
-      [[id]],
+      [id],
       { _timestamp: timestampContext }
     ]);
     return result;
