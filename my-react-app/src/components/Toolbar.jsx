@@ -42,6 +42,8 @@ const Toolbar = ({
 
   const { action = [], relate = [], print = [], emails = [] } = toolbarInfo;
 
+  const disabledVisualStyle = { opacity: 0.35, filter: 'grayscale(60%)', cursor: 'not-allowed' };
+
   // Renderizar botones de navegación
   const renderNavigationButtons = () => (
     <Space.Compact>
@@ -50,6 +52,7 @@ const Toolbar = ({
           icon={<SwapOutlined />} 
           onClick={onSwitchView}
           disabled={loading || viewType === 'tree' || isNativeForm}
+          style={(loading || viewType === 'tree' || isNativeForm) ? disabledVisualStyle : undefined}
           type={isDirty ? 'primary' : 'default'}
         />
       </Tooltip>
@@ -58,6 +61,7 @@ const Toolbar = ({
           icon={<LeftOutlined />} 
           onClick={() => onNavigate?.('previous')}
           disabled={loading || currentRecord <= 1}
+          style={(loading || currentRecord <= 1) ? disabledVisualStyle : undefined}
         />
       </Tooltip>
       <InputNumber
@@ -65,7 +69,7 @@ const Toolbar = ({
         min={1}
         max={totalRecords}
         controls={false}
-        style={{ width: 60, textAlign: 'center' }}
+        style={{ width: 60, textAlign: 'center', ...(loading ? disabledVisualStyle : {}) }}
         onChange={(value) => onNavigate?.('goto', value)}
         disabled={loading}
       />
@@ -74,6 +78,7 @@ const Toolbar = ({
           icon={<RightOutlined />} 
           onClick={() => onNavigate?.('next')}
           disabled={loading || currentRecord >= totalRecords}
+          style={(loading || currentRecord >= totalRecords) ? disabledVisualStyle : undefined}
         />
       </Tooltip>
     </Space.Compact>
@@ -87,6 +92,7 @@ const Toolbar = ({
           icon={<PlusOutlined />} 
           onClick={onCreate}
           disabled={loading || (isNativeForm || (viewType === 'form' && !isNativeForm))}
+          style={(loading || (isNativeForm || (viewType === 'form' && !isNativeForm))) ? disabledVisualStyle : undefined}
         />
       </Tooltip>
       <Tooltip title="Save">
@@ -94,6 +100,7 @@ const Toolbar = ({
           icon={<SaveOutlined />} 
           onClick={onSave}
           disabled={loading || (isNativeForm || (viewType === 'tree'))}
+          style={(loading || (isNativeForm || (viewType === 'tree'))) ? disabledVisualStyle : undefined}
         />
       </Tooltip>
       <Tooltip title="Refresh">
@@ -101,6 +108,7 @@ const Toolbar = ({
           icon={<ReloadOutlined />} 
           onClick={onRefresh}
           disabled={loading}
+          style={loading ? disabledVisualStyle : undefined}
         />
       </Tooltip>
     </Space.Compact>
@@ -114,6 +122,7 @@ const Toolbar = ({
           icon={<FileOutlined />} 
           onClick={onAttach}
           disabled={loading}
+          style={loading ? disabledVisualStyle : undefined}
         />
       </Tooltip>
       <Tooltip title="Comentarios">
@@ -121,6 +130,7 @@ const Toolbar = ({
           icon={<CommentOutlined />} 
           onClick={onComment}
           disabled={loading}
+          style={loading ? disabledVisualStyle : undefined}
         />
       </Tooltip>
     </Space.Compact>
@@ -142,7 +152,7 @@ const Toolbar = ({
         trigger={['click']}
         disabled={loading}
       >
-        <Button icon={<SettingOutlined />}>
+        <Button icon={<SettingOutlined />} disabled={loading} style={loading ? disabledVisualStyle : undefined}>
           Actions
         </Button>
       </Dropdown>
@@ -165,7 +175,7 @@ const Toolbar = ({
         trigger={['click']}
         disabled={loading}
       >
-        <Button icon={<LinkOutlined />}>
+        <Button icon={<LinkOutlined />} disabled={loading} style={loading ? disabledVisualStyle : undefined}>
         </Button>
       </Dropdown>
     );
@@ -187,7 +197,7 @@ const Toolbar = ({
         trigger={['click']}
         disabled={loading}
       >
-        <Button icon={<PrinterOutlined />}>
+        <Button icon={<PrinterOutlined />} disabled={loading} style={loading ? disabledVisualStyle : undefined}>
           Print
         </Button>
       </Dropdown>
@@ -206,6 +216,7 @@ const Toolbar = ({
           icon={<MailOutlined />} 
           onClick={() => onEmail?.()}
           disabled={loading || !hasSelectedRecord}
+          style={(loading || !hasSelectedRecord) ? disabledVisualStyle : undefined}
         />
       </Tooltip>
     );
@@ -213,13 +224,13 @@ const Toolbar = ({
 
   return (
     <div style={{
-      background: '#267f82',
+      background: 'transparent',
       padding: '8px 12px',
       borderRadius: '8px',
       display: 'flex',
       flexDirection: 'row',
       gap: '6px',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      boxShadow: 'none',
       minWidth: 'fit-content'
     }}>
       {/* Primera fila - Navegación y acciones principales */}
