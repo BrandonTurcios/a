@@ -217,7 +217,7 @@ const Toolbar = ({
       padding: '8px 12px',
       borderRadius: '8px',
       display: 'flex',
-      flexDirection: 'column',
+      flexDirection: 'row',
       gap: '6px',
       boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
       minWidth: 'fit-content'
