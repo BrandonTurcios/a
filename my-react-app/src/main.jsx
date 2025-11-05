@@ -10,7 +10,7 @@ createRoot(document.getElementById('root')).render(
     <ConfigProvider 
       theme={antdThemeConfig}
       notification={{
-        placement: 'topLeft',
+        placement: 'topRight',
         top: 24,
         bottom: 24,
         duration: 4,

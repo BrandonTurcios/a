@@ -162,6 +162,7 @@ export const antdThemeConfig = {
       defaultBottom: 24,
       defaultLeft: 24,
       defaultRight: 24,
+      defaultPlacement: 'topRight',
     },
   },
 };

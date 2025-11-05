@@ -142,6 +142,11 @@ body {
   top: 24px !important;
 }
 
+.ant-notification-topRight {
+  right: 24px !important;
+  top: 24px !important;
+}
+
 .ant-notification-notice {
   background: var(--color-neutral-50) !important;
   border-radius: 8px !important;

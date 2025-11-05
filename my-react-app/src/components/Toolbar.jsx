@@ -256,7 +256,7 @@ const Toolbar = ({
       notification.success({
         message: 'Attachment agregado',
         description: `El archivo "${file.name}" se ha agregado exitosamente`,
-        placement: 'topLeft',
+        placement: 'topRight',
         duration: 4,
         style: {
           zIndex: 10000,
@@ -313,11 +313,12 @@ const Toolbar = ({
         resource: resourceKey,
         unread: newNoteUnread
       });
+      console.log('✅ Note created successfully, showing notification');
       notification.success({
         message: 'Nota creada',
         description: 'La nota se ha creado exitosamente',
-        placement: 'topLeft',
-        duration: 4,
+        placement: 'topRight',
+        duration: 4.5,
         style: {
           zIndex: 10000,
         },
@@ -326,8 +327,16 @@ const Toolbar = ({
       setNewNoteUnread(true);
       await fetchNotes();
     } catch (e) {
-      console.error(e);
-      message.error('Failed to create note');
+      console.error('❌ Error creating note:', e);
+      notification.error({
+        message: 'Error al crear nota',
+        description: 'No se pudo crear la nota. Por favor, inténtalo de nuevo.',
+        placement: 'topRight',
+        duration: 4.5,
+        style: {
+          zIndex: 10000,
+        },
+      });
     }
   };
 
