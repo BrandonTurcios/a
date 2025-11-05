@@ -145,15 +145,18 @@ body {
 .ant-notification {
   z-index: 9999 !important;
   position: fixed !important;
+  background: transparent !important;
 }
 
 .ant-notification-hook-holder {
   z-index: 9999 !important;
+  background: transparent !important;
 }
 
 .ant-notification-topLeft {
   left: 24px !important;
   top: 24px !important;
+  background: transparent !important;
 }
 
 .ant-notification-topRight {
@@ -161,6 +164,7 @@ body {
   top: 24px !important;
   z-index: 9999 !important;
   position: fixed !important;
+  background: transparent !important;
 }
 
 .ant-notification-topRight .ant-notification-notice {
@@ -172,10 +176,18 @@ body {
   border-radius: 8px !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
   border: none !important;
-  padding: 16px 20px !important;
+  padding: 0 !important;
   min-width: 320px !important;
   max-width: 400px !important;
   z-index: 9999 !important;
+}
+
+.ant-notification-notice-content {
+  background: transparent !important;
+}
+
+.ant-notification-notice-with-icon {
+  background: transparent !important;
 }
 
 .ant-notification-notice-success {
@@ -233,6 +245,28 @@ body {
   border-left: 4px solid var(--color-success-500) !important;
   border-radius: 8px !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+  padding: 16px 20px !important;
+  overflow: hidden !important;
+}
+
+/* Todos los elementos hijos deben tener fondo transparente */
+.custom-notification-success .ant-notification-notice-content,
+.custom-notification-success .ant-notification-notice-with-icon,
+.custom-notification-success .ant-notification-notice-message,
+.custom-notification-success .ant-notification-notice-description,
+.custom-notification-success .ant-notification-notice-icon,
+.custom-notification-success .ant-notification-notice-close,
+.custom-notification-success .ant-notification-notice-close-x,
+.custom-notification-success > div,
+.custom-notification-success > div > div {
+  background: transparent !important;
+}
+
+/* Asegurar que no haya fondo blanco en ningún elemento interno de todas las notificaciones */
+.ant-notification-notice-content,
+.ant-notification-notice-with-icon,
+.ant-notification-notice-with-icon .ant-notification-notice-content {
+  background: transparent !important;
 }
 
 .custom-notification-success .ant-notification-notice-message {
