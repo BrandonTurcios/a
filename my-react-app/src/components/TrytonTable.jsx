@@ -289,31 +289,24 @@ const TrytonTable = ({
 
   return (
     <div style={{
-      borderRadius: '16px',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+      borderRadius: '12px',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
       border: '1px solid var(--color-border)',
-      background: 'var(--color-neutral-50)',
-      padding: '24px'
+      background: 'white',
+      padding: '20px'
     }}>
-      <div style={{
-        background: 'white',
-        borderRadius: '12px',
-        padding: '16px',
-        border: '1px solid var(--color-border)'
-      }}>
-        <MemoizedDataTable
-          columns={columns}
-          data={data}
-          searchable={true}
-          pagination={true}
-          pageSize={20}
-          onRowClick={onRowClick}
-          onRowDoubleClick={onRowDoubleClick}
-          onRowSelect={onRowSelect}
-          enableRowSelection={enableRowSelection}
-          selectedRecord={selectedRecord}
-        />
-      </div>
+      <MemoizedDataTable
+        columns={columns}
+        data={data}
+        searchable={true}
+        pagination={true}
+        pageSize={20}
+        onRowClick={onRowClick}
+        onRowDoubleClick={onRowDoubleClick}
+        onRowSelect={onRowSelect}
+        enableRowSelection={enableRowSelection}
+        selectedRecord={selectedRecord}
+      />
       
       {/* Debug information (development only) */}
       {process.env.NODE_ENV === 'development' && (
