@@ -23,13 +23,13 @@ const Sidebar = ({ open, menuItems, loading, error, expandedMenus, activeTab, on
         background: var(--color-neutral-500);
       }
       .menu-item-button:hover:not([disabled]) {
-        background: var(--color-primary-50) !important;
+        background: var(--color-neutral-200) !important;
       }
       .menu-item-button.ant-btn-primary:hover {
-        background: var(--color-primary-100) !important;
+        background: var(--color-primary-50) !important;
       }
       .menu-item-button[style*="background"]:hover {
-        background: var(--color-primary-100) !important;
+        background: var(--color-primary-50) !important;
       }
     `;
     document.head.appendChild(style);

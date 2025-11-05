@@ -144,6 +144,17 @@ export const antdThemeConfig = {
       colorError: colors.danger.A500,
       colorWarning: colors.warning.A500,
     },
+    // Tooltip
+    Tooltip: {
+      colorBgSpotlight: colors.neutral.A900,
+      colorTextLightSolid: colors.neutral.A50,
+      borderRadius: 6,
+      fontSize: 13,
+      fontWeightStrong: 500,
+      paddingBlock: 8,
+      paddingInline: 12,
+      boxShadowSecondary: '0 4px 12px rgba(0, 0, 0, 0.15)',
+    },
   },
 };
 

@@ -85,3 +85,49 @@ body {
   background-color: var(--color-neutral-50) !important;
   border-color: var(--color-border) !important;
 }
+
+/* Estilos para Tooltips - Mejorar legibilidad */
+.ant-tooltip {
+  z-index: 9999 !important;
+}
+
+.ant-tooltip-inner {
+  background-color: var(--color-neutral-900) !important;
+  color: var(--color-neutral-50) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  padding: 8px 12px !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  max-width: 300px !important;
+  line-height: 1.4 !important;
+}
+
+.ant-tooltip-arrow::before {
+  background-color: var(--color-neutral-900) !important;
+}
+
+/* Tooltip con fondo oscuro para mejor contraste */
+.ant-tooltip-placement-top .ant-tooltip-arrow::before,
+.ant-tooltip-placement-topLeft .ant-tooltip-arrow::before,
+.ant-tooltip-placement-topRight .ant-tooltip-arrow::before {
+  border-top-color: var(--color-neutral-900) !important;
+}
+
+.ant-tooltip-placement-bottom .ant-tooltip-arrow::before,
+.ant-tooltip-placement-bottomLeft .ant-tooltip-arrow::before,
+.ant-tooltip-placement-bottomRight .ant-tooltip-arrow::before {
+  border-bottom-color: var(--color-neutral-900) !important;
+}
+
+.ant-tooltip-placement-left .ant-tooltip-arrow::before,
+.ant-tooltip-placement-leftTop .ant-tooltip-arrow::before,
+.ant-tooltip-placement-leftBottom .ant-tooltip-arrow::before {
+  border-left-color: var(--color-neutral-900) !important;
+}
+
+.ant-tooltip-placement-right .ant-tooltip-arrow::before,
+.ant-tooltip-placement-rightTop .ant-tooltip-arrow::before,
+.ant-tooltip-placement-rightBottom .ant-tooltip-arrow::before {
+  border-right-color: var(--color-neutral-900) !important;
+}
