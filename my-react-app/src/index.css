@@ -143,8 +143,16 @@ body {
 
 /* Estilos para Notificaciones - Arriba a la derecha y siempre enfrente */
 .ant-notification {
-  z-index: 10000 !important;
+  z-index: 9999 !important;
   position: fixed !important;
+}
+
+.ant-notification-hook-holder {
+  z-index: 9999 !important;
+}
+
+.ant-notification-notice {
+  z-index: 9999 !important;
 }
 
 .ant-notification-topLeft {
@@ -155,7 +163,7 @@ body {
 .ant-notification-topRight {
   right: 24px !important;
   top: 24px !important;
-  z-index: 10000 !important;
+  z-index: 9999 !important;
   position: fixed !important;
 }
 

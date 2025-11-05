@@ -258,8 +258,10 @@ const Toolbar = ({
         description: `Se agregó el archivo "${file.name}" exitosamente`,
         placement: 'topRight',
         duration: 4.5,
+        top: 24,
+        getContainer: () => document.body,
         style: {
-          zIndex: 10000,
+          zIndex: 9999,
         },
         className: 'custom-notification-success',
       });
@@ -320,8 +322,10 @@ const Toolbar = ({
         description: 'Se agregó la nota exitosamente',
         placement: 'topRight',
         duration: 4.5,
+        top: 24,
+        getContainer: () => document.body,
         style: {
-          zIndex: 10000,
+          zIndex: 9999,
         },
         className: 'custom-notification-success',
       });
@@ -335,8 +339,10 @@ const Toolbar = ({
         description: 'No se pudo crear la nota. Por favor, inténtalo de nuevo.',
         placement: 'topRight',
         duration: 4.5,
+        top: 24,
+        getContainer: () => document.body,
         style: {
-          zIndex: 10000,
+          zIndex: 9999,
         },
       });
     }

@@ -116,6 +116,7 @@ export const antdThemeConfig = {
     Modal: {
       borderRadius: 16,
       borderRadiusLG: 16,
+      zIndexBase: 1000, // Modal base z-index
     },
     // Tag
     Tag: {
@@ -157,7 +158,7 @@ export const antdThemeConfig = {
     },
     // Notification
     Notification: {
-      zIndexPopup: 10000,
+      zIndexPopup: 9999, // Mayor que Modal para que aparezca siempre enfrente
       defaultTop: 24,
       defaultBottom: 24,
       defaultLeft: 24,
