@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { App as AntApp } from 'antd'
 import Login from './components/Login'
 import Dashboard from './app/dashboard/Dashboard'
 
@@ -45,17 +46,19 @@ function App() {
   }
 
   return (
-    <div className="App">
-      {sessionData ? (
-        <Dashboard sessionData={sessionData} onLogout={handleLogout} />
-      ) : (
-        <div className="min-h-screen bg-neutral-100">
-          <div className="container mx-auto py-8">
-            <Login onLogin={handleLogin} />
+    <AntApp>
+      <div className="App">
+        {sessionData ? (
+          <Dashboard sessionData={sessionData} onLogout={handleLogout} />
+        ) : (
+          <div className="min-h-screen bg-neutral-100">
+            <div className="container mx-auto py-8">
+              <Login onLogin={handleLogin} />
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </AntApp>
   );
 }
 

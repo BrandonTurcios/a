@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
-import { Button, Space, InputNumber, Tooltip, Dropdown, Modal, List, Typography, Tag, message, notification, Upload, Image, Input, Checkbox, Badge, Popconfirm } from 'antd';
+import { Button, Space, InputNumber, Tooltip, Dropdown, Modal, List, Typography, Tag, message, Upload, Image, Input, Checkbox, Badge, Popconfirm, App } from 'antd';
 import {
   PlusOutlined,
   SaveOutlined,
@@ -45,6 +45,8 @@ const Toolbar = ({
   contextModel = null,
   contextId = null
 }) => {
+  const { notification: notificationApi } = App.useApp();
+  
   if (!toolbarInfo) {
     return null;
   }
@@ -253,13 +255,12 @@ const Toolbar = ({
         resource: resourceKey,
         dataBase64: base64,
       });
-      notification.success({
+      notificationApi.success({
         message: 'Success',
         description: `Se agregó el archivo "${file.name}" exitosamente`,
         placement: 'topRight',
         duration: 4.5,
         top: 24,
-        getContainer: () => document.body,
         style: {
           zIndex: 9999,
         },
@@ -317,13 +318,12 @@ const Toolbar = ({
         unread: newNoteUnread
       });
       console.log('✅ Note created successfully, showing notification');
-      notification.success({
+      notificationApi.success({
         message: 'Success',
         description: 'Se agregó la nota exitosamente',
         placement: 'topRight',
         duration: 4.5,
         top: 24,
-        getContainer: () => document.body,
         style: {
           zIndex: 9999,
         },
@@ -334,13 +334,12 @@ const Toolbar = ({
       await fetchNotes();
     } catch (e) {
       console.error('❌ Error creating note:', e);
-      notification.error({
+      notificationApi.error({
         message: 'Error al crear nota',
         description: 'No se pudo crear la nota. Por favor, inténtalo de nuevo.',
         placement: 'topRight',
         duration: 4.5,
         top: 24,
-        getContainer: () => document.body,
         style: {
           zIndex: 9999,
         },
