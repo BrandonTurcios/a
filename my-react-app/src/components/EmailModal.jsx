@@ -106,7 +106,7 @@ const EmailModal = ({
     <Modal
       title={
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <MailOutlined style={{ color: '#1890ff' }} />
+          <MailOutlined style={{ color: 'var(--color-primary)' }} />
           <Title level={4} style={{ margin: 0 }}>
             Send Email
           </Title>

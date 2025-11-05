@@ -21,7 +21,7 @@ const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar }) => {
       right: 0,
       zIndex: 1000,
       height: '64px',
-      borderBottom: '1px solid #E0E7EB'
+      borderBottom: '1px solid var(--color-border)'
     }}>
       {/* Left: Menu button + Logo + Title */}
       <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -30,7 +30,7 @@ const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar }) => {
           icon={<MenuOutlined />}
           onClick={onToggleSidebar}
           style={{
-            color: '#333333',
+            color: 'var(--color-text-primary)',
             marginRight: '16px',
             fontSize: '18px'
           }}
@@ -39,7 +39,7 @@ const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar }) => {
           <div style={{
             width: '32px',
             height: '32px',
-            background: '#00A88E',
+            background: 'var(--color-primary)',
             borderRadius: '8px',
             display: 'flex',
             alignItems: 'center',
@@ -48,7 +48,7 @@ const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar }) => {
           }}>
             <span style={{ color: 'white', fontWeight: 'bold', fontSize: '14px' }}>T</span>
           </div>
-          <Title level={4} style={{ color: '#333333', margin: 0 }}>
+          <Title level={4} style={{ color: 'var(--color-text-primary)', margin: 0 }}>
             Tryton Management System
           </Title>
         </div>
@@ -58,12 +58,12 @@ const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar }) => {
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
         <Search
           placeholder="Search in the system..."
-          prefix={<SearchOutlined style={{ color: '#6C757D' }} />}
+          prefix={<SearchOutlined style={{ color: 'var(--color-text-secondary)' }} />}
           style={{
             width: 320,
-            background: '#F8F9FA',
-            border: '1px solid #E0E7EB',
-            color: '#333333',
+            background: 'var(--color-background)',
+            border: '1px solid var(--color-border)',
+            color: 'var(--color-text-primary)',
             borderRadius: '8px'
           }}
         />
@@ -77,13 +77,13 @@ const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar }) => {
             alignItems: 'center',
             gap: '8px',
             padding: '6px 12px',
-            background: '#F8F9FA',
+            background: 'var(--color-background)',
             borderRadius: '8px',
-            border: '1px solid #E0E7EB'
+            border: '1px solid var(--color-border)'
           }}>
             <Avatar
               style={{
-                background: '#00A88E',
+                background: 'var(--color-primary)',
                 color: 'white',
                 width: '28px',
                 height: '28px',
@@ -94,10 +94,10 @@ const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar }) => {
               {sessionData?.username?.charAt(0).toUpperCase() || 'U'}
             </Avatar>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-              <Text style={{ color: '#333333', fontSize: '13px', fontWeight: '500', lineHeight: '1.2' }}>
+              <Text style={{ color: 'var(--color-text-primary)', fontSize: '13px', fontWeight: '500', lineHeight: '1.2' }}>
                 {sessionData?.username || 'Usuario'}
               </Text>
-              <Text style={{ color: '#6C757D', fontSize: '11px', lineHeight: '1.2' }}>
+              <Text style={{ color: 'var(--color-text-secondary)', fontSize: '11px', lineHeight: '1.2' }}>
                 {sessionData?.database || 'Database'}
               </Text>
             </div>
@@ -108,7 +108,7 @@ const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar }) => {
               icon={<LogoutOutlined />}
               onClick={onLogout}
               style={{
-                color: '#6C757D',
+                color: 'var(--color-text-secondary)',
                 width: '32px',
                 height: '32px'
               }}

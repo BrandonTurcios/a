@@ -495,13 +495,13 @@ const Toolbar = ({
       <Space.Compact>
         <Dropdown menu={{ items }} trigger={['click']} disabled={loading}>
           <Tooltip title="Attachments">
-            <Badge count={attachmentsCount} size="small" offset={[-12, 8]} style={{ zIndex: 100 }} color="#00A88E">
+            <Badge count={attachmentsCount} size="small" offset={[-12, 8]} style={{ zIndex: 100 }} color="var(--color-primary)">
               <Button icon={<FileOutlined />} disabled={disabled} style={disabled ? disabledVisualStyle : undefined} />
             </Badge>
           </Tooltip>
         </Dropdown>
         <Tooltip title="Note">
-          <Badge count={notesBadgeText} size="small" offset={[-12, 8]} style={{ zIndex: 100 }} color="#00A88E">
+          <Badge count={notesBadgeText} size="small" offset={[-12, 8]} style={{ zIndex: 100 }} color="var(--color-primary)">
             <Button 
               icon={<CommentOutlined />} 
               onClick={handleManageNotes}
@@ -608,10 +608,10 @@ const Toolbar = ({
   return (
     <>
     <div style={{
-      background: '#f3f4f6',
+      background: 'var(--color-neutral-200)',
       padding: '8px 12px',
       borderRadius: '8px',
-      border: '1px solid #e5e7eb',
+      border: '1px solid var(--color-border)',
       display: 'flex',
       flexDirection: 'row',
       gap: '6px',
@@ -637,12 +637,12 @@ const Toolbar = ({
     <Modal
       open={attachmentsOpen}
       title={
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 0', borderBottom: '2px solid #00A88E' }}>
-          <div style={{ width: '40px', height: '40px', background: '#00A88E', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '18px', fontWeight: 'bold' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 0', borderBottom: '2px solid var(--color-primary)' }}>
+          <div style={{ width: '40px', height: '40px', background: 'var(--color-primary)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '18px', fontWeight: 'bold' }}>
             A
           </div>
           <div>
-            <Typography.Title level={3} style={{ margin: 0, color: '#00A88E' }}>Manage Attachments</Typography.Title>
+            <Typography.Title level={3} style={{ margin: 0, color: 'var(--color-primary)' }}>Manage Attachments</Typography.Title>
             <Typography.Text type="secondary" style={{ fontSize: '14px' }}>View and manage file attachments</Typography.Text>
           </div>
         </div>
@@ -662,7 +662,7 @@ const Toolbar = ({
                 onConfirm={handleDeleteAttachments}
                 okText="Yes"
                 cancelText="No"
-                okButtonProps={{ style: { background: '#00A88E', borderColor: '#00A88E' } }}
+                okButtonProps={{ style: { background: 'var(--color-primary)', borderColor: 'var(--color-primary)' } }}
               >
                 <Button danger>Delete</Button>
               </Popconfirm>
@@ -797,7 +797,7 @@ const Toolbar = ({
             decoded = '[Unable to decode text]';
           }
           return (
-            <pre style={{ maxHeight: '70vh', overflow: 'auto', background: '#f8f9fa', padding: 12, borderRadius: 6 }}>
+            <pre style={{ maxHeight: '70vh', overflow: 'auto', background: 'var(--color-background)', padding: 12, borderRadius: 6 }}>
               {decoded}
             </pre>
           );
@@ -815,12 +815,12 @@ const Toolbar = ({
     <Modal
       open={notesOpen}
       title={
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 0', borderBottom: '2px solid #00A88E' }}>
-          <div style={{ width: '40px', height: '40px', background: '#00A88E', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '18px', fontWeight: 'bold' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 0', borderBottom: '2px solid var(--color-primary)' }}>
+          <div style={{ width: '40px', height: '40px', background: 'var(--color-primary)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '18px', fontWeight: 'bold' }}>
             N
           </div>
           <div>
-            <Typography.Title level={3} style={{ margin: 0, color: '#00A88E' }}>Manage Notes</Typography.Title>
+            <Typography.Title level={3} style={{ margin: 0, color: 'var(--color-primary)' }}>Manage Notes</Typography.Title>
             <Typography.Text type="secondary" style={{ fontSize: '14px' }}>View and add notes</Typography.Text>
           </div>
         </div>
@@ -840,7 +840,7 @@ const Toolbar = ({
                 onConfirm={handleDeleteNotes}
                 okText="Yes"
                 cancelText="No"
-                okButtonProps={{ style: { background: '#00A88E', borderColor: '#00A88E' } }}
+                okButtonProps={{ style: { background: 'var(--color-primary)', borderColor: 'var(--color-primary)' } }}
               >
                 <Button danger>Delete</Button>
               </Popconfirm>
@@ -855,7 +855,7 @@ const Toolbar = ({
       }}
     >
       {/* New Note Form */}
-      <div style={{ marginBottom: '24px', padding: '16px', background: '#f8f9fa', borderRadius: '8px' }}>
+      <div style={{ marginBottom: '24px', padding: '16px', background: 'var(--color-background)', borderRadius: '8px' }}>
         <Typography.Text strong style={{ display: 'block', marginBottom: '8px' }}>New Note</Typography.Text>
         <Input.TextArea
           rows={4}
@@ -870,8 +870,6 @@ const Toolbar = ({
           </Checkbox>
         </Space>
         <Button type="primary" onClick={handleSaveNote} block style={{ 
-          background: '#00A88E', 
-          borderColor: '#00A88E',
           borderRadius: '8px'
         }}>
           Save Note

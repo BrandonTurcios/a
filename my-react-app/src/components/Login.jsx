@@ -87,7 +87,7 @@ const Login = ({ onLogin }) => {
   return (
     <div style={{ 
       minHeight: '100vh', 
-      background: '#F8F9FA',
+      background: 'var(--color-background)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -98,7 +98,7 @@ const Login = ({ onLogin }) => {
           style={{ 
             borderRadius: '12px',
             boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-            border: '1px solid #E0E7EB'
+            border: '1px solid var(--color-border)'
           }}
           bodyStyle={{ padding: '40px' }}
         >
@@ -107,7 +107,7 @@ const Login = ({ onLogin }) => {
             <div style={{
               width: '60px',
               height: '60px',
-              background: '#00A88E',
+              background: 'var(--color-primary)',
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
@@ -116,10 +116,10 @@ const Login = ({ onLogin }) => {
             }}>
               <span style={{ fontSize: '24px', color: 'white', fontWeight: 'bold' }}>T</span>
             </div>
-            <Title level={3} style={{ margin: '0 0 8px 0', color: '#333333' }}>
+            <Title level={3} style={{ margin: '0 0 8px 0', color: 'var(--color-text-primary)' }}>
               Tryton Management
             </Title>
-            <Text style={{ color: '#6C757D', fontSize: '16px' }}>
+            <Text style={{ color: 'var(--color-text-secondary)', fontSize: '16px' }}>
               Connect to your Tryton server
             </Text>
           </div>
@@ -132,13 +132,13 @@ const Login = ({ onLogin }) => {
               {/* Database Field */}
               <Form.Item
                 name="database"
-                label={<span style={{ color: '#333333', fontWeight: '500' }}>Database</span>}
+                label={<span style={{ color: 'var(--color-text-primary)', fontWeight: '500' }}>Database</span>}
                 rules={[{ required: true, message: 'Please select a database' }]}
               >
                 {loadingDatabases ? (
                   <div style={{ textAlign: 'center', padding: '16px' }}>
                     <Spin />
-                    <div style={{ marginTop: '8px', color: '#6C757D' }}>
+                    <div style={{ marginTop: '8px', color: 'var(--color-text-secondary)' }}>
                       Loading...
                     </div>
                   </div>
@@ -166,7 +166,7 @@ const Login = ({ onLogin }) => {
               {/* Username Field */}
               <Form.Item
                 name="username"
-                label={<span style={{ color: '#333333', fontWeight: '500' }}>Username</span>}
+                label={<span style={{ color: 'var(--color-text-primary)', fontWeight: '500' }}>Username</span>}
                 rules={[{ required: true, message: 'Please enter your username' }]}
               >
                 <Input 
@@ -178,7 +178,7 @@ const Login = ({ onLogin }) => {
               {/* Password Field */}
               <Form.Item
                 name="password"
-                label={<span style={{ color: '#333333', fontWeight: '500' }}>Password</span>}
+                label={<span style={{ color: 'var(--color-text-primary)', fontWeight: '500' }}>Password</span>}
                 rules={[{ required: true, message: 'Please enter your password' }]}
               >
                 <Input.Password 
@@ -203,13 +203,12 @@ const Login = ({ onLogin }) => {
               <Form.Item style={{ marginBottom: '0' }}>
                 <Button
                   htmlType="submit"
+                  type="primary"
                   loading={loading}
                   disabled={loadingDatabases}
                   block
                   style={{
                     height: '44px',
-                    background: '#00A88E',
-                    borderColor: '#00A88E',
                     borderRadius: '8px',
                     fontSize: '16px',
                     fontWeight: '500'

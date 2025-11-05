@@ -26,10 +26,10 @@ const Sidebar = ({ open, menuItems, loading, error, expandedMenus, activeTab, on
         background: rgba(255,255,255,0.1) !important;
       }
       .menu-item-button.ant-btn-primary:hover {
-        background: #007BFF !important;
+        background: var(--color-primary-dark) !important;
       }
-      .menu-item-button[style*="background: rgb(0, 123, 255)"]:hover {
-        background: #007BFF !important;
+      .menu-item-button[style*="background"]:hover {
+        background: var(--color-primary-dark) !important;
       }
     `;
     document.head.appendChild(style);
@@ -48,7 +48,7 @@ const Sidebar = ({ open, menuItems, loading, error, expandedMenus, activeTab, on
         // Esto se maneja en el hook useMenuData
       }}
       style={{
-        background: '#00A88E',
+        background: 'var(--color-primary)',
         boxShadow: '2px 0 8px rgba(0,0,0,0.1)',
         position: 'fixed',
         height: '100vh',

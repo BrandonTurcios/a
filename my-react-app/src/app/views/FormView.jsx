@@ -9,7 +9,7 @@ const FormView = ({ formInfo, selectedMenuInfo, loadingContent, formDirty, onFor
   return (
     <div style={{
       padding: '24px',
-      background: '#F8F9FA',
+      background: 'var(--color-background)',
       minHeight: 'calc(100vh - 64px)',
       overflowY: 'auto'
     }}>
@@ -21,10 +21,10 @@ const FormView = ({ formInfo, selectedMenuInfo, loadingContent, formDirty, onFor
         gap: '16px'
       }}>
         <div style={{ flex: 1 }}>
-          <Title level={2} style={{ margin: 0, color: '#333333' }}>
+          <Title level={2} style={{ margin: 0, color: 'var(--color-text-primary)' }}>
             {selectedMenuInfo?.actionName || selectedMenuInfo?.menuItem?.name || 'Form'}
           </Title>
-          <Paragraph style={{ color: '#6C757D', margin: '8px 0 0 0' }}>
+          <Paragraph style={{ color: 'var(--color-text-secondary)', margin: '8px 0 0 0' }}>
             {selectedMenuInfo?.resModel} - {formInfo?.isNew ? 'New record' : 'Form view'}
           </Paragraph>
         </div>

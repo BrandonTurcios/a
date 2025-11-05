@@ -11,10 +11,10 @@ const LoadingView = () => {
       justifyContent: 'center',
       alignItems: 'center',
       minHeight: 'calc(100vh - 64px)',
-      background: '#F8F9FA'
+      background: 'var(--color-background)'
     }}>
       <Spin size="large" />
-      <Text style={{ marginTop: '16px', color: '#999' }}>
+      <Text style={{ marginTop: '16px', color: 'var(--color-text-secondary)' }}>
         Cargando contenido...
       </Text>
     </div>

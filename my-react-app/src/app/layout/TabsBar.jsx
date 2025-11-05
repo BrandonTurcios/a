@@ -53,7 +53,7 @@ const TabsBar = ({
               alignItems: 'center', 
               gap: '8px',
               padding: '4px 8px',
-              background: isActive ? '#f0f0f0' : 'transparent',
+              background: isActive ? 'var(--color-neutral-200)' : 'transparent',
               borderRadius: '4px',
               minWidth: '120px',
               maxWidth: '200px'
@@ -123,7 +123,7 @@ const TabsBar = ({
   return (
     <div style={{
       background: 'white',
-      borderBottom: '1px solid #E0E7EB',
+      borderBottom: '1px solid var(--color-border)',
       padding: '0 16px',
       minHeight: '40px',
       display: 'flex',

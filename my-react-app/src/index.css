@@ -2,18 +2,86 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Variables CSS para la paleta de colores */
+:root {
+  /* Primary */
+  --color-primary-50: #E0F4F7;
+  --color-primary-100: #B3E3EB;
+  --color-primary-200: #80D0DD;
+  --color-primary-300: #4DBDCF;
+  --color-primary-400: #26ADC3;
+  --color-primary-500: #01768F;
+  --color-primary-600: #016A81;
+  --color-primary-700: #015D70;
+  --color-primary-800: #014E5F;
+  --color-primary-900: #003B47;
+  
+  /* Secondary */
+  --color-secondary-50: #D8FAF4;
+  --color-secondary-100: #A6F2E5;
+  --color-secondary-200: #73E9D6;
+  --color-secondary-300: #40E0C6;
+  --color-secondary-400: #1AD8BA;
+  --color-secondary-500: #00BFA6;
+  --color-secondary-600: #00AC94;
+  --color-secondary-700: #009C85;
+  --color-secondary-800: #008C7D;
+  --color-secondary-900: #00685D;
+  
+  /* Neutral */
+  --color-neutral-50: #FFFFFF;
+  --color-neutral-100: #F8F9FA;
+  --color-neutral-200: #F1F3F4;
+  --color-neutral-300: #E9ECEF;
+  --color-neutral-400: #DEE2E6;
+  --color-neutral-500: #CED4DA;
+  --color-neutral-600: #ADB5BD;
+  --color-neutral-700: #6C757D;
+  --color-neutral-800: #495057;
+  --color-neutral-900: #212529;
+  
+  /* Success */
+  --color-success-500: #28A745;
+  
+  /* Danger */
+  --color-danger-500: #DC3545;
+  
+  /* Warning */
+  --color-warning-500: #FFC107;
+  
+  /* Info */
+  --color-info-500: #17A2B8;
+  
+  /* Colores principales para uso común */
+  --color-primary: var(--color-primary-500);
+  --color-primary-dark: var(--color-primary-700);
+  --color-primary-light: var(--color-primary-200);
+  --color-secondary: var(--color-secondary-500);
+  --color-background: var(--color-neutral-100);
+  --color-card-background: var(--color-neutral-50);
+  --color-text-primary: var(--color-neutral-900);
+  --color-text-secondary: var(--color-neutral-700);
+  --color-border: var(--color-neutral-400);
+}
+
+/* Estilos base */
+body {
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+}
+
 /* Checkbox más visible en tablas */
 .checkbox-visible .ant-checkbox-inner {
-  background-color: #ffffff !important;
-  border-color: #666666 !important;
+  background-color: var(--color-neutral-50) !important;
+  border-color: var(--color-neutral-700) !important;
 }
 
 .checkbox-visible .ant-checkbox-inner::after {
-  border-color: #000000 !important;
+  border-color: var(--color-text-primary) !important;
   border-width: 2px !important;
 }
 
 .checkbox-unchecked .ant-checkbox-inner {
-  background-color: #ffffff !important;
-  border-color: #d9d9d9 !important;
+  background-color: var(--color-neutral-50) !important;
+  border-color: var(--color-border) !important;
 }

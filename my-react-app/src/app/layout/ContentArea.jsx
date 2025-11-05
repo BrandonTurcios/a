@@ -78,7 +78,7 @@ const ContentArea = ({
   };
 
   return (
-    <Content style={{ background: '#F8F9FA' }}>
+    <Content style={{ background: 'var(--color-background)' }}>
       {renderContent()}
     </Content>
   );
