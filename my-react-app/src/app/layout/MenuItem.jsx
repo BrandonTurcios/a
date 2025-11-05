@@ -19,7 +19,7 @@ const MenuItem = ({ item, isActive, isExpanded, hasChildren, level = 0, onClick,
         {isChild && sidebarOpen && (
           <div style={{
             marginRight: '8px',
-            color: 'rgba(255,255,255,0.6)',
+            color: 'var(--color-text-secondary)',
             fontSize: '12px'
           }}>
             →
@@ -39,10 +39,10 @@ const MenuItem = ({ item, isActive, isExpanded, hasChildren, level = 0, onClick,
             display: 'flex',
             alignItems: 'center',
             justifyContent: sidebarOpen ? 'flex-start' : 'center',
-            background: isActive ? 'var(--color-primary-dark)' : 'transparent',
+            background: isActive ? 'var(--color-primary-100)' : 'transparent',
             border: 'none',
             borderRadius: '8px',
-            color: 'white',
+            color: isActive ? 'var(--color-primary-700)' : 'var(--color-text-primary)',
             minHeight: '40px',
             position: 'relative',
             maxWidth: '100%',
@@ -65,7 +65,7 @@ const MenuItem = ({ item, isActive, isExpanded, hasChildren, level = 0, onClick,
                   style={{
                     fontSize: '14px',
                     fontWeight: isChild ? '400' : '500',
-                    color: 'white',
+                    color: isActive ? 'var(--color-primary-700)' : 'var(--color-text-primary)',
                     wordBreak: 'break-word',
                     lineHeight: '1.3'
                   }}
@@ -77,8 +77,7 @@ const MenuItem = ({ item, isActive, isExpanded, hasChildren, level = 0, onClick,
                   <Text
                     style={{
                       fontSize: '12px',
-                      opacity: 0.7,
-                      color: 'rgba(255,255,255,0.7)',
+                      color: 'var(--color-text-secondary)',
                       wordBreak: 'break-word',
                       lineHeight: '1.2'
                     }}
@@ -98,7 +97,7 @@ const MenuItem = ({ item, isActive, isExpanded, hasChildren, level = 0, onClick,
         {hasChildren && sidebarOpen && (
           <div style={{
             marginLeft: '4px',
-            color: 'rgba(255,255,255,0.6)',
+            color: 'var(--color-text-secondary)',
             fontSize: '12px'
           }}>
             {isExpanded ? <DownOutlined /> : <RightOutlined />}

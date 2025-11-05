@@ -38,25 +38,37 @@ const TableFooter = React.forwardRef(({ className, ...props }, ref) => (
 ))
 TableFooter.displayName = "TableFooter"
 
-const TableRow = React.forwardRef(({ className, ...props }, ref) => (
-  <tr
-    ref={ref}
-    className={cn(
-      "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
-      className
-    )}
-    {...props}
-  />
-))
+const TableRow = React.forwardRef(({ className, style, ...props }, ref) => {
+  return (
+    <tr
+      ref={ref}
+      className={cn(
+        "border-b transition-colors hover:bg-primary-50 data-[state=selected]:bg-primary-100",
+        className
+      )}
+      style={{
+        ...style,
+        borderBottom: '1px solid var(--color-border)'
+      }}
+      {...props}
+    />
+  );
+})
 TableRow.displayName = "TableRow"
 
 const TableHead = React.forwardRef(({ className, ...props }, ref) => (
   <th
     ref={ref}
     className={cn(
-      "h-12 px-4 text-left align-middle font-semibold text-white bg-teal-600 [&:has([role=checkbox])]:pr-0",
+      "h-12 px-4 text-left align-middle font-semibold text-white bg-primary-500 [&:has([role=checkbox])]:pr-0",
       className
     )}
+    style={{
+      background: 'var(--color-primary)',
+      color: 'white',
+      fontWeight: '600',
+      borderBottom: '2px solid var(--color-primary-700)'
+    }}
     {...props}
   />
 ))

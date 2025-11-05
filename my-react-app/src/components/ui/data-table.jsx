@@ -105,10 +105,10 @@ export function DataTable({
           alignItems: 'center', 
           justifyContent: 'center',
           height: '100%',
-          borderRight: '2px solid #D1D5DB',
+          borderRight: '2px solid var(--color-primary-300)',
           marginRight: '12px',
           paddingRight: '8px',
-          background: 'rgba(255, 255, 255, 0.1)'
+          background: 'var(--color-primary-50)'
         }}>
           <Checkbox
             checked={table.getIsAllPageRowsSelected()}
@@ -123,10 +123,10 @@ export function DataTable({
           alignItems: 'center', 
           justifyContent: 'center',
           height: '100%',
-          borderRight: '2px solid #E5E7EB',
+          borderRight: '2px solid var(--color-primary-200)',
           marginRight: '12px',
           paddingRight: '8px',
-          background: 'rgba(248, 249, 250, 0.5)'
+          background: 'var(--color-neutral-50)'
         }}>
           <Checkbox
             checked={row.getIsSelected()}
@@ -208,7 +208,7 @@ export function DataTable({
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
+              table.getRowModel().rows.map((row, rowIndex) => (
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
@@ -222,7 +222,11 @@ export function DataTable({
                     if (e.target.type === 'checkbox') return;
                     if (onRowDoubleClick) onRowDoubleClick(row.original);
                   }}
-                  className={(onRowClick || onRowDoubleClick) ? "cursor-pointer hover:bg-gray-100" : ""}
+                  style={{
+                    cursor: (onRowClick || onRowDoubleClick) ? 'pointer' : 'default',
+                    backgroundColor: rowIndex % 2 === 0 ? 'white' : 'var(--color-neutral-50)',
+                  }}
+                  className={(onRowClick || onRowDoubleClick) ? "hover:bg-primary-50" : ""}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>

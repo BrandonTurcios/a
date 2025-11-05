@@ -53,7 +53,10 @@ const TabsBar = ({
               alignItems: 'center', 
               gap: '8px',
               padding: '4px 8px',
-              background: isActive ? 'var(--color-neutral-200)' : 'transparent',
+              background: isActive ? 'var(--color-primary-50)' : 'transparent',
+              borderBottom: isActive ? '3px solid var(--color-primary)' : '3px solid transparent',
+              color: isActive ? 'var(--color-primary-700)' : 'var(--color-text-secondary)',
+              fontWeight: isActive ? '600' : '400',
               borderRadius: '4px',
               minWidth: '120px',
               maxWidth: '200px'
@@ -122,12 +125,13 @@ const TabsBar = ({
 
   return (
     <div style={{
-      background: 'white',
-      borderBottom: '1px solid var(--color-border)',
+      background: 'var(--color-neutral-50)',
+      borderBottom: '2px solid var(--color-primary-200)',
       padding: '0 16px',
-      minHeight: '40px',
+      minHeight: '44px',
       display: 'flex',
-      alignItems: 'center'
+      alignItems: 'center',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
     }}>
       <Tabs
         activeKey={activeTabId}

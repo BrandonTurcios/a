@@ -294,42 +294,65 @@ const TrytonTable = ({
   }
 
   return (
-    <div className="rounded-2xl shadow-lg border border-gray-200 bg-white p-6">
+    <div style={{
+      borderRadius: '16px',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+      border: '1px solid var(--color-border)',
+      background: 'var(--color-neutral-50)',
+      padding: '24px'
+    }}>
       <div className="mb-4 flex justify-end">
         <Space className="flex flex-wrap gap-2">
           <Button 
+            type="primary"
             icon={<ReloadOutlined />}
             onClick={handleRefresh}
             title="Update"
-            className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg"
+            style={{ borderRadius: '8px' }}
           >
             Update
           </Button>
           <Button 
+            type="primary"
             icon={<DownloadOutlined />}
             title="Export"
-            className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg"
+            style={{ borderRadius: '8px' }}
           >
             Export
           </Button>
           <Button 
+            type="default"
             icon={<FilterOutlined />}
             title="Filters"
-            className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg"
+            style={{ 
+              borderRadius: '8px',
+              borderColor: 'var(--color-secondary-500)',
+              color: 'var(--color-secondary-700)'
+            }}
           >
             Filters
           </Button>
           <Button 
+            type="default"
             icon={<SettingOutlined />}
             title="Configure"
-            className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg"
+            style={{ 
+              borderRadius: '8px',
+              borderColor: 'var(--color-neutral-400)',
+              color: 'var(--color-text-primary)'
+            }}
           >
             Configure
           </Button>
         </Space>
       </div>
       
-      <div className="bg-gray-50 rounded-lg p-4">
+      <div style={{
+        background: 'white',
+        borderRadius: '12px',
+        padding: '16px',
+        border: '1px solid var(--color-border)'
+      }}>
         <MemoizedDataTable
           columns={columns}
           data={data}

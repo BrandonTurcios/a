@@ -9,19 +9,19 @@ const { Search } = Input;
 const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar }) => {
   return (
     <Header style={{
-      background: 'white',
+      background: 'var(--color-neutral-50)',
       padding: '0 24px',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
       position: 'fixed',
       top: 0,
       left: 0,
       right: 0,
       zIndex: 1000,
       height: '64px',
-      borderBottom: '1px solid var(--color-border)'
+      borderBottom: '2px solid var(--color-primary)'
     }}>
       {/* Left: Menu button + Logo + Title */}
       <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -37,18 +37,27 @@ const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar }) => {
         />
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <div style={{
-            width: '32px',
-            height: '32px',
-            background: 'var(--color-primary)',
-            borderRadius: '8px',
+            width: '36px',
+            height: '36px',
+            background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-400) 100%)',
+            borderRadius: '10px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            marginRight: '12px'
+            marginRight: '12px',
+            boxShadow: '0 2px 6px rgba(1, 118, 143, 0.3)'
           }}>
-            <span style={{ color: 'white', fontWeight: 'bold', fontSize: '14px' }}>T</span>
+            <span style={{ color: 'white', fontWeight: 'bold', fontSize: '16px' }}>T</span>
           </div>
-          <Title level={4} style={{ color: 'var(--color-text-primary)', margin: 0 }}>
+          <Title level={4} style={{ 
+            color: 'var(--color-primary-700)', 
+            margin: 0,
+            fontWeight: '600',
+            background: 'linear-gradient(135deg, var(--color-primary-700) 0%, var(--color-primary) 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
+          }}>
             Tryton Management System
           </Title>
         </div>
@@ -77,18 +86,20 @@ const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar }) => {
             alignItems: 'center',
             gap: '8px',
             padding: '6px 12px',
-            background: 'var(--color-background)',
-            borderRadius: '8px',
-            border: '1px solid var(--color-border)'
+            background: 'var(--color-primary-50)',
+            borderRadius: '10px',
+            border: '1px solid var(--color-primary-200)',
+            padding: '8px 14px'
           }}>
             <Avatar
               style={{
-                background: 'var(--color-primary)',
+                background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary-500) 100%)',
                 color: 'white',
-                width: '28px',
-                height: '28px',
-                fontSize: '12px',
-                fontWeight: 'bold'
+                width: '32px',
+                height: '32px',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                boxShadow: '0 2px 4px rgba(1, 118, 143, 0.2)'
               }}
             >
               {sessionData?.username?.charAt(0).toUpperCase() || 'U'}
