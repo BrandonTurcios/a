@@ -155,6 +155,14 @@ export const antdThemeConfig = {
       paddingInline: 12,
       boxShadowSecondary: '0 4px 12px rgba(0, 0, 0, 0.15)',
     },
+    // Notification
+    Notification: {
+      zIndexPopup: 10000,
+      defaultTop: 24,
+      defaultBottom: 24,
+      defaultLeft: 24,
+      defaultRight: 24,
+    },
   },
 };
 

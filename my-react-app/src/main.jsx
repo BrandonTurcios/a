@@ -7,7 +7,16 @@ import antdThemeConfig from './config/antdTheme.js'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <ConfigProvider theme={antdThemeConfig}>
+    <ConfigProvider 
+      theme={antdThemeConfig}
+      notification={{
+        placement: 'topLeft',
+        top: 24,
+        bottom: 24,
+        duration: 4,
+        rtl: false,
+      }}
+    >
       <App />
     </ConfigProvider>
   </StrictMode>,

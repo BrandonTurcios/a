@@ -131,3 +131,70 @@ body {
 .ant-tooltip-placement-rightBottom .ant-tooltip-arrow::before {
   border-right-color: var(--color-neutral-900) !important;
 }
+
+/* Estilos para Notificaciones - Arriba a la izquierda y siempre enfrente */
+.ant-notification {
+  z-index: 10000 !important;
+}
+
+.ant-notification-topLeft {
+  left: 24px !important;
+  top: 24px !important;
+}
+
+.ant-notification-notice {
+  background: var(--color-neutral-50) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid var(--color-border) !important;
+  padding: 16px !important;
+}
+
+.ant-notification-notice-success {
+  border-left: 4px solid var(--color-success-500) !important;
+}
+
+.ant-notification-notice-error {
+  border-left: 4px solid var(--color-danger-500) !important;
+}
+
+.ant-notification-notice-warning {
+  border-left: 4px solid var(--color-warning-500) !important;
+}
+
+.ant-notification-notice-info {
+  border-left: 4px solid var(--color-info-500) !important;
+}
+
+.ant-notification-notice-message {
+  color: var(--color-text-primary) !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  margin-bottom: 4px !important;
+}
+
+.ant-notification-notice-description {
+  color: var(--color-text-secondary) !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+}
+
+.ant-notification-notice-icon {
+  font-size: 20px !important;
+}
+
+.ant-notification-notice-icon-success {
+  color: var(--color-success-500) !important;
+}
+
+.ant-notification-notice-icon-error {
+  color: var(--color-danger-500) !important;
+}
+
+.ant-notification-notice-icon-warning {
+  color: var(--color-warning-500) !important;
+}
+
+.ant-notification-notice-icon-info {
+  color: var(--color-info-500) !important;
+}

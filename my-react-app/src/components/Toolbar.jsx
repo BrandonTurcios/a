@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
-import { Button, Space, InputNumber, Tooltip, Dropdown, Modal, List, Typography, Tag, message, Upload, Image, Input, Checkbox, Badge, Popconfirm } from 'antd';
+import { Button, Space, InputNumber, Tooltip, Dropdown, Modal, List, Typography, Tag, message, notification, Upload, Image, Input, Checkbox, Badge, Popconfirm } from 'antd';
 import {
   PlusOutlined,
   SaveOutlined,
@@ -253,7 +253,15 @@ const Toolbar = ({
         resource: resourceKey,
         dataBase64: base64,
       });
-      message.success('Attachment added');
+      notification.success({
+        message: 'Attachment agregado',
+        description: `El archivo "${file.name}" se ha agregado exitosamente`,
+        placement: 'topLeft',
+        duration: 4,
+        style: {
+          zIndex: 10000,
+        },
+      });
       // Refresh list if modal open
       if (attachmentsOpen) await fetchAttachments();
     } catch (err) {
@@ -305,7 +313,15 @@ const Toolbar = ({
         resource: resourceKey,
         unread: newNoteUnread
       });
-      message.success('Note created successfully');
+      notification.success({
+        message: 'Nota creada',
+        description: 'La nota se ha creado exitosamente',
+        placement: 'topLeft',
+        duration: 4,
+        style: {
+          zIndex: 10000,
+        },
+      });
       setNewNoteMessage('');
       setNewNoteUnread(true);
       await fetchNotes();
