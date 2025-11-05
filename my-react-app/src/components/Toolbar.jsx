@@ -254,13 +254,14 @@ const Toolbar = ({
         dataBase64: base64,
       });
       notification.success({
-        message: 'Attachment agregado',
-        description: `El archivo "${file.name}" se ha agregado exitosamente`,
+        message: 'Success',
+        description: `Se agregó el archivo "${file.name}" exitosamente`,
         placement: 'topRight',
-        duration: 4,
+        duration: 4.5,
         style: {
           zIndex: 10000,
         },
+        className: 'custom-notification-success',
       });
       // Refresh list if modal open
       if (attachmentsOpen) await fetchAttachments();
@@ -315,13 +316,14 @@ const Toolbar = ({
       });
       console.log('✅ Note created successfully, showing notification');
       notification.success({
-        message: 'Nota creada',
-        description: 'La nota se ha creado exitosamente',
+        message: 'Success',
+        description: 'Se agregó la nota exitosamente',
         placement: 'topRight',
         duration: 4.5,
         style: {
           zIndex: 10000,
         },
+        className: 'custom-notification-success',
       });
       setNewNoteMessage('');
       setNewNoteUnread(true);
