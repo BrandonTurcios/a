@@ -146,17 +146,23 @@ body {
   z-index: 9999 !important;
   position: fixed !important;
   background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 .ant-notification-hook-holder {
   z-index: 9999 !important;
   background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 .ant-notification-topLeft {
   left: 24px !important;
   top: 24px !important;
   background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 .ant-notification-topRight {
@@ -165,10 +171,25 @@ body {
   z-index: 9999 !important;
   position: fixed !important;
   background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 .ant-notification-topRight .ant-notification-notice {
   margin-bottom: 16px !important;
+}
+
+/* Eliminar margin-bottom para notificaciones custom para evitar espacio blanco */
+.ant-notification-topRight .ant-notification-notice.custom-notification-success,
+.ant-notification-topRight .custom-notification-success {
+  margin-bottom: 16px !important;
+}
+
+/* Asegurar que el siguiente elemento no tenga fondo blanco */
+.ant-notification-topRight .ant-notification-notice.custom-notification-success + *,
+.ant-notification-topRight .custom-notification-success + * {
+  background: transparent !important;
+  display: none !important;
 }
 
 .ant-notification-notice {
@@ -184,7 +205,18 @@ body {
   max-width: 400px !important;
   z-index: 9999 !important;
   height: auto !important;
+  min-height: auto !important;
+  max-height: none !important;
   overflow: hidden !important;
+  display: block !important;
+}
+
+/* Aplicar fondo verde al notice cuando tiene la clase custom */
+.custom-notification-success.ant-notification-notice,
+.ant-notification-notice.custom-notification-success {
+  background: var(--color-success-50) !important;
+  border-left: 4px solid var(--color-success-500) !important;
+  border-radius: 8px !important;
 }
 
 .ant-notification-notice-content {
@@ -251,18 +283,39 @@ body {
 /* Estilos adicionales para notificaciones de éxito más visibles */
 .custom-notification-success {
   background: var(--color-success-50) !important;
+  background-color: var(--color-success-50) !important;
   border-left: 4px solid var(--color-success-500) !important;
   border-radius: 8px !important;
   border: none !important;
   border-bottom: none !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
   padding: 18px 20px !important;
+  padding-bottom: 18px !important;
   overflow: hidden !important;
   display: block !important;
   width: 100% !important;
   box-sizing: border-box !important;
   position: relative !important;
   margin-bottom: 0 !important;
+  margin-top: 0 !important;
+  height: auto !important;
+  min-height: auto !important;
+  max-height: none !important;
+  line-height: normal !important;
+}
+
+/* Asegurar que no haya espacio extra en la parte inferior */
+.custom-notification-success *:last-child {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* Aplicar el fondo verde también al notice padre */
+.ant-notification-topRight .ant-notification-notice.custom-notification-success,
+.ant-notification-topRight .custom-notification-success,
+.ant-notification-notice.custom-notification-success {
+  background: var(--color-success-50) !important;
+  background-color: var(--color-success-50) !important;
 }
 
 /* FORZAR que TODOS los elementos hijos (pero no el contenedor mismo) tengan fondo transparente */
@@ -318,17 +371,67 @@ body {
 .custom-notification-success,
 .custom-notification-success *,
 .ant-notification-notice,
-.ant-notification-notice * {
+.ant-notification-notice *,
+.ant-notification-notice div,
+.ant-notification-notice span,
+.ant-notification-topRight *,
+.ant-notification-topRight div,
+.ant-notification-topRight span {
   border-bottom: none !important;
   border-top: none !important;
   border-right: none !important;
 }
 
+/* Eliminar cualquier fondo blanco en todos los elementos posibles */
+.ant-notification-topRight div,
+.ant-notification-topRight span,
+.ant-notification-notice div,
+.ant-notification-notice span,
+.custom-notification-success div,
+.custom-notification-success span {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Asegurar que no haya padding/margin blanco */
+.ant-notification-topRight > div,
+.ant-notification-topRight > span {
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+  background: transparent !important;
+}
+
+/* Aplicar fondo verde a todos los contenedores posibles cuando tienen la clase custom */
+.ant-notification-topRight .custom-notification-success,
+.ant-notification-topRight .ant-notification-notice.custom-notification-success,
+.ant-notification-topRight div.custom-notification-success,
+.ant-notification-topRight span.custom-notification-success,
+.custom-notification-success.ant-notification-notice {
+  background: var(--color-success-50) !important;
+  background-color: var(--color-success-50) !important;
+}
+
+/* Asegurar que el contenedor padre también tenga el fondo */
+.ant-notification-topRight:has(.custom-notification-success) {
+  background: transparent !important;
+}
+
+.ant-notification-topRight:has(.custom-notification-success) > div {
+  background: transparent !important;
+}
+
 /* Asegurar que no haya padding/margin blanco en la parte inferior */
 .custom-notification-success::after,
-.ant-notification-notice::after {
+.custom-notification-success::before,
+.ant-notification-notice::after,
+.ant-notification-notice::before,
+.ant-notification-topRight::after,
+.ant-notification-topRight::before {
   display: none !important;
   content: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 /* Estructura del layout con icono */
