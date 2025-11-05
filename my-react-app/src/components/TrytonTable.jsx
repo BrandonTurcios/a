@@ -1,11 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, Spin, Alert, Button, Space, Typography, Checkbox } from 'antd';
-import {
-  ReloadOutlined,
-  DownloadOutlined,
-  FilterOutlined,
-  SettingOutlined
-} from '@ant-design/icons';
 import { MemoizedDataTable } from './ui/data-table';
 import trytonService from '../services/trytonService';
 
@@ -301,52 +295,6 @@ const TrytonTable = ({
       background: 'var(--color-neutral-50)',
       padding: '24px'
     }}>
-      <div className="mb-4 flex justify-end">
-        <Space className="flex flex-wrap gap-2">
-          <Button 
-            type="primary"
-            icon={<ReloadOutlined />}
-            onClick={handleRefresh}
-            title="Update"
-            style={{ borderRadius: '8px' }}
-          >
-            Update
-          </Button>
-          <Button 
-            type="primary"
-            icon={<DownloadOutlined />}
-            title="Export"
-            style={{ borderRadius: '8px' }}
-          >
-            Export
-          </Button>
-          <Button 
-            type="default"
-            icon={<FilterOutlined />}
-            title="Filters"
-            style={{ 
-              borderRadius: '8px',
-              borderColor: 'var(--color-secondary-500)',
-              color: 'var(--color-secondary-700)'
-            }}
-          >
-            Filters
-          </Button>
-          <Button 
-            type="default"
-            icon={<SettingOutlined />}
-            title="Configure"
-            style={{ 
-              borderRadius: '8px',
-              borderColor: 'var(--color-neutral-400)',
-              color: 'var(--color-text-primary)'
-            }}
-          >
-            Configure
-          </Button>
-        </Space>
-      </div>
-      
       <div style={{
         background: 'white',
         borderRadius: '12px',
