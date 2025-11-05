@@ -174,20 +174,26 @@ body {
 .ant-notification-notice {
   background: transparent !important;
   border-radius: 8px !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: none !important;
   border: none !important;
   padding: 0 !important;
+  margin: 0 !important;
   min-width: 320px !important;
   max-width: 400px !important;
   z-index: 9999 !important;
+  height: auto !important;
 }
 
 .ant-notification-notice-content {
   background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 .ant-notification-notice-with-icon {
   background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 .ant-notification-notice-success {
@@ -247,26 +253,49 @@ body {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
   padding: 16px 20px !important;
   overflow: hidden !important;
+  display: block !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  position: relative !important;
 }
 
-/* Todos los elementos hijos deben tener fondo transparente */
+/* FORZAR que TODOS los elementos hijos (pero no el contenedor mismo) tengan fondo transparente */
+.custom-notification-success > *,
+.custom-notification-success > * > *,
+.custom-notification-success > * > * > *,
+.custom-notification-success *:not(.custom-notification-success) {
+  background: transparent !important;
+  box-sizing: border-box !important;
+}
+
+/* Todos los elementos hijos deben ocupar todo el espacio */
 .custom-notification-success .ant-notification-notice-content,
-.custom-notification-success .ant-notification-notice-with-icon,
+.custom-notification-success .ant-notification-notice-with-icon {
+  width: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: block !important;
+}
+
 .custom-notification-success .ant-notification-notice-message,
 .custom-notification-success .ant-notification-notice-description,
 .custom-notification-success .ant-notification-notice-icon,
 .custom-notification-success .ant-notification-notice-close,
-.custom-notification-success .ant-notification-notice-close-x,
-.custom-notification-success > div,
-.custom-notification-success > div > div {
+.custom-notification-success .ant-notification-notice-close-x {
   background: transparent !important;
 }
 
 /* Asegurar que no haya fondo blanco en ningún elemento interno de todas las notificaciones */
 .ant-notification-notice-content,
 .ant-notification-notice-with-icon,
-.ant-notification-notice-with-icon .ant-notification-notice-content {
+.ant-notification-notice-with-icon .ant-notification-notice-content,
+.ant-notification-notice-content > div,
+.ant-notification-notice-content > span,
+.ant-notification-notice-with-icon > div,
+.ant-notification-notice-with-icon > span {
   background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 .custom-notification-success .ant-notification-notice-message {

@@ -263,6 +263,7 @@ const Toolbar = ({
         top: 24,
         style: {
           zIndex: 9999,
+          background: 'var(--color-success-50)',
         },
         className: 'custom-notification-success',
       });
@@ -326,6 +327,7 @@ const Toolbar = ({
         top: 24,
         style: {
           zIndex: 9999,
+          background: 'var(--color-success-50)',
         },
         className: 'custom-notification-success',
       });

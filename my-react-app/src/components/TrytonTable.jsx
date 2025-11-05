@@ -295,18 +295,18 @@ const TrytonTable = ({
       background: 'white',
       padding: '20px'
     }}>
-      <MemoizedDataTable
-        columns={columns}
-        data={data}
-        searchable={true}
-        pagination={true}
-        pageSize={20}
-        onRowClick={onRowClick}
-        onRowDoubleClick={onRowDoubleClick}
-        onRowSelect={onRowSelect}
-        enableRowSelection={enableRowSelection}
-        selectedRecord={selectedRecord}
-      />
+        <MemoizedDataTable
+          columns={columns}
+          data={data}
+          searchable={true}
+          pagination={true}
+          pageSize={20}
+          onRowClick={onRowClick}
+          onRowDoubleClick={onRowDoubleClick}
+          onRowSelect={onRowSelect}
+          enableRowSelection={enableRowSelection}
+          selectedRecord={selectedRecord}
+        />
       
       {/* Debug information (development only) */}
       {process.env.NODE_ENV === 'development' && (
