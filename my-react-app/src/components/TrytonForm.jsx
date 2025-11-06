@@ -90,7 +90,7 @@ const isFieldReadonly = (fieldDef, formData) => {
   // Si no hay fieldDef, asumir que no es readonly
   if (!fieldDef) return false;
 
-  // Evaluar estados dinámicos primero (tienen prioridad)
+  // Evaluar estados dinámicos primero (tienen prioridad sobre readonly estático)
   if (fieldDef.states) {
     try {
       const states =
@@ -118,23 +118,22 @@ const isFieldReadonly = (fieldDef, formData) => {
     }
   }
 
-  // IMPORTANTE: Ignorar readonly estático para permitir edición
-  // El servidor validará si el campo realmente puede modificarse
-  // Esto coincide con el comportamiento del cliente original de Tryton
-
+  // Si no hay estados dinámicos, usar el readonly estático del campo
+  // Este valor viene de view_fields_get del modelo y ya está calculado por el servidor
+  const staticReadonly = fieldDef.readonly === true;
+  
   // Debug para campos sin states
   if (fieldDef.name === "puid" || fieldDef.name === "ref") {
     console.log(
-      `🔍 Campo ${fieldDef.name} sin states (ignorando readonly estático):`,
+      `🔍 Campo ${fieldDef.name} sin states:`,
       {
         "fieldDef.readonly": fieldDef.readonly,
-        "permitiendo edición": true,
+        "staticReadonly": staticReadonly,
       }
     );
   }
 
-  // Permitir edición - el servidor validará
-  return false;
+  return staticReadonly;
 };
 
 // Component for many2one fields with autocomplete
