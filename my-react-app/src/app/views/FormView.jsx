@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Typography } from 'antd';
 import TrytonForm from '../../components/TrytonForm';
 import Toolbar from '../../components/Toolbar';
 
 const { Title, Paragraph } = Typography;
 
-const FormView = ({ formInfo, selectedMenuInfo, loadingContent, formDirty, onFormChange, toolbarHandlers }) => {
+const FormView = ({ formInfo, selectedMenuInfo, loadingContent, formDirty, onFormChange, toolbarHandlers, formRef }) => {
   return (
     <div style={{
       padding: '24px',
@@ -59,6 +59,7 @@ const FormView = ({ formInfo, selectedMenuInfo, loadingContent, formDirty, onFor
       </div>
 
       <TrytonForm
+        ref={formRef}
         model={formInfo.model}
         viewId={formInfo.viewId}
         viewType={selectedMenuInfo.viewType}

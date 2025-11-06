@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import {
   Card,
   Form,
@@ -534,7 +534,7 @@ const extractFormValues = (data, fieldsView) => {
   return formValues;
 };
 
-const TrytonForm = ({
+const TrytonForm = forwardRef(({
   model,
   viewId,
   viewType = "form",
@@ -549,7 +549,7 @@ const TrytonForm = ({
   submitButtonText = "Save", // New prop for button text
   fieldsView = null, // New prop to pass fieldsView directly
   onFormChange = null, // Callback when form changes (dirty detection)
-}) => {
+}, ref) => {
   const [form] = Form.useForm();
   const [internalLoading, setInternalLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -567,6 +567,14 @@ const TrytonForm = ({
 
   // Rastrear campos modificados (solo se envían al servidor los campos que cambian)
   const [modifiedFields, setModifiedFields] = useState({});
+
+  // Exponer método submit para que el componente padre pueda dispararlo
+  useImperativeHandle(ref, () => ({
+    submit: () => {
+      console.log('🖱️ Submit llamado desde componente padre (toolbar)');
+      form.submit();
+    }
+  }));
 
   // Manejar cambios en campos del formulario
   const handleFormChange = (changedValues, allValues) => {
@@ -1640,6 +1648,8 @@ const TrytonForm = ({
       )}
     </Card>
   );
-};
+});
+
+TrytonForm.displayName = 'TrytonForm';
 
 export default TrytonForm;

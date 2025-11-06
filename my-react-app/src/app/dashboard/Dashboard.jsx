@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Layout } from 'antd';
 import DashboardHeader from './DashboardHeader';
 import Sidebar from '../layout/Sidebar';
@@ -39,6 +39,9 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
   // Estado para el modal de email
   const [emailModalVisible, setEmailModalVisible] = useState(false);
+
+  // Ref para el formulario (para poder llamar submit desde el toolbar)
+  const formRef = useRef(null);
 
   // Manejar clicks del menú con lógica de wizards y opciones
   const handleMenuClick = async (item) => {
@@ -109,8 +112,14 @@ const Dashboard = ({ sessionData, onLogout }) => {
   };
 
   const handleToolbarSave = () => {
-    console.log('Toolbar save clicked');
-    // TODO: Implementar guardado de registro
+    console.log('💾 Toolbar save clicked');
+    // Si hay una ref del formulario, llamar a su método submit
+    if (formRef.current) {
+      console.log('💾 Llamando submit del formulario desde toolbar');
+      formRef.current.submit();
+    } else {
+      console.warn('⚠️ No hay referencia al formulario disponible');
+    }
   };
 
   const handleToolbarRefresh = () => {
@@ -557,6 +566,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
             onRecordClick={handleRecordClick}
             selectedRecord={selectedRecord}
             onRecordSelect={handleRecordSelect}
+            formRef={formRef}
             toolbarHandlers={{
               onNavigate: handleToolbarNavigate,
               onCreate: handleToolbarCreate,

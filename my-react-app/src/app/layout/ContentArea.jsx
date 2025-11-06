@@ -19,7 +19,8 @@ const ContentArea = ({
   toolbarHandlers,
   onRecordClick,
   selectedRecord,
-  onRecordSelect
+  onRecordSelect,
+  formRef
 }) => {
   const renderContent = () => {
     console.log('🎨 ContentArea renderContent:', {
@@ -51,6 +52,7 @@ const ContentArea = ({
           formDirty={formDirty}
           onFormChange={onFormChange}
           toolbarHandlers={toolbarHandlers}
+          formRef={formRef}
         />
       );
     }
