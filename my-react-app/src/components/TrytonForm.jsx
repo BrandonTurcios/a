@@ -18,6 +18,11 @@ import {
   Tag,
   Tooltip,
   AutoComplete,
+  Upload,
+  Image,
+  Table,
+  Modal,
+  message,
 } from "antd";
 import {
   SaveOutlined,
@@ -28,6 +33,8 @@ import {
   MinusOutlined,
   SearchOutlined,
   CalendarOutlined,
+  UploadOutlined,
+  PictureOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import trytonService from "../services/trytonService";
@@ -331,6 +338,531 @@ const Many2OneField = ({
             type="secondary"
             style={{ fontSize: "12px", lineHeight: "1.4" }}
           >
+            {help}
+          </Text>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Component for one2many fields with table and modal for editing
+const One2ManyField = ({
+  name,
+  label,
+  fieldDef,
+  required,
+  readonly,
+  help,
+  form,
+  defaultValue,
+  parentRecordId,
+  parentModel,
+}) => {
+  const [relatedRecords, setRelatedRecords] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
+  const [tableColumns, setTableColumns] = useState([]);
+  const relation = fieldDef.relation;
+  const fieldString = fieldDef.field_string || name; // Campo que apunta al registro padre
+
+  // Cargar registros relacionados
+  const loadRelatedRecords = async () => {
+    if (!relation || !parentRecordId) {
+      setRelatedRecords([]);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      console.log(
+        `🔍 Loading one2many records for ${name} (${relation}) where ${fieldString} = ${parentRecordId}`
+      );
+
+      // Obtener vista tree del modelo relacionado
+      let fieldsView = null;
+      try {
+        fieldsView = await trytonService.getFieldsView(relation, null, "tree");
+      } catch (e) {
+        // Si no hay vista tree, intentar con form
+        try {
+          fieldsView = await trytonService.getFieldsView(relation, null, "form");
+        } catch (e2) {
+          console.warn(`⚠️ No view available for ${relation}`);
+        }
+      }
+
+      if (fieldsView) {
+        // Obtener campos de la vista
+        const fields = Object.keys(fieldsView.fields || {});
+        const expandedFields =
+          trytonService.expandFieldsForRelationsFromFieldsView(
+            fields,
+            fieldsView
+          );
+
+        // Buscar registros relacionados
+        const domain = [[fieldString, "=", parentRecordId]];
+        const records = await trytonService.getModelData(
+          relation,
+          domain,
+          expandedFields,
+          1000
+        );
+
+        setRelatedRecords(records || []);
+
+        // Generar columnas para la tabla
+        if (fieldsView.fields) {
+          const cols = [];
+          Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
+            if (shouldIncludeFieldInTable(fieldName, fieldsView.arch)) {
+              cols.push({
+                title: fieldDef.string || fieldName,
+                dataIndex: fieldName,
+                key: fieldName,
+                render: (value, record) => {
+                  if (value === null || value === undefined) return "-";
+                  if (typeof value === "object" && value.rec_name) {
+                    return value.rec_name;
+                  }
+                  if (Array.isArray(value)) {
+                    return `${value.length} item(s)`;
+                  }
+                  return String(value);
+                },
+              });
+            }
+          });
+          setTableColumns(cols);
+        }
+
+        console.log(`✅ Loaded ${records.length} related records`);
+        
+        // Actualizar valor del formulario con los IDs
+        const ids = (records || []).map((r) => r.id);
+        form.setFieldValue(name, ids);
+      } else {
+        // Si no hay vista, usar campos básicos
+        const records = await trytonService.getModelData(
+          relation,
+          [[fieldString, "=", parentRecordId]],
+          ["id", "name", "rec_name"],
+          1000
+        );
+        setRelatedRecords(records || []);
+        setTableColumns([
+          {
+            title: "Name",
+            dataIndex: "name",
+            key: "name",
+            render: (value) => value || "-",
+          },
+        ]);
+        
+        // Actualizar valor del formulario con los IDs
+        const ids = (records || []).map((r) => r.id);
+        form.setFieldValue(name, ids);
+      }
+    } catch (error) {
+      console.error(`❌ Error loading one2many records for ${name}:`, error);
+      message.error(`Error loading ${label}: ${error.message}`);
+      setRelatedRecords([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const shouldIncludeFieldInTable = (fieldName, arch) => {
+    if (!arch) return false;
+    return arch.includes(`name="${fieldName}"`);
+  };
+
+  useEffect(() => {
+    if (parentRecordId) {
+      loadRelatedRecords();
+    } else if (defaultValue && Array.isArray(defaultValue)) {
+      // Si hay valores por defecto (IDs), cargarlos
+      setRelatedRecords(defaultValue);
+      form.setFieldValue(
+        name,
+        defaultValue.map((r) => (typeof r === "object" ? r.id : r))
+      );
+    }
+  }, [parentRecordId, relation, fieldString]);
+
+  const handleAdd = () => {
+    setEditingRecord(null);
+    setModalVisible(true);
+  };
+
+  const handleEdit = (record) => {
+    setEditingRecord(record);
+    setModalVisible(true);
+  };
+
+  const handleDelete = async (recordId) => {
+    try {
+      await trytonService.deleteRecord(relation, recordId);
+      message.success("Record deleted successfully");
+      loadRelatedRecords();
+    } catch (error) {
+      console.error("Error deleting record:", error);
+      message.error(`Error deleting record: ${error.message}`);
+    }
+  };
+
+  const handleModalSave = async (values) => {
+    try {
+      if (editingRecord) {
+        // Actualizar registro existente
+        await trytonService.updateRecord(relation, editingRecord.id, values);
+        message.success("Record updated successfully");
+      } else {
+        // Crear nuevo registro
+        const newValues = {
+          ...values,
+          [fieldString]: parentRecordId,
+        };
+        await trytonService.createRecord(relation, newValues);
+        message.success("Record created successfully");
+      }
+      setModalVisible(false);
+      setEditingRecord(null);
+      loadRelatedRecords();
+    } catch (error) {
+      console.error("Error saving record:", error);
+      message.error(`Error saving record: ${error.message}`);
+    }
+  };
+
+  return (
+    <div className="mb-6">
+      <div className="flex items-center gap-2 font-medium text-gray-700 mb-2">
+        {required && <span className="text-red-500">*</span>}
+        {label}
+      </div>
+
+      <div
+        style={{
+          padding: "16px",
+          border: "1px solid #d9d9d9",
+          borderRadius: "8px",
+          background: "#fafafa",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: "12px",
+          }}
+        >
+          <Text type="secondary" style={{ fontWeight: "500" }}>
+            {relatedRecords.length} record(s)
+          </Text>
+          {!readonly && (
+            <Button
+              size="small"
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={handleAdd}
+              disabled={!parentRecordId}
+            >
+              Add
+            </Button>
+          )}
+        </div>
+
+        {loading ? (
+          <div style={{ textAlign: "center", padding: "20px" }}>
+            <Spin />
+          </div>
+        ) : relatedRecords.length > 0 ? (
+          <Table
+            dataSource={relatedRecords}
+            columns={[
+              ...tableColumns,
+              {
+                title: "Actions",
+                key: "actions",
+                render: (_, record) => (
+                  <Space>
+                    {!readonly && (
+                      <>
+                        <Button
+                          size="small"
+                          icon={<EditOutlined />}
+                          onClick={() => handleEdit(record)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          size="small"
+                          danger
+                          icon={<DeleteOutlined />}
+                          onClick={() => {
+                            Modal.confirm({
+                              title: "Delete Record",
+                              content: "Are you sure you want to delete this record?",
+                              onOk: () => handleDelete(record.id),
+                            });
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      </>
+                    )}
+                  </Space>
+                ),
+              },
+            ]}
+            rowKey="id"
+            pagination={{ pageSize: 5 }}
+            size="small"
+          />
+        ) : (
+          <div
+            style={{
+              textAlign: "center",
+              padding: "20px",
+              color: "#8c8c8c",
+            }}
+          >
+            <Text type="secondary">
+              {parentRecordId
+                ? "No related records. Click 'Add' to create one."
+                : "Save the parent record first to add related records."}
+            </Text>
+          </div>
+        )}
+      </div>
+
+      {/* Modal para editar/crear registro */}
+      <Modal
+        title={editingRecord ? `Edit ${label}` : `Add ${label}`}
+        open={modalVisible}
+        onCancel={() => {
+          setModalVisible(false);
+          setEditingRecord(null);
+        }}
+        footer={null}
+        width={800}
+      >
+        <TrytonForm
+          model={relation}
+          viewId={null}
+          viewType="form"
+          recordId={editingRecord?.id || null}
+          recordData={editingRecord}
+          title={editingRecord ? `Edit ${label}` : `Add ${label}`}
+          onSubmit={handleModalSave}
+          onCancel={() => {
+            setModalVisible(false);
+            setEditingRecord(null);
+          }}
+          readonly={readonly}
+        />
+      </Modal>
+
+      {/* Campo oculto para almacenar los IDs en el formulario */}
+      <Form.Item name={name} hidden>
+        <Input type="hidden" />
+      </Form.Item>
+
+      {help && (
+        <div style={{ marginTop: "8px", marginBottom: "16px" }}>
+          <Text type="secondary" style={{ fontSize: "12px", lineHeight: "1.4" }}>
+            {help}
+          </Text>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Component for binary/image fields with upload and preview
+const BinaryImageField = ({
+  name,
+  label,
+  fieldDef,
+  required,
+  readonly,
+  help,
+  form,
+  defaultValue,
+}) => {
+  const [imageUrl, setImageUrl] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [previewImage, setPreviewImage] = useState("");
+
+  // Cargar imagen existente
+  useEffect(() => {
+    if (defaultValue) {
+      // Si defaultValue es base64, usarlo directamente
+      if (typeof defaultValue === "string" && defaultValue.startsWith("data:")) {
+        setImageUrl(defaultValue);
+      } else if (typeof defaultValue === "object" && defaultValue.base64) {
+        // Si es un objeto con base64
+        setImageUrl(`data:image/png;base64,${defaultValue.base64}`);
+      } else if (typeof defaultValue === "object" && defaultValue.__class__ === "bytes") {
+        // Formato Tryton bytes
+        setImageUrl(`data:image/png;base64,${defaultValue.base64}`);
+      }
+    }
+  }, [defaultValue]);
+
+  const getBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handleChange = async (info) => {
+    if (info.file.status === "uploading") {
+      setLoading(true);
+      return;
+    }
+
+    if (info.file.status === "done") {
+      try {
+        // Convertir a base64
+        const base64 = await getBase64(info.file.originFileObj);
+        setImageUrl(base64);
+
+        // Extraer solo la parte base64 (sin el prefijo data:image/...)
+        const base64Data = base64.split(",")[1];
+
+        // Guardar en formato Tryton bytes
+        form.setFieldValue(name, {
+          __class__: "bytes",
+          base64: base64Data,
+        });
+
+        setLoading(false);
+        message.success("Image uploaded successfully");
+      } catch (error) {
+        console.error("Error processing image:", error);
+        message.error("Error processing image");
+        setLoading(false);
+      }
+    }
+
+    if (info.file.status === "error") {
+      setLoading(false);
+      message.error("Error uploading image");
+    }
+  };
+
+  const handlePreview = (file) => {
+    if (file.url || file.preview) {
+      setPreviewImage(file.url || file.preview);
+      setPreviewVisible(true);
+    } else if (imageUrl) {
+      setPreviewImage(imageUrl);
+      setPreviewVisible(true);
+    }
+  };
+
+  const handleRemove = () => {
+    setImageUrl(null);
+    form.setFieldValue(name, null);
+    message.success("Image removed");
+  };
+
+  const uploadButton = (
+    <div>
+      {loading ? <Spin /> : <UploadOutlined />}
+      <div style={{ marginTop: 8 }}>Upload</div>
+    </div>
+  );
+
+  return (
+    <div className="mb-6">
+      <div className="flex items-center gap-2 font-medium text-gray-700 mb-2">
+        {required && <span className="text-red-500">*</span>}
+        <PictureOutlined className="text-teal-600" />
+        {label}
+      </div>
+
+      <Upload
+        name={name}
+        listType="picture-card"
+        className="avatar-uploader"
+        showUploadList={false}
+        beforeUpload={(file) => {
+          const isImage = file.type.startsWith("image/");
+          if (!isImage) {
+            message.error("You can only upload image files!");
+            return false;
+          }
+          const isLt2M = file.size / 1024 / 1024 < 2;
+          if (!isLt2M) {
+            message.error("Image must be smaller than 2MB!");
+            return false;
+          }
+          return true;
+        }}
+        onChange={handleChange}
+        onPreview={handlePreview}
+        disabled={readonly || loading}
+        customRequest={({ file, onSuccess, onError }) => {
+          // Simular upload (el procesamiento se hace en handleChange)
+          setTimeout(() => {
+            onSuccess("ok");
+          }, 0);
+        }}
+      >
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt="preview"
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        ) : (
+          uploadButton
+        )}
+      </Upload>
+
+      {imageUrl && !readonly && (
+        <div style={{ marginTop: "8px" }}>
+          <Button
+            size="small"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={handleRemove}
+          >
+            Remove Image
+          </Button>
+        </div>
+      )}
+
+      {previewVisible && (
+        <Image
+          wrapperStyle={{ display: "none" }}
+          preview={{
+            visible: previewVisible,
+            onVisibleChange: (visible) => setPreviewVisible(visible),
+            mask: "Preview",
+          }}
+          src={previewImage}
+        />
+      )}
+
+      {/* Campo oculto para almacenar el valor en el formulario */}
+      <Form.Item name={name} hidden>
+        <Input type="hidden" />
+      </Form.Item>
+
+      {help && (
+        <div style={{ marginTop: "8px", marginBottom: "16px" }}>
+          <Text type="secondary" style={{ fontSize: "12px", lineHeight: "1.4" }}>
             {help}
           </Text>
         </div>
@@ -1252,66 +1784,49 @@ const TrytonForm = forwardRef(({
 
       case "one2many":
         return (
-          <Form.Item key={name} {...commonProps}>
-            <div
-              style={{
-                padding: "12px",
-                border: "1px solid #d9d9d9",
-                borderRadius: "6px",
-                background: "#fafafa",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: "8px",
-                }}
-              >
-                <Text type="secondary" style={{ fontWeight: "500" }}>
-                  {label} (One2Many)
-                </Text>
-                <Button
-                  size="small"
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={() => {
-                    console.log(
-                      `Opening wizard for one2many field: ${name} (${fieldDef.relation})`
-                    );
-                    // TODO: Implementar wizard para editar registros relacionados
-                  }}
-                >
-                  Add
-                </Button>
-              </div>
-              <div
-                style={{
-                  minHeight: "60px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#8c8c8c",
-                  fontSize: "12px",
-                }}
-              >
-                {formData[name] && formData[name].length > 0 ? (
-                  <Text type="secondary">
-                    {formData[name].length} related record(s) - Click "Add" to
-                    manage
-                  </Text>
-                ) : (
-                  <Text type="secondary">
-                    No related records - Click "Add" to create new
-                  </Text>
-                )}
-              </div>
-            </div>
-          </Form.Item>
+          <One2ManyField
+            key={name}
+            name={name}
+            label={label}
+            fieldDef={fieldDef}
+            required={required}
+            readonly={isReadonly}
+            help={help}
+            form={form}
+            defaultValue={formData[name]}
+            parentRecordId={recordId}
+            parentModel={model}
+          />
         );
 
       case "binary":
+        // Determinar si es una imagen basándose en el nombre del campo o el tipo
+        const isImageField =
+          name.toLowerCase().includes("image") ||
+          name.toLowerCase().includes("photo") ||
+          name.toLowerCase().includes("picture") ||
+          name.toLowerCase().includes("avatar") ||
+          fieldDef.string?.toLowerCase().includes("image") ||
+          fieldDef.string?.toLowerCase().includes("photo") ||
+          fieldDef.string?.toLowerCase().includes("picture");
+        
+        if (isImageField) {
+          return (
+            <BinaryImageField
+              key={name}
+              name={name}
+              label={label}
+              fieldDef={fieldDef}
+              required={required}
+              readonly={isReadonly}
+              help={help}
+              form={form}
+              defaultValue={formData[name]}
+            />
+          );
+        }
+        
+        // Para otros campos binary (archivos), mostrar un componente básico
         return (
           <Form.Item key={name} {...commonProps}>
             <div
@@ -1400,6 +1915,23 @@ const TrytonForm = forwardRef(({
               } else {
                 writableValues[fieldName] = fieldValue.toISOString();
               }
+            } else {
+              writableValues[fieldName] = fieldValue;
+            }
+            return;
+          }
+
+          // Campos one2many no se envían directamente (se manejan a través de los registros relacionados)
+          if (fieldDef.type === "one2many") {
+            console.log(`⏭️ Omitiendo campo one2many ${fieldName} (se maneja a través de registros relacionados)`);
+            return;
+          }
+
+          // Campos binary ya están en formato correcto (__class__: "bytes")
+          if (fieldDef.type === "binary" && fieldValue) {
+            // Si ya está en formato Tryton bytes, mantenerlo
+            if (typeof fieldValue === "object" && fieldValue.__class__ === "bytes") {
+              writableValues[fieldName] = fieldValue;
             } else {
               writableValues[fieldName] = fieldValue;
             }
