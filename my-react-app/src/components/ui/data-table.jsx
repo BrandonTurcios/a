@@ -43,55 +43,16 @@ export function DataTable({
   const [rowSelection, setRowSelection] = React.useState({})
   const [globalFilter, setGlobalFilter] = React.useState("")
 
-  // Update row selection when selectedRecord changes (but avoid infinite loops)
-  React.useEffect(() => {
-    if (selectedRecord && data.length > 0) {
-      // Find the row index of the selected record
-      const rowIndex = data.findIndex(row => row.id === selectedRecord.id);
-      if (rowIndex !== -1) {
-        // Only update if the selection is actually different
-        const newSelection = { [rowIndex]: true };
-        setRowSelection(prevSelection => {
-          if (JSON.stringify(prevSelection) !== JSON.stringify(newSelection)) {
-            return newSelection;
-          }
-          return prevSelection;
-        });
-      }
-    } else if (!selectedRecord) {
-      setRowSelection(prevSelection => {
-        if (Object.keys(prevSelection).length > 0) {
-          return {};
-        }
-        return prevSelection;
-      });
-    }
-  }, [selectedRecord, data]);
-
-  // Handle row selection changes
+  // Handle row selection changes - NO notificar al parent para evitar recargas
   const handleRowSelectionChange = React.useCallback((updaterOrValue) => {
     setRowSelection(prevSelection => {
-      const newSelection = typeof updaterOrValue === 'function' 
-        ? updaterOrValue(prevSelection) 
+      const newSelection = typeof updaterOrValue === 'function'
+        ? updaterOrValue(prevSelection)
         : updaterOrValue;
-      
-      // Only update if selection actually changed
-      if (JSON.stringify(newSelection) !== JSON.stringify(prevSelection)) {
-        // Notify parent component about selection changes
-        if (onRowSelect) {
-          const selectedRowIndex = Object.keys(newSelection).find(key => newSelection[key]);
-          if (selectedRowIndex !== undefined) {
-            const selectedRow = data[parseInt(selectedRowIndex)];
-            onRowSelect(selectedRow, true);
-          } else {
-            onRowSelect(null, false);
-          }
-        }
-        return newSelection;
-      }
-      return prevSelection;
+
+      return newSelection;
     });
-  }, [onRowSelect, data]);
+  }, []);
 
   // Add selection column if row selection is enabled
   const columnsWithSelection = React.useMemo(() => {
@@ -100,9 +61,9 @@ export function DataTable({
     const selectionColumn = {
       id: "select",
       header: ({ table }) => (
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
           justifyContent: 'center',
           height: '100%',
           borderRight: '2px solid #D1D5DB',
@@ -113,14 +74,18 @@ export function DataTable({
           <Checkbox
             checked={table.getIsAllPageRowsSelected()}
             indeterminate={table.getIsSomePageRowsSelected()}
-            onChange={(e) => table.toggleAllPageRowsSelected(e.target.checked)}
+            onChange={(e) => {
+              e.stopPropagation();
+              table.toggleAllPageRowsSelected(e.target.checked);
+              // NO notificar al parent para evitar recargas múltiples
+            }}
           />
         </div>
       ),
       cell: ({ row }) => (
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
           justifyContent: 'center',
           height: '100%',
           borderRight: '2px solid #E5E7EB',
@@ -130,8 +95,12 @@ export function DataTable({
         }}>
           <Checkbox
             checked={row.getIsSelected()}
+            onClick={(e) => {
+              e.stopPropagation(); // Prevenir que el click se propague al row
+            }}
             onChange={(e) => {
               row.toggleSelected(e.target.checked);
+              // NO notificar al parent para evitar recargas
             }}
           />
         </div>
@@ -213,13 +182,24 @@ export function DataTable({
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
                   onClick={(e) => {
-                    // Prevent click if clicking on checkbox
+                    // Prevent click if clicking on checkbox directly
                     if (e.target.type === 'checkbox') return;
-                    if (onRowClick) onRowClick(row.original);
+
+                    // Si el registro ya está seleccionado, ir al formulario
+                    if (row.getIsSelected()) {
+                      if (onRowDoubleClick) {
+                        onRowDoubleClick(row.original);
+                      }
+                    } else {
+                      // Si no está seleccionado, activar su checkbox (primer click)
+                      // NO notificar al parent para evitar recargas - solo actualizar estado local
+                      row.toggleSelected(true);
+                    }
                   }}
                   onDoubleClick={(e) => {
                     // Prevent double click if clicking on checkbox
                     if (e.target.type === 'checkbox') return;
+                    // El doble click siempre va al formulario
                     if (onRowDoubleClick) onRowDoubleClick(row.original);
                   }}
                   className={(onRowClick || onRowDoubleClick) ? "cursor-pointer hover:bg-gray-100" : ""}
