@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 import { Typography } from 'antd';
 import TrytonTable from '../../components/TrytonTable';
 import Toolbar from '../../components/Toolbar';
@@ -6,8 +6,6 @@ import Toolbar from '../../components/Toolbar';
 const { Title, Paragraph } = Typography;
 
 const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, toolbarHandlers, onRecordClick, selectedRecord, onRecordSelect }) => {
-  // Estado para rastrear registros seleccionados
-  const [selectedRecords, setSelectedRecords] = useState([]);
 
   const handleRowClick = useCallback((record) => {
     console.log('🖱️ Row clicked:', record);
@@ -30,21 +28,9 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
     }
   }, [onRecordSelect]);
 
-  // Manejar cambios en la selección múltiple
-  const handleSelectionChange = useCallback((records) => {
-    console.log('✅ Selection changed:', records);
-    setSelectedRecords(records);
-  }, []);
-
-  // Limpiar selección cuando cambia la vista o la tabla
-  React.useEffect(() => {
-    setSelectedRecords([]);
-  }, [tableInfo?.model, tableInfo?.viewId]);
-
   // Debug: Log toolbar info
   console.log('🔧 TableView - toolbarInfo:', selectedMenuInfo?.toolbarInfo);
   console.log('🔧 TableView - selectedRecord:', selectedRecord);
-  console.log('🔧 TableView - selectedRecords:', selectedRecords);
 
   return (
     <div style={{
@@ -91,10 +77,9 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
               onSwitchView={toolbarHandlers.onSwitchView}
               isDirty={false}
               isNativeForm={false}
-              hasSelectedRecord={!!selectedRecord || selectedRecords.length > 0}
-              selectedRecords={selectedRecords}
+              hasSelectedRecord={!!selectedRecord}
               contextModel={selectedMenuInfo?.resModel}
-              contextId={selectedRecord?.id || (selectedRecords.length === 1 ? selectedRecords[0]?.id : null)}
+              contextId={selectedRecord?.id}
             />
           </div>
         )}
@@ -114,7 +99,6 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
         selectedRecord={selectedRecord}
         tableData={tableInfo.filtered ? tableInfo : null}
         filtered={tableInfo.filtered || false}
-        onSelectionChange={handleSelectionChange}
       />
     </div>
   );

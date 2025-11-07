@@ -37,14 +37,13 @@ export function DataTable({
   onRowSelect = null,
   enableRowSelection = false,
   selectedRecord = null, // Pass the currently selected record
-  onSelectionChange = null, // Callback cuando cambia la selección (recibe array de registros seleccionados)
 }) {
   const [sorting, setSorting] = React.useState([])
   const [columnFilters, setColumnFilters] = React.useState([])
   const [rowSelection, setRowSelection] = React.useState({})
   const [globalFilter, setGlobalFilter] = React.useState("")
 
-  // Handle row selection changes - Notificar al parent cuando cambia la selección
+  // Handle row selection changes - NO notificar al parent para evitar recargas
   const handleRowSelectionChange = React.useCallback((updaterOrValue) => {
     setRowSelection(prevSelection => {
       const newSelection = typeof updaterOrValue === 'function'
@@ -139,26 +138,6 @@ export function DataTable({
       },
     },
   })
-
-  // Notificar al padre cuando cambia la selección (sin recargar la tabla)
-  React.useEffect(() => {
-    if (enableRowSelection && onSelectionChange && table) {
-      // Usar setTimeout para asegurar que el estado de la tabla se haya actualizado
-      const timer = setTimeout(() => {
-        try {
-          const selectedRows = table.getFilteredSelectedRowModel().rows;
-          const selectedRecords = selectedRows.map(row => row.original);
-          onSelectionChange(selectedRecords);
-        } catch (error) {
-          // Si hay un error, simplemente notificar array vacío
-          console.warn('Error getting selected rows:', error);
-          onSelectionChange([]);
-        }
-      }, 0);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [rowSelection, enableRowSelection, onSelectionChange, table]);
 
   return (
     <div className="w-full">
@@ -321,7 +300,6 @@ export const MemoizedDataTable = React.memo(DataTable, (prevProps, nextProps) =>
     // Para las funciones, solo comparar si son las mismas referencias
     prevProps.onRowClick === nextProps.onRowClick &&
     prevProps.onRowDoubleClick === nextProps.onRowDoubleClick &&
-    prevProps.onRowSelect === nextProps.onRowSelect &&
-    prevProps.onSelectionChange === nextProps.onSelectionChange
+    prevProps.onRowSelect === nextProps.onRowSelect
   );
 });

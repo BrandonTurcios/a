@@ -18,8 +18,7 @@ const TrytonTable = ({
   enableRowSelection = false,
   selectedRecord = null,
   tableData = null, // Datos pre-cargados (para tablas relacionadas)
-  filtered = false, // Indicar si está filtrado
-  onSelectionChange = null, // Callback cuando cambia la selección múltiple
+  filtered = false // Indicar si está filtrado
 }) => {
   const [tableInfo, setTableInfo] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -307,7 +306,6 @@ const TrytonTable = ({
           onRowSelect={onRowSelect}
           enableRowSelection={enableRowSelection}
           selectedRecord={selectedRecord}
-          onSelectionChange={onSelectionChange}
         />
       
       {/* Debug information (development only) */}
