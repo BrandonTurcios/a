@@ -23,6 +23,7 @@ import {
   Table,
   Modal,
   message,
+  App,
 } from "antd";
 import {
   SaveOutlined,
@@ -1082,6 +1083,7 @@ const TrytonForm = forwardRef(({
   fieldsView = null, // New prop to pass fieldsView directly
   onFormChange = null, // Callback when form changes (dirty detection)
 }, ref) => {
+  const { notification: notificationApi } = App.useApp();
   const [form] = Form.useForm();
   const [internalLoading, setInternalLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -2008,6 +2010,19 @@ const TrytonForm = forwardRef(({
       if (onFormChange) {
         onFormChange(false);
       }
+
+      // Mostrar notificación de éxito
+      notificationApi.success({
+        message: 'Success',
+        placement: 'topRight',
+        duration: 4.5,
+        top: 24,
+        style: {
+          zIndex: 9999,
+          background: 'var(--color-success-50)',
+        },
+        className: 'custom-notification-success',
+      });
 
       if (onSave) {
         onSave(writableValues, savedRecordId);

@@ -257,7 +257,6 @@ const Toolbar = ({
       });
       notificationApi.success({
         message: 'Success',
-        description: `Se agregó el archivo "${file.name}" exitosamente`,
         placement: 'topRight',
         duration: 4.5,
         top: 24,
@@ -321,7 +320,6 @@ const Toolbar = ({
       console.log('✅ Note created successfully, showing notification');
       notificationApi.success({
         message: 'Success',
-        description: 'Se agregó la nota exitosamente',
         placement: 'topRight',
         duration: 4.5,
         top: 24,

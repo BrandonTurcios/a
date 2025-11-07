@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { ConfigProvider } from 'antd'
+import { ConfigProvider, App as AntdApp } from 'antd'
 import './index.css'
 import App from './App.jsx'
 import antdThemeConfig from './config/antdTheme.js'
@@ -17,7 +17,9 @@ createRoot(document.getElementById('root')).render(
         rtl: false,
       }}
     >
-      <App />
+      <AntdApp>
+        <App />
+      </AntdApp>
     </ConfigProvider>
   </StrictMode>,
 )
