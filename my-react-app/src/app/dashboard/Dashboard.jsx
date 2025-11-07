@@ -543,7 +543,7 @@ const Dashboard = ({ sessionData, onLogout, onLanguageChange }) => {
         throw new Error('Respuesta del reporte inválida');
       }
 
-      const [format, pdfData, directPrint, reportName] = result;
+      const [format, pdfData, directPrint, reportFileName] = result;
 
       if (format !== 'pdf') {
         throw new Error(`Formato de reporte no soportado: ${format}`);
@@ -573,7 +573,7 @@ const Dashboard = ({ sessionData, onLogout, onLanguageChange }) => {
         // Si el popup fue bloqueado, crear un enlace de descarga
         const a = document.createElement('a');
         a.href = pdfUrl;
-        a.download = `${reportName || printItem.name || 'reporte'}.pdf`;
+        a.download = `${reportFileName || printItem.name || 'reporte'}.pdf`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
