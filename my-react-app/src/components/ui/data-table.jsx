@@ -43,17 +43,24 @@ export function DataTable({
   const [rowSelection, setRowSelection] = React.useState({});
   const [globalFilter, setGlobalFilter] = React.useState("");
 
-  // Handle row selection changes
-  const handleRowSelectionChange = React.useCallback((updaterOrValue) => {
-    setRowSelection((prevSelection) => {
-      const newSelection =
-        typeof updaterOrValue === "function"
-          ? updaterOrValue(prevSelection)
-          : updaterOrValue;
+  // Notificar al parent cuando cambia la selección (para habilitar botones del toolbar)
+  React.useEffect(() => {
+    if (!onRowSelect) return;
 
-      return newSelection;
-    });
-  }, []);
+    const selectedIndices = Object.keys(rowSelection).filter(key => rowSelection[key]);
+
+    if (selectedIndices.length > 0) {
+      // Hay registros seleccionados - notificar con el primero (para toolbar)
+      const firstSelectedIndex = parseInt(selectedIndices[0]);
+      const selectedRow = data[firstSelectedIndex];
+      if (selectedRow) {
+        onRowSelect(selectedRow, true);
+      }
+    } else {
+      // No hay selección - notificar
+      onRowSelect(null, false);
+    }
+  }, [rowSelection, data, onRowSelect]);
 
   // Add selection column if row selection is enabled
   const columnsWithSelection = React.useMemo(() => {
@@ -125,7 +132,7 @@ export function DataTable({
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    onRowSelectionChange: handleRowSelectionChange,
+    onRowSelectionChange: setRowSelection,
     onGlobalFilterChange: setGlobalFilter,
     globalFilterFn: "includesString",
     enableRowSelection: enableRowSelection,
