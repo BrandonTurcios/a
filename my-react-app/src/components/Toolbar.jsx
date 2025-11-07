@@ -578,20 +578,27 @@ const Toolbar = ({
   const renderRelateDropdown = () => {
     if (!relate || relate.length === 0) return null;
 
+    const isDisabled = loading || !hasSelectedRecord;
+
     const menuItems = relate.map((item, index) => ({
       key: index,
       label: item.name || `Relate ${index + 1}`,
-      onClick: () => onRelate?.(item)
+      onClick: () => onRelate?.(item),
+      disabled: isDisabled
     }));
 
     return (
       <Dropdown
         menu={{ items: menuItems }}
         trigger={['click']}
-        disabled={loading}
+        disabled={isDisabled}
       >
-        <Tooltip title="Relate">
-          <Button icon={<LinkOutlined />} disabled={loading} style={loading ? disabledVisualStyle : undefined}>
+        <Tooltip title={hasSelectedRecord ? "Relate" : "Selecciona un registro para relacionar"}>
+          <Button 
+            icon={<LinkOutlined />} 
+            disabled={isDisabled} 
+            style={isDisabled ? disabledVisualStyle : undefined}
+          >
           </Button>
         </Tooltip>
       </Dropdown>
@@ -602,20 +609,27 @@ const Toolbar = ({
   const renderPrintDropdown = () => {
     if (!print || print.length === 0) return null;
 
+    const isDisabled = loading || !hasSelectedRecord;
+
     const menuItems = print.map((item, index) => ({
       key: index,
       label: item.name || `Print ${index + 1}`,
-      onClick: () => onPrint?.(item)
+      onClick: () => onPrint?.(item),
+      disabled: isDisabled
     }));
 
     return (
       <Dropdown
         menu={{ items: menuItems }}
         trigger={['click']}
-        disabled={loading}
+        disabled={isDisabled}
       >
-        <Tooltip title="Print">
-          <Button icon={<PrinterOutlined />} disabled={loading} style={loading ? disabledVisualStyle : undefined} />
+        <Tooltip title={hasSelectedRecord ? "Print" : "Selecciona un registro para imprimir"}>
+          <Button 
+            icon={<PrinterOutlined />} 
+            disabled={isDisabled} 
+            style={isDisabled ? disabledVisualStyle : undefined} 
+          />
         </Tooltip>
       </Dropdown>
     );

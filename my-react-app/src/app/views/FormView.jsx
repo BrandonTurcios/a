@@ -51,6 +51,7 @@ const FormView = ({ formInfo, selectedMenuInfo, loadingContent, formDirty, onFor
               onSwitchView={toolbarHandlers.onSwitchView}
               isDirty={formDirty}
               isNativeForm={formInfo?.isNativeForm || false}
+              hasSelectedRecord={!!formInfo?.recordData?.id}
               contextModel={formInfo?.model}
               contextId={formInfo?.recordData?.id}
             />
