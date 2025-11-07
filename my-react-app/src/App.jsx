@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { message, Spin } from 'antd'
+import { message, Spin, App as AntApp } from 'antd'
 import Login from './components/Login'
 import Dashboard from './app/dashboard/Dashboard'
 import trytonService from './services/trytonService'

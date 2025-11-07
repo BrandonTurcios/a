@@ -39,7 +39,7 @@ const Dashboard = ({ sessionData, onLogout, onLanguageChange }) => {
 
   // Estado para el modal de email
   const [emailModalVisible, setEmailModalVisible] = useState(false);
-
+  const formRef = useRef(null);
   // Restaurar estado de navegación después de cambio de idioma
   useEffect(() => {
     // Solo ejecutar cuando el menú ha terminado de cargar
