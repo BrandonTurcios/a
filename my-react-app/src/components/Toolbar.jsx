@@ -627,13 +627,21 @@ const Toolbar = ({
     // This allows us to handle email functionality manually
     if (viewType !== 'tree') return null;
 
+    const isEnabled = !loading && hasSelectedRecord;
+    const enabledStyle = isEnabled ? { 
+      borderColor: 'var(--color-primary)', 
+      color: 'var(--color-primary)',
+      boxShadow: '0 2px 4px rgba(0, 168, 142, 0.2)'
+    } : undefined;
+
     return (
       <Tooltip title={hasSelectedRecord ? "Enviar por email" : "Selecciona un registro para enviar email"}>
         <Button 
           icon={<MailOutlined />} 
           onClick={() => onEmail?.()}
-          disabled={loading || !hasSelectedRecord}
-          style={(loading || !hasSelectedRecord) ? disabledVisualStyle : undefined}
+          disabled={!isEnabled}
+          style={isEnabled ? enabledStyle : disabledVisualStyle}
+          type={isEnabled ? 'primary' : 'default'}
         />
       </Tooltip>
     );

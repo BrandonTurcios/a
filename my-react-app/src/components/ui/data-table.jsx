@@ -1,4 +1,4 @@
-import * as React from "react";
+import * as React from "react"
 import {
   flexRender,
   getCoreRowModel,
@@ -6,7 +6,7 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from "@tanstack/react-table";
+} from "@tanstack/react-table"
 import {
   Table,
   TableBody,
@@ -14,15 +14,15 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "./table";
-import { Button, Input, Checkbox } from "antd";
-import {
+} from "./table"
+import { Button, Input, Checkbox } from "antd"
+import { 
   LeftOutlined,
   RightOutlined,
   DoubleLeftOutlined,
   DoubleRightOutlined,
-  SearchOutlined,
-} from "@ant-design/icons";
+  SearchOutlined
+} from "@ant-design/icons"
 
 const { Search } = Input;
 
@@ -38,19 +38,17 @@ export function DataTable({
   enableRowSelection = false,
   selectedRecord = null, // Pass the currently selected record
 }) {
-  const [sorting, setSorting] = React.useState([]);
-  const [columnFilters, setColumnFilters] = React.useState([]);
-  const [rowSelection, setRowSelection] = React.useState({});
-  const [globalFilter, setGlobalFilter] = React.useState("");
+  const [sorting, setSorting] = React.useState([])
+  const [columnFilters, setColumnFilters] = React.useState([])
+  const [rowSelection, setRowSelection] = React.useState({})
+  const [globalFilter, setGlobalFilter] = React.useState("")
 
-  // Handle row selection changes
+  // Handle row selection changes - solo actualizar estado local
   const handleRowSelectionChange = React.useCallback((updaterOrValue) => {
-    setRowSelection((prevSelection) => {
-      const newSelection =
-        typeof updaterOrValue === "function"
-          ? updaterOrValue(prevSelection)
-          : updaterOrValue;
-
+    setRowSelection(prevSelection => {
+      const newSelection = typeof updaterOrValue === 'function'
+        ? updaterOrValue(prevSelection)
+        : updaterOrValue;
       return newSelection;
     });
   }, []);
@@ -58,7 +56,7 @@ export function DataTable({
   // Add selection column if row selection is enabled
   const columnsWithSelection = React.useMemo(() => {
     if (!enableRowSelection) return columns;
-
+    
     const selectionColumn = {
       id: "select",
       header: ({ table }) => (
@@ -96,9 +94,10 @@ export function DataTable({
           <Checkbox
             checked={row.getIsSelected()}
             onClick={(e) => {
-              e.stopPropagation();
+              e.stopPropagation(); // Prevenir que el click se propague al row
             }}
             onChange={(e) => {
+              e.stopPropagation();
               row.toggleSelected(e.target.checked);
             }}
           />
@@ -108,9 +107,9 @@ export function DataTable({
       enableHiding: false,
       size: 50, // Fixed width for selection column
     };
-
+    
     return [selectionColumn, ...columns];
-  }, [columns, enableRowSelection, onRowSelect]);
+  }, [columns, enableRowSelection]);
 
   const table = useReactTable({
     data,
@@ -136,7 +135,60 @@ export function DataTable({
         pageSize: pageSize,
       },
     },
-  });
+  })
+
+  // Notificar al parent cuando cambia la selección (sin recargar la tabla)
+  // Usar useRef para rastrear la selección anterior y evitar notificaciones innecesarias
+  const prevSelectionRef = React.useRef({});
+  const selectionChangeTimeoutRef = React.useRef(null);
+  
+  React.useEffect(() => {
+    if (!enableRowSelection || !onRowSelect) return;
+    
+    // Comparar con la selección anterior para evitar notificaciones duplicadas
+    const prevSelectionKeys = Object.keys(prevSelectionRef.current || {}).sort().join(',');
+    const currentSelectionKeys = Object.keys(rowSelection || {}).sort().join(',');
+    
+    if (prevSelectionKeys === currentSelectionKeys) return;
+    
+    prevSelectionRef.current = { ...rowSelection };
+    
+    // Usar un pequeño delay para agrupar cambios rápidos y evitar múltiples llamadas
+    if (selectionChangeTimeoutRef.current) {
+      clearTimeout(selectionChangeTimeoutRef.current);
+    }
+    
+    selectionChangeTimeoutRef.current = setTimeout(() => {
+      try {
+        // Obtener los registros seleccionados usando la tabla actual
+        const currentTable = table;
+        if (!currentTable) return;
+        
+        const selectedRows = currentTable.getFilteredSelectedRowModel().rows;
+        const selectedRecords = selectedRows.map(row => row.original);
+        
+        // Notificar al parent solo si hay un cambio real
+        if (selectedRecords.length > 0) {
+          // Notificar con el primer registro seleccionado
+          console.log('✅ Notificando selección al parent:', selectedRecords[0]);
+          onRowSelect(selectedRecords[0], true);
+        } else {
+          // Si no hay selección, notificar null
+          console.log('✅ Notificando deselección al parent');
+          onRowSelect(null, false);
+        }
+      } catch (error) {
+        console.warn('Error notificando selección:', error);
+      }
+    }, 10);
+    
+    // Cleanup timeout on unmount
+    return () => {
+      if (selectionChangeTimeoutRef.current) {
+        clearTimeout(selectionChangeTimeoutRef.current);
+      }
+    };
+  }, [rowSelection, enableRowSelection, onRowSelect]);
 
   return (
     <div className="w-full">
@@ -169,7 +221,7 @@ export function DataTable({
                             header.getContext()
                           )}
                     </TableHead>
-                  );
+                  )
                 })}
               </TableRow>
             ))}
@@ -182,7 +234,7 @@ export function DataTable({
                   data-state={row.getIsSelected() && "selected"}
                   onClick={(e) => {
                     // Prevent click if clicking on checkbox directly
-                    if (e.target.type === "checkbox") return;
+                    if (e.target.type === 'checkbox') return;
 
                     // Si el registro ya está seleccionado, ir al formulario
                     if (row.getIsSelected()) {
@@ -190,18 +242,14 @@ export function DataTable({
                         onRowDoubleClick(row.original);
                       }
                     } else {
-                      // Si no está seleccionado, activar su checkbox
+                      // Si no está seleccionado, activar su checkbox (primer click)
                       row.toggleSelected(true);
-                      // Notificar al padre sobre la selección
-                      if (onRowSelect) {
-                        onRowSelect(row.original, true);
-                      }
                     }
                   }}
                   onDoubleClick={(e) => {
                     // Prevent double click if clicking on checkbox
-                    if (e.target.type === "checkbox") return;
-
+                    if (e.target.type === 'checkbox') return;
+                    // El doble click siempre va al formulario
                     if (onRowDoubleClick) onRowDoubleClick(row.original);
                   }}
                   style={{
@@ -284,27 +332,24 @@ export function DataTable({
         </div>
       )}
     </div>
-  );
+  )
 }
 
 // Exportar también el componente memoizado con comparación personalizada
-export const MemoizedDataTable = React.memo(
-  DataTable,
-  (prevProps, nextProps) => {
-    // Solo re-renderizar si las props realmente importantes han cambiado
-    return (
-      prevProps.columns === nextProps.columns &&
-      prevProps.data === nextProps.data &&
-      prevProps.searchable === nextProps.searchable &&
-      prevProps.pagination === nextProps.pagination &&
-      prevProps.pageSize === nextProps.pageSize &&
-      prevProps.enableRowSelection === nextProps.enableRowSelection &&
-      // Para selectedRecord, comparar por ID en lugar de referencia
-      prevProps.selectedRecord?.id === nextProps.selectedRecord?.id &&
-      // Para las funciones, solo comparar si son las mismas referencias
-      prevProps.onRowClick === nextProps.onRowClick &&
-      prevProps.onRowDoubleClick === nextProps.onRowDoubleClick &&
-      prevProps.onRowSelect === nextProps.onRowSelect
-    );
-  }
-);
+export const MemoizedDataTable = React.memo(DataTable, (prevProps, nextProps) => {
+  // Solo re-renderizar si las props realmente importantes han cambiado
+  return (
+    prevProps.columns === nextProps.columns &&
+    prevProps.data === nextProps.data &&
+    prevProps.searchable === nextProps.searchable &&
+    prevProps.pagination === nextProps.pagination &&
+    prevProps.pageSize === nextProps.pageSize &&
+    prevProps.enableRowSelection === nextProps.enableRowSelection &&
+    // Para selectedRecord, comparar por ID en lugar de referencia
+    (prevProps.selectedRecord?.id === nextProps.selectedRecord?.id) &&
+    // Para las funciones, solo comparar si son las mismas referencias
+    prevProps.onRowClick === nextProps.onRowClick &&
+    prevProps.onRowDoubleClick === nextProps.onRowDoubleClick &&
+    prevProps.onRowSelect === nextProps.onRowSelect
+  );
+});
