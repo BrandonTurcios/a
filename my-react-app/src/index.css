@@ -177,6 +177,8 @@ body {
 
 .ant-notification-topRight .ant-notification-notice {
   margin-bottom: 16px !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 /* Eliminar margin-bottom para notificaciones custom para evitar espacio blanco */
@@ -209,6 +211,30 @@ body {
   max-height: none !important;
   overflow: hidden !important;
   display: block !important;
+}
+
+/* Eliminar box-shadow de todos los contenedores de notificación */
+.ant-notification,
+.ant-notification-topRight,
+.ant-notification-topRight > div,
+.ant-notification-topRight > span,
+.ant-notification-topRight > div > div,
+.ant-notification-topRight > div > span {
+  box-shadow: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Asegurar que el contenedor de notificaciones no tenga fondo blanco ni sombra */
+.ant-notification-topRight .ant-notification-notice.custom-notification-success {
+  box-shadow: none !important;
+}
+
+/* Eliminar cualquier sombra o fondo blanco de elementos wrapper */
+.ant-notification-topRight > *,
+.ant-notification-topRight > * > *,
+.ant-notification-topRight > * > * > * {
+  box-shadow: none !important;
 }
 
 /* Aplicar fondo verde al notice cuando tiene la clase custom */
@@ -288,7 +314,7 @@ body {
   border-radius: 8px !important;
   border: none !important;
   border-bottom: none !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: none !important;
   padding: 18px 20px !important;
   padding-bottom: 18px !important;
   overflow: hidden !important;
