@@ -1,18 +1,19 @@
 import { useState, useEffect } from 'react';
-import { 
-  Form, 
-  Input, 
-  Button, 
-  Select, 
-  Card, 
-  Typography, 
-  Alert, 
+import {
+  Form,
+  Input,
+  Button,
+  Select,
+  Card,
+  Typography,
+  Alert,
   Spin
 } from 'antd';
-import { 
+import {
   ExclamationCircleOutlined
 } from '@ant-design/icons';
 import trytonService from '../services/trytonService';
+import LanguageSelector from './LanguageSelector';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -24,6 +25,7 @@ const Login = ({ onLogin }) => {
   const [databases, setDatabases] = useState([]);
   const [loadingDatabases, setLoadingDatabases] = useState(true);
   const [selectedDatabase, setSelectedDatabase] = useState('');
+  const [selectedLanguage, setSelectedLanguage] = useState('en');
 
   useEffect(() => {
     // Obtener las bases de datos disponibles al cargar el componente (como hace el SAO)
@@ -73,10 +75,12 @@ const Login = ({ onLogin }) => {
       const sessionData = await trytonService.login(
         values.database,
         values.username,
-        values.password
+        values.password,
+        selectedLanguage
       );
-      
-      onLogin(sessionData);
+
+      // Pass both session data and password to parent
+      onLogin(sessionData, values.password);
     } catch (error) {
       setError(error.message);
     } finally {
@@ -181,9 +185,20 @@ const Login = ({ onLogin }) => {
                 label={<span style={{ color: '#333333', fontWeight: '500' }}>Password</span>}
                 rules={[{ required: true, message: 'Please enter your password' }]}
               >
-                <Input.Password 
-                  placeholder="Password" 
+                <Input.Password
+                  placeholder="Password"
                   style={{ height: '40px' }}
+                />
+              </Form.Item>
+
+              {/* Language Selector */}
+              <Form.Item
+                label={<span style={{ color: '#333333', fontWeight: '500' }}>Language</span>}
+              >
+                <LanguageSelector
+                  value={selectedLanguage}
+                  onChange={setSelectedLanguage}
+                  style={{ width: '100%', height: '40px' }}
                 />
               </Form.Item>
 

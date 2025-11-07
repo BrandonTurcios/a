@@ -1,12 +1,13 @@
 import React from 'react';
 import { Layout, Button, Input, Avatar, Typography, Tooltip } from 'antd';
 import { MenuOutlined, SearchOutlined, LogoutOutlined } from '@ant-design/icons';
+import LanguageSelector from '../../components/LanguageSelector';
 
 const { Header } = Layout;
 const { Title, Text } = Typography;
 const { Search } = Input;
 
-const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar }) => {
+const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar, onLanguageChange }) => {
   return (
     <Header style={{
       background: 'white',
@@ -102,6 +103,11 @@ const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar }) => {
               </Text>
             </div>
           </div>
+          <LanguageSelector
+            value={sessionData?.language || 'en'}
+            onChange={onLanguageChange}
+            style={{ width: 180 }}
+          />
           <Tooltip title="Sign out">
             <Button
               type="text"
