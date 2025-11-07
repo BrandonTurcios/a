@@ -37,22 +37,15 @@ export function DataTable({
   onRowSelect = null,
   enableRowSelection = false,
   selectedRecord = null, // Pass the currently selected record
+  onSelectionChange = null, // Callback cuando cambia la selección (recibe array de registros seleccionados)
 }) {
   const [sorting, setSorting] = React.useState([])
   const [columnFilters, setColumnFilters] = React.useState([])
   const [rowSelection, setRowSelection] = React.useState({})
   const [globalFilter, setGlobalFilter] = React.useState("")
-  const tableRef = React.useRef(null)
-  // Referencia para rastrear si el cambio de selección viene del usuario o del padre
-  const isInternalSelectionChange = React.useRef(false)
-  // Referencia para el último selectedRecord que notificamos al padre
-  const lastNotifiedRecordRef = React.useRef(null)
 
-  // Handle row selection changes - Notificar al parent cuando cambie la selección
+  // Handle row selection changes - Notificar al parent cuando cambia la selección
   const handleRowSelectionChange = React.useCallback((updaterOrValue) => {
-    // Marcar que este cambio es interno (del usuario)
-    isInternalSelectionChange.current = true;
-    
     setRowSelection(prevSelection => {
       const newSelection = typeof updaterOrValue === 'function'
         ? updaterOrValue(prevSelection)
@@ -85,7 +78,7 @@ export function DataTable({
             onChange={(e) => {
               e.stopPropagation();
               table.toggleAllPageRowsSelected(e.target.checked);
-              // La notificación se hace automáticamente en el useEffect que observa rowSelection
+              // NO notificar al parent para evitar recargas múltiples
             }}
           />
         </div>
@@ -108,7 +101,7 @@ export function DataTable({
             }}
             onChange={(e) => {
               row.toggleSelected(e.target.checked);
-              // La notificación se hace automáticamente en el useEffect que observa rowSelection
+              // NO notificar al parent para evitar recargas
             }}
           />
         </div>
@@ -134,11 +127,6 @@ export function DataTable({
     onGlobalFilterChange: setGlobalFilter,
     globalFilterFn: "includesString",
     enableRowSelection: enableRowSelection,
-    // Usar el ID del registro como clave para preservar la selección cuando los datos cambian
-    getRowId: (row) => {
-      // Intentar usar 'id' primero, luego otros campos comunes
-      return row.id?.toString() || row._id?.toString() || row.key?.toString() || String(row.index || Math.random());
-    },
     state: {
       sorting,
       columnFilters,
@@ -152,128 +140,25 @@ export function DataTable({
     },
   })
 
-  // Guardar referencia de la tabla para usar en efectos
+  // Notificar al padre cuando cambia la selección (sin recargar la tabla)
   React.useEffect(() => {
-    tableRef.current = table;
-  }, [table]);
-
-  // Referencia para rastrear los IDs de datos anteriores
-  const prevDataIdsRef = React.useRef(new Set());
-
-  // Restaurar selección cuando los datos cambian (solo si realmente cambiaron)
-  React.useEffect(() => {
-    if (!enableRowSelection || !data || data.length === 0) {
-      prevDataIdsRef.current = new Set();
-      return;
-    }
-
-    // Obtener IDs actuales de los datos
-    const currentDataIds = new Set(data.map(row => row.id?.toString()).filter(Boolean));
-    
-    // Verificar si los datos realmente cambiaron (comparar IDs)
-    const dataChanged = 
-      prevDataIdsRef.current.size !== currentDataIds.size ||
-      Array.from(prevDataIdsRef.current).some(id => !currentDataIds.has(id)) ||
-      Array.from(currentDataIds).some(id => !prevDataIdsRef.current.has(id));
-
-    // Actualizar referencia
-    prevDataIdsRef.current = currentDataIds;
-
-    // Solo restaurar selección si los datos cambiaron Y hay un selectedRecord
-    if (dataChanged && selectedRecord?.id) {
-      // Usar un pequeño delay para asegurar que la tabla esté lista
-      const timeoutId = setTimeout(() => {
-        const rowToSelect = table.getRowModel().rows.find(
-          row => row.original.id === selectedRecord.id
-        );
-        
-        if (rowToSelect && !rowToSelect.getIsSelected()) {
-          // Restaurar selección sin notificar (viene de recarga de datos)
-          isInternalSelectionChange.current = false;
-          rowToSelect.toggleSelected(true);
+    if (enableRowSelection && onSelectionChange && table) {
+      // Usar setTimeout para asegurar que el estado de la tabla se haya actualizado
+      const timer = setTimeout(() => {
+        try {
+          const selectedRows = table.getFilteredSelectedRowModel().rows;
+          const selectedRecords = selectedRows.map(row => row.original);
+          onSelectionChange(selectedRecords);
+        } catch (error) {
+          // Si hay un error, simplemente notificar array vacío
+          console.warn('Error getting selected rows:', error);
+          onSelectionChange([]);
         }
-      }, 10);
-
-      return () => clearTimeout(timeoutId);
-    }
-  }, [data, enableRowSelection, selectedRecord?.id, table]);
-
-  // Notificar al padre cuando cambie la selección (solo si el cambio viene del usuario)
-  React.useEffect(() => {
-    if (!enableRowSelection || !onRowSelect) return;
-    
-    // Solo notificar si el cambio viene del usuario (no del padre)
-    if (!isInternalSelectionChange.current) {
-      return;
-    }
-    
-    // Resetear la bandera después de verificar
-    isInternalSelectionChange.current = false;
-
-    // Usar un pequeño delay para agrupar múltiples cambios de selección
-    const timeoutId = setTimeout(() => {
-      const selectedRows = table.getSelectedRowModel().rows;
-      const selectedCount = selectedRows.length;
-      let recordToNotify = null;
-      let isSelected = false;
-
-      if (selectedCount === 0) {
-        // No hay selección - notificar null
-        recordToNotify = null;
-        isSelected = false;
-      } else if (selectedCount === 1) {
-        // Una sola selección - notificar ese registro
-        recordToNotify = selectedRows[0].original;
-        isSelected = true;
-      } else {
-        // Múltiples selecciones - notificar el último seleccionado
-        // Esto es útil para que el toolbar sepa qué registro está activo
-        const selectedRecords = selectedRows.map(row => row.original);
-        recordToNotify = selectedRecords[selectedRecords.length - 1];
-        isSelected = true;
-      }
-
-      // Solo notificar si el registro cambió (evitar notificaciones redundantes)
-      const currentRecordId = recordToNotify?.id || null;
-      const lastNotifiedId = lastNotifiedRecordRef.current?.id || null;
+      }, 0);
       
-      if (currentRecordId !== lastNotifiedId) {
-        lastNotifiedRecordRef.current = recordToNotify;
-        onRowSelect(recordToNotify, isSelected);
-      }
-    }, 0);
-
-    return () => clearTimeout(timeoutId);
-  }, [rowSelection, enableRowSelection, onRowSelect, table]);
-
-  // Sincronizar selección cuando selectedRecord cambie desde el padre
-  // Solo sincronizar si la selección actual no coincide con selectedRecord
-  // IMPORTANTE: Este efecto solo se ejecuta cuando selectedRecord cambia externamente,
-  // no cuando viene de nuestra propia notificación
-  React.useEffect(() => {
-    if (!enableRowSelection || !selectedRecord?.id) return;
-
-    // Verificar si la selección ya es correcta
-    const selectedRows = table.getSelectedRowModel().rows;
-    const isCurrentlySelected = selectedRows.some(row => row.original.id === selectedRecord.id);
-    
-    // Si ya está seleccionado, no hacer nada (evitar ciclo)
-    if (isCurrentlySelected) {
-      return;
+      return () => clearTimeout(timer);
     }
-
-    // Buscar la fila que corresponde al selectedRecord
-    const rowToSelect = table.getRowModel().rows.find(
-      row => row.original.id === selectedRecord.id
-    );
-
-    // Si encontramos la fila y no está seleccionada, seleccionarla
-    // Marcar que este cambio NO viene del usuario para no notificar de vuelta
-    if (rowToSelect) {
-      isInternalSelectionChange.current = false;
-      rowToSelect.toggleSelected(true);
-    }
-  }, [selectedRecord?.id, enableRowSelection, table]);
+  }, [rowSelection, enableRowSelection, onSelectionChange, table]);
 
   return (
     <div className="w-full">
@@ -328,7 +213,7 @@ export function DataTable({
                       }
                     } else {
                       // Si no está seleccionado, activar su checkbox (primer click)
-                      // La notificación se hace automáticamente en el useEffect que observa rowSelection
+                      // NO notificar al parent para evitar recargas - solo actualizar estado local
                       row.toggleSelected(true);
                     }
                   }}
@@ -436,6 +321,7 @@ export const MemoizedDataTable = React.memo(DataTable, (prevProps, nextProps) =>
     // Para las funciones, solo comparar si son las mismas referencias
     prevProps.onRowClick === nextProps.onRowClick &&
     prevProps.onRowDoubleClick === nextProps.onRowDoubleClick &&
-    prevProps.onRowSelect === nextProps.onRowSelect
+    prevProps.onRowSelect === nextProps.onRowSelect &&
+    prevProps.onSelectionChange === nextProps.onSelectionChange
   );
 });

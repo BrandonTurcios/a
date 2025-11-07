@@ -42,6 +42,7 @@ const Toolbar = ({
   isDirty = false, // Whether there are unsaved changes
   isNativeForm = false, // Whether this is a native form (not converted from tree)
   hasSelectedRecord = false, // Whether a record is selected (for email button)
+  selectedRecords = [], // Array of selected records (for multiple selection)
   contextModel = null,
   contextId = null
 }) => {
@@ -553,6 +554,9 @@ const Toolbar = ({
   const renderActionsDropdown = () => {
     if (!action || action.length === 0) return null;
 
+    const hasSelection = hasSelectedRecord || selectedRecords.length > 0;
+    const disabled = loading || (viewType === 'tree' && !hasSelection);
+
     const menuItems = action.map((item, index) => ({
       key: index,
       label: item.name || `Action ${index + 1}`,
@@ -563,10 +567,14 @@ const Toolbar = ({
       <Dropdown
         menu={{ items: menuItems }}
         trigger={['click']}
-        disabled={loading}
+        disabled={disabled}
       >
-        <Tooltip title="Actions">
-          <Button icon={<SettingOutlined />} disabled={loading} style={loading ? disabledVisualStyle : undefined}>
+        <Tooltip title={viewType === 'tree' && !hasSelection ? "Selecciona registros para realizar acciones" : "Actions"}>
+          <Button 
+            icon={<SettingOutlined />} 
+            disabled={disabled} 
+            style={disabled ? disabledVisualStyle : undefined}
+          >
             Actions
           </Button>
         </Tooltip>
@@ -578,6 +586,9 @@ const Toolbar = ({
   const renderRelateDropdown = () => {
     if (!relate || relate.length === 0) return null;
 
+    const hasSelection = hasSelectedRecord || selectedRecords.length > 0;
+    const disabled = loading || (viewType === 'tree' && !hasSelection);
+
     const menuItems = relate.map((item, index) => ({
       key: index,
       label: item.name || `Relate ${index + 1}`,
@@ -588,10 +599,14 @@ const Toolbar = ({
       <Dropdown
         menu={{ items: menuItems }}
         trigger={['click']}
-        disabled={loading}
+        disabled={disabled}
       >
-        <Tooltip title="Relate">
-          <Button icon={<LinkOutlined />} disabled={loading} style={loading ? disabledVisualStyle : undefined}>
+        <Tooltip title={viewType === 'tree' && !hasSelection ? "Selecciona registros para relacionar" : "Relate"}>
+          <Button 
+            icon={<LinkOutlined />} 
+            disabled={disabled} 
+            style={disabled ? disabledVisualStyle : undefined}
+          >
           </Button>
         </Tooltip>
       </Dropdown>
@@ -601,6 +616,9 @@ const Toolbar = ({
   // Renderizar dropdown de impresión
   const renderPrintDropdown = () => {
     if (!print || print.length === 0) return null;
+
+    const hasSelection = hasSelectedRecord || selectedRecords.length > 0;
+    const disabled = loading || (viewType === 'tree' && !hasSelection);
 
     const menuItems = print.map((item, index) => ({
       key: index,
@@ -612,10 +630,14 @@ const Toolbar = ({
       <Dropdown
         menu={{ items: menuItems }}
         trigger={['click']}
-        disabled={loading}
+        disabled={disabled}
       >
-        <Tooltip title="Print">
-          <Button icon={<PrinterOutlined />} disabled={loading} style={loading ? disabledVisualStyle : undefined} />
+        <Tooltip title={viewType === 'tree' && !hasSelection ? "Selecciona registros para imprimir" : "Print"}>
+          <Button 
+            icon={<PrinterOutlined />} 
+            disabled={disabled} 
+            style={disabled ? disabledVisualStyle : undefined} 
+          />
         </Tooltip>
       </Dropdown>
     );
@@ -627,13 +649,16 @@ const Toolbar = ({
     // This allows us to handle email functionality manually
     if (viewType !== 'tree') return null;
 
+    const hasSelection = hasSelectedRecord || selectedRecords.length > 0;
+    const isDisabled = loading || !hasSelection;
+
     return (
-      <Tooltip title={hasSelectedRecord ? "Enviar por email" : "Selecciona un registro para enviar email"}>
+      <Tooltip title={hasSelection ? "Enviar por email" : "Selecciona registros para enviar email"}>
         <Button 
           icon={<MailOutlined />} 
           onClick={() => onEmail?.()}
-          disabled={loading || !hasSelectedRecord}
-          style={(loading || !hasSelectedRecord) ? disabledVisualStyle : undefined}
+          disabled={isDisabled}
+          style={isDisabled ? disabledVisualStyle : undefined}
         />
       </Tooltip>
     );
