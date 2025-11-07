@@ -61,7 +61,14 @@ class TrytonService {
     return data;
   }
 
-  async createAttachment({ name, resource, dataBase64, description = "", type = "data", link = "" }) {
+  async createAttachment({
+    name,
+    resource,
+    dataBase64,
+    description = "",
+    type = "data",
+    link = "",
+  }) {
     // Tryton expects bytes for data field. Do NOT send function-only fields like 'summary'.
     const vals = {
       name,
@@ -75,7 +82,10 @@ class TrytonService {
     if (link !== undefined && link !== null) {
       vals.link = link;
     }
-    const result = await this.makeRpcCall("model.ir.attachment.create", [[vals], {}]);
+    const result = await this.makeRpcCall("model.ir.attachment.create", [
+      [vals],
+      {},
+    ]);
     return result;
   }
 
@@ -103,19 +113,19 @@ class TrytonService {
     // timestampMap can be { id: timestamp } or single timestamp for backward compatibility
     const idsArray = Array.isArray(ids) ? ids : [ids];
     const timestampContext = {};
-    
-    if (timestampMap && typeof timestampMap === 'object') {
+
+    if (timestampMap && typeof timestampMap === "object") {
       // Handle map of id -> timestamp
-      idsArray.forEach(id => {
+      idsArray.forEach((id) => {
         if (timestampMap[id]) {
           timestampContext[`ir.attachment,${id}`] = timestampMap[id];
         }
       });
     }
-    
+
     const result = await this.makeRpcCall("model.ir.attachment.delete", [
       idsArray,
-      { _timestamp: timestampContext }
+      { _timestamp: timestampContext },
     ]);
     return result;
   }
@@ -125,14 +135,14 @@ class TrytonService {
     const fieldsView = await this.makeRpcCall("model.ir.note.fields_view_get", [
       null,
       "tree",
-      this.context
+      this.context,
     ]);
     return fieldsView;
   }
 
   async getNoteModels() {
     const models = await this.makeRpcCall("model.ir.note.get_models", [
-      this.context
+      this.context,
     ]);
     return models;
   }
@@ -144,7 +154,7 @@ class TrytonService {
       offset,
       limit,
       null,
-      {}
+      {},
     ]);
     return ids;
   }
@@ -161,12 +171,12 @@ class TrytonService {
       "rec_name",
       "_timestamp",
       "_write",
-      "_delete"
+      "_delete",
     ];
     const list = await this.makeRpcCall("model.ir.note.read", [
       ids,
       fields,
-      this.context
+      this.context,
     ]);
     return list;
   }
@@ -175,11 +185,11 @@ class TrytonService {
     const vals = {
       message,
       resource,
-      unread
+      unread,
     };
     const result = await this.makeRpcCall("model.ir.note.create", [
       [vals],
-      this.context
+      this.context,
     ]);
     return result;
   }
@@ -189,19 +199,19 @@ class TrytonService {
     // timestampMap can be { id: timestamp } or single timestamp for backward compatibility
     const idsArray = Array.isArray(ids) ? ids : [ids];
     const timestampContext = {};
-    
-    if (timestampMap && typeof timestampMap === 'object') {
+
+    if (timestampMap && typeof timestampMap === "object") {
       // Handle map of id -> timestamp
-      idsArray.forEach(id => {
+      idsArray.forEach((id) => {
         if (timestampMap[id]) {
           timestampContext[`ir.note,${id}`] = timestampMap[id];
         }
       });
     }
-    
+
     const result = await this.makeRpcCall("model.ir.note.delete", [
       idsArray,
-      { _timestamp: timestampContext }
+      { _timestamp: timestampContext },
     ]);
     return result;
   }
@@ -368,7 +378,7 @@ class TrytonService {
   }
 
   // Login
-  async login(database, username, password) {
+  async login(database, username, password, language = "en") {
     try {
       // Guardar base de datos
       this.database = database;
@@ -393,7 +403,7 @@ class TrytonService {
           device_cookie: "a8e18b090c9c40989af64040c0ec9f1f",
           password: password,
         },
-        "en", // Idioma
+        language, // Idioma configurable
       ];
 
       const result = await this.makeRpcCall("common.db.login", loginParams);
@@ -406,6 +416,7 @@ class TrytonService {
           sessionId: result[1], // session viene segundo
           database: database,
           username: username,
+          language: language, // Guardar idioma en sesión
           loginTime: new Date().toISOString(),
         };
 
@@ -430,6 +441,14 @@ class TrytonService {
         {},
       ]);
       this.context = context || {};
+
+      // Sobrescribir el idioma del contexto con el idioma de sesiónno
+      if (this.sessionData && this.sessionData.language) {
+        this.context.language = this.sessionData.language;
+        console.log(
+          `🌍 Forzando idioma del contexto a: ${this.sessionData.language}`
+        );
+      }
     } catch (error) {
       console.warn("No se pudo cargar el contexto del usuario:", error.message);
       this.context = {};

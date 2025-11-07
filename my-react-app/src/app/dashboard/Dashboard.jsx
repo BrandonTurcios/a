@@ -17,7 +17,7 @@ import trytonService from '../../services/trytonService';
 /**
  * Dashboard Principal
  */
-const Dashboard = ({ sessionData, onLogout }) => {
+const Dashboard = ({ sessionData, onLogout, onLanguageChange }) => {
   // Custom hooks encapsulan toda la lógica
   const menuData = useMenuData(sessionData);
   const menuActions = useMenuActions();
@@ -39,9 +39,73 @@ const Dashboard = ({ sessionData, onLogout }) => {
 
   // Estado para el modal de email
   const [emailModalVisible, setEmailModalVisible] = useState(false);
-
-  // Ref para el formulario (para poder llamar submit desde el toolbar)
   const formRef = useRef(null);
+  // Restaurar estado de navegación después de cambio de idioma
+  useEffect(() => {
+    // Solo ejecutar cuando el menú ha terminado de cargar
+    if (!menuData.loading && menuData.items.length > 0) {
+      const savedNavState = sessionStorage.getItem('tryton_nav_state');
+      if (savedNavState) {
+        try {
+          const navState = JSON.parse(savedNavState);
+          console.log('🔄 Restaurando estado de navegación:', navState);
+
+          // 1. Restaurar tabs abiertos
+          if (navState.tabs && navState.activeTabId) {
+            const restored = tabs.restoreTabs(navState.tabs, navState.activeTabId);
+            if (restored) {
+              console.log(`✅ Restaurados ${navState.tabs.length} tabs, activo: ${navState.activeTabId}`);
+
+              // Restaurar el contenido de la tab activa
+              setTimeout(() => {
+                const activeTab = navState.tabs.find(t => t.id === navState.activeTabId);
+                if (activeTab && activeTab.data) {
+                  console.log('📋 Restaurando datos de la tab activa:', activeTab.data);
+                  menuActions.setSelectedMenuInfo(activeTab.data.selectedMenuInfo);
+                  menuActions.setTableInfo(activeTab.data.tableInfo);
+                  menuActions.setFormInfo(activeTab.data.formInfo);
+                  menuActions.setActiveTab(activeTab.data.menuItem?.id || 'content');
+                  console.log('✅ Contenido de la tab activa restaurado');
+                }
+              }, 100);
+            }
+          }
+
+          // 2. Restaurar menús expandidos
+          if (navState.expandedMenus && menuActions.toggleExpansion) {
+            Object.keys(navState.expandedMenus).forEach((key) => {
+              if (navState.expandedMenus[key]) {
+                menuActions.toggleExpansion(key);
+              }
+            });
+            console.log('✅ Menús expandidos restaurados');
+          }
+
+          // Limpiar el estado guardado después de restaurarlo
+          sessionStorage.removeItem('tryton_nav_state');
+          console.log('✅ Estado de navegación completamente restaurado');
+        } catch (error) {
+          console.error('❌ Error restaurando estado de navegación:', error);
+          sessionStorage.removeItem('tryton_nav_state');
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [menuData.loading, menuData.items.length]); // Ejecutar cuando termine de cargar el menú
+
+  // Handler para cambio de idioma con estado de navegación
+  const handleLanguageChangeWithState = (newLanguage) => {
+    // Capturar estado actual de navegación
+    const navigationState = {
+      activeTabId: tabs.activeTabId,
+      tabs: tabs.tabs,
+      selectedMenuInfo: menuActions.selectedMenuInfo,
+      expandedMenus: menuActions.expandedMenus
+    };
+
+    // Llamar a onLanguageChange con el nuevo idioma y el estado
+    onLanguageChange(newLanguage, navigationState);
+  };
 
   // Manejar clicks del menú con lógica de wizards y opciones
   const handleMenuClick = async (item) => {
@@ -521,6 +585,7 @@ const Dashboard = ({ sessionData, onLogout }) => {
         sessionData={sessionData}
         onLogout={onLogout}
         onToggleSidebar={menuData.toggleSidebar}
+        onLanguageChange={handleLanguageChangeWithState}
       />
 
       <Layout>
