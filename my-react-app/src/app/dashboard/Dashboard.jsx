@@ -293,9 +293,163 @@ const Dashboard = ({ sessionData, onLogout, onLanguageChange }) => {
     }
   };
 
-  const handleToolbarPrint = (printItem) => {
-    console.log('Toolbar print clicked:', printItem);
-    // TODO: Implementar impresión
+  const handleToolbarPrint = async (printItem) => {
+    try {
+      console.log('🖨️ Toolbar print clicked:', printItem);
+
+      // Verificar que haya un registro seleccionado
+      if (!selectedRecord || !selectedRecord.id) {
+        console.warn('⚠️ No hay registro seleccionado para imprimir');
+        // Si estamos en vista de formulario, intentar obtener el ID del formulario
+        if (menuActions.selectedMenuInfo?.viewType === 'form' && menuActions.formInfo?.recordData?.id) {
+          const recordId = menuActions.formInfo.recordData.id;
+          await executePrint(printItem, recordId);
+          return;
+        }
+        alert('Por favor, selecciona un registro para imprimir');
+        return;
+      }
+
+      const recordId = selectedRecord.id;
+      await executePrint(printItem, recordId);
+    } catch (error) {
+      console.error('❌ Error ejecutando impresión:', error);
+      alert('Error al ejecutar la impresión: ' + error.message);
+    }
+  };
+
+  const executePrint = async (printItem, recordId) => {
+    try {
+      menuActions.setLoadingContent(true);
+
+      // Obtener información del modelo actual
+      const model = menuActions.selectedMenuInfo?.resModel;
+      if (!model) {
+        throw new Error('No se pudo determinar el modelo del registro');
+      }
+
+      console.log('🖨️ Ejecutando reporte:', {
+        printItem,
+        recordId,
+        model
+      });
+
+      // El printItem puede tener diferentes estructuras
+      // Intentar obtener el método del reporte de diferentes formas
+      let reportMethod = printItem.action || printItem.method || printItem.report_name || printItem.report;
+      
+      // Si no hay método directo, intentar obtener desde action_id
+      if (!reportMethod && printItem.action_id) {
+        try {
+          // Obtener la información de la acción de reporte
+          const actionData = await trytonService.makeRpcCall(
+            'model.ir.action.report.read',
+            [[printItem.action_id], ['report_name', 'name']]
+          );
+          
+          if (actionData && actionData.length > 0 && actionData[0].report_name) {
+            // El report_name generalmente es el método del reporte
+            reportMethod = actionData[0].report_name;
+            console.log('✅ Método del reporte obtenido desde action:', reportMethod);
+          }
+        } catch (error) {
+          console.warn('⚠️ No se pudo obtener el método desde action_id:', error);
+        }
+      }
+
+      // Si aún no tenemos el método, intentar construirlo desde el nombre del printItem
+      if (!reportMethod) {
+        // El printItem.name podría contener información útil
+        // Por ahora, lanzar un error para que el usuario vea qué estructura tiene
+        console.error('❌ Estructura del printItem:', printItem);
+        throw new Error('No se pudo determinar el método del reporte. Ver consola para detalles del printItem.');
+      }
+
+      // Construir los parámetros según la estructura que muestra el usuario
+      // params: [[ids], {action_id, id, ids, model, ...}, {context}]
+      const actionId = printItem.id || printItem.action_id;
+      const ids = [recordId];
+      
+      const params = [
+        [recordId], // Primer parámetro: array de IDs
+        {
+          action_id: actionId,
+          id: recordId,
+          ids: ids,
+          model: model,
+          model_context: null,
+          paths: [[recordId]]
+        },
+        {
+          // El contexto se agregará automáticamente por makeRpcCall
+        }
+      ];
+
+      console.log('📤 Ejecutando reporte con parámetros:', {
+        method: reportMethod,
+        params
+      });
+
+      // Ejecutar el reporte
+      const result = await trytonService.makeRpcCall(reportMethod, params);
+
+      console.log('📥 Respuesta del reporte:', result);
+
+      // La respuesta debería ser: ["pdf", {__class__: "bytes", base64: "..."}, false, "nombre"]
+      if (!result || !Array.isArray(result) || result.length < 2) {
+        throw new Error('Respuesta del reporte inválida');
+      }
+
+      const [format, pdfData, directPrint, reportName] = result;
+
+      if (format !== 'pdf') {
+        throw new Error(`Formato de reporte no soportado: ${format}`);
+      }
+
+      if (!pdfData || !pdfData.base64) {
+        throw new Error('No se recibieron datos del PDF');
+      }
+
+      // Decodificar el PDF desde base64
+      const base64Data = pdfData.base64;
+      const byteCharacters = atob(base64Data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'application/pdf' });
+
+      // Crear URL del blob
+      const pdfUrl = URL.createObjectURL(blob);
+
+      // Abrir el PDF en una nueva ventana/pestaña
+      const newWindow = window.open(pdfUrl, '_blank');
+      
+      if (!newWindow) {
+        // Si el popup fue bloqueado, crear un enlace de descarga
+        const a = document.createElement('a');
+        a.href = pdfUrl;
+        a.download = `${reportName || printItem.name || 'reporte'}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(pdfUrl);
+        alert('El PDF se descargará. Si el popup fue bloqueado, verifica la configuración de tu navegador.');
+      } else {
+        // Limpiar la URL después de que la ventana se cierre (opcional)
+        newWindow.addEventListener('beforeunload', () => {
+          URL.revokeObjectURL(pdfUrl);
+        });
+      }
+
+      console.log('✅ PDF generado y abierto correctamente');
+    } catch (error) {
+      console.error('❌ Error ejecutando reporte:', error);
+      throw error;
+    } finally {
+      menuActions.setLoadingContent(false);
+    }
   };
 
   const handleToolbarEmail = (emailItem) => {
