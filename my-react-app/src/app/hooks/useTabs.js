@@ -99,13 +99,25 @@ export const useTabs = () => {
 
   // Actualizar título de una tab
   const updateTabTitle = useCallback((tabId, newTitle) => {
-    setTabs(prevTabs => 
-      prevTabs.map(tab => 
-        tab.id === tabId 
+    setTabs(prevTabs =>
+      prevTabs.map(tab =>
+        tab.id === tabId
           ? { ...tab, title: newTitle }
           : tab
       )
     );
+  }, []);
+
+  // Restaurar tabs desde un estado guardado
+  const restoreTabs = useCallback((savedTabs, savedActiveTabId) => {
+    if (savedTabs && Array.isArray(savedTabs) && savedTabs.length > 0) {
+      setTabs(savedTabs);
+      if (savedActiveTabId) {
+        setActiveTabId(savedActiveTabId);
+      }
+      return true;
+    }
+    return false;
   }, []);
 
   return {
@@ -117,6 +129,7 @@ export const useTabs = () => {
     closeAllTabs,
     getActiveTab,
     updateTabData,
-    updateTabTitle
+    updateTabTitle,
+    restoreTabs
   };
 };
