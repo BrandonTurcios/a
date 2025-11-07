@@ -186,9 +186,138 @@ const Dashboard = ({ sessionData, onLogout, onLanguageChange }) => {
     }
   };
 
-  const handleToolbarRefresh = () => {
-    console.log('Toolbar refresh clicked');
-    // TODO: Implementar refrescar datos
+  const handleToolbarRefresh = async () => {
+    try {
+      console.log('🔄 Toolbar refresh clicked');
+
+      if (!menuActions.selectedMenuInfo || !menuActions.selectedMenuInfo.resModel) {
+        console.warn('⚠️ No hay información del menú seleccionado');
+        return;
+      }
+
+      menuActions.setLoadingContent(true);
+
+      const model = menuActions.selectedMenuInfo.resModel;
+      const viewType = menuActions.selectedMenuInfo.viewType;
+
+      console.log(`🔄 Refrescando datos para modelo: ${model}, vista: ${viewType}`);
+
+      if (viewType === 'tree') {
+        // Refrescar vista de tabla
+        await refreshTableView(model);
+      } else if (viewType === 'form') {
+        // Refrescar vista de formulario
+        await refreshFormView(model);
+      } else {
+        console.warn('⚠️ Tipo de vista no soportado para refresh:', viewType);
+      }
+
+      console.log('✅ Datos refrescados correctamente');
+    } catch (error) {
+      console.error('❌ Error refrescando datos:', error);
+      alert('Error al refrescar los datos: ' + error.message);
+    } finally {
+      menuActions.setLoadingContent(false);
+    }
+  };
+
+  const refreshTableView = async (model) => {
+    try {
+      console.log('🔄 Refrescando vista de tabla para modelo:', model);
+
+      // Obtener información actual de la tabla
+      const currentTableInfo = menuActions.tableInfo;
+      if (!currentTableInfo) {
+        console.warn('⚠️ No hay información de tabla para refrescar');
+        return;
+      }
+
+      const viewId = currentTableInfo.viewId;
+      const viewType = currentTableInfo.viewType || 'tree';
+      const domain = currentTableInfo.domain || [];
+      const limit = currentTableInfo.limit || 100;
+
+      console.log('🔄 Parámetros de refresh:', {
+        model,
+        viewId,
+        viewType,
+        domain,
+        limit
+      });
+
+      // Refrescar datos de la tabla
+      const refreshedTableInfo = await trytonService.getTableInfo(
+        model,
+        viewId,
+        viewType,
+        domain,
+        limit
+      );
+
+      console.log('✅ Datos de tabla refrescados:', refreshedTableInfo);
+
+      // Actualizar el estado con los nuevos datos
+      menuActions.setTableInfo(refreshedTableInfo);
+    } catch (error) {
+      console.error('❌ Error refrescando tabla:', error);
+      throw error;
+    }
+  };
+
+  const refreshFormView = async (model) => {
+    try {
+      console.log('🔄 Refrescando vista de formulario para modelo:', model);
+
+      // Obtener información actual del formulario
+      const currentFormInfo = menuActions.formInfo;
+      if (!currentFormInfo) {
+        console.warn('⚠️ No hay información de formulario para refrescar');
+        return;
+      }
+
+      const recordId = currentFormInfo.recordData?.id;
+      if (!recordId) {
+        console.warn('⚠️ No hay ID de registro para refrescar');
+        return;
+      }
+
+      const viewId = currentFormInfo.viewId;
+      const fieldsView = currentFormInfo.fieldsView;
+
+      console.log('🔄 Refrescando registro:', {
+        model,
+        recordId,
+        viewId
+      });
+
+      // Obtener campos expandidos para relaciones
+      const fields = fieldsView?.fields ? Object.keys(fieldsView.fields) : [];
+      const expandedFields = trytonService.expandFieldsForRelationsFromFieldsView(
+        fields,
+        fieldsView
+      );
+
+      // Refrescar datos del registro
+      const refreshedRecordData = await trytonService.getFormRecordData(
+        model,
+        recordId,
+        expandedFields
+      );
+
+      console.log('✅ Datos del registro refrescados:', refreshedRecordData);
+
+      // Actualizar el estado con los nuevos datos
+      const updatedFormInfo = {
+        ...currentFormInfo,
+        recordData: refreshedRecordData
+      };
+
+      menuActions.setFormInfo(updatedFormInfo);
+      setFormDirty(false); // Los datos refrescados no están modificados
+    } catch (error) {
+      console.error('❌ Error refrescando formulario:', error);
+      throw error;
+    }
   };
 
   const handleToolbarAttach = () => {
