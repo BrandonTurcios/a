@@ -464,11 +464,11 @@ const Dashboard = ({ sessionData, onLogout, onLanguageChange }) => {
       });
 
       // El printItem puede tener diferentes estructuras
-      // Intentar obtener el método del reporte de diferentes formas
-      let reportMethod = printItem.action || printItem.method || printItem.report_name || printItem.report;
+      // Intentar obtener el nombre del reporte de diferentes formas
+      let reportName = printItem.action || printItem.method || printItem.report_name || printItem.report;
       
-      // Si no hay método directo, intentar obtener desde action_id
-      if (!reportMethod && printItem.action_id) {
+      // Si no hay nombre directo, intentar obtener desde action_id
+      if (!reportName && printItem.action_id) {
         try {
           // Obtener la información de la acción de reporte
           const actionData = await trytonService.makeRpcCall(
@@ -477,22 +477,36 @@ const Dashboard = ({ sessionData, onLogout, onLanguageChange }) => {
           );
           
           if (actionData && actionData.length > 0 && actionData[0].report_name) {
-            // El report_name generalmente es el método del reporte
-            reportMethod = actionData[0].report_name;
-            console.log('✅ Método del reporte obtenido desde action:', reportMethod);
+            // El report_name es el nombre del reporte (ej: "health_dentistry.procedure.report")
+            reportName = actionData[0].report_name;
+            console.log('✅ Nombre del reporte obtenido desde action:', reportName);
           }
         } catch (error) {
-          console.warn('⚠️ No se pudo obtener el método desde action_id:', error);
+          console.warn('⚠️ No se pudo obtener el nombre desde action_id:', error);
         }
       }
 
-      // Si aún no tenemos el método, intentar construirlo desde el nombre del printItem
-      if (!reportMethod) {
+      // Si aún no tenemos el nombre, intentar construirlo desde el nombre del printItem
+      if (!reportName) {
         // El printItem.name podría contener información útil
         // Por ahora, lanzar un error para que el usuario vea qué estructura tiene
         console.error('❌ Estructura del printItem:', printItem);
-        throw new Error('No se pudo determinar el método del reporte. Ver consola para detalles del printItem.');
+        throw new Error('No se pudo determinar el nombre del reporte. Ver consola para detalles del printItem.');
       }
+
+      // Construir el método completo del reporte
+      // El formato debe ser: report.<nombre_del_reporte>.execute
+      // Ejemplo: report.health_dentistry.procedure.report.execute
+      let reportMethod;
+      if (reportName.startsWith('report.')) {
+        // Si ya tiene el prefijo report., solo agregar .execute
+        reportMethod = reportName.endsWith('.execute') ? reportName : `${reportName}.execute`;
+      } else {
+        // Si no tiene el prefijo, agregar report. al inicio y .execute al final
+        reportMethod = `report.${reportName}${reportName.endsWith('.execute') ? '' : '.execute'}`;
+      }
+
+      console.log('📋 Método del reporte construido:', reportMethod);
 
       // Construir los parámetros según la estructura que muestra el usuario
       // params: [[ids], {action_id, id, ids, model, ...}, {context}]
