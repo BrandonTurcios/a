@@ -28,6 +28,10 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
     }
   }, [onRecordSelect]);
 
+  // Memo para evitar crear nuevas referencias que causen recargas
+  const tableDomain = React.useMemo(() => tableInfo.domain || [], [tableInfo.domain]);
+  const tableDataProp = React.useMemo(() => tableInfo.filtered ? tableInfo : null, [tableInfo.filtered, tableInfo]);
+
   // Debug: Log toolbar info
   console.log('🔧 TableView - toolbarInfo:', selectedMenuInfo?.toolbarInfo);
   console.log('🔧 TableView - selectedRecord:', selectedRecord);
@@ -89,7 +93,7 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
         model={tableInfo.model}
         viewId={tableInfo.viewId}
         viewType={tableInfo.viewType}
-        domain={tableInfo.domain || []}
+        domain={tableDomain}
         limit={100}
         title={selectedMenuInfo?.actionName}
         onRowClick={handleRowClick}
@@ -97,7 +101,7 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
         onRowSelect={handleRowSelect}
         enableRowSelection={true}
         selectedRecord={selectedRecord}
-        tableData={tableInfo.filtered ? tableInfo : null}
+        tableData={tableDataProp}
         filtered={tableInfo.filtered || false}
       />
     </div>
