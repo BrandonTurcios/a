@@ -42,13 +42,15 @@ export function DataTable({
   const [columnFilters, setColumnFilters] = React.useState([])
   const [rowSelection, setRowSelection] = React.useState({})
   const [globalFilter, setGlobalFilter] = React.useState("")
+  const tableRef = React.useRef(null)
 
-  // Handle row selection changes - solo actualizar estado local
+  // Handle row selection changes - Notificar al parent cuando cambie la selección
   const handleRowSelectionChange = React.useCallback((updaterOrValue) => {
     setRowSelection(prevSelection => {
       const newSelection = typeof updaterOrValue === 'function'
         ? updaterOrValue(prevSelection)
         : updaterOrValue;
+
       return newSelection;
     });
   }, []);
@@ -76,6 +78,7 @@ export function DataTable({
             onChange={(e) => {
               e.stopPropagation();
               table.toggleAllPageRowsSelected(e.target.checked);
+              // La notificación se hace automáticamente en el useEffect que observa rowSelection
             }}
           />
         </div>
@@ -97,8 +100,8 @@ export function DataTable({
               e.stopPropagation(); // Prevenir que el click se propague al row
             }}
             onChange={(e) => {
-              e.stopPropagation();
               row.toggleSelected(e.target.checked);
+              // La notificación se hace automáticamente en el useEffect que observa rowSelection
             }}
           />
         </div>
@@ -137,58 +140,62 @@ export function DataTable({
     },
   })
 
-  // Notificar al parent cuando cambia la selección (sin recargar la tabla)
-  // Usar useRef para rastrear la selección anterior y evitar notificaciones innecesarias
-  const prevSelectionRef = React.useRef({});
-  const selectionChangeTimeoutRef = React.useRef(null);
-  
+  // Guardar referencia de la tabla para usar en efectos
+  React.useEffect(() => {
+    tableRef.current = table;
+  }, [table]);
+
+  // Notificar al padre cuando cambie la selección (sin recargar la tabla)
   React.useEffect(() => {
     if (!enableRowSelection || !onRowSelect) return;
-    
-    // Comparar con la selección anterior para evitar notificaciones duplicadas
-    const prevSelectionKeys = Object.keys(prevSelectionRef.current || {}).sort().join(',');
-    const currentSelectionKeys = Object.keys(rowSelection || {}).sort().join(',');
-    
-    if (prevSelectionKeys === currentSelectionKeys) return;
-    
-    prevSelectionRef.current = { ...rowSelection };
-    
-    // Usar un pequeño delay para agrupar cambios rápidos y evitar múltiples llamadas
-    if (selectionChangeTimeoutRef.current) {
-      clearTimeout(selectionChangeTimeoutRef.current);
-    }
-    
-    selectionChangeTimeoutRef.current = setTimeout(() => {
-      try {
-        // Obtener los registros seleccionados usando la tabla actual
-        const currentTable = table;
-        if (!currentTable) return;
-        
-        const selectedRows = currentTable.getFilteredSelectedRowModel().rows;
+
+    // Usar un pequeño delay para agrupar múltiples cambios de selección
+    const timeoutId = setTimeout(() => {
+      const selectedRows = table.getSelectedRowModel().rows;
+      const selectedCount = selectedRows.length;
+
+      if (selectedCount === 0) {
+        // No hay selección - notificar null
+        onRowSelect(null, false);
+      } else if (selectedCount === 1) {
+        // Una sola selección - notificar ese registro
+        const selectedRecord = selectedRows[0].original;
+        onRowSelect(selectedRecord, true);
+      } else {
+        // Múltiples selecciones - notificar el último seleccionado
+        // Esto es útil para que el toolbar sepa qué registro está activo
         const selectedRecords = selectedRows.map(row => row.original);
-        
-        // Notificar al parent solo si hay un cambio real
-        if (selectedRecords.length > 0) {
-          // Notificar con el primer registro seleccionado
-          console.log('✅ Notificando selección al parent:', selectedRecords[0]);
-          onRowSelect(selectedRecords[0], true);
-        } else {
-          // Si no hay selección, notificar null
-          console.log('✅ Notificando deselección al parent');
-          onRowSelect(null, false);
-        }
-      } catch (error) {
-        console.warn('Error notificando selección:', error);
+        const lastSelected = selectedRecords[selectedRecords.length - 1];
+        onRowSelect(lastSelected, true);
       }
-    }, 10);
-    
-    // Cleanup timeout on unmount
-    return () => {
-      if (selectionChangeTimeoutRef.current) {
-        clearTimeout(selectionChangeTimeoutRef.current);
-      }
-    };
-  }, [rowSelection, enableRowSelection, onRowSelect]);
+    }, 0);
+
+    return () => clearTimeout(timeoutId);
+  }, [rowSelection, enableRowSelection, onRowSelect, table]);
+
+  // Sincronizar selección cuando selectedRecord cambie desde el padre (solo si viene de fuera)
+  // Esto permite que el padre controle la selección externamente sin interferir con la selección múltiple del usuario
+  React.useEffect(() => {
+    if (!enableRowSelection) return;
+
+    // Si selectedRecord es null y hay selecciones, limpiarlas (solo si viene de fuera)
+    if (!selectedRecord) {
+      // Nota: No limpiamos automáticamente porque el usuario podría estar seleccionando múltiples items
+      // Solo el padre puede limpiar la selección explícitamente
+      return;
+    }
+
+    // Buscar la fila que corresponde al selectedRecord
+    const rowToSelect = table.getRowModel().rows.find(
+      row => row.original.id === selectedRecord.id
+    );
+
+    // Si encontramos la fila y no está seleccionada, seleccionarla
+    // Pero no deseleccionar otras para permitir selección múltiple
+    if (rowToSelect && !rowToSelect.getIsSelected()) {
+      rowToSelect.toggleSelected(true);
+    }
+  }, [selectedRecord?.id, enableRowSelection, table]);
 
   return (
     <div className="w-full">
@@ -243,6 +250,7 @@ export function DataTable({
                       }
                     } else {
                       // Si no está seleccionado, activar su checkbox (primer click)
+                      // La notificación se hace automáticamente en el useEffect que observa rowSelection
                       row.toggleSelected(true);
                     }
                   }}
