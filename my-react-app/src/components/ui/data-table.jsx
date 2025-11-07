@@ -43,7 +43,7 @@ export function DataTable({
   const [rowSelection, setRowSelection] = React.useState({})
   const [globalFilter, setGlobalFilter] = React.useState("")
 
-  // Handle row selection changes - NO notificar al parent para evitar recargas
+  // Handle row selection changes - actualizar estado local
   const handleRowSelectionChange = React.useCallback((updaterOrValue) => {
     setRowSelection(prevSelection => {
       const newSelection = typeof updaterOrValue === 'function'
@@ -99,8 +99,12 @@ export function DataTable({
               e.stopPropagation(); // Prevenir que el click se propague al row
             }}
             onChange={(e) => {
-              row.toggleSelected(e.target.checked);
-              // NO notificar al parent para evitar recargas
+              const isSelected = e.target.checked;
+              row.toggleSelected(isSelected);
+              // Notificar al padre sobre la selección/deselección
+              if (onRowSelect) {
+                onRowSelect(row.original, isSelected);
+              }
             }}
           />
         </div>
@@ -111,7 +115,7 @@ export function DataTable({
     };
     
     return [selectionColumn, ...columns];
-  }, [columns, enableRowSelection]);
+  }, [columns, enableRowSelection, onRowSelect]);
 
   const table = useReactTable({
     data,
@@ -192,8 +196,11 @@ export function DataTable({
                       }
                     } else {
                       // Si no está seleccionado, activar su checkbox (primer click)
-                      // NO notificar al parent para evitar recargas - solo actualizar estado local
                       row.toggleSelected(true);
+                      // Notificar al padre sobre la selección
+                      if (onRowSelect) {
+                        onRowSelect(row.original, true);
+                      }
                     }
                   }}
                   onDoubleClick={(e) => {
