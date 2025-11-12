@@ -1,9 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Card, Spin, Alert, Button, Space, Typography, Checkbox } from 'antd';
-import { MemoizedDataTable } from './ui/data-table';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Card, Spin, Alert, Button, Typography } from 'antd';
+import { AgGridReact } from 'ag-grid-react';
+import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
 import trytonService from '../services/trytonService';
 
-const { Title, Text } = Typography;
+// Registrar módulos de AG Grid
+ModuleRegistry.registerModules([AllCommunityModule]);
+
+const { Text } = Typography;
 
 const TrytonTable = ({
   model,
@@ -23,8 +27,8 @@ const TrytonTable = ({
   const [tableInfo, setTableInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [columns, setColumns] = useState([]);
-  const [data, setData] = useState([]);
+  const [rowData, setRowData] = useState([]);
+  const gridRef = useRef(null);
 
   useEffect(() => {
     // Si tenemos datos pre-cargados (tabla relacionada), usarlos directamente
@@ -32,20 +36,16 @@ const TrytonTable = ({
       console.log('🔗 Using pre-loaded filtered data');
       setTableInfo(tableData);
       
-      // Generate columns dynamically based on the view
-      const generatedColumns = generateColumns(tableData.fieldsView);
-      setColumns(generatedColumns);
-      
       // Process data
       const processedData = processData(tableData.data);
-      setData(processedData);
+      setRowData(processedData);
       
       setLoading(false);
     } else {
       // Cargar datos normalmente
       loadTableData();
     }
-}, [model, viewId, viewType, domain, limit, tableData, filtered]);
+  }, [model, viewId, viewType, domain, limit, tableData, filtered]);
 
   const loadTableData = async () => {
     try {
@@ -75,13 +75,9 @@ const TrytonTable = ({
       
       setTableInfo(info);
       
-      // Generate columns dynamically based on the view
-      const generatedColumns = generateColumns(info.fieldsView);
-      setColumns(generatedColumns);
-      
       // Process data
       const processedData = processData(info.data);
-      setData(processedData);
+      setRowData(processedData);
       
     } catch (error) {
       console.error('❌ Error loading table:', error);
@@ -89,34 +85,6 @@ const TrytonTable = ({
     } finally {
       setLoading(false);
     }
-  };
-
-  const generateColumns = (fieldsView) => {
-    if (!fieldsView.fields) return [];
-    
-    const cols = [];
-    
-    // Process view fields
-    Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
-      // Only include fields that are in the tree view
-      if (shouldIncludeField(fieldName, fieldsView.arch)) {
-        cols.push({
-          accessorKey: fieldName,
-          header: fieldDef.string || fieldName,
-          cell: ({ getValue, row }) => {
-            const value = getValue();
-            const record = row.original;
-            return formatCellValue(value, fieldDef, record);
-          },
-          meta: {
-            fieldDef,
-            fieldName
-          }
-        });
-      }
-    });
-    
-    return cols;
   };
 
   const shouldIncludeField = (fieldName, arch) => {
@@ -179,18 +147,9 @@ const TrytonTable = ({
       return parseFloat(value.decimal).toFixed(4);
     }
 
-    // Handle booleans - mostrar checkbox más visible
+    // Handle booleans - retornar el valor directamente para que ag-grid lo maneje
     if (fieldDef.type === 'boolean') {
-      return (
-        <Checkbox
-          checked={value}
-          disabled
-          style={{
-            pointerEvents: 'none',
-          }}
-          className={value ? 'checkbox-visible' : 'checkbox-unchecked'}
-        />
-      );
+      return value ? '✓ Sí' : '✗ No';
     }
 
     // Handle gender field - convertir m/f a Male/Female
@@ -249,9 +208,144 @@ const TrytonTable = ({
     }));
   };
 
+  // Generar columnas para AG Grid
+  const columnDefs = useMemo(() => {
+    if (!tableInfo?.fieldsView?.fields) return [];
+
+    const cols = [];
+    
+    // Agregar columna de selección si está habilitada
+    if (enableRowSelection) {
+      cols.push({
+        headerName: '',
+        field: 'select',
+        checkboxSelection: true,
+        headerCheckboxSelection: true,
+        width: 50,
+        pinned: 'left',
+        lockPosition: true,
+        suppressMenu: true,
+        sortable: false,
+        filter: false,
+        cellStyle: { 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          padding: '8px'
+        }
+      });
+    }
+    
+    // Process view fields
+    Object.entries(tableInfo.fieldsView.fields).forEach(([fieldName, fieldDef]) => {
+      // Only include fields that are in the tree view
+      if (shouldIncludeField(fieldName, tableInfo.fieldsView.arch)) {
+        cols.push({
+          field: fieldName,
+          headerName: fieldDef.string || fieldName,
+          sortable: true,
+          filter: true,
+          resizable: true,
+          flex: fieldName === 'name' || fieldName === 'rec_name' ? 2 : 1,
+          minWidth: 120,
+          cellRenderer: (params) => {
+            const value = params.value;
+            const record = params.data;
+            const formatted = formatCellValue(value, fieldDef, record);
+            
+            // Si es un boolean, renderizar con mejor formato
+            if (fieldDef.type === 'boolean') {
+              return (
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  fontWeight: value ? 'bold' : 'normal',
+                  color: value ? 'var(--color-success-500)' : 'var(--color-text-secondary)'
+                }}>
+                  {formatted}
+                </div>
+              );
+            }
+            
+            return formatted;
+          },
+          cellStyle: (params) => {
+            const baseStyle = {
+              display: 'flex',
+              alignItems: 'center',
+              padding: '8px 12px'
+            };
+            
+            // Resaltar fila seleccionada
+            if (selectedRecord && params.data?.id === selectedRecord.id) {
+              return {
+                ...baseStyle,
+                backgroundColor: 'var(--color-primary-50)',
+                fontWeight: '500'
+              };
+            }
+            
+            return baseStyle;
+          }
+        });
+      }
+    });
+    
+    return cols;
+  }, [tableInfo, enableRowSelection, selectedRecord]);
+
+  // Manejar selección de filas
+  const onSelectionChanged = useCallback(() => {
+    if (!onRowSelect || !gridRef.current) return;
+    
+    const selectedRows = gridRef.current.api.getSelectedRows();
+    if (selectedRows.length > 0) {
+      onRowSelect(selectedRows[0], true);
+    } else {
+      onRowSelect(null, false);
+    }
+  }, [onRowSelect]);
+
+  // Manejar click en fila
+  const onRowClicked = useCallback((event) => {
+    if (onRowClick && event.data?.id) {
+      onRowClick(event.data);
+    }
+  }, [onRowClick]);
+
+  // Manejar doble click en fila
+  const onRowDoubleClicked = useCallback((event) => {
+    if (onRowDoubleClick && event.data?.id) {
+      onRowDoubleClick(event.data);
+    }
+  }, [onRowDoubleClick]);
+
+  // Sincronizar selección cuando cambia selectedRecord
+  useEffect(() => {
+    if (!gridRef.current || !selectedRecord) return;
+    
+    gridRef.current.api.forEachNode((node) => {
+      if (node.data?.id === selectedRecord.id) {
+        node.setSelected(true);
+      } else {
+        node.setSelected(false);
+      }
+    });
+  }, [selectedRecord]);
+
   const handleRefresh = () => {
     loadTableData();
   };
+
+  // Configuración por defecto de AG Grid
+  const defaultColDef = useMemo(() => ({
+    sortable: true,
+    filter: true,
+    resizable: true,
+    flex: 1,
+    minWidth: 120
+  }), []);
 
   if (loading) {
     return (
@@ -293,20 +387,34 @@ const TrytonTable = ({
       boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
       border: '1px solid var(--color-border)',
       background: 'white',
-      padding: '20px'
+      padding: '20px',
+      height: 'calc(100vh - 200px)',
+      minHeight: '600px'
     }}>
-        <MemoizedDataTable
-          columns={columns}
-          data={data}
-          searchable={true}
+      <div 
+        className="ag-theme-alpine"
+        style={{
+          height: '100%',
+          width: '100%'
+        }}
+      >
+        <AgGridReact
+          ref={gridRef}
+          rowData={rowData}
+          columnDefs={columnDefs}
+          defaultColDef={defaultColDef}
+          onSelectionChanged={onSelectionChanged}
+          onRowClicked={onRowClicked}
+          onRowDoubleClicked={onRowDoubleClicked}
+          suppressRowClickSelection={false}
+          rowSelection={enableRowSelection ? 'multiple' : undefined}
+          animateRows={true}
+          enableCellTextSelection={true}
           pagination={true}
-          pageSize={20}
-          onRowClick={onRowClick}
-          onRowDoubleClick={onRowDoubleClick}
-          onRowSelect={onRowSelect}
-          enableRowSelection={enableRowSelection}
-          selectedRecord={selectedRecord}
+          paginationPageSize={20}
+          paginationPageSizeSelector={[10, 20, 50, 100]}
         />
+      </div>
       
       {/* Debug information (development only) */}
       {process.env.NODE_ENV === 'development' && (
@@ -327,8 +435,8 @@ const TrytonTable = ({
               viewId,
               viewType,
               domain,
-              columnsCount: columns.length,
-              dataCount: data.length,
+              columnsCount: columnDefs.length,
+              dataCount: rowData.length,
               fieldsView: tableInfo?.fieldsView
             }, null, 2)}
           </pre>

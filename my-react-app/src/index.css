@@ -2,6 +2,90 @@
 @tailwind components;
 @tailwind utilities;
 
+/* AG Grid Styles */
+@import 'ag-grid-community/styles/ag-grid.css';
+@import 'ag-grid-community/styles/ag-theme-alpine.css';
+
+/* Custom AG Grid Theme Overrides */
+.ag-theme-alpine {
+  --ag-header-background-color: var(--color-primary-50);
+  --ag-header-foreground-color: var(--color-text-primary);
+  --ag-header-cell-hover-background-color: var(--color-primary-100);
+  --ag-header-cell-moving-background-color: var(--color-primary-200);
+  --ag-border-color: var(--color-border);
+  --ag-row-hover-color: var(--color-primary-50);
+  --ag-selected-row-background-color: var(--color-primary-100);
+  --ag-odd-row-background-color: var(--color-neutral-50);
+  --ag-even-row-background-color: white;
+  --ag-range-selection-background-color: var(--color-primary-200);
+  --ag-range-selection-background-color-2: var(--color-primary-300);
+  --ag-range-selection-background-color-3: var(--color-primary-400);
+  --ag-range-selection-background-color-4: var(--color-primary-500);
+  --ag-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  --ag-font-size: 14px;
+  --ag-border-radius: 8px;
+  --ag-wrapper-border-radius: 8px;
+}
+
+.ag-theme-alpine .ag-header {
+  font-weight: 600;
+  border-bottom: 2px solid var(--color-primary-300);
+}
+
+.ag-theme-alpine .ag-header-cell {
+  border-right: 1px solid var(--color-border);
+}
+
+.ag-theme-alpine .ag-row {
+  border-bottom: 1px solid var(--color-neutral-200);
+  transition: background-color 0.2s ease;
+}
+
+.ag-theme-alpine .ag-row:hover {
+  background-color: var(--color-primary-50) !important;
+}
+
+.ag-theme-alpine .ag-row-selected {
+  background-color: var(--color-primary-100) !important;
+}
+
+.ag-theme-alpine .ag-cell {
+  border-right: 1px solid var(--color-neutral-200);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+}
+
+.ag-theme-alpine .ag-paging-panel {
+  border-top: 1px solid var(--color-border);
+  padding: 12px;
+  background-color: var(--color-neutral-50);
+}
+
+.ag-theme-alpine .ag-paging-button {
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.ag-theme-alpine .ag-paging-button:hover {
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-700);
+}
+
+.ag-theme-alpine .ag-paging-button.ag-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ag-theme-alpine .ag-checkbox-input-wrapper {
+  border-radius: 4px;
+}
+
+.ag-theme-alpine .ag-checkbox-input-wrapper.ag-checked {
+  background-color: var(--color-primary-500);
+  border-color: var(--color-primary-500);
+}
+
 /* Variables CSS para la paleta de colores */
 :root {
   /* Primary */
