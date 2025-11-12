@@ -227,6 +227,7 @@ const TrytonTable = ({
         suppressMenu: true,
         sortable: false,
         filter: false,
+        suppressMovable: true,
         cellStyle: { 
           display: 'flex', 
           alignItems: 'center', 
@@ -278,7 +279,8 @@ const TrytonTable = ({
             const baseStyle = {
               display: 'flex',
               alignItems: 'center',
-              padding: '8px 12px'
+              padding: '8px 12px',
+              cursor: 'pointer'
             };
             
             // Resaltar fila seleccionada
@@ -291,7 +293,9 @@ const TrytonTable = ({
             }
             
             return baseStyle;
-          }
+          },
+          suppressMovable: false,
+          suppressMenu: false
         });
       }
     });
@@ -415,6 +419,7 @@ const TrytonTable = ({
           onRowDoubleClicked={onRowDoubleClicked}
           suppressRowClickSelection={false}
           rowSelection={enableRowSelection ? 'multiple' : 'single'}
+          suppressCellFocus={true}
           animateRows={true}
           enableCellTextSelection={true}
           pagination={true}
