@@ -147,9 +147,9 @@ const TrytonTable = ({
       return parseFloat(value.decimal).toFixed(4);
     }
 
-    // Handle booleans - retornar el valor directamente para que ag-grid lo maneje
+    // Handle booleans - retornar solo el símbolo
     if (fieldDef.type === 'boolean') {
-      return value ? '✓ Sí' : '✗ No';
+      return value ? '✓' : '✗';
     }
 
     // Handle gender field - convertir m/f a Male/Female
@@ -247,21 +247,25 @@ const TrytonTable = ({
           filter: true,
           resizable: true,
           flex: fieldName === 'name' || fieldName === 'rec_name' ? 2 : 1,
-          minWidth: 120,
+          minWidth: fieldDef.type === 'boolean' ? 60 : 120,
+          width: fieldDef.type === 'boolean' ? 60 : undefined,
           cellRenderer: (params) => {
             const value = params.value;
             const record = params.data;
             const formatted = formatCellValue(value, fieldDef, record);
             
-            // Si es un boolean, renderizar con mejor formato
+            // Si es un boolean, renderizar solo el símbolo centrado
             if (fieldDef.type === 'boolean') {
               return (
                 <div style={{ 
                   display: 'flex', 
                   alignItems: 'center', 
                   justifyContent: 'center',
-                  fontWeight: value ? 'bold' : 'normal',
-                  color: value ? 'var(--color-success-500)' : 'var(--color-text-secondary)'
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  color: value ? 'var(--color-success-500)' : 'var(--color-text-secondary)',
+                  width: '100%',
+                  height: '100%'
                 }}>
                   {formatted}
                 </div>
@@ -295,7 +299,7 @@ const TrytonTable = ({
     return cols;
   }, [tableInfo, enableRowSelection, selectedRecord]);
 
-  // Manejar selección de filas
+  // Manejar selección de filas (cuando cambia la selección)
   const onSelectionChanged = useCallback(() => {
     if (!onRowSelect || !gridRef.current) return;
     
@@ -307,15 +311,18 @@ const TrytonTable = ({
     }
   }, [onRowSelect]);
 
-  // Manejar click en fila
+  // Manejar click en fila - solo notificar, ag-grid maneja la selección automáticamente
   const onRowClicked = useCallback((event) => {
+    // No hacer nada aquí, la selección se maneja en onSelectionChanged
+    // Solo llamar a onRowClick si existe (para compatibilidad)
     if (onRowClick && event.data?.id) {
       onRowClick(event.data);
     }
   }, [onRowClick]);
 
-  // Manejar doble click en fila
+  // Manejar doble click en fila - abrir formulario
   const onRowDoubleClicked = useCallback((event) => {
+    // El doble click siempre abre el formulario
     if (onRowDoubleClick && event.data?.id) {
       onRowDoubleClick(event.data);
     }
@@ -407,7 +414,7 @@ const TrytonTable = ({
           onRowClicked={onRowClicked}
           onRowDoubleClicked={onRowDoubleClicked}
           suppressRowClickSelection={false}
-          rowSelection={enableRowSelection ? 'multiple' : undefined}
+          rowSelection={enableRowSelection ? 'multiple' : 'single'}
           animateRows={true}
           enableCellTextSelection={true}
           pagination={true}
