@@ -303,8 +303,9 @@ const TrytonTable = ({
     return cols;
   }, [tableInfo, enableRowSelection, selectedRecord]);
 
-  // Rastrear el nodo actualmente seleccionado
+  // Rastrear el nodo actualmente seleccionado y cuándo se seleccionó
   const currentSelectedNodeRef = useRef(null);
+  const selectionTimestampRef = useRef(0);
 
   // Manejar selección de filas (cuando cambia la selección)
   const onSelectionChanged = useCallback(() => {
@@ -316,16 +317,16 @@ const TrytonTable = ({
       gridRef.current.api.forEachNode((node) => {
         if (node.isSelected()) {
           currentSelectedNodeRef.current = node;
+          selectionTimestampRef.current = Date.now();
         }
       });
-      selectionChangedRef.current = true;
       
       if (onRowSelect) {
         onRowSelect(selectedRows[0], true);
       }
     } else {
       currentSelectedNodeRef.current = null;
-      selectionChangedRef.current = true;
+      selectionTimestampRef.current = 0;
       
       if (onRowSelect) {
         onRowSelect(null, false);
@@ -354,30 +355,39 @@ const TrytonTable = ({
       }
     }
 
-    // Verificar si esta fila está seleccionada actualmente
+    // IMPORTANTE: Verificar el estado de selección ANTES de hacer cualquier cambio
     // Como suppressRowClickSelection={true}, AG Grid no cambiará la selección automáticamente
-    // Así que podemos verificar el estado actual de selección de forma segura
     const isCurrentlySelected = event.node.isSelected();
+    const currentTime = Date.now();
+    
+    // Verificar si esta fila ya estaba seleccionada ANTES del click
+    // Usar timestamp para distinguir entre selección reciente (por este click) y selección previa
+    const isSameNode = currentSelectedNodeRef.current === event.node;
+    const timeSinceSelection = currentTime - selectionTimestampRef.current;
+    const wasAlreadySelected = isSameNode && isCurrentlySelected && timeSinceSelection > 200; // Más de 200ms
 
-    // Si la fila ya está seleccionada (ya sea porque estaba seleccionada antes o se seleccionó programáticamente),
-    // abrir el formulario al hacer click en ella
-    if (isCurrentlySelected) {
-      // La fila está seleccionada, abrir el formulario
+    // Si la fila ya estaba seleccionada ANTES del click (hace más de 200ms), abrir el formulario
+    if (wasAlreadySelected) {
+      // La fila ya estaba seleccionada, abrir el formulario
       if (onRowDoubleClick) {
         onRowDoubleClick(event.data);
       }
-    } else {
-      // La fila NO está seleccionada, seleccionarla (sin abrir formulario)
+      return; // Salir inmediatamente
+    }
+
+    // Si la fila NO está seleccionada, seleccionarla (sin abrir formulario)
+    if (!isCurrentlySelected) {
+      // Seleccionar la fila
       event.node.setSelected(true);
       
-      // Esto activará onSelectionChanged, que actualizará currentSelectedNodeRef
+      // Actualizar el timestamp inmediatamente para evitar que el siguiente click abra el formulario
+      // onSelectionChanged se llamará después y también actualizará el timestamp
+      selectionTimestampRef.current = currentTime;
       
-      // Llamar a onRowClick si existe (para compatibilidad)
-      if (onRowClick) {
-        onRowClick(event.data);
-      }
+      // NO llamar a onRowClick aquí porque eso abriría el formulario
+      // onSelectionChanged se llamará automáticamente y actualizará currentSelectedNodeRef
     }
-  }, [onRowClick, onRowDoubleClick]);
+  }, [onRowDoubleClick]);
 
   // Manejar doble click en fila - abrir formulario
   const onRowDoubleClicked = useCallback((event) => {
