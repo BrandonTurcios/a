@@ -303,26 +303,81 @@ const TrytonTable = ({
     return cols;
   }, [tableInfo, enableRowSelection, selectedRecord]);
 
+  // Rastrear el nodo actualmente seleccionado
+  const currentSelectedNodeRef = useRef(null);
+
   // Manejar selección de filas (cuando cambia la selección)
   const onSelectionChanged = useCallback(() => {
-    if (!onRowSelect || !gridRef.current) return;
+    if (!gridRef.current) return;
     
     const selectedRows = gridRef.current.api.getSelectedRows();
     if (selectedRows.length > 0) {
-      onRowSelect(selectedRows[0], true);
+      // Buscar el nodo seleccionado
+      gridRef.current.api.forEachNode((node) => {
+        if (node.isSelected()) {
+          currentSelectedNodeRef.current = node;
+        }
+      });
+      selectionChangedRef.current = true;
+      
+      if (onRowSelect) {
+        onRowSelect(selectedRows[0], true);
+      }
     } else {
-      onRowSelect(null, false);
+      currentSelectedNodeRef.current = null;
+      selectionChangedRef.current = true;
+      
+      if (onRowSelect) {
+        onRowSelect(null, false);
+      }
     }
   }, [onRowSelect]);
 
-  // Manejar click en fila - solo notificar, ag-grid maneja la selección automáticamente
+  // Manejar click en fila - seleccionar sin abrir formulario, o abrir si ya está seleccionada
   const onRowClicked = useCallback((event) => {
-    // No hacer nada aquí, la selección se maneja en onSelectionChanged
-    // Solo llamar a onRowClick si existe (para compatibilidad)
-    if (onRowClick && event.data?.id) {
-      onRowClick(event.data);
+    if (!event.data?.id || !gridRef.current) return;
+
+    // Verificar si el click fue directamente en un checkbox
+    const target = event.event?.target;
+    if (target) {
+      // Buscar si el click fue en un checkbox o en un elemento relacionado con el checkbox
+      const isCheckboxClick = target.type === 'checkbox' || 
+                              target.closest('.ag-selection-checkbox') ||
+                              target.closest('[role="checkbox"]') ||
+                              target.closest('.ag-checkbox') ||
+                              target.closest('input[type="checkbox"]');
+      
+      if (isCheckboxClick) {
+        // AG Grid manejará la selección automáticamente cuando se hace click en el checkbox
+        // El evento onSelectionChanged se llamará después
+        return;
+      }
     }
-  }, [onRowClick]);
+
+    // Verificar si esta fila está seleccionada actualmente
+    // Como suppressRowClickSelection={true}, AG Grid no cambiará la selección automáticamente
+    // Así que podemos verificar el estado actual de selección de forma segura
+    const isCurrentlySelected = event.node.isSelected();
+
+    // Si la fila ya está seleccionada (ya sea porque estaba seleccionada antes o se seleccionó programáticamente),
+    // abrir el formulario al hacer click en ella
+    if (isCurrentlySelected) {
+      // La fila está seleccionada, abrir el formulario
+      if (onRowDoubleClick) {
+        onRowDoubleClick(event.data);
+      }
+    } else {
+      // La fila NO está seleccionada, seleccionarla (sin abrir formulario)
+      event.node.setSelected(true);
+      
+      // Esto activará onSelectionChanged, que actualizará currentSelectedNodeRef
+      
+      // Llamar a onRowClick si existe (para compatibilidad)
+      if (onRowClick) {
+        onRowClick(event.data);
+      }
+    }
+  }, [onRowClick, onRowDoubleClick]);
 
   // Manejar doble click en fila - abrir formulario
   const onRowDoubleClicked = useCallback((event) => {
@@ -417,7 +472,7 @@ const TrytonTable = ({
           onSelectionChanged={onSelectionChanged}
           onRowClicked={onRowClicked}
           onRowDoubleClicked={onRowDoubleClicked}
-          suppressRowClickSelection={false}
+          suppressRowClickSelection={true}
           rowSelection={enableRowSelection ? 'multiple' : 'single'}
           suppressCellFocus={true}
           animateRows={true}
