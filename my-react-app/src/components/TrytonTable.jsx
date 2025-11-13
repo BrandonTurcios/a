@@ -459,11 +459,6 @@ const TrytonTable = ({
 
   return (
     <div style={{
-      borderRadius: '12px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-      border: '1px solid var(--color-border)',
-      background: 'white',
-      padding: '20px',
       height: 'calc(100vh - 200px)',
       minHeight: '600px'
     }}>

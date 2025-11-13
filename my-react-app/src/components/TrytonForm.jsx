@@ -290,10 +290,17 @@ const Many2OneField = ({
   };
 
   return (
-    <div className="mb-6">
-      <div className="flex items-center gap-2 font-medium text-gray-700 mb-2">
-        {required && <span className="text-red-500">*</span>}
-        <SearchOutlined className="text-teal-600" />
+    <div style={{ marginBottom: '24px' }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        fontWeight: '500',
+        color: 'var(--color-text-primary)',
+        marginBottom: '8px'
+      }}>
+        {required && <span style={{ color: 'var(--color-danger-500)' }}>*</span>}
+        <SearchOutlined style={{ color: 'var(--color-primary-500)' }} />
         {label}
       </div>
 
@@ -307,7 +314,6 @@ const Many2OneField = ({
           placeholder={`Search ${label.toLowerCase()}...`}
           disabled={readonly}
           notFoundContent={loading ? <Spin size="small" /> : null}
-          className="w-full"
           style={{ width: "100%" }}
           filterOption={false}
         >
@@ -316,10 +322,14 @@ const Many2OneField = ({
               loading ? (
                 <Spin size="small" />
               ) : (
-                <SearchOutlined className="text-gray-400" />
+                <SearchOutlined style={{ color: 'var(--color-text-secondary)' }} />
               )
             }
-            className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12"
+            style={{
+              borderRadius: '6px',
+              height: '40px',
+              fontSize: '14px'
+            }}
           />
         </AutoComplete>
       </div>
@@ -539,18 +549,25 @@ const One2ManyField = ({
   };
 
   return (
-    <div className="mb-6">
-      <div className="flex items-center gap-2 font-medium text-gray-700 mb-2">
-        {required && <span className="text-red-500">*</span>}
+    <div style={{ marginBottom: '24px' }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        fontWeight: '500',
+        color: 'var(--color-text-primary)',
+        marginBottom: '8px'
+      }}>
+        {required && <span style={{ color: 'var(--color-danger-500)' }}>*</span>}
         {label}
       </div>
 
       <div
         style={{
           padding: "16px",
-          border: "1px solid #d9d9d9",
+          border: "1px solid var(--color-border)",
           borderRadius: "8px",
-          background: "#fafafa",
+          background: "var(--color-neutral-100)",
         }}
       >
         <div
@@ -785,10 +802,17 @@ const BinaryImageField = ({
   );
 
   return (
-    <div className="mb-6">
-      <div className="flex items-center gap-2 font-medium text-gray-700 mb-2">
-        {required && <span className="text-red-500">*</span>}
-        <PictureOutlined className="text-teal-600" />
+    <div style={{ marginBottom: '24px' }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        fontWeight: '500',
+        color: 'var(--color-text-primary)',
+        marginBottom: '8px'
+      }}>
+        {required && <span style={{ color: 'var(--color-danger-500)' }}>*</span>}
+        <PictureOutlined style={{ color: 'var(--color-primary-500)' }} />
         {label}
       </div>
 
@@ -1372,6 +1396,37 @@ const TrytonForm = forwardRef(({
     return defaults;
   };
 
+  // Helper function para crear labels consistentes
+  const createFieldLabel = (labelText, required, icon = null) => (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      fontWeight: '500',
+      color: 'var(--color-text-primary)'
+    }}>
+      {required && <span style={{ color: 'var(--color-danger-500)' }}>*</span>}
+      {icon && <span style={{ color: 'var(--color-primary-500)' }}>{icon}</span>}
+      {labelText}
+    </div>
+  );
+
+  // Helper function para crear help text
+  const createFieldHelp = (helpText) => (
+    helpText ? (
+      <Text type="secondary" style={{ fontSize: '12px' }}>
+        {helpText}
+      </Text>
+    ) : null
+  );
+
+  // Helper function para estilos comunes de inputs
+  const inputStyle = {
+    borderRadius: '6px',
+    height: '40px',
+    fontSize: '14px'
+  };
+
   const renderFormField = (field) => {
     const { name, label, fieldDef, required, readonly, help } = field;
 
@@ -1410,25 +1465,16 @@ const TrytonForm = forwardRef(({
 
     const commonProps = {
       name,
-      label: help ? (
-        <div>
-          <div>{label}</div>
-          {help && (
-            <Text
-              type="secondary"
-              style={{ fontSize: "12px", fontWeight: "normal" }}
-            >
-              {help}
-            </Text>
-          )}
-        </div>
-      ) : (
-        label
-      ),
+      label: createFieldLabel(label, required),
       required,
       disabled: isReadonly,
-      style: { marginBottom: "16px" },
+      style: { marginBottom: "24px" },
     };
+    
+    // Si hay help, agregarlo como prop help
+    if (help) {
+      commonProps.help = createFieldHelp(help);
+    }
 
     switch (fieldType) {
       case "char":
@@ -1437,25 +1483,11 @@ const TrytonForm = forwardRef(({
           <Form.Item
             key={name}
             {...commonProps}
-            label={
-              <div className="flex items-center gap-2 font-medium text-gray-700">
-                {required && <span className="text-red-500">*</span>}
-                {label}
-              </div>
-            }
-            help={
-              help ? (
-                <Text type="secondary" className="text-xs">
-                  {help}
-                </Text>
-              ) : null
-            }
-            className="mb-6"
           >
             <Input
               disabled={isReadonly}
               placeholder={`Enter ${label.toLowerCase()}`}
-              className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 text-base"
+              style={inputStyle}
             />
           </Form.Item>
         );
@@ -1465,26 +1497,16 @@ const TrytonForm = forwardRef(({
           <Form.Item
             key={name}
             {...commonProps}
-            label={
-              <div className="flex items-center gap-2 font-medium text-gray-700">
-                {required && <span className="text-red-500">*</span>}
-                {label}
-              </div>
-            }
-            help={
-              help ? (
-                <Text type="secondary" className="text-xs">
-                  {help}
-                </Text>
-              ) : null
-            }
-            className="mb-6"
           >
             <Input.TextArea
               disabled={isReadonly}
               rows={4}
               placeholder={`Enter ${label.toLowerCase()}`}
-              className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 text-base resize-y"
+              style={{
+                ...inputStyle,
+                resize: 'vertical',
+                minHeight: '100px'
+              }}
             />
           </Form.Item>
         );
@@ -1495,26 +1517,11 @@ const TrytonForm = forwardRef(({
           <Form.Item
             key={name}
             {...commonProps}
-            label={
-              <div className="flex items-center gap-2 font-medium text-gray-700">
-                {required && <span className="text-red-500">*</span>}
-                {label}
-              </div>
-            }
-            help={
-              help ? (
-                <Text type="secondary" className="text-xs">
-                  {help}
-                </Text>
-              ) : null
-            }
-            className="mb-6"
           >
             <InputNumber
               disabled={isReadonly}
-              style={{ width: "100%" }}
+              style={{ width: "100%", ...inputStyle }}
               placeholder={`Enter ${label.toLowerCase()}`}
-              className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 text-base w-full"
             />
           </Form.Item>
         );
@@ -1525,27 +1532,12 @@ const TrytonForm = forwardRef(({
           <Form.Item
             key={name}
             {...commonProps}
-            label={
-              <div className="flex items-center gap-2 font-medium text-gray-700">
-                {required && <span className="text-red-500">*</span>}
-                {label}
-              </div>
-            }
-            help={
-              help ? (
-                <Text type="secondary" className="text-xs">
-                  {help}
-                </Text>
-              ) : null
-            }
-            className="mb-6"
           >
             <InputNumber
               disabled={isReadonly}
-              style={{ width: "100%" }}
+              style={{ width: "100%", ...inputStyle }}
               step={0.01}
               placeholder={`Enter ${label.toLowerCase()}`}
-              className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 text-base w-full"
             />
           </Form.Item>
         );
@@ -1556,88 +1548,47 @@ const TrytonForm = forwardRef(({
             key={name}
             {...commonProps}
             valuePropName="checked"
-            label={
-              <div className="flex items-center gap-2 font-medium text-gray-700">
-                {required && <span className="text-red-500">*</span>}
-                {label}
-              </div>
-            }
-            help={
-              help ? (
-                <Text type="secondary" className="text-xs">
-                  {help}
-                </Text>
-              ) : null
-            }
-            className="mb-6"
           >
             <Switch
               disabled={isReadonly}
-              className="[&.ant-switch-checked]:bg-teal-600 [&.ant-switch-checked]:shadow-teal-200"
             />
           </Form.Item>
         );
 
-      case "date":
+      case "date": {
+        const dateProps = { ...commonProps };
+        dateProps.label = createFieldLabel(label, required, <CalendarOutlined />);
         return (
           <Form.Item
             key={name}
-            {...commonProps}
-            label={
-              <div className="flex items-center gap-2 font-medium text-gray-700">
-                {required && <span className="text-red-500">*</span>}
-                <CalendarOutlined className="text-teal-600" />
-                {label}
-              </div>
-            }
-            help={
-              help ? (
-                <Text type="secondary" className="text-xs">
-                  {help}
-                </Text>
-              ) : null
-            }
-            className="mb-6"
+            {...dateProps}
           >
             <DatePicker
               disabled={isReadonly}
-              style={{ width: "100%" }}
+              style={{ width: "100%", ...inputStyle }}
               placeholder={`Select ${label.toLowerCase()}`}
-              className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 w-full"
             />
           </Form.Item>
         );
+      }
 
-      case "datetime":
+      case "datetime": {
+        const datetimeProps = { ...commonProps };
+        datetimeProps.label = createFieldLabel(label, required, <CalendarOutlined />);
         return (
           <Form.Item
             key={name}
-            {...commonProps}
-            label={
-              <div className="flex items-center gap-2 font-medium text-gray-700">
-                {required && <span className="text-red-500">*</span>}
-                <CalendarOutlined className="text-teal-600" />
-                {label}
-              </div>
-            }
-            help={
-              help ? (
-                <Text type="secondary" className="text-xs">
-                  {help}
-                </Text>
-              ) : null
-            }
-            className="mb-6"
+            {...datetimeProps}
           >
             <DatePicker
               disabled={isReadonly}
               showTime
-              style={{ width: "100%" }}
+              style={{ width: "100%", ...inputStyle }}
               placeholder={`Select ${label.toLowerCase()}`}
-              className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 w-full"
             />
           </Form.Item>
         );
+      }
 
       case "timedelta":
         return (
@@ -1669,25 +1620,11 @@ const TrytonForm = forwardRef(({
             <Form.Item
               key={name}
               {...commonProps}
-              label={
-                <div className="flex items-center gap-2 font-medium text-gray-700">
-                  {required && <span className="text-red-500">*</span>}
-                  {label}
-                </div>
-              }
-              help={
-                help ? (
-                  <Text type="secondary" className="text-xs">
-                    {help}
-                  </Text>
-                ) : null
-              }
-              className="mb-6"
             >
               <Select
                 disabled={isReadonly}
                 placeholder={`Select ${label.toLowerCase()}`}
-                className="w-full rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12"
+                style={{ width: "100%", ...inputStyle }}
               >
                 {dynamicOptions.length > 0 ? (
                   dynamicOptions.map(([value, optionLabel]) => (
@@ -1706,25 +1643,11 @@ const TrytonForm = forwardRef(({
           <Form.Item
             key={name}
             {...commonProps}
-            label={
-              <div className="flex items-center gap-2 font-medium text-gray-700">
-                {required && <span className="text-red-500">*</span>}
-                {label}
-              </div>
-            }
-            help={
-              help ? (
-                <Text type="secondary" className="text-xs">
-                  {help}
-                </Text>
-              ) : null
-            }
-            className="mb-6"
           >
             <Select
               disabled={isReadonly}
               placeholder={`Select ${label.toLowerCase()}`}
-              className="w-full rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12"
+              style={{ width: "100%", ...inputStyle }}
             >
               {options.map(([value, label]) => (
                 <Option key={value} value={value}>
@@ -2088,17 +2011,22 @@ const TrytonForm = forwardRef(({
   }
 
   return (
-    <Card
-      className="rounded-2xl shadow-lg border border-teal-100"
-      headStyle={{
-        background: "linear-gradient(135deg, #00A88E 0%, #00C4A7 100%)",
-        borderRadius: "16px 16px 0 0",
-        border: "none",
-        padding: "20px 24px",
-      }}
-      title={null}
-      extra={
-        <Space className="flex flex-wrap gap-2">
+    <div style={{
+      background: 'var(--color-card-background)',
+      borderRadius: '8px',
+      border: '1px solid var(--color-border)',
+      overflow: 'hidden'
+    }}>
+      {/* Header con acciones */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+        padding: '16px 24px',
+        borderBottom: '1px solid var(--color-border)',
+        background: 'var(--color-neutral-50)'
+      }}>
+        <Space size="middle">
           {!readonly && (
             <>
               {isEditing ? (
@@ -2111,14 +2039,22 @@ const TrytonForm = forwardRef(({
                       console.log("🖱️ Save button clicked!");
                       form.submit();
                     }}
-                    className="bg-teal-600 hover:bg-teal-700 border-teal-600 hover:border-teal-700 text-white rounded-lg shadow-md"
+                    style={{
+                      background: 'var(--color-primary-500)',
+                      borderColor: 'var(--color-primary-500)',
+                      borderRadius: '6px'
+                    }}
                   >
                     {submitButtonText}
                   </Button>
                   <Button
                     icon={<MinusOutlined />}
                     onClick={handleCancel}
-                    className="bg-white border-gray-300 text-gray-600 hover:border-teal-600 hover:text-teal-600 rounded-lg"
+                    style={{
+                      borderColor: 'var(--color-border)',
+                      color: 'var(--color-text-secondary)',
+                      borderRadius: '6px'
+                    }}
                   >
                     Cancel
                   </Button>
@@ -2128,7 +2064,11 @@ const TrytonForm = forwardRef(({
                   type="primary"
                   icon={<EditOutlined />}
                   onClick={handleEdit}
-                  className="bg-teal-600 hover:bg-teal-700 border-teal-600 hover:border-teal-700 text-white rounded-lg shadow-md"
+                  style={{
+                    background: 'var(--color-primary-500)',
+                    borderColor: 'var(--color-primary-500)',
+                    borderRadius: '6px'
+                  }}
                 >
                   Edit
                 </Button>
@@ -2136,10 +2076,13 @@ const TrytonForm = forwardRef(({
             </>
           )}
         </Space>
-      }
-      styles={{ body: { padding: "24px" } }}
-    >
-      <div className="bg-gray-50 rounded-lg p-6 -mx-6 -mb-6">
+      </div>
+
+      {/* Contenido del formulario */}
+      <div style={{
+        padding: '24px',
+        background: 'var(--color-card-background)'
+      }}>
         <Form
           form={form}
           layout="vertical"
@@ -2173,27 +2116,36 @@ const TrytonForm = forwardRef(({
           )}
 
           {fields.length === 0 && (
-            <div className="text-center py-10 text-gray-500">
-              <Text>No fields available for this form</Text>
+            <div style={{
+              textAlign: 'center',
+              padding: '40px 20px',
+              color: 'var(--color-text-secondary)'
+            }}>
+              <Text style={{ color: 'var(--color-text-secondary)' }}>
+                No fields available for this form
+              </Text>
             </div>
           )}
         </Form>
       </div>
 
-      {formInfo && (
+      {formInfo && process.env.NODE_ENV === 'development' && (
         <div
           style={{
-            marginTop: "24px",
-            paddingTop: "16px",
-            borderTop: "1px solid #f0f0f0",
+            padding: '12px 24px',
+            borderTop: '1px solid var(--color-border)',
+            background: 'var(--color-neutral-100)'
           }}
         >
-          <Text type="secondary" style={{ fontSize: "12px" }}>
+          <Text type="secondary" style={{ 
+            fontSize: "12px",
+            color: 'var(--color-text-secondary)'
+          }}>
             Vista: {viewId} | Tipo: {formInfo.type} | Campos: {fields.length}
           </Text>
         </div>
       )}
-    </Card>
+    </div>
   );
 });
 
