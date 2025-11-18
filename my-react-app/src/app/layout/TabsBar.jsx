@@ -1,16 +1,19 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Tabs, Button, Dropdown, Menu } from 'antd';
 import { CloseOutlined, MoreOutlined } from '@ant-design/icons';
 
 const { TabPane } = Tabs;
 
-const TabsBar = ({ 
-  tabs, 
-  activeTabId, 
-  onTabChange, 
-  onCloseTab, 
-  onCloseAllTabs 
+const TabsBar = ({
+  tabs,
+  activeTabId,
+  onTabChange,
+  onCloseTab,
+  onCloseAllTabs
 }) => {
+  const { t } = useTranslation();
+
   const handleTabChange = (key) => {
     onTabChange(key);
   };
@@ -23,7 +26,7 @@ const TabsBar = ({
   const getTabMenu = (tabId) => (
     <Menu>
       <Menu.Item key="close" onClick={() => onCloseTab(tabId)}>
-        Cerrar
+        {t('common.close')}
       </Menu.Item>
       <Menu.Item key="closeOthers" onClick={() => {
         // Cerrar todas excepto esta
@@ -33,10 +36,10 @@ const TabsBar = ({
           }
         });
       }}>
-        Cerrar otras
+        {t('common.closeOthers')}
       </Menu.Item>
       <Menu.Item key="closeAll" onClick={onCloseAllTabs}>
-        Cerrar todas
+        {t('common.closeAll')}
       </Menu.Item>
     </Menu>
   );
@@ -91,7 +94,11 @@ const TabsBar = ({
             )}
             {tab.closable && (
               <Dropdown
-                overlay={getTabMenu(tab.id)}
+                menu={{ items: getTabMenu(tab.id).props.children.map(item => ({
+                  key: item.key,
+                  label: item.props.children,
+                  onClick: item.props.onClick
+                })) }}
                 trigger={['click']}
                 placement="bottomRight"
               >
@@ -127,7 +134,9 @@ const TabsBar = ({
       padding: '0 16px',
       minHeight: '40px',
       display: 'flex',
-      alignItems: 'center'
+      alignItems: 'center',
+      overflowX: 'auto',
+      maxWidth: '100%'
     }}>
       <Tabs
         activeKey={activeTabId}
@@ -136,11 +145,13 @@ const TabsBar = ({
         size="small"
         style={{
           flex: 1,
-          margin: 0
+          margin: 0,
+          minWidth: 'fit-content'
         }}
         tabBarStyle={{
           margin: 0,
-          border: 'none'
+          border: 'none',
+          flexWrap: 'nowrap'
         }}
       >
         {tabs.map(tab => renderTabPane(tab))}

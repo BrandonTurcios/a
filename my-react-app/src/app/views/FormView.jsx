@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Typography } from 'antd';
 import TrytonForm from '../../components/TrytonForm';
 import Toolbar from '../../components/Toolbar';
@@ -6,6 +7,7 @@ import Toolbar from '../../components/Toolbar';
 const { Title, Paragraph } = Typography;
 
 const FormView = ({ formInfo, selectedMenuInfo, loadingContent, formDirty, onFormChange, toolbarHandlers }) => {
+  const { t } = useTranslation();
   return (
     <div style={{
       padding: '24px',
@@ -22,10 +24,10 @@ const FormView = ({ formInfo, selectedMenuInfo, loadingContent, formDirty, onFor
       }}>
         <div style={{ flex: 1 }}>
           <Title level={2} style={{ margin: 0, color: '#333333' }}>
-            {selectedMenuInfo?.actionName || selectedMenuInfo?.menuItem?.name || 'Form'}
+            {selectedMenuInfo?.actionName || selectedMenuInfo?.menuItem?.name || t('form.view')}
           </Title>
           <Paragraph style={{ color: '#6C757D', margin: '8px 0 0 0' }}>
-            {selectedMenuInfo?.resModel} - {formInfo?.isNew ? 'New record' : 'Form view'}
+            {selectedMenuInfo?.resModel} - {formInfo?.isNew ? t('form.newRecordLabel') : t('form.viewLabel')}
           </Paragraph>
         </div>
 

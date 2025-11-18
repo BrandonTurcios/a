@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, Spin, Alert, Button, Space, Typography, Checkbox } from 'antd';
 import {
   ReloadOutlined,
@@ -26,6 +27,7 @@ const TrytonTable = ({
   tableData = null, // Datos pre-cargados (para tablas relacionadas)
   filtered = false // Indicar si está filtrado
 }) => {
+  const { t } = useTranslation();
   const [tableInfo, setTableInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -66,7 +68,7 @@ const TrytonTable = ({
       
       // Only proceed if it's a "tree" type view
       if (!fieldsView || fieldsView.type !== 'tree') {
-        throw new Error(`View is not of type "tree" (current type: ${fieldsView?.type || 'unknown'})`);
+        throw new Error(t('errors.viewNotTree'));
       }
       
       const info = await trytonService.getTableInfo(
@@ -201,9 +203,9 @@ const TrytonTable = ({
 
     // Handle gender field - convertir m/f a Male/Female
     if (fieldDef.name === 'gender' && fieldDef.type === 'selection') {
-      if (value === 'm') return 'Male';
-      if (value === 'f') return 'Female';
-      if (value === 'm-f') return 'Male-Female';
+      if (value === 'm') return t('table.male');
+      if (value === 'f') return t('table.female');
+      if (value === 'm-f') return t('table.maleFemale');
       return value;
     }
     
@@ -262,14 +264,14 @@ const TrytonTable = ({
   if (loading) {
     return (
       <Card>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          minHeight: '200px' 
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '200px'
         }}>
           <Spin size="large" />
-          <Text style={{ marginLeft: '16px' }}>Loading table...</Text>
+          <Text style={{ marginLeft: '16px' }}>{t('table.loading')}</Text>
         </div>
       </Card>
     );
@@ -279,13 +281,13 @@ const TrytonTable = ({
     return (
       <Card>
         <Alert
-          message="Error"
+          message={t('common.error')}
           description={error}
           type="error"
           showIcon
           action={
             <Button size="small" onClick={handleRefresh}>
-              Retry
+              {t('common.retry')}
             </Button>
           }
         />
@@ -297,34 +299,34 @@ const TrytonTable = ({
     <div className="rounded-2xl shadow-lg border border-gray-200 bg-white p-6">
       <div className="mb-4 flex justify-end">
         <Space className="flex flex-wrap gap-2">
-          <Button 
+          <Button
             icon={<ReloadOutlined />}
             onClick={handleRefresh}
-            title="Update"
+            title={t('table.update')}
             className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg"
           >
-            Update
+            {t('table.update')}
           </Button>
-          <Button 
+          <Button
             icon={<DownloadOutlined />}
-            title="Export"
+            title={t('table.export')}
             className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg"
           >
-            Export
+            {t('table.export')}
           </Button>
-          <Button 
+          <Button
             icon={<FilterOutlined />}
-            title="Filters"
+            title={t('table.filters')}
             className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg"
           >
-            Filters
+            {t('table.filters')}
           </Button>
-          <Button 
+          <Button
             icon={<SettingOutlined />}
-            title="Configure"
+            title={t('table.configure')}
             className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg"
           >
-            Configure
+            {t('table.configure')}
           </Button>
         </Space>
       </div>

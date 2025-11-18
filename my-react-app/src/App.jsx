@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { message, Spin } from 'antd'
+import { useTranslation } from 'react-i18next'
 import Login from './components/Login'
 import Dashboard from './app/dashboard/Dashboard'
 import trytonService from './services/trytonService'
 
 function App() {
+  const { t, i18n } = useTranslation();
   const [sessionData, setSessionData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isChangingLanguage, setIsChangingLanguage] = useState(false);
@@ -51,7 +53,7 @@ function App() {
     const encodedPassword = sessionStorage.getItem('tryton_temp_pwd');
 
     if (!sessionData || !encodedPassword) {
-      message.warning('Please log in again to change language');
+      message.warning(t('app.languageChangeWarning'));
       handleLogout();
       return;
     }
@@ -78,6 +80,12 @@ function App() {
       setSessionData(newSession);
       localStorage.setItem('tryton_session', JSON.stringify(newSession));
 
+      // Guardar el idioma seleccionado
+      localStorage.setItem('tryton_language', newLanguage);
+
+      // Cambiar el idioma de i18n
+      await i18n.changeLanguage(newLanguage);
+
       // Recargar la página para actualizar todo el contenido traducido
       // El overlay se mantiene hasta que recargue
       setTimeout(() => {
@@ -85,7 +93,7 @@ function App() {
       }, 300);
     } catch (error) {
       setIsChangingLanguage(false);
-      message.error('Failed to change language');
+      message.error(t('app.languageChangeError'));
       console.error('Error changing language:', error);
     }
   };
@@ -95,7 +103,7 @@ function App() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando Tryton...</p>
+          <p className="text-gray-600">{t('app.loadingTryton')}</p>
         </div>
       </div>
     );
@@ -121,7 +129,7 @@ function App() {
         }}>
           <Spin size="large" />
           <p style={{ marginTop: '24px', fontSize: '16px', color: '#333' }}>
-            Changing language...
+            {t('app.changingLanguage')}
           </p>
         </div>
       )}

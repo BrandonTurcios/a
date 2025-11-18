@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal, Form, Input, Button, Space, Typography, AutoComplete, message } from 'antd';
 import { MailOutlined, SendOutlined, CloseOutlined } from '@ant-design/icons';
 import trytonService from '../services/trytonService';
@@ -6,13 +7,14 @@ import trytonService from '../services/trytonService';
 const { TextArea } = Input;
 const { Title } = Typography;
 
-const EmailModal = ({ 
-  visible, 
-  onClose, 
-  selectedRecord, 
+const EmailModal = ({
+  visible,
+  onClose,
+  selectedRecord,
   model,
-  loading = false 
+  loading = false
 }) => {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const [emailLoading, setEmailLoading] = useState(false);
   const [toOptions, setToOptions] = useState([]);
@@ -47,7 +49,7 @@ const EmailModal = ({
       
     } catch (error) {
       console.error('Error loading email template:', error);
-      message.error('Error loading email template');
+      message.error(t('errors.emailTemplateLoad'));
     } finally {
       setEmailLoading(false);
     }
@@ -85,13 +87,13 @@ const EmailModal = ({
       
       // TODO: Implement actual email sending
       console.log('Sending email:', values);
-      
-      message.success('Email sent successfully');
+
+      message.success(t('email.sentSuccess'));
       onClose();
-      
+
     } catch (error) {
       console.error('Error sending email:', error);
-      message.error('Error sending email');
+      message.error(t('errors.emailSendFailed'));
     } finally {
       setEmailLoading(false);
     }
@@ -108,7 +110,7 @@ const EmailModal = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <MailOutlined style={{ color: '#1890ff' }} />
           <Title level={4} style={{ margin: 0 }}>
-            Send Email
+            {t('email.modalTitle')}
           </Title>
         </div>
       }
@@ -117,16 +119,16 @@ const EmailModal = ({
       width={800}
       footer={[
         <Button key="cancel" onClick={handleCancel} icon={<CloseOutlined />}>
-          Cancel
+          {t('common.cancel')}
         </Button>,
-        <Button 
-          key="send" 
-          type="primary" 
+        <Button
+          key="send"
+          type="primary"
           loading={emailLoading}
           onClick={() => form.submit()}
           icon={<SendOutlined />}
         >
-          Send
+          {t('email.send')}
         </Button>
       ]}
     >
@@ -138,13 +140,13 @@ const EmailModal = ({
       >
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
           <Form.Item
-            label="To"
+            label={t('email.to')}
             name="to"
-            rules={[{ required: true, message: 'Please enter recipients' }]}
+            rules={[{ required: true, message: t('validation.emailRecipients') }]}
           >
             <AutoComplete
               mode="tags"
-              placeholder="Enter email addresses"
+              placeholder={t('email.enterAddresses')}
               onSearch={(value) => handleEmailComplete('to', value)}
               options={toOptions}
               style={{ width: '100%' }}
@@ -152,12 +154,12 @@ const EmailModal = ({
           </Form.Item>
 
           <Form.Item
-            label="Cc"
+            label={t('email.cc')}
             name="cc"
           >
             <AutoComplete
               mode="tags"
-              placeholder="Enter CC addresses"
+              placeholder={t('email.enterCcAddresses')}
               onSearch={(value) => handleEmailComplete('cc', value)}
               options={ccOptions}
               style={{ width: '100%' }}
@@ -166,12 +168,12 @@ const EmailModal = ({
         </div>
 
         <Form.Item
-          label="Bcc"
+          label={t('email.bcc')}
           name="bcc"
         >
           <AutoComplete
             mode="tags"
-            placeholder="Enter BCC addresses"
+            placeholder={t('email.enterBccAddresses')}
             onSearch={(value) => handleEmailComplete('bcc', value)}
             options={bccOptions}
             style={{ width: '100%' }}
@@ -179,21 +181,21 @@ const EmailModal = ({
         </Form.Item>
 
         <Form.Item
-          label="Subject"
+          label={t('email.subject')}
           name="subject"
-          rules={[{ required: true, message: 'Please enter subject' }]}
+          rules={[{ required: true, message: t('validation.emailSubject') }]}
         >
-          <Input placeholder="Enter email subject" />
+          <Input placeholder={t('email.enterSubject')} />
         </Form.Item>
 
         <Form.Item
-          label="Message"
+          label={t('email.message')}
           name="body"
-          rules={[{ required: true, message: 'Please enter message' }]}
+          rules={[{ required: true, message: t('validation.emailMessage') }]}
         >
           <TextArea
             rows={12}
-            placeholder="Enter your message here..."
+            placeholder={t('email.enterMessage')}
             style={{ resize: 'vertical' }}
           />
         </Form.Item>

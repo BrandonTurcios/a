@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Layout, Spin, Alert, Button } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 import MenuTree from './MenuTree';
@@ -6,6 +7,8 @@ import MenuTree from './MenuTree';
 const { Sider } = Layout;
 
 const Sidebar = ({ open, menuItems, loading, error, expandedMenus, activeTab, onMenuClick, onRetry }) => {
+  const { t } = useTranslation();
+
   useEffect(() => {
     const style = document.createElement('style');
     style.textContent = `
@@ -68,18 +71,18 @@ const Sidebar = ({ open, menuItems, loading, error, expandedMenus, activeTab, on
         {loading ? (
           <div style={{ padding: '24px', textAlign: 'center' }}>
             <Spin size="large" />
-            <p style={{ marginTop: '16px', color: 'rgba(255,255,255,0.7)' }}>Cargando menú...</p>
+            <p style={{ marginTop: '16px', color: 'rgba(255,255,255,0.7)' }}>{t('sidebar.loadingMenu')}</p>
           </div>
         ) : error ? (
           <div style={{ padding: '16px' }}>
             <Alert
-              message="Error"
+              message={t('common.error')}
               description={error}
               type="error"
               showIcon
               action={
                 <Button size="small" icon={<ReloadOutlined />} onClick={onRetry}>
-                  Reintentar
+                  {t('common.retry')}
                 </Button>
               }
             />

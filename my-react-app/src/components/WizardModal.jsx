@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal, Form, Button, Space, message, Spin, Card, Row, Col, AutoComplete, Table, Input, Divider, Typography, Checkbox, DatePicker, TimePicker, Select } from 'antd';
 import { CloseOutlined, CheckOutlined, PlusOutlined, MinusOutlined, SearchOutlined, CalendarOutlined, DollarOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import trytonService from '../services/trytonService';
@@ -10,6 +11,7 @@ const { Title, Text } = Typography;
 
 // Component for many2one fields with autocomplete
 const Many2OneField = ({ name, string, required, help, relation, disabled, form, defaultValue }) => {
+  const { t } = useTranslation();
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [inputValue, setInputValue] = useState('');
@@ -117,12 +119,12 @@ const Many2OneField = ({ name, string, required, help, relation, disabled, form,
       {/* Visible field to show the label */}
       <Form.Item
         label={string}
-        rules={required ? [{ required: true, message: `Field ${string} is required` }] : []}
+        rules={required ? [{ required: true, message: t('validation.fieldRequired', { field: string }) }] : []}
         help={help}
         className="mb-6"
       >
         <AutoComplete
-          placeholder={`Search ${string.toLowerCase()}...`}
+          placeholder={t('wizard.searchField', { field: string.toLowerCase() })}
           disabled={disabled}
           loading={loading}
           options={options}
@@ -134,7 +136,7 @@ const Many2OneField = ({ name, string, required, help, relation, disabled, form,
           showSearch
           allowClear
           className="w-full rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 transition-colors duration-300 h-12 text-base"
-          notFoundContent={loading ? "Searching..." : "No options found"}
+          notFoundContent={loading ? t('wizard.searching') : t('wizard.noOptionsFound')}
         />
       </Form.Item>
     </>
@@ -143,6 +145,7 @@ const Many2OneField = ({ name, string, required, help, relation, disabled, form,
 
 // Component for many2many fields with table selection
 const Many2ManyField = ({ name, string, relation, disabled, form, fieldDef, wizardInfo }) => {
+  const { t } = useTranslation();
   const [availableOptions, setAvailableOptions] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -336,7 +339,7 @@ const Many2ManyField = ({ name, string, relation, disabled, form, fieldDef, wiza
     <div className="space-y-6">
       {/* Search input */}
       <Input
-        placeholder={`Search ${string.toLowerCase()}...`}
+        placeholder={t('wizard.searchField', { field: string.toLowerCase() })}
         prefix={<SearchOutlined />}
         value={searchText}
         onChange={(e) => handleSearch(e.target.value)}
@@ -348,7 +351,7 @@ const Many2ManyField = ({ name, string, relation, disabled, form, fieldDef, wiza
       <div className="bg-white rounded-lg border border-gray-200 p-4">
         <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
           <SearchOutlined className="text-teal-600" />
-          Available {string}
+          {t('wizard.availableItems', { items: string })}
         </h4>
         <Table
           dataSource={availableOptions}
@@ -365,7 +368,7 @@ const Many2ManyField = ({ name, string, relation, disabled, form, fieldDef, wiza
       <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
         <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
           <CheckOutlined className="text-green-600" />
-          Selected {string} ({selectedItems.length})
+          {t('wizard.selectedItems', { items: string, count: selectedItems.length })}
         </h4>
         {selectedItems.length > 0 ? (
           <Table
@@ -377,7 +380,7 @@ const Many2ManyField = ({ name, string, relation, disabled, form, fieldDef, wiza
             className="rounded-lg"
           />
         ) : (
-          <p className="text-gray-500 italic text-center py-4">No items selected</p>
+          <p className="text-gray-500 italic text-center py-4">{t('wizard.noItemsSelected')}</p>
         )}
       </div>
     </div>
@@ -393,6 +396,7 @@ const WizardModal = ({
   loading = false,
   title = "Wizard"
 }) => {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const [internalLoading, setInternalLoading] = useState(false);
   const [formFields, setFormFields] = useState([]);
@@ -717,13 +721,13 @@ const WizardModal = ({
       console.log(`📤 Valores procesados para envío:`, processedValues);
       
       await onSubmit(processedValues, buttonState);
-      
-      message.success('Wizard executed successfully');
+
+      message.success(t('wizard.successMessage'));
       onClose();
-      
+
     } catch (error) {
       console.error('Error sending wizard:', error);
-      message.error('Error executing wizard: ' + error.message);
+      message.error(t('wizard.errorMessage') + error.message);
     } finally {
       setInternalLoading(false);
     }
@@ -739,7 +743,7 @@ const WizardModal = ({
       onClose();
     } catch (error) {
       console.error('Error canceling wizard:', error);
-      message.error('Error canceling wizard: ' + error.message);
+      message.error(t('wizard.errorMessage') + error.message);
     }
   };
 
@@ -750,13 +754,13 @@ const WizardModal = ({
     if (!fieldDef) {
       return (
         <Form.Item key={name} name={name} label={string}>
-          <input disabled placeholder="Field not available" />
+          <input disabled placeholder={t('wizard.fieldNotAvailable')} />
         </Form.Item>
       );
     }
 
     const commonProps = {
-      placeholder: string,
+      placeholder: t('wizard.selectField', { field: string }),
       disabled: readonly || currentLoading
     };
 
@@ -982,14 +986,14 @@ const WizardModal = ({
                 {string}
               </div>
             }
-            rules={required ? [{ required: true, message: `Field ${string} is required` }] : []}
+            rules={required ? [{ required: true, message: t('validation.fieldRequired', { field: string }) }] : []}
             help={fieldDef.help ? <Text type="secondary" className="text-xs">{fieldDef.help}</Text> : null}
             className="mb-6"
           >
-            <Select 
+            <Select
               {...commonProps}
               className="w-full rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 transition-colors duration-300 h-12"
-              placeholder={`Select ${string.toLowerCase()}...`}
+              placeholder={t('wizard.selectField', { field: string.toLowerCase() })}
               options={fieldDef.selection ? fieldDef.selection.map(([value, label]) => ({
                 value,
                 label
@@ -1009,13 +1013,13 @@ const WizardModal = ({
                 {string}
               </div>
             }
-            rules={required ? [{ required: true, message: `Field ${string} is required` }] : []}
+            rules={required ? [{ required: true, message: t('validation.fieldRequired', { field: string }) }] : []}
             help={fieldDef.help ? <Text type="secondary" className="text-xs">{fieldDef.help}</Text> : null}
             className="mb-6"
           >
-            <Input 
-              {...commonProps} 
-              placeholder={`Field type ${type}`}
+            <Input
+              {...commonProps}
+              placeholder={t('wizard.fieldType', { type })}
               className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 transition-colors duration-300"
             />
           </Form.Item>
@@ -1100,7 +1104,7 @@ const WizardModal = ({
               {title}
             </Title>
             <Text type="secondary" className="text-sm">
-              Complete the form below to proceed
+              {t('wizard.subtitle')}
             </Text>
           </div>
         </div>
@@ -1189,7 +1193,7 @@ const WizardModal = ({
           </div>
         ) : (
           <div style={{ textAlign: 'center', padding: '20px' }}>
-            <p>Error: Could not load wizard information</p>
+            <p>{t('wizard.loadError')}</p>
           </div>
         )}
       </Spin>

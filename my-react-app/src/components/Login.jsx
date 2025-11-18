@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Form,
   Input,
@@ -19,13 +20,14 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 
 const Login = ({ onLogin }) => {
+  const { t, i18n } = useTranslation();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [databases, setDatabases] = useState([]);
   const [loadingDatabases, setLoadingDatabases] = useState(true);
   const [selectedDatabase, setSelectedDatabase] = useState('');
-  const [selectedLanguage, setSelectedLanguage] = useState('en');
+  const [selectedLanguage, setSelectedLanguage] = useState(i18n.language || 'en');
 
   useEffect(() => {
     // Obtener las bases de datos disponibles al cargar el componente (como hace el SAO)
@@ -121,10 +123,10 @@ const Login = ({ onLogin }) => {
               <span style={{ fontSize: '24px', color: 'white', fontWeight: 'bold' }}>T</span>
             </div>
             <Title level={3} style={{ margin: '0 0 8px 0', color: '#333333' }}>
-              Tryton Management
+              {t('login.title')}
             </Title>
             <Text style={{ color: '#6C757D', fontSize: '16px' }}>
-              Connect to your Tryton server
+              {t('login.subtitle')}
             </Text>
           </div>
 
@@ -136,19 +138,19 @@ const Login = ({ onLogin }) => {
               {/* Database Field */}
               <Form.Item
                 name="database"
-                label={<span style={{ color: '#333333', fontWeight: '500' }}>Database</span>}
-                rules={[{ required: true, message: 'Please select a database' }]}
+                label={<span style={{ color: '#333333', fontWeight: '500' }}>{t('login.database')}</span>}
+                rules={[{ required: true, message: t('login.selectDatabaseError') }]}
               >
                 {loadingDatabases ? (
                   <div style={{ textAlign: 'center', padding: '16px' }}>
                     <Spin />
                     <div style={{ marginTop: '8px', color: '#6C757D' }}>
-                      Loading...
+                      {t('login.loadingDatabases')}
                     </div>
                   </div>
                 ) : databases.length > 0 ? (
                   <Select
-                    placeholder="Select a database"
+                    placeholder={t('login.selectDatabase')}
                     style={{ width: '100%', height: '40px' }}
                     showSearch
                     onChange={(value) => setSelectedDatabase(value)}
@@ -161,7 +163,7 @@ const Login = ({ onLogin }) => {
                   </Select>
                 ) : (
                   <Input
-                    placeholder="Database name"
+                    placeholder={t('login.database')}
                     style={{ height: '40px' }}
                   />
                 )}
@@ -170,11 +172,11 @@ const Login = ({ onLogin }) => {
               {/* Username Field */}
               <Form.Item
                 name="username"
-                label={<span style={{ color: '#333333', fontWeight: '500' }}>Username</span>}
-                rules={[{ required: true, message: 'Please enter your username' }]}
+                label={<span style={{ color: '#333333', fontWeight: '500' }}>{t('login.username')}</span>}
+                rules={[{ required: true, message: t('login.enterUsername') }]}
               >
-                <Input 
-                  placeholder="Username" 
+                <Input
+                  placeholder={t('login.username')}
                   style={{ height: '40px' }}
                 />
               </Form.Item>
@@ -182,18 +184,18 @@ const Login = ({ onLogin }) => {
               {/* Password Field */}
               <Form.Item
                 name="password"
-                label={<span style={{ color: '#333333', fontWeight: '500' }}>Password</span>}
-                rules={[{ required: true, message: 'Please enter your password' }]}
+                label={<span style={{ color: '#333333', fontWeight: '500' }}>{t('login.password')}</span>}
+                rules={[{ required: true, message: t('login.enterPassword') }]}
               >
                 <Input.Password
-                  placeholder="Password"
+                  placeholder={t('login.password')}
                   style={{ height: '40px' }}
                 />
               </Form.Item>
 
               {/* Language Selector */}
               <Form.Item
-                label={<span style={{ color: '#333333', fontWeight: '500' }}>Language</span>}
+                label={<span style={{ color: '#333333', fontWeight: '500' }}>{t('login.language')}</span>}
               >
                 <LanguageSelector
                   value={selectedLanguage}
@@ -205,7 +207,7 @@ const Login = ({ onLogin }) => {
               {/* Error Message */}
               {error && (
                 <Alert
-                  message="Authentication Error"
+                  message={t('login.authError')}
                   description={error}
                   type="error"
                   icon={<ExclamationCircleOutlined />}
@@ -230,7 +232,7 @@ const Login = ({ onLogin }) => {
                     fontWeight: '500'
                   }}
                 >
-                  {loading ? 'Signing in...' : 'Sign In'}
+                  {loading ? t('login.signingIn') : t('login.signIn')}
                 </Button>
               </Form.Item>
             </Form>

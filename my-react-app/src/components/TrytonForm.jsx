@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from 'react-i18next';
 import {
   Card,
   Form,
@@ -148,6 +149,7 @@ const Many2OneField = ({
   form,
   defaultValue,
 }) => {
+  const { t } = useTranslation();
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -297,7 +299,7 @@ const Many2OneField = ({
           onSearch={searchOptions}
           onSelect={handleSelect}
           onChange={handleChange}
-          placeholder={`Search ${label.toLowerCase()}...`}
+          placeholder={t('wizard.searchField', { field: label.toLowerCase() })}
           disabled={readonly}
           notFoundContent={loading ? <Spin size="small" /> : null}
           className="w-full"
@@ -321,7 +323,7 @@ const Many2OneField = ({
       <Form.Item
         name={name}
         hidden
-        rules={[{ required, message: `${label} es requerido` }]}
+        rules={[{ required, message: t('validation.fieldRequired', { field: label }) }]}
       >
         <Input type="hidden" />
       </Form.Item>
@@ -551,6 +553,7 @@ const TrytonForm = ({
   fieldsView = null, // New prop to pass fieldsView directly
   onFormChange = null, // Callback when form changes (dirty detection)
 }) => {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const [internalLoading, setInternalLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -839,7 +842,7 @@ const TrytonForm = ({
       console.warn(`⚠️ Field ${name} has no fieldDef defined`);
       return (
         <Form.Item key={name} name={name} label={label || name}>
-          <Input disabled placeholder="Field not available" />
+          <Input disabled placeholder={t('wizard.fieldNotAvailable')} />
         </Form.Item>
       );
     }
@@ -913,7 +916,7 @@ const TrytonForm = ({
           >
             <Input
               disabled={isReadonly}
-              placeholder={`Enter ${label.toLowerCase()}`}
+              placeholder={t('form.enterField', { field: label.toLowerCase() })}
               className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 text-base"
             />
           </Form.Item>
@@ -942,7 +945,7 @@ const TrytonForm = ({
             <Input.TextArea
               disabled={isReadonly}
               rows={4}
-              placeholder={`Enter ${label.toLowerCase()}`}
+              placeholder={t('form.enterField', { field: label.toLowerCase() })}
               className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 text-base resize-y"
             />
           </Form.Item>
@@ -972,7 +975,7 @@ const TrytonForm = ({
             <InputNumber
               disabled={isReadonly}
               style={{ width: "100%" }}
-              placeholder={`Enter ${label.toLowerCase()}`}
+              placeholder={t('form.enterField', { field: label.toLowerCase() })}
               className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 text-base w-full"
             />
           </Form.Item>
@@ -1003,7 +1006,7 @@ const TrytonForm = ({
               disabled={isReadonly}
               style={{ width: "100%" }}
               step={0.01}
-              placeholder={`Enter ${label.toLowerCase()}`}
+              placeholder={t('form.enterField', { field: label.toLowerCase() })}
               className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 text-base w-full"
             />
           </Form.Item>
@@ -1061,7 +1064,7 @@ const TrytonForm = ({
             <DatePicker
               disabled={isReadonly}
               style={{ width: "100%" }}
-              placeholder={`Select ${label.toLowerCase()}`}
+              placeholder={t('form.selectField', { field: label.toLowerCase() })}
               className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 w-full"
             />
           </Form.Item>
@@ -1092,7 +1095,7 @@ const TrytonForm = ({
               disabled={isReadonly}
               showTime
               style={{ width: "100%" }}
-              placeholder={`Select ${label.toLowerCase()}`}
+              placeholder={t('form.selectField', { field: label.toLowerCase() })}
               className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 w-full"
             />
           </Form.Item>
@@ -1102,15 +1105,15 @@ const TrytonForm = ({
         return (
           <Form.Item key={name} {...commonProps}>
             <div style={{ display: "flex", gap: "8px" }}>
-              <InputNumber placeholder="Days" style={{ flex: 1 }} min={0} />
+              <InputNumber placeholder={t('form.days')} style={{ flex: 1 }} min={0} />
               <InputNumber
-                placeholder="Hours"
+                placeholder={t('form.hours')}
                 style={{ flex: 1 }}
                 min={0}
                 max={23}
               />
               <InputNumber
-                placeholder="Minutes"
+                placeholder={t('form.minutes')}
                 style={{ flex: 1 }}
                 min={0}
                 max={59}
@@ -1145,7 +1148,7 @@ const TrytonForm = ({
             >
               <Select
                 disabled={isReadonly}
-                placeholder={`Select ${label.toLowerCase()}`}
+                placeholder={t('form.selectField', { field: label.toLowerCase() })}
                 className="w-full rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12"
               >
                 {dynamicOptions.length > 0 ? (
@@ -1155,7 +1158,7 @@ const TrytonForm = ({
                     </Option>
                   ))
                 ) : (
-                  <Option value="loading">Cargando opciones...</Option>
+                  <Option value="loading">{t('form.loadingOptions')}</Option>
                 )}
               </Select>
             </Form.Item>
@@ -1182,7 +1185,7 @@ const TrytonForm = ({
           >
             <Select
               disabled={isReadonly}
-              placeholder={`Select ${label.toLowerCase()}`}
+              placeholder={t('form.selectField', { field: label.toLowerCase() })}
               className="w-full rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12"
             >
               {options.map(([value, label]) => (
@@ -1217,7 +1220,7 @@ const TrytonForm = ({
           <Form.Item key={name} {...commonProps}>
             <Select
               mode="multiple"
-              placeholder={`Select ${label.toLowerCase()}`}
+              placeholder={t('form.selectField', { field: label.toLowerCase() })}
               style={{ width: "100%" }}
             >
               {multiselectionOptions.map(([value, label]) => (
@@ -1234,11 +1237,11 @@ const TrytonForm = ({
           <Form.Item key={name} {...commonProps}>
             <Select
               mode="multiple"
-              placeholder={`Select ${label.toLowerCase()}`}
+              placeholder={t('form.selectField', { field: label.toLowerCase() })}
               style={{ width: "100%" }}
             >
               {/* Las opciones se cargarían dinámicamente */}
-              <Option value="loading">Cargando opciones...</Option>
+              <Option value="loading">{t('form.loadingOptions')}</Option>
             </Select>
           </Form.Item>
         );
@@ -1263,7 +1266,7 @@ const TrytonForm = ({
                 }}
               >
                 <Text type="secondary" style={{ fontWeight: "500" }}>
-                  {label} (One2Many)
+                  {label} ({t('form.one2Many')})
                 </Text>
                 <Button
                   size="small"
@@ -1276,7 +1279,7 @@ const TrytonForm = ({
                     // TODO: Implementar wizard para editar registros relacionados
                   }}
                 >
-                  Add
+                  {t('common.add')}
                 </Button>
               </div>
               <div
@@ -1291,12 +1294,11 @@ const TrytonForm = ({
               >
                 {formData[name] && formData[name].length > 0 ? (
                   <Text type="secondary">
-                    {formData[name].length} related record(s) - Click "Add" to
-                    manage
+                    {formData[name].length} {t('form.relatedRecordsManage')}
                   </Text>
                 ) : (
                   <Text type="secondary">
-                    No related records - Click "Add" to create new
+                    {t('form.noRelatedRecords')}
                   </Text>
                 )}
               </div>
@@ -1316,10 +1318,10 @@ const TrytonForm = ({
                 color: "#8c8c8c",
               }}
             >
-              <Text type="secondary">File field (binary)</Text>
+              <Text type="secondary">{t('form.fileField')}</Text>
               <br />
               <Text type="secondary" style={{ fontSize: "12px" }}>
-                Will be implemented in future versions
+                {t('form.futureImplementation')}
               </Text>
             </div>
           </Form.Item>
@@ -1328,7 +1330,7 @@ const TrytonForm = ({
       default:
         return (
           <Form.Item key={name} {...commonProps}>
-            <Input placeholder={`Enter ${label.toLowerCase()}`} />
+            <Input placeholder={t('form.enterField', { field: label.toLowerCase() })} />
           </Form.Item>
         );
     }
@@ -1512,7 +1514,7 @@ const TrytonForm = ({
         }}
       >
         <Spin size="large" />
-        <Text style={{ marginLeft: "16px" }}>Cargando formulario...</Text>
+        <Text style={{ marginLeft: "16px" }}>{t('form.loading')}</Text>
       </div>
     );
   }
@@ -1520,13 +1522,13 @@ const TrytonForm = ({
   if (error) {
     return (
       <Alert
-        message="Error"
+        message={t('common.error')}
         description={error}
         type="error"
         showIcon
         action={
           <Button size="small" onClick={loadFormData}>
-            Reintentar
+            {t('common.retry')}
           </Button>
         }
       />
@@ -1620,7 +1622,7 @@ const TrytonForm = ({
 
           {fields.length === 0 && (
             <div className="text-center py-10 text-gray-500">
-              <Text>No fields available for this form</Text>
+              <Text>{t('form.noFields')}</Text>
             </div>
           )}
         </Form>
@@ -1635,7 +1637,7 @@ const TrytonForm = ({
           }}
         >
           <Text type="secondary" style={{ fontSize: "12px" }}>
-            Vista: {viewId} | Tipo: {formInfo.type} | Campos: {fields.length}
+            {t('form.view')} {viewId} | {t('form.type')} {formInfo.type} | {t('form.fields')} {fields.length}
           </Text>
         </div>
       )}

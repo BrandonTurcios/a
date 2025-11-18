@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Layout, Button, Input, Avatar, Typography, Tooltip } from 'antd';
 import { MenuOutlined, SearchOutlined, LogoutOutlined } from '@ant-design/icons';
 import LanguageSelector from '../../components/LanguageSelector';
@@ -8,6 +9,8 @@ const { Title, Text } = Typography;
 const { Search } = Input;
 
 const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar, onLanguageChange }) => {
+  const { t } = useTranslation();
+
   return (
     <Header style={{
       background: 'white',
@@ -50,7 +53,7 @@ const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar, onLanguageCha
             <span style={{ color: 'white', fontWeight: 'bold', fontSize: '14px' }}>T</span>
           </div>
           <Title level={4} style={{ color: '#333333', margin: 0 }}>
-            Tryton Management System
+            {t('header.title')}
           </Title>
         </div>
       </div>
@@ -58,7 +61,7 @@ const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar, onLanguageCha
       {/* Center/Right: Search + User */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
         <Search
-          placeholder="Search in the system..."
+          placeholder={t('header.searchPlaceholder')}
           prefix={<SearchOutlined style={{ color: '#6C757D' }} />}
           style={{
             width: 320,
@@ -96,10 +99,10 @@ const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar, onLanguageCha
             </Avatar>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
               <Text style={{ color: '#333333', fontSize: '13px', fontWeight: '500', lineHeight: '1.2' }}>
-                {sessionData?.username || 'Usuario'}
+                {sessionData?.username || t('header.defaultUser')}
               </Text>
               <Text style={{ color: '#6C757D', fontSize: '11px', lineHeight: '1.2' }}>
-                {sessionData?.database || 'Database'}
+                {sessionData?.database || t('header.database')}
               </Text>
             </div>
           </div>
@@ -108,7 +111,7 @@ const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar, onLanguageCha
             onChange={onLanguageChange}
             style={{ width: 180 }}
           />
-          <Tooltip title="Sign out">
+          <Tooltip title={t('header.signOut')}>
             <Button
               type="text"
               icon={<LogoutOutlined />}
