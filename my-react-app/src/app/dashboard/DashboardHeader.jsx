@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Layout, Button, Input, Avatar, Typography, Tooltip } from 'antd';
 import { MenuOutlined, SearchOutlined, LogoutOutlined } from '@ant-design/icons';
 import LanguageSelector from '../../components/LanguageSelector';
@@ -8,6 +9,8 @@ const { Title, Text } = Typography;
 const { Search } = Input;
 
 const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar, onLanguageChange }) => {
+  const { t } = useTranslation();
+
   return (
     <Header style={{
       background: 'var(--color-neutral-50)',
@@ -50,16 +53,8 @@ const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar, onLanguageCha
           }}>
             <span style={{ color: 'white', fontWeight: 'bold', fontSize: '16px' }}>T</span>
           </div>
-          <Title level={4} style={{ 
-            color: 'var(--color-primary-700)', 
-            margin: 0,
-            fontWeight: '600',
-            background: 'linear-gradient(135deg, var(--color-primary-700) 0%, var(--color-primary) 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text'
-          }}>
-            Tryton Management System
+          <Title level={4} style={{ color: '#333333', margin: 0 }}>
+            {t('header.title')}
           </Title>
         </div>
       </div>
@@ -67,8 +62,8 @@ const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar, onLanguageCha
       {/* Center/Right: Search + User */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
         <Search
-          placeholder="Search in the system..."
-          prefix={<SearchOutlined style={{ color: 'var(--color-text-secondary)' }} />}
+          placeholder={t('header.searchPlaceholder')}
+          prefix={<SearchOutlined style={{ color: '#6C757D' }} />}
           style={{
             width: 320,
             background: 'var(--color-background)',
@@ -106,11 +101,11 @@ const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar, onLanguageCha
               {sessionData?.username?.charAt(0).toUpperCase() || 'U'}
             </Avatar>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-              <Text style={{ color: 'var(--color-text-primary)', fontSize: '13px', fontWeight: '500', lineHeight: '1.2' }}>
-                {sessionData?.username || 'Usuario'}
+              <Text style={{ color: '#333333', fontSize: '13px', fontWeight: '500', lineHeight: '1.2' }}>
+                {sessionData?.username || t('header.defaultUser')}
               </Text>
-              <Text style={{ color: 'var(--color-text-secondary)', fontSize: '11px', lineHeight: '1.2' }}>
-                {sessionData?.database || 'Database'}
+              <Text style={{ color: '#6C757D', fontSize: '11px', lineHeight: '1.2' }}>
+                {sessionData?.database || t('header.database')}
               </Text>
             </div>
           </div>
@@ -119,7 +114,7 @@ const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar, onLanguageCha
             onChange={onLanguageChange}
             style={{ width: 180 }}
           />
-          <Tooltip title="Sign out">
+          <Tooltip title={t('header.signOut')}>
             <Button
               type="text"
               icon={<LogoutOutlined />}

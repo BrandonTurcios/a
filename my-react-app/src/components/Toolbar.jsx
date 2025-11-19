@@ -1,5 +1,6 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
-import { Button, Space, InputNumber, Tooltip, Dropdown, Modal, List, Typography, Tag, message, Upload, Image, Input, Checkbox, Badge, Popconfirm, App } from 'antd';
+import { useTranslation } from 'react-i18next';
+import { Button, Space, InputNumber, Tooltip, Dropdown, Modal, List, Typography, Tag, message, Upload, Image, Input, Checkbox, Badge, Popconfirm } from 'antd';
 import {
   PlusOutlined,
   SaveOutlined,
@@ -45,8 +46,8 @@ const Toolbar = ({
   contextModel = null,
   contextId = null
 }) => {
-  const { notification: notificationApi } = App.useApp();
-  
+  const { t } = useTranslation();
+
   if (!toolbarInfo) {
     return null;
   }
@@ -80,7 +81,7 @@ const Toolbar = ({
 
   const fetchAttachments = async () => {
     if (!resourceKey) {
-      message.warning('No record selected');
+      message.warning(t('toolbar.noRecordSelected'));
       return;
     }
     try {
@@ -94,7 +95,7 @@ const Toolbar = ({
       setAttachments(list || []);
     } catch (e) {
       console.error(e);
-      message.error('Failed to load attachments');
+      message.error(t('errors.failedLoadAttachments'));
     } finally {
       setAttachmentsLoading(false);
     }
@@ -113,7 +114,7 @@ const Toolbar = ({
 
   const handleDeleteAttachments = async () => {
     if (!selectedAttachments || selectedAttachments.length === 0) {
-      message.warning('No attachments selected');
+      message.warning(t('toolbar.noAttachmentsSelected'));
       return;
     }
     try {
@@ -128,12 +129,12 @@ const Toolbar = ({
       
       // Delete all selected attachments in one call
       await trytonService.deleteAttachment(selectedAttachments, timestampMap);
-      message.success(`${selectedAttachments.length} attachment(s) deleted successfully`);
+      message.success(`${selectedAttachments.length} ${t('toolbar.attachmentsDeleted')}`);
       setSelectedAttachments([]);
       await fetchAttachments();
     } catch (e) {
       console.error(e);
-      message.error('Failed to delete attachments');
+      message.error(t('errors.failedDeleteAttachments'));
     }
   };
 
@@ -167,7 +168,7 @@ const Toolbar = ({
       URL.revokeObjectURL(url);
     } catch (e) {
       console.error(e);
-      message.error('Download failed');
+      message.error(t('errors.downloadFailed'));
     }
   };
 
@@ -187,13 +188,13 @@ const Toolbar = ({
       setPreviewOpen(true);
     } catch (e) {
       console.error(e);
-      message.error('Preview failed');
+      message.error(t('errors.previewFailed'));
     }
   };
 
   const handleQuickPreview = async () => {
     if (!resourceKey) {
-      message.warning('No record selected');
+      message.warning(t('toolbar.noRecordSelected'));
       return;
     }
     // Ensure attachments list is loaded so preview modal can navigate
@@ -209,13 +210,13 @@ const Toolbar = ({
       }
     } catch (e) {
       console.error(e);
-      message.error('Failed to load attachments');
+      message.error(t('errors.failedLoadAttachments'));
       return;
     } finally {
       setAttachmentsLoading(false);
     }
     if (!ids?.length) {
-      message.info('No attachments');
+      message.info(t('toolbar.noAttachments'));
       return;
     }
     await handlePreviewAttachment(ids[0], 0);
@@ -223,7 +224,7 @@ const Toolbar = ({
 
   const handleAddAttachment = () => {
     if (!resourceKey) {
-      message.warning('No record selected');
+      message.warning(t('toolbar.noRecordSelected'));
       return;
     }
     (async () => {
@@ -255,22 +256,12 @@ const Toolbar = ({
         resource: resourceKey,
         dataBase64: base64,
       });
-      notificationApi.success({
-        message: 'Success',
-        placement: 'topRight',
-        duration: 4.5,
-        top: 24,
-        style: {
-          zIndex: 9999,
-          background: 'var(--color-success-50)',
-        },
-        className: 'custom-notification-success',
-      });
+      message.success(t('toolbar.attachmentAdded'));
       // Refresh list if modal open
       if (attachmentsOpen) await fetchAttachments();
     } catch (err) {
       console.error(err);
-      message.error('Failed to add attachment');
+      message.error(t('errors.failedAddAttachment'));
     } finally {
       e.target.value = '';
       // Refresh after add regardless of modal state
@@ -281,7 +272,7 @@ const Toolbar = ({
   // Notes handlers
   const fetchNotes = async () => {
     if (!resourceKey) {
-      message.warning('No record selected');
+      message.warning(t('toolbar.noRecordSelected'));
       return;
     }
     try {
@@ -295,7 +286,7 @@ const Toolbar = ({
       setNotes(list || []);
     } catch (e) {
       console.error(e);
-      message.error('Failed to load notes');
+      message.error(t('errors.failedLoadNotes'));
     } finally {
       setNotesLoading(false);
     }
@@ -308,7 +299,7 @@ const Toolbar = ({
 
   const handleSaveNote = async () => {
     if (!resourceKey || !newNoteMessage.trim()) {
-      message.warning('Please enter a message');
+      message.warning(t('toolbar.enterMessage'));
       return;
     }
     try {
@@ -317,33 +308,13 @@ const Toolbar = ({
         resource: resourceKey,
         unread: newNoteUnread
       });
-      console.log('✅ Note created successfully, showing notification');
-      notificationApi.success({
-        message: 'Success',
-        placement: 'topRight',
-        duration: 4.5,
-        top: 24,
-        style: {
-          zIndex: 9999,
-          background: 'var(--color-success-50)',
-        },
-        className: 'custom-notification-success',
-      });
+      message.success(t('toolbar.noteCreated'));
       setNewNoteMessage('');
       setNewNoteUnread(true);
       await fetchNotes();
     } catch (e) {
-      console.error('❌ Error creating note:', e);
-      notificationApi.error({
-        message: 'Error al crear nota',
-        description: 'No se pudo crear la nota. Por favor, inténtalo de nuevo.',
-        placement: 'topRight',
-        duration: 4.5,
-        top: 24,
-        style: {
-          zIndex: 9999,
-        },
-      });
+      console.error(e);
+      message.error(t('errors.failedCreateNote'));
     }
   };
 
@@ -357,7 +328,7 @@ const Toolbar = ({
 
   const handleDeleteNotes = async () => {
     if (!selectedNotes || selectedNotes.length === 0) {
-      message.warning('No notes selected');
+      message.warning(t('toolbar.noNotesSelected'));
       return;
     }
     try {
@@ -372,12 +343,12 @@ const Toolbar = ({
       
       // Delete all selected notes in one call
       await trytonService.deleteNote(selectedNotes, timestampMap);
-      message.success(`${selectedNotes.length} note(s) deleted successfully`);
+      message.success(`${selectedNotes.length} ${t('toolbar.notesDeleted')}`);
       setSelectedNotes([]);
       await fetchNotes();
     } catch (e) {
       console.error(e);
-      message.error('Failed to delete notes');
+      message.error(t('errors.failedDeleteNotes'));
     }
   };
 
@@ -443,18 +414,18 @@ const Toolbar = ({
   // Renderizar botones de navegación
   const renderNavigationButtons = () => (
     <Space.Compact>
-      <Tooltip title={viewType === 'form' ? 'Switch to list view' : 'Switch view'}>
-        <Button 
-          icon={<SwapOutlined />} 
+      <Tooltip title={viewType === 'form' ? t('toolbar.switchToListView') : t('toolbar.switchView')}>
+        <Button
+          icon={<SwapOutlined />}
           onClick={onSwitchView}
           disabled={loading || viewType === 'tree' || isNativeForm}
           style={(loading || viewType === 'tree' || isNativeForm) ? disabledVisualStyle : undefined}
           type={isDirty ? 'primary' : 'default'}
         />
       </Tooltip>
-      <Tooltip title="Previous">
-        <Button 
-          icon={<LeftOutlined />} 
+      <Tooltip title={t('toolbar.previous')}>
+        <Button
+          icon={<LeftOutlined />}
           onClick={() => onNavigate?.('previous')}
           disabled={loading || currentRecord <= 1}
           style={(loading || currentRecord <= 1) ? disabledVisualStyle : undefined}
@@ -469,9 +440,9 @@ const Toolbar = ({
         onChange={(value) => onNavigate?.('goto', value)}
         disabled={loading}
       />
-      <Tooltip title="Next">
-        <Button 
-          icon={<RightOutlined />} 
+      <Tooltip title={t('toolbar.next')}>
+        <Button
+          icon={<RightOutlined />}
           onClick={() => onNavigate?.('next')}
           disabled={loading || currentRecord >= totalRecords}
           style={(loading || currentRecord >= totalRecords) ? disabledVisualStyle : undefined}
@@ -483,25 +454,25 @@ const Toolbar = ({
   // Renderizar botones de acción CRUD
   const renderActionButtons = () => (
     <Space.Compact>
-      <Tooltip title="Create new">
-        <Button 
-          icon={<PlusOutlined />} 
+      <Tooltip title={t('toolbar.createNew')}>
+        <Button
+          icon={<PlusOutlined />}
           onClick={onCreate}
           disabled={loading || (isNativeForm || (viewType === 'form' && !isNativeForm))}
           style={(loading || (isNativeForm || (viewType === 'form' && !isNativeForm))) ? disabledVisualStyle : undefined}
         />
       </Tooltip>
-      <Tooltip title="Save">
-        <Button 
-          icon={<SaveOutlined />} 
+      <Tooltip title={t('toolbar.save')}>
+        <Button
+          icon={<SaveOutlined />}
           onClick={onSave}
           disabled={loading || (isNativeForm || (viewType === 'tree'))}
           style={(loading || (isNativeForm || (viewType === 'tree'))) ? disabledVisualStyle : undefined}
         />
       </Tooltip>
-      <Tooltip title="Refresh">
-        <Button 
-          icon={<ReloadOutlined />} 
+      <Tooltip title={t('toolbar.refresh')}>
+        <Button
+          icon={<ReloadOutlined />}
           onClick={onRefresh}
           disabled={loading}
           style={loading ? disabledVisualStyle : undefined}
@@ -514,9 +485,9 @@ const Toolbar = ({
   const renderAttachmentDropdown = () => {
     const disabled = loading || !resourceKey;
     const items = [
-      { key: 'add', label: 'Add', icon: <UploadOutlined />, onClick: handleAddAttachment },
-      { key: 'manage', label: 'Manage', icon: <SettingOutlined />, onClick: handleManageAttachments },
-      { key: 'preview', label: 'Preview', icon: <EyeOutlined />, onClick: handleQuickPreview }
+      { key: 'add', label: t('common.add'), icon: <UploadOutlined />, onClick: handleAddAttachment },
+      { key: 'manage', label: t('toolbar.manage'), icon: <SettingOutlined />, onClick: handleManageAttachments },
+      { key: 'preview', label: t('toolbar.preview'), icon: <EyeOutlined />, onClick: handleQuickPreview }
     ];
     const attachmentsCount = attachments.length;
     const notesCount = notes.length;
@@ -526,16 +497,16 @@ const Toolbar = ({
     return (
       <Space.Compact>
         <Dropdown menu={{ items }} trigger={['click']} disabled={loading}>
-          <Tooltip title="Attachments">
-            <Badge count={attachmentsCount} size="small" offset={[-12, 8]} style={{ zIndex: 100 }} color="var(--color-primary)">
+          <Tooltip title={t('toolbar.attachments')}>
+            <Badge count={attachmentsCount} size="small" offset={[-12, 8]} style={{ zIndex: 100 }} color="#00A88E">
               <Button icon={<FileOutlined />} disabled={disabled} style={disabled ? disabledVisualStyle : undefined} />
             </Badge>
           </Tooltip>
         </Dropdown>
-        <Tooltip title="Note">
-          <Badge count={notesBadgeText} size="small" offset={[-12, 8]} style={{ zIndex: 100 }} color="var(--color-primary)">
-            <Button 
-              icon={<CommentOutlined />} 
+        <Tooltip title={t('toolbar.note')}>
+          <Badge count={notesBadgeText} size="small" offset={[-12, 8]} style={{ zIndex: 100 }} color="#00A88E">
+            <Button
+              icon={<CommentOutlined />}
               onClick={handleManageNotes}
               disabled={loading || !resourceKey}
               style={(loading || !resourceKey) ? disabledVisualStyle : undefined}
@@ -563,9 +534,9 @@ const Toolbar = ({
         trigger={['click']}
         disabled={loading}
       >
-        <Tooltip title="Actions">
+        <Tooltip title={t('common.actions')}>
           <Button icon={<SettingOutlined />} disabled={loading} style={loading ? disabledVisualStyle : undefined}>
-            Actions
+            {t('common.actions')}
           </Button>
         </Tooltip>
       </Dropdown>
@@ -591,12 +562,8 @@ const Toolbar = ({
         trigger={['click']}
         disabled={isDisabled}
       >
-        <Tooltip title={hasSelectedRecord ? "Relate" : "Selecciona un registro para relacionar"}>
-          <Button 
-            icon={<LinkOutlined />} 
-            disabled={isDisabled} 
-            style={isDisabled ? disabledVisualStyle : undefined}
-          >
+        <Tooltip title={t('common.relate')}>
+          <Button icon={<LinkOutlined />} disabled={loading} style={loading ? disabledVisualStyle : undefined}>
           </Button>
         </Tooltip>
       </Dropdown>
@@ -622,12 +589,8 @@ const Toolbar = ({
         trigger={['click']}
         disabled={isDisabled}
       >
-        <Tooltip title={hasSelectedRecord ? "Print" : "Selecciona un registro para imprimir"}>
-          <Button 
-            icon={<PrinterOutlined />} 
-            disabled={isDisabled} 
-            style={isDisabled ? disabledVisualStyle : undefined} 
-          />
+        <Tooltip title={t('common.print')}>
+          <Button icon={<PrinterOutlined />} disabled={loading} style={loading ? disabledVisualStyle : undefined} />
         </Tooltip>
       </Dropdown>
     );
@@ -640,9 +603,9 @@ const Toolbar = ({
     if (viewType !== 'tree') return null;
 
     return (
-      <Tooltip title={hasSelectedRecord ? "Enviar por email" : "Selecciona un registro para enviar email"}>
-        <Button 
-          icon={<MailOutlined />} 
+      <Tooltip title={hasSelectedRecord ? t('toolbar.sendEmail') : t('toolbar.selectRecordForEmail')}>
+        <Button
+          icon={<MailOutlined />}
           onClick={() => onEmail?.()}
           disabled={loading || !hasSelectedRecord}
           style={(loading || !hasSelectedRecord) ? disabledVisualStyle : undefined}
@@ -688,8 +651,8 @@ const Toolbar = ({
             A
           </div>
           <div>
-            <Typography.Title level={3} style={{ margin: 0, color: 'var(--color-primary)' }}>Manage Attachments</Typography.Title>
-            <Typography.Text type="secondary" style={{ fontSize: '14px' }}>View and manage file attachments</Typography.Text>
+            <Typography.Title level={3} style={{ margin: 0, color: '#00A88E' }}>{t('toolbar.manageAttachments')}</Typography.Title>
+            <Typography.Text type="secondary" style={{ fontSize: '14px' }}>{t('toolbar.manageAttachmentsSubtitle')}</Typography.Text>
           </div>
         </div>
       }
@@ -697,20 +660,20 @@ const Toolbar = ({
       footer={
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px' }}>
           <Typography.Text>
-            {selectedAttachments.length > 0 ? `${selectedAttachments.length} attachment(s) selected` : 'No attachments selected'}
+            {selectedAttachments.length > 0 ? `${selectedAttachments.length} ${t('toolbar.attachmentsSelected')}` : t('toolbar.noAttachmentsSelected')}
           </Typography.Text>
           <Space>
-            <Button onClick={handleCloseAttachmentsModal}>Cancel</Button>
+            <Button onClick={handleCloseAttachmentsModal}>{t('common.cancel')}</Button>
             {selectedAttachments.length > 0 && (
               <Popconfirm
-                title="Delete selected attachments"
-                description="Are you sure you want to delete these attachments?"
+                title={t('toolbar.deleteAttachmentsTitle')}
+                description={t('toolbar.deleteAttachmentsDesc')}
                 onConfirm={handleDeleteAttachments}
-                okText="Yes"
-                cancelText="No"
-                okButtonProps={{ style: { background: 'var(--color-primary)', borderColor: 'var(--color-primary)' } }}
+                okText={t('common.yes')}
+                cancelText={t('common.no')}
+                okButtonProps={{ style: { background: '#00A88E', borderColor: '#00A88E' } }}
               >
-                <Button danger>Delete</Button>
+                <Button danger>{t('common.delete')}</Button>
               </Popconfirm>
             )}
           </Space>
@@ -729,8 +692,8 @@ const Toolbar = ({
         renderItem={(it) => (
           <List.Item
             actions={[
-              <Button key="download" icon={<DownloadOutlined />} onClick={() => handleDownloadAttachment(it.id, it.name)}>Download</Button>,
-              <Button key="preview" icon={<EyeOutlined />} onClick={() => handlePreviewAttachment(it.id, attachments.findIndex(a => a.id === it.id))}>Preview</Button>,
+              <Button key="download" icon={<DownloadOutlined />} onClick={() => handleDownloadAttachment(it.id, it.name)}>{t('toolbar.download')}</Button>,
+              <Button key="preview" icon={<EyeOutlined />} onClick={() => handlePreviewAttachment(it.id, attachments.findIndex(a => a.id === it.id))}>{t('toolbar.preview')}</Button>,
             ]}
           >
             <Checkbox
@@ -774,7 +737,7 @@ const Toolbar = ({
               style={{ padding: '4px 8px' }}
             />
             <span style={{ flex: 1, textAlign: 'center' }}>
-              {previewItem?.name || 'Preview'}{attachments?.length ? ` (${currentPreviewIndex + 1}/${attachments.length})` : ''}
+              {previewItem?.name || t('toolbar.preview')}{attachments?.length ? ` (${currentPreviewIndex + 1}/${attachments.length})` : ''}
             </span>
             <Button 
               type="text" 
@@ -819,7 +782,7 @@ const Toolbar = ({
     >
       {(() => {
         if (!previewItem?.data?.base64) {
-          return <Typography.Text>No preview available.</Typography.Text>;
+          return <Typography.Text>{t('toolbar.noPreviewAvailable')}</Typography.Text>;
         }
         const name = previewItem?.name || '';
         const ext = name.split('.').pop()?.toLowerCase();
@@ -851,7 +814,7 @@ const Toolbar = ({
         // Fallback: show generic note and offer download via button
         return (
           <div>
-            <Typography.Text>Preview not supported for this file type. Use Download in Manage list.</Typography.Text>
+            <Typography.Text>{t('toolbar.previewNotSupported')}</Typography.Text>
           </div>
         );
       })()}
@@ -866,8 +829,8 @@ const Toolbar = ({
             N
           </div>
           <div>
-            <Typography.Title level={3} style={{ margin: 0, color: 'var(--color-primary)' }}>Manage Notes</Typography.Title>
-            <Typography.Text type="secondary" style={{ fontSize: '14px' }}>View and add notes</Typography.Text>
+            <Typography.Title level={3} style={{ margin: 0, color: '#00A88E' }}>{t('toolbar.manageNotes')}</Typography.Title>
+            <Typography.Text type="secondary" style={{ fontSize: '14px' }}>{t('toolbar.manageNotesSubtitle')}</Typography.Text>
           </div>
         </div>
       }
@@ -875,20 +838,20 @@ const Toolbar = ({
       footer={
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px' }}>
           <Typography.Text>
-            {selectedNotes.length > 0 ? `${selectedNotes.length} note(s) selected` : 'No notes selected'}
+            {selectedNotes.length > 0 ? `${selectedNotes.length} ${t('toolbar.notesSelected')}` : t('toolbar.noNotesSelected')}
           </Typography.Text>
           <Space>
-            <Button onClick={handleCloseNotesModal}>Cancel</Button>
+            <Button onClick={handleCloseNotesModal}>{t('common.cancel')}</Button>
             {selectedNotes.length > 0 && (
               <Popconfirm
-                title="Delete selected notes"
-                description="Are you sure you want to delete these notes?"
+                title={t('toolbar.deleteNotesTitle')}
+                description={t('toolbar.deleteNotesDesc')}
                 onConfirm={handleDeleteNotes}
-                okText="Yes"
-                cancelText="No"
-                okButtonProps={{ style: { background: 'var(--color-primary)', borderColor: 'var(--color-primary)' } }}
+                okText={t('common.yes')}
+                cancelText={t('common.no')}
+                okButtonProps={{ style: { background: '#00A88E', borderColor: '#00A88E' } }}
               >
-                <Button danger>Delete</Button>
+                <Button danger>{t('common.delete')}</Button>
               </Popconfirm>
             )}
           </Space>
@@ -901,24 +864,26 @@ const Toolbar = ({
       }}
     >
       {/* New Note Form */}
-      <div style={{ marginBottom: '24px', padding: '16px', background: 'var(--color-background)', borderRadius: '8px' }}>
-        <Typography.Text strong style={{ display: 'block', marginBottom: '8px' }}>New Note</Typography.Text>
+      <div style={{ marginBottom: '24px', padding: '16px', background: '#f8f9fa', borderRadius: '8px' }}>
+        <Typography.Text strong style={{ display: 'block', marginBottom: '8px' }}>{t('toolbar.newNote')}</Typography.Text>
         <Input.TextArea
           rows={4}
-          placeholder="Enter your message..."
+          placeholder={t('toolbar.enterMessage')}
           value={newNoteMessage}
           onChange={(e) => setNewNoteMessage(e.target.value)}
           style={{ marginBottom: '12px' }}
         />
         <Space style={{ marginBottom: '12px' }}>
           <Checkbox checked={newNoteUnread} onChange={(e) => setNewNoteUnread(e.target.checked)}>
-            Mark as unread
+            {t('toolbar.markAsUnread')}
           </Checkbox>
         </Space>
-        <Button type="primary" onClick={handleSaveNote} block style={{ 
+        <Button type="primary" onClick={handleSaveNote} block style={{
+          background: '#00A88E',
+          borderColor: '#00A88E',
           borderRadius: '8px'
         }}>
-          Save Note
+          {t('toolbar.saveNote')}
         </Button>
       </div>
 
@@ -938,18 +903,18 @@ const Toolbar = ({
               title={
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Tag color={it.unread ? "orange" : "default"}>
-                    {it.unread ? "Unread" : "Read"}
+                    {it.unread ? t('toolbar.unread') : t('toolbar.read')}
                   </Tag>
-                  <Typography.Text strong>{it['resource.rec_name'] || 'Unknown Resource'}</Typography.Text>
+                  <Typography.Text strong>{it['resource.rec_name'] || t('toolbar.unknownResource')}</Typography.Text>
                 </div>
               }
               description={
                 <div>
                   <Typography.Paragraph style={{ margin: '8px 0' }}>
-                    {it.message_wrapped || 'No message'}
+                    {it.message_wrapped || t('toolbar.noMessage')}
                   </Typography.Paragraph>
                   <Space size={8} wrap>
-                    {it.last_user ? <Tag color="default">By: {it.last_user}</Tag> : null}
+                    {it.last_user ? <Tag color="default">{t('toolbar.by')} {it.last_user}</Tag> : null}
                     {it.last_modification ? (
                       <Tag color="default">
                         {new Date(it.last_modification.year, (it.last_modification.month || 1) - 1, it.last_modification.day || 1).toLocaleDateString()} {' '}

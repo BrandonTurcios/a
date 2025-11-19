@@ -10,27 +10,40 @@ export const useTabs = () => {
   // Crear nueva tab
   const createTab = useCallback((tabData) => {
     const { id, title, type, data, closable = true } = tabData;
-    
-    // Verificar si la tab ya existe
-    const existingTab = tabs.find(tab => tab.id === id);
-    if (existingTab) {
-      // Si ya existe, solo activarla
-      setActiveTabId(id);
-      return id;
-    }
-
-    // Crear nueva tab
-    const newTab = {
-      id,
-      title,
-      type,
-      closable,
-      active: true,
-      data,
-      timestamp: new Date().toISOString()
-    };
 
     setTabs(prevTabs => {
+      // Verificar si la tab ya existe
+      const existingTabIndex = prevTabs.findIndex(tab => tab.id === id);
+
+      if (existingTabIndex !== -1) {
+        // Si ya existe, actualizar título y datos, y activarla
+        console.log(`📝 Tab ${id} ya existe, actualizando título de "${prevTabs[existingTabIndex].title}" a "${title}"`);
+        const updatedTabs = prevTabs.map((tab, index) => {
+          if (index === existingTabIndex) {
+            return {
+              ...tab,
+              title, // Actualizar título (importante para cambios de idioma)
+              data, // Actualizar datos
+              active: true
+            };
+          }
+          return { ...tab, active: false };
+        });
+        setActiveTabId(id);
+        return updatedTabs;
+      }
+
+      // Crear nueva tab
+      const newTab = {
+        id,
+        title,
+        type,
+        closable,
+        active: true,
+        data,
+        timestamp: new Date().toISOString()
+      };
+
       // Desactivar todas las tabs existentes
       const updatedTabs = prevTabs.map(tab => ({ ...tab, active: false }));
       return [...updatedTabs, newTab];
@@ -38,7 +51,7 @@ export const useTabs = () => {
 
     setActiveTabId(id);
     return id;
-  }, [tabs]);
+  }, []);
 
   // Cerrar tab
   const closeTab = useCallback((tabId) => {

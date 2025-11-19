@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -7,14 +8,15 @@ import {
   DialogTitle,
 } from './ui/dialog';
 
-const ActionOptionsModal = ({ 
-  isOpen, 
-  onClose, 
-  options = [], 
+const ActionOptionsModal = ({
+  isOpen,
+  onClose,
+  options = [],
   onSelectOption,
-  title = "Select Action",
-  description = "This menu has multiple options available. Select one to continue:"
+  title,
+  description
 }) => {
+  const { t } = useTranslation();
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const handleSelect = () => {
@@ -35,9 +37,9 @@ const ActionOptionsModal = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle>{title || t('actionOptions.title')}</DialogTitle>
           <DialogDescription>
-            {description}
+            {description || t('actionOptions.description')}
           </DialogDescription>
         </DialogHeader>
         
@@ -61,12 +63,12 @@ const ActionOptionsModal = ({
                     {option.description || `${option.name} (${option.resModel})`}
                   </p>
                   <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                    <span>Model: {option.resModel}</span>
+                    <span>{t('actionOptions.model', { model: option.resModel })}</span>
                     {option.contextModel && (
-                      <span>Context: {option.contextModel}</span>
+                      <span>{t('actionOptions.context', { context: option.contextModel })}</span>
                     )}
                     {option.views && option.views.length > 0 && (
-                      <span>Views: {option.views.length}</span>
+                      <span>{t('actionOptions.views', { count: option.views.length })}</span>
                     )}
                   </div>
                 </div>
@@ -88,14 +90,14 @@ const ActionOptionsModal = ({
             onClick={handleCancel}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             onClick={handleSelect}
             disabled={options.length === 0}
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Select
+            {t('common.select')}
           </button>
         </div>
       </DialogContent>

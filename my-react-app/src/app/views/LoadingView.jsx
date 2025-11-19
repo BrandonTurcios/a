@@ -1,9 +1,12 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Spin, Typography } from 'antd';
 
 const { Text } = Typography;
 
 const LoadingView = () => {
+  const { t } = useTranslation();
+
   return (
     <div style={{
       display: 'flex',
@@ -14,8 +17,8 @@ const LoadingView = () => {
       background: 'var(--color-background)'
     }}>
       <Spin size="large" />
-      <Text style={{ marginTop: '16px', color: 'var(--color-text-secondary)' }}>
-        Cargando contenido...
+      <Text style={{ marginTop: '16px', color: '#999' }}>
+        {t('loading.content')}
       </Text>
     </div>
   );

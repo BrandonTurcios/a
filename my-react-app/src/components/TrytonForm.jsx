@@ -1,4 +1,5 @@
-import { useState, useEffect, forwardRef, useImperativeHandle } from "react";
+import { useState, useEffect } from "react";
+import { useTranslation } from 'react-i18next';
 import {
   Card,
   Form,
@@ -155,6 +156,7 @@ const Many2OneField = ({
   form,
   defaultValue,
 }) => {
+  const { t } = useTranslation();
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -311,7 +313,7 @@ const Many2OneField = ({
           onSearch={searchOptions}
           onSelect={handleSelect}
           onChange={handleChange}
-          placeholder={`Search ${label.toLowerCase()}...`}
+          placeholder={t('wizard.searchField', { field: label.toLowerCase() })}
           disabled={readonly}
           notFoundContent={loading ? <Spin size="small" /> : null}
           style={{ width: "100%" }}
@@ -338,7 +340,7 @@ const Many2OneField = ({
       <Form.Item
         name={name}
         hidden
-        rules={[{ required, message: `${label} es requerido` }]}
+        rules={[{ required, message: t('validation.fieldRequired', { field: label }) }]}
       >
         <Input type="hidden" />
       </Form.Item>
@@ -1106,8 +1108,8 @@ const TrytonForm = forwardRef(({
   submitButtonText = "Save", // New prop for button text
   fieldsView = null, // New prop to pass fieldsView directly
   onFormChange = null, // Callback when form changes (dirty detection)
-}, ref) => {
-  const { notification: notificationApi } = App.useApp();
+}) => {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const [internalLoading, setInternalLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -1435,7 +1437,7 @@ const TrytonForm = forwardRef(({
       console.warn(`⚠️ Field ${name} has no fieldDef defined`);
       return (
         <Form.Item key={name} name={name} label={label || name}>
-          <Input disabled placeholder="Field not available" />
+          <Input disabled placeholder={t('wizard.fieldNotAvailable')} />
         </Form.Item>
       );
     }
@@ -1486,8 +1488,8 @@ const TrytonForm = forwardRef(({
           >
             <Input
               disabled={isReadonly}
-              placeholder={`Enter ${label.toLowerCase()}`}
-              style={inputStyle}
+              placeholder={t('form.enterField', { field: label.toLowerCase() })}
+              className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 text-base"
             />
           </Form.Item>
         );
@@ -1501,12 +1503,8 @@ const TrytonForm = forwardRef(({
             <Input.TextArea
               disabled={isReadonly}
               rows={4}
-              placeholder={`Enter ${label.toLowerCase()}`}
-              style={{
-                ...inputStyle,
-                resize: 'vertical',
-                minHeight: '100px'
-              }}
+              placeholder={t('form.enterField', { field: label.toLowerCase() })}
+              className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 text-base resize-y"
             />
           </Form.Item>
         );
@@ -1520,8 +1518,9 @@ const TrytonForm = forwardRef(({
           >
             <InputNumber
               disabled={isReadonly}
-              style={{ width: "100%", ...inputStyle }}
-              placeholder={`Enter ${label.toLowerCase()}`}
+              style={{ width: "100%" }}
+              placeholder={t('form.enterField', { field: label.toLowerCase() })}
+              className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 text-base w-full"
             />
           </Form.Item>
         );
@@ -1537,7 +1536,8 @@ const TrytonForm = forwardRef(({
               disabled={isReadonly}
               style={{ width: "100%", ...inputStyle }}
               step={0.01}
-              placeholder={`Enter ${label.toLowerCase()}`}
+              placeholder={t('form.enterField', { field: label.toLowerCase() })}
+              className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 text-base w-full"
             />
           </Form.Item>
         );
@@ -1565,8 +1565,9 @@ const TrytonForm = forwardRef(({
           >
             <DatePicker
               disabled={isReadonly}
-              style={{ width: "100%", ...inputStyle }}
-              placeholder={`Select ${label.toLowerCase()}`}
+              style={{ width: "100%" }}
+              placeholder={t('form.selectField', { field: label.toLowerCase() })}
+              className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 w-full"
             />
           </Form.Item>
         );
@@ -1583,8 +1584,9 @@ const TrytonForm = forwardRef(({
             <DatePicker
               disabled={isReadonly}
               showTime
-              style={{ width: "100%", ...inputStyle }}
-              placeholder={`Select ${label.toLowerCase()}`}
+              style={{ width: "100%" }}
+              placeholder={t('form.selectField', { field: label.toLowerCase() })}
+              className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 w-full"
             />
           </Form.Item>
         );
@@ -1594,15 +1596,15 @@ const TrytonForm = forwardRef(({
         return (
           <Form.Item key={name} {...commonProps}>
             <div style={{ display: "flex", gap: "8px" }}>
-              <InputNumber placeholder="Days" style={{ flex: 1 }} min={0} />
+              <InputNumber placeholder={t('form.days')} style={{ flex: 1 }} min={0} />
               <InputNumber
-                placeholder="Hours"
+                placeholder={t('form.hours')}
                 style={{ flex: 1 }}
                 min={0}
                 max={23}
               />
               <InputNumber
-                placeholder="Minutes"
+                placeholder={t('form.minutes')}
                 style={{ flex: 1 }}
                 min={0}
                 max={59}
@@ -1623,8 +1625,8 @@ const TrytonForm = forwardRef(({
             >
               <Select
                 disabled={isReadonly}
-                placeholder={`Select ${label.toLowerCase()}`}
-                style={{ width: "100%", ...inputStyle }}
+                placeholder={t('form.selectField', { field: label.toLowerCase() })}
+                className="w-full rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12"
               >
                 {dynamicOptions.length > 0 ? (
                   dynamicOptions.map(([value, optionLabel]) => (
@@ -1633,7 +1635,7 @@ const TrytonForm = forwardRef(({
                     </Option>
                   ))
                 ) : (
-                  <Option value="loading">Cargando opciones...</Option>
+                  <Option value="loading">{t('form.loadingOptions')}</Option>
                 )}
               </Select>
             </Form.Item>
@@ -1646,8 +1648,8 @@ const TrytonForm = forwardRef(({
           >
             <Select
               disabled={isReadonly}
-              placeholder={`Select ${label.toLowerCase()}`}
-              style={{ width: "100%", ...inputStyle }}
+              placeholder={t('form.selectField', { field: label.toLowerCase() })}
+              className="w-full rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12"
             >
               {options.map(([value, label]) => (
                 <Option key={value} value={value}>
@@ -1681,7 +1683,7 @@ const TrytonForm = forwardRef(({
           <Form.Item key={name} {...commonProps}>
             <Select
               mode="multiple"
-              placeholder={`Select ${label.toLowerCase()}`}
+              placeholder={t('form.selectField', { field: label.toLowerCase() })}
               style={{ width: "100%" }}
             >
               {multiselectionOptions.map(([value, label]) => (
@@ -1698,30 +1700,73 @@ const TrytonForm = forwardRef(({
           <Form.Item key={name} {...commonProps}>
             <Select
               mode="multiple"
-              placeholder={`Select ${label.toLowerCase()}`}
+              placeholder={t('form.selectField', { field: label.toLowerCase() })}
               style={{ width: "100%" }}
             >
               {/* Las opciones se cargarían dinámicamente */}
-              <Option value="loading">Cargando opciones...</Option>
+              <Option value="loading">{t('form.loadingOptions')}</Option>
             </Select>
           </Form.Item>
         );
 
       case "one2many":
         return (
-          <One2ManyField
-            key={name}
-            name={name}
-            label={label}
-            fieldDef={fieldDef}
-            required={required}
-            readonly={isReadonly}
-            help={help}
-            form={form}
-            defaultValue={formData[name]}
-            parentRecordId={recordId}
-            parentModel={model}
-          />
+          <Form.Item key={name} {...commonProps}>
+            <div
+              style={{
+                padding: "12px",
+                border: "1px solid #d9d9d9",
+                borderRadius: "6px",
+                background: "#fafafa",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: "8px",
+                }}
+              >
+                <Text type="secondary" style={{ fontWeight: "500" }}>
+                  {label} ({t('form.one2Many')})
+                </Text>
+                <Button
+                  size="small"
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => {
+                    console.log(
+                      `Opening wizard for one2many field: ${name} (${fieldDef.relation})`
+                    );
+                    // TODO: Implementar wizard para editar registros relacionados
+                  }}
+                >
+                  {t('common.add')}
+                </Button>
+              </div>
+              <div
+                style={{
+                  minHeight: "60px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#8c8c8c",
+                  fontSize: "12px",
+                }}
+              >
+                {formData[name] && formData[name].length > 0 ? (
+                  <Text type="secondary">
+                    {formData[name].length} {t('form.relatedRecordsManage')}
+                  </Text>
+                ) : (
+                  <Text type="secondary">
+                    {t('form.noRelatedRecords')}
+                  </Text>
+                )}
+              </div>
+            </div>
+          </Form.Item>
         );
 
       case "binary":
@@ -1763,10 +1808,10 @@ const TrytonForm = forwardRef(({
                 color: "#8c8c8c",
               }}
             >
-              <Text type="secondary">File field (binary)</Text>
+              <Text type="secondary">{t('form.fileField')}</Text>
               <br />
               <Text type="secondary" style={{ fontSize: "12px" }}>
-                Will be implemented in future versions
+                {t('form.futureImplementation')}
               </Text>
             </div>
           </Form.Item>
@@ -1775,7 +1820,7 @@ const TrytonForm = forwardRef(({
       default:
         return (
           <Form.Item key={name} {...commonProps}>
-            <Input placeholder={`Enter ${label.toLowerCase()}`} />
+            <Input placeholder={t('form.enterField', { field: label.toLowerCase() })} />
           </Form.Item>
         );
     }
@@ -1989,7 +2034,7 @@ const TrytonForm = forwardRef(({
         }}
       >
         <Spin size="large" />
-        <Text style={{ marginLeft: "16px" }}>Cargando formulario...</Text>
+        <Text style={{ marginLeft: "16px" }}>{t('form.loading')}</Text>
       </div>
     );
   }
@@ -1997,13 +2042,13 @@ const TrytonForm = forwardRef(({
   if (error) {
     return (
       <Alert
-        message="Error"
+        message={t('common.error')}
         description={error}
         type="error"
         showIcon
         action={
           <Button size="small" onClick={loadFormData}>
-            Reintentar
+            {t('common.retry')}
           </Button>
         }
       />
@@ -2116,14 +2161,8 @@ const TrytonForm = forwardRef(({
           )}
 
           {fields.length === 0 && (
-            <div style={{
-              textAlign: 'center',
-              padding: '40px 20px',
-              color: 'var(--color-text-secondary)'
-            }}>
-              <Text style={{ color: 'var(--color-text-secondary)' }}>
-                No fields available for this form
-              </Text>
+            <div className="text-center py-10 text-gray-500">
+              <Text>{t('form.noFields')}</Text>
             </div>
           )}
         </Form>
@@ -2137,11 +2176,8 @@ const TrytonForm = forwardRef(({
             background: 'var(--color-neutral-100)'
           }}
         >
-          <Text type="secondary" style={{ 
-            fontSize: "12px",
-            color: 'var(--color-text-secondary)'
-          }}>
-            Vista: {viewId} | Tipo: {formInfo.type} | Campos: {fields.length}
+          <Text type="secondary" style={{ fontSize: "12px" }}>
+            {t('form.view')} {viewId} | {t('form.type')} {formInfo.type} | {t('form.fields')} {fields.length}
           </Text>
         </div>
       )}
