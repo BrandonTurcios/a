@@ -1,15 +1,17 @@
 import React from 'react';
+import { Spin } from 'antd';
 import MenuItem from './MenuItem';
 
-const MenuTree = ({ items, activeTab, expandedMenus, onMenuClick, level = 0, sidebarOpen }) => {
+const MenuTree = ({ items, activeTab, expandedMenus, loadingMenuChildren, onMenuClick, level = 0, sidebarOpen }) => {
   if (!items || items.length === 0) return null;
 
   return (
     <div style={{ padding: level === 0 ? '16px 0' : '0' }}>
       {items.map((item) => {
-        const hasChildren = item.childs && item.childs.length > 0;
+        const hasChildren = (item.childs && item.childs.length > 0) || item.hasChildren;
         const isExpanded = expandedMenus.has(item.id);
         const isActive = activeTab === item.id;
+        const isLoadingChildren = loadingMenuChildren && loadingMenuChildren.has(item.id);
 
         return (
           <div key={item.id} style={{ marginBottom: '2px' }}>
@@ -23,15 +25,33 @@ const MenuTree = ({ items, activeTab, expandedMenus, onMenuClick, level = 0, sid
               sidebarOpen={sidebarOpen}
             />
 
-            {hasChildren && isExpanded && (
-              <MenuTree
-                items={item.childs}
-                activeTab={activeTab}
-                expandedMenus={expandedMenus}
-                onMenuClick={onMenuClick}
-                level={level + 1}
-                sidebarOpen={sidebarOpen}
-              />
+            {isExpanded && (
+              <>
+                {isLoadingChildren && (
+                  <div style={{
+                    padding: '8px 16px',
+                    paddingLeft: `${(level + 1) * 20 + 16}px`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    color: 'var(--color-neutral-600)'
+                  }}>
+                    <Spin size="small" />
+                    <span style={{ fontSize: '12px' }}>Cargando...</span>
+                  </div>
+                )}
+                {!isLoadingChildren && item.childs && item.childs.length > 0 && (
+                  <MenuTree
+                    items={item.childs}
+                    activeTab={activeTab}
+                    expandedMenus={expandedMenus}
+                    loadingMenuChildren={loadingMenuChildren}
+                    onMenuClick={onMenuClick}
+                    level={level + 1}
+                    sidebarOpen={sidebarOpen}
+                  />
+                )}
+              </>
             )}
           </div>
         );

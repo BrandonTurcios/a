@@ -737,30 +737,32 @@ class TrytonService {
             );
 
             if (menuDetails && menuDetails.length > 0) {
-              menuItems = await Promise.all(
-                menuDetails.map(async (menu) => {
-                  const finalName =
-                    menu.name || menu.rec_name || `Menú ${menu.id}`;
+              // LAZY LOADING: NO cargar todos los submenús recursivamente
+              menuItems = menuDetails.map((menu) => {
+                const finalName =
+                  menu.name || menu.rec_name || `Menú ${menu.id}`;
 
-                  // Obtener submenús si existen
-                  const submenus = await this.getSubmenus(menu.childs);
+                // Solo marcar que tiene hijos, no cargarlos todavía
+                const hasChildren = menu.childs && menu.childs.length > 0;
 
-                  return {
-                    id: menu.id,
-                    name: finalName,
-                    icon: menu.icon || "📋",
-                    iconName: menu["icon:string"] || null,
-                    model: menu.model || "",
-                    description:
-                      menu.description ||
-                      menu.name ||
-                      menu.rec_name ||
-                      `Menú ${menu.id}`,
-                    sequence: menu.sequence || 0,
-                    childs: submenus,
-                  };
-                })
-              );
+                return {
+                  id: menu.id,
+                  name: finalName,
+                  icon: menu.icon || "📋",
+                  iconName: menu["icon:string"] || null,
+                  model: menu.model || "",
+                  description:
+                    menu.description ||
+                    menu.name ||
+                    menu.rec_name ||
+                    `Menú ${menu.id}`,
+                  sequence: menu.sequence || 0,
+                  childs: null,
+                  childIds: hasChildren ? menu.childs : [],
+                  hasChildren: hasChildren,
+                  childrenLoaded: false,
+                };
+              });
             }
           }
         } catch (menuError) {
@@ -902,30 +904,32 @@ class TrytonService {
             );
 
             if (menuDetails && menuDetails.length > 0) {
-              menuItems = await Promise.all(
-                menuDetails.map(async (menu) => {
-                  const finalName =
-                    menu.name || menu.rec_name || `Menú ${menu.id}`;
+              // LAZY LOADING: NO cargar todos los submenús recursivamente
+              menuItems = menuDetails.map((menu) => {
+                const finalName =
+                  menu.name || menu.rec_name || `Menú ${menu.id}`;
 
-                  // Obtener submenús si existen
-                  const submenus = await this.getSubmenus(menu.childs);
+                // Solo marcar que tiene hijos, no cargarlos todavía
+                const hasChildren = menu.childs && menu.childs.length > 0;
 
-                  return {
-                    id: menu.id,
-                    name: finalName,
-                    icon: menu.icon || "📋",
-                    iconName: menu["icon:string"] || null,
-                    model: menu.model || "",
-                    description:
-                      menu.description ||
-                      menu.name ||
-                      menu.rec_name ||
-                      `Menú ${menu.id}`,
-                    sequence: menu.sequence || 0,
-                    childs: submenus,
-                  };
-                })
-              );
+                return {
+                  id: menu.id,
+                  name: finalName,
+                  icon: menu.icon || "📋",
+                  iconName: menu["icon:string"] || null,
+                  model: menu.model || "",
+                  description:
+                    menu.description ||
+                    menu.name ||
+                    menu.rec_name ||
+                    `Menú ${menu.id}`,
+                  sequence: menu.sequence || 0,
+                  childs: null,
+                  childIds: hasChildren ? menu.childs : [], // IDs de los hijos
+                  hasChildren: hasChildren,
+                  childrenLoaded: false, // Flag para saber si ya se cargaron
+                };
+              });
             } else {
               throw new Error("No se obtuvieron detalles de menús");
             }
@@ -966,30 +970,32 @@ class TrytonService {
             );
 
             if (menuDetails && menuDetails.length > 0) {
-              menuItems = await Promise.all(
-                menuDetails.map(async (menu) => {
-                  const finalName =
-                    menu.name || menu.rec_name || `Menú ${menu.id}`;
+              // LAZY LOADING: NO cargar todos los submenús recursivamente
+              menuItems = menuDetails.map((menu) => {
+                const finalName =
+                  menu.name || menu.rec_name || `Menú ${menu.id}`;
 
-                  // Obtener submenús si existen
-                  const submenus = await this.getSubmenus(menu.childs);
+                // Solo marcar que tiene hijos, no cargarlos todavía
+                const hasChildren = menu.childs && menu.childs.length > 0;
 
-                  return {
-                    id: menu.id,
-                    name: finalName,
-                    icon: menu.icon || "📋",
-                    iconName: menu["icon:string"] || null,
-                    model: menu.model || "",
-                    description:
-                      menu.description ||
-                      menu.name ||
-                      menu.rec_name ||
-                      `Menú ${menu.id}`,
-                    sequence: menu.sequence || 0,
-                    childs: submenus,
-                  };
-                })
-              );
+                return {
+                  id: menu.id,
+                  name: finalName,
+                  icon: menu.icon || "📋",
+                  iconName: menu["icon:string"] || null,
+                  model: menu.model || "",
+                  description:
+                    menu.description ||
+                    menu.name ||
+                    menu.rec_name ||
+                    `Menú ${menu.id}`,
+                  sequence: menu.sequence || 0,
+                  childs: null, // Lazy loading - se cargará bajo demanda
+                  childIds: hasChildren ? menu.childs : [], // IDs de los hijos
+                  hasChildren: hasChildren,
+                  childrenLoaded: false, // Flag para saber si ya se cargaron
+                };
+              });
             } else {
               throw new Error("No se obtuvieron detalles de menús");
             }
@@ -1163,6 +1169,128 @@ class TrytonService {
       };
     } catch (error) {
       console.error("Error obteniendo menú del sidebar:", error);
+      throw error;
+    }
+  }
+
+  // Obtener un menuItem específico por ID (útil para lazy loading)
+  async getMenuItemById(menuId) {
+    if (!this.sessionData) {
+      throw new Error("No hay sesión activa");
+    }
+
+    try {
+      const menuDetails = await this.makeRpcCall("model.ir.ui.menu.read", [
+        [menuId],
+        [
+          "active",
+          "childs",
+          "favorite",
+          "icon",
+          "name",
+          "parent",
+          "icon:string",
+          "parent.rec_name",
+          "rec_name",
+        ],
+        {},
+      ]);
+
+      if (!menuDetails || menuDetails.length === 0) {
+        return null;
+      }
+
+      const item = menuDetails[0];
+      const hasChildren = item.childs && item.childs.length > 0;
+
+      return {
+        id: item.id,
+        name: item.name || item.rec_name || `Menú ${item.id}`,
+        icon: item.icon || "📋",
+        iconName: item["icon:string"] || null,
+        childs: null,
+        childIds: hasChildren ? item.childs : [],
+        hasChildren: hasChildren,
+        childrenLoaded: false,
+        parent: item.parent || null,
+      };
+    } catch (error) {
+      console.error(`Error loading menu item ${menuId}:`, error);
+      throw error;
+    }
+  }
+
+  // LAZY LOADING: Cargar hijos de un menú específico bajo demanda
+  async loadMenuChildren(menuId) {
+    if (!this.sessionData) {
+      throw new Error("No hay sesión activa");
+    }
+
+    try {
+      console.log(`Lazy loading children for menu ID: ${menuId}`);
+
+      // Obtener los detalles del menú para obtener sus childIds
+      const menuDetails = await this.makeRpcCall("model.ir.ui.menu.read", [
+        [menuId],
+        ["childs"],
+        {},
+      ]);
+
+      if (!menuDetails || menuDetails.length === 0 || !menuDetails[0].childs) {
+        console.log(`Menu ${menuId} has no children`);
+        return [];
+      }
+
+      const childIds = menuDetails[0].childs;
+      console.log(`Loading ${childIds.length} children for menu ${menuId}`);
+
+      // Cargar los detalles de todos los hijos
+      const childrenDetails = await this.makeRpcCall("model.ir.ui.menu.read", [
+        childIds,
+        [
+          "active",
+          "childs",
+          "favorite",
+          "icon",
+          "name",
+          "parent",
+          "icon:string",
+          "parent.rec_name",
+          "rec_name",
+          "_timestamp",
+          "_write",
+          "_delete",
+        ],
+        {},
+      ]);
+
+      // Mapear los hijos al formato esperado
+      const children = childrenDetails.map((child) => {
+        const hasChildren = child.childs && child.childs.length > 0;
+
+        return {
+          id: child.id,
+          name: child.name || child.rec_name || `Menú ${child.id}`,
+          icon: child.icon || "📋",
+          iconName: child["icon:string"] || null,
+          model: child.model || "",
+          description:
+            child.description ||
+            child.name ||
+            child.rec_name ||
+            `Menú ${child.id}`,
+          sequence: child.sequence || 0,
+          childs: null,
+          childIds: hasChildren ? child.childs : [],
+          hasChildren: hasChildren,
+          childrenLoaded: false,
+          parent: child.parent || null,
+        };
+      });
+
+      return children;
+    } catch (error) {
+      console.error(`❌ Error loading children for menu ${menuId}:`, error);
       throw error;
     }
   }

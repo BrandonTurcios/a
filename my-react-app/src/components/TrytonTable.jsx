@@ -288,9 +288,13 @@ const TrytonTable = ({
               display: 'flex',
               alignItems: 'center',
               padding: '8px 12px',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              whiteSpace: 'normal',
+              wordBreak: 'break-word',
+              overflowWrap: 'break-word',
+              lineHeight: '1.5'
             };
-            
+
             // Resaltar fila seleccionada
             if (selectedRecord && params.data?.id === selectedRecord.id) {
               return {
@@ -299,9 +303,10 @@ const TrytonTable = ({
                 fontWeight: '500'
               };
             }
-            
+
             return baseStyle;
           },
+          autoHeight: true,
           suppressMovable: false,
           suppressMenu: false
         });

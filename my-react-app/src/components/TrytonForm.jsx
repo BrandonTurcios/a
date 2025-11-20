@@ -1025,15 +1025,27 @@ const processMany2OneData = (data, fieldsView) => {
 
 // Helper function to convert Tryton date/datetime objects to dayjs
 const parseTrytonDate = (value) => {
-  if (!value) return null;
+  // Manejar valores falsy, strings vacíos, y valores inválidos
+  if (!value || value === "" || value === "null" || value === "undefined") {
+    return null;
+  }
 
   // If it's already a dayjs object, return it
   if (dayjs.isDayjs(value)) return value;
 
   // If it's a string, parse it
   if (typeof value === "string") {
-    const parsed = dayjs(value);
-    return parsed.isValid() ? parsed : null;
+    // Trim whitespace
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+
+    try {
+      const parsed = dayjs(trimmed);
+      return parsed.isValid() ? parsed : null;
+    } catch (e) {
+      console.warn("Error parsing date string:", trimmed, e);
+      return null;
+    }
   }
 
   // If it's a Tryton date object: { __class__: 'date', year, month, day }
@@ -1596,7 +1608,20 @@ const TrytonForm = forwardRef(
           );
 
         case "date": {
-          const dateProps = { ...commonProps };
+          const dateProps = {
+            ...commonProps,
+            normalize: (value) => {
+              // Normalizar el valor antes de pasarlo al DatePicker
+              if (!value || value === "" || value === "null" || value === "undefined") {
+                return null;
+              }
+              if (dayjs.isDayjs(value)) {
+                return value;
+              }
+              const parsed = parseTrytonDate(value);
+              return parsed;
+            }
+          };
           dateProps.label = createFieldLabel(
             label,
             required,
@@ -1617,7 +1642,20 @@ const TrytonForm = forwardRef(
         }
 
         case "datetime": {
-          const datetimeProps = { ...commonProps };
+          const datetimeProps = {
+            ...commonProps,
+            normalize: (value) => {
+              // Normalizar el valor antes de pasarlo al DatePicker
+              if (!value || value === "" || value === "null" || value === "undefined") {
+                return null;
+              }
+              if (dayjs.isDayjs(value)) {
+                return value;
+              }
+              const parsed = parseTrytonDate(value);
+              return parsed;
+            }
+          };
           datetimeProps.label = createFieldLabel(
             label,
             required,

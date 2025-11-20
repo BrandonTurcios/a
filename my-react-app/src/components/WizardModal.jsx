@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Form, Button, Space, message, Spin, Card, Row, Col, AutoComplete, Table, Input, Divider, Typography, Checkbox, DatePicker, TimePicker, Select } from 'antd';
 import { CloseOutlined, CheckOutlined, PlusOutlined, MinusOutlined, SearchOutlined, CalendarOutlined, DollarOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import trytonService from '../services/trytonService';
 import './WizardModal.css';
 
@@ -26,7 +27,7 @@ const Many2OneField = ({ name, string, required, help, relation, disabled, form,
     try {
       setLoading(true);
       console.log(`🔍 Searching options for ${name} (${relation}) with text: "${searchText}"`);
-      
+
       const autocompleteMethod = `model.${relation}.autocomplete`;
       const autocompleteOptions = await trytonService.makeRpcCall(autocompleteMethod, [
         searchText,  // text
@@ -35,7 +36,7 @@ const Many2OneField = ({ name, string, required, help, relation, disabled, form,
         null,        // order (null for default order)
         {}           // context (empty, service will add context automatically)
       ]);
-      
+
       if (autocompleteOptions && Array.isArray(autocompleteOptions)) {
         const formattedOptions = autocompleteOptions.map(option => ({
           value: option.id,
@@ -43,7 +44,7 @@ const Many2OneField = ({ name, string, required, help, relation, disabled, form,
           id: option.id,
           name: option.name || option.rec_name
         }));
-        
+
         setOptions(formattedOptions);
         console.log(`✅ Options found for "${searchText}": ${formattedOptions.length}`);
       } else {
@@ -95,7 +96,7 @@ const Many2OneField = ({ name, string, required, help, relation, disabled, form,
   // Function to load record name for a given ID
   const loadRecordName = async (recordId) => {
     if (!relation || !recordId) return;
-    
+
     try {
       const records = await trytonService.getModelData(relation, [['id', '=', recordId]], ['id', 'name', 'rec_name'], 1);
       if (records && records.length > 0) {
@@ -115,7 +116,7 @@ const Many2OneField = ({ name, string, required, help, relation, disabled, form,
       <Form.Item name={name} style={{ display: 'none' }}>
         <input type="hidden" />
       </Form.Item>
-      
+
       {/* Visible field to show the label */}
       <Form.Item
         label={string}
@@ -154,20 +155,20 @@ const Many2ManyField = ({ name, string, relation, disabled, form, fieldDef, wiza
   // Load available options
   const loadOptions = async (search = '') => {
     if (!relation) return;
-    
+
     try {
       setLoading(true);
       console.log(`🔍 Loading many2many options for ${name} (${relation})`);
-      
+
       // Get the view for the relation
       let fields = ['id', 'name', 'rec_name'];
-      
+
       // If there's a specific view defined in fieldDef.views
       if (fieldDef.views && fieldDef.views.tree) {
         const viewFields = Object.keys(fieldDef.views.tree.fields || {});
         fields = [...new Set([...fields, ...viewFields])];
       }
-      
+
       // Search for records
       const searchParams = [
         search ? [['name', 'ilike', search]] : [], // domain
@@ -176,18 +177,18 @@ const Many2ManyField = ({ name, string, relation, disabled, form, fieldDef, wiza
         null, // order
         {} // context
       ];
-      
+
       const records = await trytonService.getModelData(relation, searchParams[0], fields, searchParams[2]);
-      
+
       const formattedOptions = records.map(record => ({
         id: record.id,
         name: record.name || record.rec_name || `ID: ${record.id}`,
         ...record
       }));
-      
+
       setAvailableOptions(formattedOptions);
       console.log(`✅ Loaded ${formattedOptions.length} options for ${relation}`);
-      
+
     } catch (error) {
       console.error(`❌ Error loading many2many options for ${name}:`, error);
       setAvailableOptions([]);
@@ -241,7 +242,7 @@ const Many2ManyField = ({ name, string, relation, disabled, form, fieldDef, wiza
     if (wizardInfo?.defaults?.[name]) {
       const defaultValues = wizardInfo.defaults[name];
       console.log(`🎯 Loading default values for ${name}:`, defaultValues);
-      
+
       if (Array.isArray(defaultValues) && defaultValues.length > 0) {
         // If defaultValues are IDs, we need to load the actual records
         loadDefaultRecords(defaultValues);
@@ -252,32 +253,32 @@ const Many2ManyField = ({ name, string, relation, disabled, form, fieldDef, wiza
   // Load default records for many2many field
   const loadDefaultRecords = async (recordIds) => {
     if (!relation || !Array.isArray(recordIds)) return;
-    
+
     try {
       console.log(`🔍 Loading default records for ${name}:`, recordIds);
-      
+
       // Get the view for the relation
       let fields = ['id', 'name', 'rec_name'];
-      
+
       // If there's a specific view defined in fieldDef.views
       if (fieldDef.views && fieldDef.views.tree) {
         const viewFields = Object.keys(fieldDef.views.tree.fields || {});
         fields = [...new Set([...fields, ...viewFields])];
       }
-      
+
       // Load records by IDs
       const records = await trytonService.getModelData(relation, [['id', 'in', recordIds]], fields, recordIds.length);
-      
+
       const formattedRecords = records.map(record => ({
         id: record.id,
         name: record.name || record.rec_name || `ID: ${record.id}`,
         ...record
       }));
-      
+
       setSelectedItems(formattedRecords);
       form.setFieldValue(name, recordIds);
       console.log(`✅ Loaded ${formattedRecords.length} default records for ${name}`);
-      
+
     } catch (error) {
       console.error(`❌ Error loading default records for ${name}:`, error);
     }
@@ -406,42 +407,73 @@ const WizardModal = ({
   useEffect(() => {
     if (wizardInfo && wizardInfo.fieldsView && visible) {
       console.log('🧙 Configurando formulario de wizard:', wizardInfo);
-      
+
        // Generar campos del formulario
        const fields = generateFormFields(wizardInfo.fieldsView);
        setFormFields(fields);
-      
+
       // Establecer valores por defecto
       if (wizardInfo.defaults) {
         console.log('🎯 Estableciendo valores por defecto:', wizardInfo.defaults);
-        
-        // Convertir valores datetime de Tryton a formato HTML datetime-local
+
+        // Convertir valores date/datetime de Tryton a dayjs
         const processedDefaults = { ...wizardInfo.defaults };
+        const fieldDefs = wizardInfo.fieldsView?.fields || {};
+
         Object.keys(processedDefaults).forEach(key => {
           const value = processedDefaults[key];
+          const fieldDef = fieldDefs[key];
+
+          // Convertir campos date
+          if (value && typeof value === 'object' && value.__class__ === 'date') {
+            const iso = `${String(value.year).padStart(4, '0')}-${String(value.month).padStart(2, '0')}-${String(value.day).padStart(2, '0')}`;
+            processedDefaults[key] = dayjs(iso);
+            console.log(`📅 Converted date ${key}:`, value, '->', processedDefaults[key]);
+          }
+
+          // Convertir campos datetime
           if (value && typeof value === 'object' && value.__class__ === 'datetime') {
-            // Convertir datetime de Tryton a formato ISO string para datetime-local
-            const date = new Date(value.year, value.month - 1, value.day, value.hour, value.minute, value.second);
-            processedDefaults[key] = date.toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm
+            const iso = `${String(value.year).padStart(4, '0')}-${String(value.month).padStart(2, '0')}-${String(value.day).padStart(2, '0')}T${String(value.hour || 0).padStart(2, '0')}:${String(value.minute || 0).padStart(2, '0')}:${String(value.second || 0).padStart(2, '0')}`;
+            processedDefaults[key] = dayjs(iso);
             console.log(`🕒 Converted datetime ${key}:`, value, '->', processedDefaults[key]);
           }
         });
-        
+
         // Asegurar que campos many2many tengan valores por defecto
         if (!processedDefaults.tests) {
           processedDefaults.tests = [];
           console.log('⚠️ Campo tests no tiene valor por defecto, estableciendo array vacío');
         }
-        
+
         form.setFieldsValue(processedDefaults);
       }
-      
+
       // Establecer valores iniciales
       if (wizardInfo.values) {
-        console.log('🎯 Estableciendo valores iniciales:', wizardInfo.values);
-        form.setFieldsValue(wizardInfo.values);
+        const processedValues = { ...wizardInfo.values };
+        const fieldDefs = wizardInfo.fieldsView?.fields || {};
+
+        Object.keys(processedValues).forEach(key => {
+          const value = processedValues[key];
+
+          // Convertir campos date
+          if (value && typeof value === 'object' && value.__class__ === 'date') {
+            const iso = `${String(value.year).padStart(4, '0')}-${String(value.month).padStart(2, '0')}-${String(value.day).padStart(2, '0')}`;
+            processedValues[key] = dayjs(iso);
+            console.log(`📅 Converted date ${key}:`, value, '->', processedValues[key]);
+          }
+
+          // Convertir campos datetime
+          if (value && typeof value === 'object' && value.__class__ === 'datetime') {
+            const iso = `${String(value.year).padStart(4, '0')}-${String(value.month).padStart(2, '0')}-${String(value.day).padStart(2, '0')}T${String(value.hour || 0).padStart(2, '0')}:${String(value.minute || 0).padStart(2, '0')}:${String(value.second || 0).padStart(2, '0')}`;
+            processedValues[key] = dayjs(iso);
+            console.log(`🕒 Converted datetime ${key}:`, value, '->', processedValues[key]);
+          }
+        });
+
+        form.setFieldsValue(processedValues);
       }
-      
+
       // Asegurar que todos los campos many2many tengan valores por defecto
       const allFields = wizardInfo.fieldsView?.fields || {};
       Object.keys(allFields).forEach(fieldName => {
@@ -475,11 +507,11 @@ const WizardModal = ({
     // Procesar cada grupo
     groups.forEach(group => {
       const groupFields = [];
-      
+
       if (group.fields && Array.isArray(group.fields)) {
         group.fields.forEach(fieldName => {
           const fieldDef = fieldDefinitions[fieldName];
-          
+
           if (fieldDef) {
             groupFields.push({
               name: fieldName,
@@ -511,10 +543,10 @@ const WizardModal = ({
     if (fields.length === 0) {
       console.warn('⚠️ No se pudieron parsear grupos del XML, creando grupo por defecto');
       const allFields = [];
-      
+
       Object.keys(fieldDefinitions).forEach(fieldName => {
         const fieldDef = fieldDefinitions[fieldName];
-        
+
         if (fieldDef) {
           allFields.push({
             name: fieldName,
@@ -554,17 +586,17 @@ const WizardModal = ({
 
     console.log('🔍 Parseando XML arch:', arch);
     const groups = [];
-    
+
     try {
       // PASO 1: Extraer campos que están fuera de grupos (en el nivel raíz del form)
       const formContent = arch.replace(/<form[^>]*>(.*)<\/form>/s, '$1');
       console.log('📋 Contenido del form:', formContent);
-      
+
       // Buscar campos que NO están dentro de grupos
       const rootFields = [];
       const fieldRegex = /<field name="([^"]*)"[^>]*\/>/g;
       let fieldMatch;
-      
+
       // Primero, marcar todas las posiciones donde empiezan y terminan los grupos
       const groupPositions = [];
       const groupRegex = /<group[^>]*>.*?<\/group>/gs;
@@ -575,7 +607,7 @@ const WizardModal = ({
           end: groupMatch.index + groupMatch[0].length
         });
       }
-      
+
       // Buscar campos que están fuera de grupos
       let fieldIndex = 0;
       fieldRegex.lastIndex = 0; // Reset regex
@@ -583,18 +615,18 @@ const WizardModal = ({
         const fieldStart = fieldMatch.index;
         const fieldEnd = fieldMatch.index + fieldMatch[0].length;
         const fieldName = fieldMatch[1];
-        
+
         // Verificar si este campo está dentro de algún grupo
-        const isInsideGroup = groupPositions.some(pos => 
+        const isInsideGroup = groupPositions.some(pos =>
           fieldStart >= pos.start && fieldEnd <= pos.end
         );
-        
+
         if (!isInsideGroup) {
           rootFields.push(fieldName);
           console.log(`🔧 Campo raíz encontrado: ${fieldName}`);
         }
       }
-      
+
       // Si hay campos raíz, crear un grupo para ellos
       if (rootFields.length > 0) {
         groups.push({
@@ -605,30 +637,30 @@ const WizardModal = ({
         });
         console.log(`✅ Grupo raíz creado con ${rootFields.length} campos:`, rootFields);
       }
-      
+
       // PASO 2: Extraer grupos usando regex más flexible
       const groupRegex2 = /<group[^>]*id="([^"]*)"[^>]*(?:colspan="([^"]*)")?[^>]*>(.*?)<\/group>/gs;
       let match;
-      
+
       while ((match = groupRegex2.exec(arch)) !== null) {
         const groupId = match[1];
         const colspan = parseInt(match[2]) || 4;
         const groupContent = match[3];
-        
+
         console.log(`📦 Procesando grupo: ${groupId}, colspan: ${colspan}`);
         console.log(`📝 Contenido del grupo:`, groupContent);
-        
+
         // Extraer campos del grupo
         const groupFields = [];
         const groupFieldRegex = /<field name="([^"]*)"[^>]*\/>/g;
         let groupFieldMatch;
-        
+
         while ((groupFieldMatch = groupFieldRegex.exec(groupContent)) !== null) {
           groupFields.push(groupFieldMatch[1]);
         }
-        
+
          console.log(`🔧 Fields found in ${groupId}:`, groupFields);
-         
+
          groups.push({
            id: groupId,
            title: null, // Sin título específico
@@ -636,7 +668,7 @@ const WizardModal = ({
            fields: groupFields || [] // Asegurar que fields siempre sea un array
          });
       }
-      
+
       console.log(`✅ Total grupos parseados: ${groups.length}`, groups);
       return groups;
     } catch (error) {
@@ -653,22 +685,22 @@ const WizardModal = ({
       console.log('🧙 Enviando formulario de wizard:', values);
       console.log('🔍 Verificando campo tests:', values.tests);
       console.log('🔍 Tipo de tests:', typeof values.tests, Array.isArray(values.tests));
-      
+
       // Procesar valores antes de enviar
       const processedValues = { ...values };
-      
+
       // Asegurar que todos los campos tengan valores por defecto apropiados
       Object.keys(processedValues).forEach(fieldName => {
         const value = processedValues[fieldName];
-        
+
         // Para campos many2many, asegurar que sean arrays
         // Los campos many2many suelen terminar en 's' (plural) o tener nombres específicos
-        const isMany2ManyField = fieldName.endsWith('s') || 
-                                fieldName === 'tests' || 
-                                fieldName === 'items' || 
+        const isMany2ManyField = fieldName.endsWith('s') ||
+                                fieldName === 'tests' ||
+                                fieldName === 'items' ||
                                 fieldName === 'records' ||
                                 (Array.isArray(value) && value.length > 0 && typeof value[0] === 'number');
-        
+
         if (isMany2ManyField) {
           if (!Array.isArray(value)) {
             processedValues[fieldName] = [];
@@ -682,7 +714,7 @@ const WizardModal = ({
           }
         }
       });
-      
+
       // Logging adicional para debug
       console.log('🔍 Valores antes del procesamiento:', values);
       console.log('🔍 Valores después del procesamiento:', processedValues);
@@ -692,7 +724,7 @@ const WizardModal = ({
         type: typeof processedValues.tests,
         isArray: Array.isArray(processedValues.tests)
       });
-      
+
       // Convertir valores datetime-local de vuelta al formato Tryton
       Object.keys(processedValues).forEach(key => {
         const value = processedValues[key];
@@ -712,14 +744,14 @@ const WizardModal = ({
           console.log(`🕒 Converted datetime ${key}:`, value, '->', processedValues[key]);
         }
       });
-      
+
       // Encontrar el botón por defecto o el primer botón de submit
       const submitButton = wizardInfo?.buttons?.find(btn => btn.default || btn.validate);
       const buttonState = submitButton?.state || 'end';
-      
+
       console.log(`🎯 Botón seleccionado: ${submitButton?.string}, Estado: ${buttonState}`);
       console.log(`📤 Valores procesados para envío:`, processedValues);
-      
+
       await onSubmit(processedValues, buttonState);
 
       message.success(t('wizard.successMessage'));
@@ -780,8 +812,8 @@ const WizardModal = ({
             rules={required ? [{ required: true, message: `Field ${string} is required` }] : []}
             help={fieldDef.help ? <Text type="secondary" className="text-xs">{fieldDef.help}</Text> : null}
           >
-            <Input 
-              {...commonProps} 
+            <Input
+              {...commonProps}
               size="large"
               className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 transition-colors duration-300"
             />
@@ -803,8 +835,8 @@ const WizardModal = ({
             help={fieldDef.help ? <Text type="secondary" className="text-xs">{fieldDef.help}</Text> : null}
             className="mb-6"
           >
-            <Input.TextArea 
-              {...commonProps} 
+            <Input.TextArea
+              {...commonProps}
               rows={4}
               className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 transition-colors duration-300 text-base"
             />
@@ -826,9 +858,9 @@ const WizardModal = ({
             rules={required ? [{ required: true, message: `Field ${string} is required` }] : []}
             help={fieldDef.help ? <Text type="secondary" className="text-xs">{fieldDef.help}</Text> : null}
           >
-            <Input 
+            <Input
               type="number"
-              {...commonProps} 
+              {...commonProps}
               size="large"
               className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 transition-colors duration-300"
             />
@@ -850,7 +882,7 @@ const WizardModal = ({
             help={fieldDef.help ? <Text type="secondary" className="text-xs">{fieldDef.help}</Text> : null}
             className="mb-6"
           >
-            <Checkbox 
+            <Checkbox
               disabled={readonly || currentLoading}
               className="text-base"
             >
@@ -875,8 +907,8 @@ const WizardModal = ({
             help={fieldDef.help ? <Text type="secondary" className="text-xs">{fieldDef.help}</Text> : null}
             className="mb-6"
           >
-            <DatePicker 
-              {...commonProps} 
+            <DatePicker
+              {...commonProps}
               className="w-full rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 transition-colors duration-300 h-12"
               format="YYYY-MM-DD"
             />
@@ -899,8 +931,8 @@ const WizardModal = ({
             help={fieldDef.help ? <Text type="secondary" className="text-xs">{fieldDef.help}</Text> : null}
             className="mb-6"
           >
-            <TimePicker 
-              {...commonProps} 
+            <TimePicker
+              {...commonProps}
               className="w-full rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 transition-colors duration-300 h-12"
               format="HH:mm"
             />
@@ -966,9 +998,9 @@ const WizardModal = ({
             help={fieldDef.help ? <Text type="secondary" className="text-xs">{fieldDef.help}</Text> : null}
             className="mb-6"
           >
-            <Input 
+            <Input
               type="datetime-local"
-              {...commonProps} 
+              {...commonProps}
               size="large"
               className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 transition-colors duration-300"
             />
@@ -1032,17 +1064,17 @@ const WizardModal = ({
     if (!wizardInfo || !wizardInfo.buttons || wizardInfo.buttons.length === 0) {
       return (
         <div className="flex justify-end gap-3 p-5 bg-white rounded-lg shadow-md -mx-6 -mb-6">
-          <Button 
-            onClick={handleCancel} 
+          <Button
+            onClick={handleCancel}
             icon={<CloseOutlined />}
             size="large"
             className="min-w-[100px] border-gray-300 text-gray-600 rounded-lg hover:border-teal-600 hover:text-teal-600 transition-colors duration-300"
           >
             Cancel
           </Button>
-          <Button 
-            type="primary" 
-            onClick={() => form.submit()} 
+          <Button
+            type="primary"
+            onClick={() => form.submit()}
             icon={<CheckOutlined />}
             loading={currentLoading}
             size="large"
@@ -1066,7 +1098,7 @@ const WizardModal = ({
                 icon={<CheckOutlined />}
                 loading={currentLoading}
                 size="large"
-                className={button.default 
+                className={button.default
                   ? "min-w-[120px] bg-teal-600 border-teal-600 rounded-lg font-medium hover:bg-teal-700 hover:border-teal-700 transition-colors duration-300"
                   : "min-w-[100px] rounded-lg hover:border-teal-600 transition-colors duration-300"
                 }
@@ -1134,9 +1166,9 @@ const WizardModal = ({
                 console.warn(`⚠️ Grupo ${groupIndex} no tiene campos válidos:`, group);
                 return null;
               }
-              
+
                return (
-                 <Card 
+                 <Card
                    key={groupIndex}
                    size="small"
                      className="mb-5 rounded-xl shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-300"
@@ -1158,7 +1190,7 @@ const WizardModal = ({
                        {group.fields.map((field, fieldIndex) => {
                          // Ajustar columnas basado en el tipo de campo y cantidad
                          let colSpan = 24; // Por defecto una columna por fila
-                         
+
                          // Campos especiales que necesitan toda la fila
                          if (field.type === 'many2many' || field.type === 'text') {
                            colSpan = 24; // Toda la fila
@@ -1178,7 +1210,7 @@ const WizardModal = ({
                              colSpan = 4; // 9+ campos = 6 columnas
                            }
                          }
-                         
+
                          return (
                            <Col key={fieldIndex} span={colSpan}>
                          {renderFormField(field)}
