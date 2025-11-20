@@ -36,27 +36,77 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
   console.log('🔧 TableView - toolbarInfo:', selectedMenuInfo?.toolbarInfo);
   console.log('🔧 TableView - selectedRecord:', selectedRecord);
 
+  const title = selectedMenuInfo?.actionName || selectedMenuInfo?.menuItem?.name || 'Table';
+  const subtitle = `${selectedMenuInfo?.resModel || 'Tryton'} · ${tableInfo?.viewType || 'tree'} view`;
+  const headerChipBase = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '6px 12px',
+    borderRadius: '999px',
+    fontSize: '13px',
+    fontWeight: 600
+  };
+
   return (
     <div style={{
-      padding: '24px',
-      background: 'var(--color-background)',
+      padding: '32px',
+      background: 'linear-gradient(180deg, var(--color-primary-50) 0%, var(--color-background) 40%)',
       minHeight: 'calc(100vh - 64px)',
       overflowY: 'auto'
     }}>
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'flex-start',
+        alignItems: 'stretch',
         marginBottom: '24px',
-        gap: '16px'
+        gap: '16px',
+        flexWrap: 'wrap'
       }}>
-        <div style={{ flex: 1 }}>
-          <Title level={2} style={{ margin: 0, color: 'var(--color-text-primary)' }}>
-            {selectedMenuInfo?.actionName || selectedMenuInfo?.menuItem?.name || 'Table'}
+        <div style={{
+          flex: 1,
+          minWidth: '320px',
+          padding: '24px',
+          borderRadius: '20px',
+          background: 'linear-gradient(135deg, var(--color-primary-50), var(--color-secondary-50))',
+          border: '1px solid var(--color-primary-100)',
+          boxShadow: '0 12px 30px rgba(1, 118, 143, 0.08)'
+        }}>
+          <Title level={2} style={{ margin: '0 0 6px', color: 'var(--color-primary-900)' }}>
+            {title}
           </Title>
-          <Paragraph style={{ color: 'var(--color-text-secondary)', margin: '8px 0 0 0' }}>
-            {selectedMenuInfo?.resModel} - Table view
+          <Paragraph style={{ color: 'var(--color-primary-700)', margin: 0 }}>
+            {subtitle}
           </Paragraph>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '18px' }}>
+            {selectedMenuInfo?.resModel && (
+              <span style={{
+                ...headerChipBase,
+                background: 'var(--color-primary-100)',
+                color: 'var(--color-primary-800)'
+              }}>
+                {selectedMenuInfo.resModel}
+              </span>
+            )}
+            {tableInfo?.domain?.length > 0 && (
+              <span style={{
+                ...headerChipBase,
+                background: 'var(--color-secondary-100)',
+                color: 'var(--color-secondary-800)'
+              }}>
+                {tableInfo.domain.length} filtros activos
+              </span>
+            )}
+            {tableInfo?.fieldsView?.fields && (
+              <span style={{
+                ...headerChipBase,
+                background: 'var(--color-neutral-200)',
+                color: 'var(--color-neutral-800)'
+              }}>
+                {Object.keys(tableInfo.fieldsView.fields).length} columnas
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Toolbar al lado del título */}

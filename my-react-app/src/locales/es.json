@@ -48,7 +48,8 @@
     "enterPassword": "Por favor ingrese su contraseña",
     "selectDatabaseError": "Por favor seleccione una base de datos",
     "authError": "Error de autenticación",
-    "loadingDatabases": "Cargando..."
+    "loadingDatabases": "Cargando...",
+    "secureAccess": "Acceso seguro"
   },
   "app": {
     "loadingTryton": "Cargando Tryton...",
@@ -90,6 +91,8 @@
     "export": "Exportar",
     "filters": "Filtros",
     "configure": "Configurar",
+    "columns": "columnas",
+    "domain": "filtros",
     "json": "JSON",
     "elements": "elemento(s)",
     "male": "Masculino",

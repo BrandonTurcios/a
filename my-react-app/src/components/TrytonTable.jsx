@@ -465,43 +465,115 @@ const TrytonTable = ({
     );
   }
 
+  const quickButtonBase = {
+    borderRadius: '10px',
+    borderWidth: 0,
+    color: '#fff',
+    fontWeight: 500,
+    boxShadow: '0 6px 16px rgba(1, 118, 143, 0.18)'
+  };
+
+  const quickButtons = [
+    {
+      key: 'refresh',
+      icon: <ReloadOutlined />,
+      title: t('table.update'),
+      onClick: handleRefresh,
+      style: { ...quickButtonBase, background: 'var(--color-primary-600)' }
+    },
+    {
+      key: 'export',
+      icon: <DownloadOutlined />,
+      title: t('table.export'),
+      style: { ...quickButtonBase, background: 'var(--color-secondary-600)' }
+    },
+    {
+      key: 'filters',
+      icon: <FilterOutlined />,
+      title: t('table.filters'),
+      style: { ...quickButtonBase, background: 'var(--color-primary-400)' }
+    },
+    {
+      key: 'configure',
+      icon: <SettingOutlined />,
+      title: t('table.configure'),
+      style: { ...quickButtonBase, background: 'var(--color-secondary-700)' }
+    }
+  ];
+
+  const statsCards = [
+    {
+      label: t('table.records'),
+      value: rowData.length,
+      accent: 'var(--color-primary-500)',
+      background: 'var(--color-primary-50)'
+    },
+    {
+      label: t('table.columns'),
+      value: columnDefs.length,
+      accent: 'var(--color-secondary-500)',
+      background: 'var(--color-secondary-50)'
+    },
+    {
+      label: t('table.domain'),
+      value: domain?.length || 0,
+      accent: 'var(--color-info-500)',
+      background: 'var(--color-info-50)'
+    }
+  ];
+
   return (
     <div style={{
       height: 'calc(100vh - 200px)',
       minHeight: '600px'
     }}>
-      <div className="mb-4 flex justify-end" style={{ marginBottom: '16px' }}>
-        <Space className="flex flex-wrap gap-2">
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={handleRefresh}
-            title={t('table.update')}
-            className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg"
-          >
-            {t('table.update')}
-          </Button>
-          <Button
-            icon={<DownloadOutlined />}
-            title={t('table.export')}
-            className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg"
-          >
-            {t('table.export')}
-          </Button>
-          <Button
-            icon={<FilterOutlined />}
-            title={t('table.filters')}
-            className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg"
-          >
-            {t('table.filters')}
-          </Button>
-          <Button
-            icon={<SettingOutlined />}
-            title={t('table.configure')}
-            className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg"
-          >
-            {t('table.configure')}
-          </Button>
+      <div style={{
+        marginBottom: '12px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '12px',
+        alignItems: 'center'
+      }}>
+        <Space wrap size={[12, 12]}>
+          {quickButtons.map((btn) => (
+            <Button
+              key={btn.key}
+              icon={btn.icon}
+              onClick={btn.onClick}
+              title={btn.title}
+              style={btn.style}
+            >
+              {btn.title}
+            </Button>
+          ))}
         </Space>
+        <div style={{
+          display: 'flex',
+          gap: '10px',
+          flexWrap: 'wrap',
+          justifyContent: 'flex-end'
+        }}>
+          {statsCards.map((card) => (
+            <div
+              key={card.label}
+              style={{
+                minWidth: '120px',
+                padding: '10px 14px',
+                borderRadius: '12px',
+                background: card.background,
+                border: `1px solid ${card.accent}20`,
+                color: card.accent,
+                textAlign: 'right'
+              }}
+            >
+              <div style={{ fontSize: '22px', fontWeight: 700 }}>{card.value}</div>
+              <div style={{ fontSize: '12px', letterSpacing: 0.5, textTransform: 'uppercase' }}>
+                {card.label}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
       
       <div 

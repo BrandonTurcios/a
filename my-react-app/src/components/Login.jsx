@@ -90,44 +90,71 @@ const Login = ({ onLogin }) => {
     }
   };
 
+  const inputStyle = {
+    height: '44px',
+    borderRadius: '12px',
+    border: '1px solid var(--color-primary-100)',
+    background: 'var(--color-neutral-50)',
+    color: 'var(--color-text-primary)'
+  };
+
   return (
     <div style={{ 
       minHeight: '100vh', 
-      background: 'var(--color-background)',
+      background: 'radial-gradient(circle at top, rgba(1,118,143,0.25), transparent 45%), linear-gradient(135deg, var(--color-primary-900), var(--color-secondary-900))',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '16px'
+      padding: '32px'
     }}>
-      <div style={{ width: '100%', maxWidth: '400px' }}>
+      <div style={{ width: '100%', maxWidth: '440px' }}>
         <Card 
           style={{ 
-            borderRadius: '12px',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-            border: '1px solid var(--color-border)'
+            borderRadius: '20px',
+            boxShadow: '0 30px 60px rgba(0,0,0,0.18)',
+            border: '1px solid var(--color-primary-100)',
+            background: 'var(--color-card-background)',
+            position: 'relative',
+            overflow: 'hidden'
           }}
-          bodyStyle={{ padding: '40px' }}
+          bodyStyle={{ padding: '48px 40px 40px' }}
         >
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(180deg, rgba(1,118,143,0.06), transparent)',
+            pointerEvents: 'none'
+          }} />
+
           {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <div style={{ textAlign: 'center', marginBottom: '32px', position: 'relative' }}>
             <div style={{
-              width: '60px',
-              height: '60px',
-              background: 'var(--color-primary)',
-              borderRadius: '12px',
+              width: '72px',
+              height: '72px',
+              background: 'linear-gradient(135deg, var(--color-primary-600), var(--color-secondary-500))',
+              borderRadius: '20px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              margin: '0 auto 20px'
+              margin: '0 auto 20px',
+              boxShadow: '0 20px 30px rgba(1,118,143,0.3)'
             }}>
-              <span style={{ fontSize: '24px', color: 'white', fontWeight: 'bold' }}>T</span>
+              <span style={{ fontSize: '28px', color: 'white', fontWeight: 'bold' }}>T</span>
             </div>
-            <Title level={3} style={{ margin: '0 0 8px 0', color: '#333333' }}>
+            <Title level={3} style={{ margin: '0 0 8px 0', color: 'var(--color-primary-900)' }}>
               {t('login.title')}
             </Title>
-            <Text style={{ color: '#6C757D', fontSize: '16px' }}>
+            <Text style={{ color: 'var(--color-primary-700)', fontSize: '16px' }}>
               {t('login.subtitle')}
             </Text>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '16px', flexWrap: 'wrap' }}>
+              <span style={{ padding: '6px 14px', borderRadius: '999px', background: 'var(--color-primary-50)', color: 'var(--color-primary-700)', fontWeight: 600, fontSize: '12px' }}>
+                {t('login.secureAccess')}
+              </span>
+              <span style={{ padding: '6px 14px', borderRadius: '999px', background: 'var(--color-secondary-50)', color: 'var(--color-secondary-700)', fontWeight: 600, fontSize: '12px' }}>
+                Tryton Suite
+              </span>
+            </div>
           </div>
 
             <Form
@@ -138,20 +165,20 @@ const Login = ({ onLogin }) => {
               {/* Database Field */}
               <Form.Item
                 name="database"
-                label={<span style={{ color: '#333333', fontWeight: '500' }}>{t('login.database')}</span>}
+                label={<span style={{ color: 'var(--color-primary-800)', fontWeight: '600' }}>{t('login.database')}</span>}
                 rules={[{ required: true, message: t('login.selectDatabaseError') }]}
               >
                 {loadingDatabases ? (
                   <div style={{ textAlign: 'center', padding: '16px' }}>
                     <Spin />
-                    <div style={{ marginTop: '8px', color: '#6C757D' }}>
+                    <div style={{ marginTop: '8px', color: 'var(--color-primary-600)' }}>
                       {t('login.loadingDatabases')}
                     </div>
                   </div>
                 ) : databases.length > 0 ? (
                   <Select
                     placeholder={t('login.selectDatabase')}
-                    style={{ width: '100%', height: '40px' }}
+                    style={{ width: '100%', ...inputStyle }}
                     showSearch
                     onChange={(value) => setSelectedDatabase(value)}
                   >
@@ -164,7 +191,7 @@ const Login = ({ onLogin }) => {
                 ) : (
                   <Input
                     placeholder={t('login.database')}
-                    style={{ height: '40px' }}
+                    style={inputStyle}
                   />
                 )}
               </Form.Item>
@@ -172,35 +199,35 @@ const Login = ({ onLogin }) => {
               {/* Username Field */}
               <Form.Item
                 name="username"
-                label={<span style={{ color: '#333333', fontWeight: '500' }}>{t('login.username')}</span>}
+                label={<span style={{ color: 'var(--color-primary-800)', fontWeight: '600' }}>{t('login.username')}</span>}
                 rules={[{ required: true, message: t('login.enterUsername') }]}
               >
                 <Input
                   placeholder={t('login.username')}
-                  style={{ height: '40px' }}
+                  style={inputStyle}
                 />
               </Form.Item>
 
               {/* Password Field */}
               <Form.Item
                 name="password"
-                label={<span style={{ color: '#333333', fontWeight: '500' }}>{t('login.password')}</span>}
+                label={<span style={{ color: 'var(--color-primary-800)', fontWeight: '600' }}>{t('login.password')}</span>}
                 rules={[{ required: true, message: t('login.enterPassword') }]}
               >
                 <Input.Password
                   placeholder={t('login.password')}
-                  style={{ height: '40px' }}
+                  style={inputStyle}
                 />
               </Form.Item>
 
               {/* Language Selector */}
               <Form.Item
-                label={<span style={{ color: '#333333', fontWeight: '500' }}>{t('login.language')}</span>}
+                label={<span style={{ color: 'var(--color-primary-800)', fontWeight: '600' }}>{t('login.language')}</span>}
               >
                 <LanguageSelector
                   value={selectedLanguage}
                   onChange={setSelectedLanguage}
-                  style={{ width: '100%', height: '40px' }}
+                  style={{ width: '100%', ...inputStyle }}
                 />
               </Form.Item>
 
@@ -212,7 +239,7 @@ const Login = ({ onLogin }) => {
                   type="error"
                   icon={<ExclamationCircleOutlined />}
                   showIcon
-                  style={{ marginBottom: '24px' }}
+                  style={{ marginBottom: '24px', borderRadius: '12px', border: '1px solid var(--color-danger-500)' }}
                 />
               )}
 
@@ -225,10 +252,13 @@ const Login = ({ onLogin }) => {
                   disabled={loadingDatabases}
                   block
                   style={{
-                    height: '44px',
-                    borderRadius: '8px',
+                    height: '50px',
+                    borderRadius: '12px',
                     fontSize: '16px',
-                    fontWeight: '500'
+                    fontWeight: '600',
+                    background: 'linear-gradient(135deg, var(--color-primary-600), var(--color-secondary-600))',
+                    border: 'none',
+                    boxShadow: '0 15px 30px rgba(0,0,0,0.18)'
                   }}
                 >
                   {loading ? t('login.signingIn') : t('login.signIn')}

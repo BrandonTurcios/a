@@ -22,6 +22,7 @@ import {
   DeleteOutlined
 } from '@ant-design/icons';
 import trytonService from '../services/trytonService';
+import { colors } from '../config/colors';
 
 const Toolbar = ({ 
   toolbarInfo, 
@@ -55,6 +56,57 @@ const Toolbar = ({
   const { action = [], relate = [], print = [], emails = [] } = toolbarInfo;
 
   const disabledVisualStyle = { opacity: 0.35, filter: 'grayscale(60%)', cursor: 'not-allowed' };
+
+  const withDisabledStyle = (style, condition) =>
+    condition ? { ...style, ...disabledVisualStyle } : style;
+
+  const primaryButtonStyle = {
+    background: 'var(--color-primary-600)',
+    borderColor: 'var(--color-primary-600)',
+    color: '#fff',
+    borderRadius: '12px',
+    boxShadow: '0 8px 18px rgba(1, 118, 143, 0.25)'
+  };
+
+  const secondaryButtonStyle = {
+    ...primaryButtonStyle,
+    background: 'var(--color-secondary-600)',
+    borderColor: 'var(--color-secondary-600)'
+  };
+
+  const neutralButtonStyle = {
+    background: 'var(--color-neutral-50)',
+    borderColor: 'var(--color-primary-100)',
+    color: 'var(--color-primary-800)',
+    borderRadius: '12px',
+    boxShadow: '0 6px 14px rgba(1, 118, 143, 0.12)'
+  };
+
+  const toolbarWrapperStyles = {
+    padding: '3px',
+    borderRadius: '20px',
+    background: 'linear-gradient(135deg, var(--color-primary-700), var(--color-secondary-600))',
+    boxShadow: '0 18px 28px rgba(1, 68, 82, 0.25)',
+    border: '1px solid var(--color-primary-200)',
+    minWidth: 'fit-content'
+  };
+
+  const toolbarInnerStyles = {
+    background: 'var(--color-card-background)',
+    borderRadius: '16px',
+    padding: '12px 16px',
+    display: 'flex',
+    flexDirection: 'row',
+    gap: '12px',
+    flexWrap: 'wrap'
+  };
+
+  const toolbarSectionStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    flexWrap: 'wrap'
+  };
 
   // Attachments state
   const [attachmentsOpen, setAttachmentsOpen] = useState(false);
@@ -419,7 +471,7 @@ const Toolbar = ({
           icon={<SwapOutlined />}
           onClick={onSwitchView}
           disabled={loading || viewType === 'tree' || isNativeForm}
-          style={(loading || viewType === 'tree' || isNativeForm) ? disabledVisualStyle : undefined}
+          style={withDisabledStyle(neutralButtonStyle, (loading || viewType === 'tree' || isNativeForm))}
           type={isDirty ? 'primary' : 'default'}
         />
       </Tooltip>
@@ -428,7 +480,7 @@ const Toolbar = ({
           icon={<LeftOutlined />}
           onClick={() => onNavigate?.('previous')}
           disabled={loading || currentRecord <= 1}
-          style={(loading || currentRecord <= 1) ? disabledVisualStyle : undefined}
+          style={withDisabledStyle(neutralButtonStyle, (loading || currentRecord <= 1))}
         />
       </Tooltip>
       <InputNumber
@@ -436,7 +488,15 @@ const Toolbar = ({
         min={1}
         max={totalRecords}
         controls={false}
-        style={{ width: 60, textAlign: 'center', ...(loading ? disabledVisualStyle : {}) }}
+        style={{
+          width: 60,
+          textAlign: 'center',
+          borderRadius: '10px',
+          border: '1px solid var(--color-primary-100)',
+          background: 'var(--color-neutral-50)',
+          color: 'var(--color-primary-800)',
+          ...(loading ? disabledVisualStyle : {})
+        }}
         onChange={(value) => onNavigate?.('goto', value)}
         disabled={loading}
       />
@@ -445,7 +505,7 @@ const Toolbar = ({
           icon={<RightOutlined />}
           onClick={() => onNavigate?.('next')}
           disabled={loading || currentRecord >= totalRecords}
-          style={(loading || currentRecord >= totalRecords) ? disabledVisualStyle : undefined}
+          style={withDisabledStyle(neutralButtonStyle, (loading || currentRecord >= totalRecords))}
         />
       </Tooltip>
     </Space.Compact>
@@ -459,7 +519,7 @@ const Toolbar = ({
           icon={<PlusOutlined />}
           onClick={onCreate}
           disabled={loading || (isNativeForm || (viewType === 'form' && !isNativeForm))}
-          style={(loading || (isNativeForm || (viewType === 'form' && !isNativeForm))) ? disabledVisualStyle : undefined}
+          style={withDisabledStyle(secondaryButtonStyle, (loading || (isNativeForm || (viewType === 'form' && !isNativeForm))))}
         />
       </Tooltip>
       <Tooltip title={t('toolbar.save')}>
@@ -467,7 +527,7 @@ const Toolbar = ({
           icon={<SaveOutlined />}
           onClick={onSave}
           disabled={loading || (isNativeForm || (viewType === 'tree'))}
-          style={(loading || (isNativeForm || (viewType === 'tree'))) ? disabledVisualStyle : undefined}
+          style={withDisabledStyle(primaryButtonStyle, (loading || (isNativeForm || (viewType === 'tree'))))}
         />
       </Tooltip>
       <Tooltip title={t('toolbar.refresh')}>
@@ -475,7 +535,7 @@ const Toolbar = ({
           icon={<ReloadOutlined />}
           onClick={onRefresh}
           disabled={loading}
-          style={loading ? disabledVisualStyle : undefined}
+          style={withDisabledStyle(neutralButtonStyle, loading)}
         />
       </Tooltip>
     </Space.Compact>
@@ -498,18 +558,22 @@ const Toolbar = ({
       <Space.Compact>
         <Dropdown menu={{ items }} trigger={['click']} disabled={loading}>
           <Tooltip title={t('toolbar.attachments')}>
-            <Badge count={attachmentsCount} size="small" offset={[-12, 8]} style={{ zIndex: 100 }} color="#00A88E">
-              <Button icon={<FileOutlined />} disabled={disabled} style={disabled ? disabledVisualStyle : undefined} />
+            <Badge count={attachmentsCount} size="small" offset={[-12, 8]} style={{ zIndex: 100 }} color={colors.secondary.A500}>
+              <Button
+                icon={<FileOutlined />}
+                disabled={disabled}
+                style={withDisabledStyle(neutralButtonStyle, disabled)}
+              />
             </Badge>
           </Tooltip>
         </Dropdown>
         <Tooltip title={t('toolbar.note')}>
-          <Badge count={notesBadgeText} size="small" offset={[-12, 8]} style={{ zIndex: 100 }} color="#00A88E">
+          <Badge count={notesBadgeText} size="small" offset={[-12, 8]} style={{ zIndex: 100 }} color={colors.secondary.A500}>
             <Button
               icon={<CommentOutlined />}
               onClick={handleManageNotes}
               disabled={loading || !resourceKey}
-              style={(loading || !resourceKey) ? disabledVisualStyle : undefined}
+              style={withDisabledStyle(neutralButtonStyle, (loading || !resourceKey))}
             />
           </Badge>
         </Tooltip>
@@ -535,7 +599,7 @@ const Toolbar = ({
         disabled={loading}
       >
         <Tooltip title={t('common.actions')}>
-          <Button icon={<SettingOutlined />} disabled={loading} style={loading ? disabledVisualStyle : undefined}>
+          <Button icon={<SettingOutlined />} disabled={loading} style={withDisabledStyle(neutralButtonStyle, loading)}>
             {t('common.actions')}
           </Button>
         </Tooltip>
@@ -563,7 +627,7 @@ const Toolbar = ({
         disabled={isDisabled}
       >
         <Tooltip title={t('common.relate')}>
-          <Button icon={<LinkOutlined />} disabled={loading} style={loading ? disabledVisualStyle : undefined}>
+          <Button icon={<LinkOutlined />} disabled={loading} style={withDisabledStyle(neutralButtonStyle, loading)}>
           </Button>
         </Tooltip>
       </Dropdown>
@@ -590,7 +654,7 @@ const Toolbar = ({
         disabled={isDisabled}
       >
         <Tooltip title={t('common.print')}>
-          <Button icon={<PrinterOutlined />} disabled={loading} style={loading ? disabledVisualStyle : undefined} />
+          <Button icon={<PrinterOutlined />} disabled={loading} style={withDisabledStyle(neutralButtonStyle, loading)} />
         </Tooltip>
       </Dropdown>
     );
@@ -608,7 +672,7 @@ const Toolbar = ({
           icon={<MailOutlined />}
           onClick={() => onEmail?.()}
           disabled={loading || !hasSelectedRecord}
-          style={(loading || !hasSelectedRecord) ? disabledVisualStyle : undefined}
+          style={withDisabledStyle(neutralButtonStyle, (loading || !hasSelectedRecord))}
         />
       </Tooltip>
     );
@@ -616,30 +680,22 @@ const Toolbar = ({
 
   return (
     <>
-    <div style={{
-      background: 'var(--color-neutral-200)',
-      padding: '8px 12px',
-      borderRadius: '8px',
-      border: '1px solid var(--color-border)',
-      display: 'flex',
-      flexDirection: 'row',
-      gap: '6px',
-      boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-      minWidth: 'fit-content'
-    }}>
-      {/* Primera fila - Navegación y acciones principales */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-        {renderNavigationButtons()}
-        {renderActionButtons()}
-        {renderAttachmentDropdown()}
-      </div>
+    <div style={toolbarWrapperStyles}>
+      <div style={toolbarInnerStyles}>
+        {/* Primera fila - Navegación y acciones principales */}
+        <div style={toolbarSectionStyle}>
+          {renderNavigationButtons()}
+          {renderActionButtons()}
+          {renderAttachmentDropdown()}
+        </div>
 
-      {/* Segunda fila - Acciones secundarias */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-        {renderActionsDropdown()}
-        {renderRelateDropdown()}
-        {renderPrintDropdown()}
-        {renderEmailButton()}
+        {/* Segunda fila - Acciones secundarias */}
+        <div style={toolbarSectionStyle}>
+          {renderActionsDropdown()}
+          {renderRelateDropdown()}
+          {renderPrintDropdown()}
+          {renderEmailButton()}
+        </div>
       </div>
     </div>
     {/* Manage Attachments Modal */}
@@ -651,7 +707,7 @@ const Toolbar = ({
             A
           </div>
           <div>
-            <Typography.Title level={3} style={{ margin: 0, color: '#00A88E' }}>{t('toolbar.manageAttachments')}</Typography.Title>
+            <Typography.Title level={3} style={{ margin: 0, color: 'var(--color-secondary-700)' }}>{t('toolbar.manageAttachments')}</Typography.Title>
             <Typography.Text type="secondary" style={{ fontSize: '14px' }}>{t('toolbar.manageAttachmentsSubtitle')}</Typography.Text>
           </div>
         </div>
@@ -671,7 +727,7 @@ const Toolbar = ({
                 onConfirm={handleDeleteAttachments}
                 okText={t('common.yes')}
                 cancelText={t('common.no')}
-                okButtonProps={{ style: { background: '#00A88E', borderColor: '#00A88E' } }}
+                okButtonProps={{ style: { background: 'var(--color-secondary-600)', borderColor: 'var(--color-secondary-600)' } }}
               >
                 <Button danger>{t('common.delete')}</Button>
               </Popconfirm>
@@ -829,7 +885,7 @@ const Toolbar = ({
             N
           </div>
           <div>
-            <Typography.Title level={3} style={{ margin: 0, color: '#00A88E' }}>{t('toolbar.manageNotes')}</Typography.Title>
+            <Typography.Title level={3} style={{ margin: 0, color: 'var(--color-secondary-700)' }}>{t('toolbar.manageNotes')}</Typography.Title>
             <Typography.Text type="secondary" style={{ fontSize: '14px' }}>{t('toolbar.manageNotesSubtitle')}</Typography.Text>
           </div>
         </div>
@@ -849,7 +905,7 @@ const Toolbar = ({
                 onConfirm={handleDeleteNotes}
                 okText={t('common.yes')}
                 cancelText={t('common.no')}
-                okButtonProps={{ style: { background: '#00A88E', borderColor: '#00A88E' } }}
+                okButtonProps={{ style: { background: 'var(--color-secondary-600)', borderColor: 'var(--color-secondary-600)' } }}
               >
                 <Button danger>{t('common.delete')}</Button>
               </Popconfirm>
@@ -879,8 +935,8 @@ const Toolbar = ({
           </Checkbox>
         </Space>
         <Button type="primary" onClick={handleSaveNote} block style={{
-          background: '#00A88E',
-          borderColor: '#00A88E',
+          background: 'var(--color-secondary-600)',
+          borderColor: 'var(--color-secondary-600)',
           borderRadius: '8px'
         }}>
           {t('toolbar.saveNote')}
