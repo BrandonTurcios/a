@@ -465,7 +465,7 @@ const TrytonTable = ({
     );
   }
 
-  const gridHeight = 'calc(100vh - 320px)';
+  const gridHeight = 'calc(100vh - 240px)';
 
   return (
     <div style={{
@@ -505,31 +505,6 @@ const TrytonTable = ({
       </div>
       
       {/* Debug information (development only) */}
-      {process.env.NODE_ENV === 'development' && (
-        <details style={{ marginTop: '16px' }}>
-          <summary style={{ cursor: 'pointer', color: '#666' }}>
-            JSON
-          </summary>
-          <pre style={{ 
-            background: '#f5f5f5', 
-            padding: '12px', 
-            borderRadius: '4px',
-            fontSize: '12px',
-            overflow: 'auto',
-            maxHeight: '200px'
-          }}>
-            {JSON.stringify({
-              model,
-              viewId,
-              viewType,
-              domain,
-              columnsCount: columnDefs.length,
-              dataCount: rowData.length,
-              fieldsView: tableInfo?.fieldsView
-            }, null, 2)}
-          </pre>
-        </details>
-      )}
     </div>
   );
 };
