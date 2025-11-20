@@ -465,10 +465,13 @@ const TrytonTable = ({
     );
   }
 
+  const gridHeight = 'calc(100vh - 320px)';
+
   return (
     <div style={{
       minHeight: '500px',
       height: '100%',
+      width: '100%',
       display: 'flex',
       flexDirection: 'column',
       gap: '16px',
@@ -477,8 +480,9 @@ const TrytonTable = ({
       <div 
         className="ag-theme-alpine"
         style={{
-          flex: 1,
-          width: '100%'
+          width: '100%',
+          height: gridHeight,
+          minHeight: '480px'
         }}
       >
         <AgGridReact
