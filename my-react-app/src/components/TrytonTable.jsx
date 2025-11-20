@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, Spin, Alert, Button, Space, Typography } from 'antd';
+import { Card, Spin, Alert, Button, Typography } from 'antd';
 import {
   ReloadOutlined,
   DownloadOutlined,
@@ -465,67 +465,18 @@ const TrytonTable = ({
     );
   }
 
-  const statsCards = [
-    {
-      label: t('table.records'),
-      value: rowData.length,
-      accent: 'var(--color-primary-500)',
-      background: 'var(--color-primary-50)'
-    },
-    {
-      label: t('table.columns'),
-      value: columnDefs.length,
-      accent: 'var(--color-secondary-500)',
-      background: 'var(--color-secondary-50)'
-    },
-    {
-      label: t('table.domain'),
-      value: domain?.length || 0,
-      accent: 'var(--color-info-500)',
-      background: 'var(--color-info-50)'
-    }
-  ];
-
   return (
     <div style={{
-      height: 'calc(100vh - 200px)',
-      minHeight: '600px'
+      minHeight: '500px',
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '16px'
     }}>
-      <div style={{
-        marginBottom: '12px',
-        display: 'flex',
-        justifyContent: 'flex-end',
-        flexWrap: 'wrap',
-        gap: '12px',
-        alignItems: 'center'
-      }}>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          {statsCards.map((card) => (
-            <div
-              key={card.label}
-              style={{
-                minWidth: '120px',
-                padding: '10px 14px',
-                borderRadius: '12px',
-                background: card.background,
-                border: `1px solid ${card.accent}20`,
-                color: card.accent,
-                textAlign: 'right'
-              }}
-            >
-              <div style={{ fontSize: '22px', fontWeight: 700 }}>{card.value}</div>
-              <div style={{ fontSize: '12px', letterSpacing: 0.5, textTransform: 'uppercase' }}>
-                {card.label}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-      
       <div 
         className="ag-theme-alpine"
         style={{
-          height: 'calc(100% - 80px)',
+          flex: 1,
           width: '100%'
         }}
       >
