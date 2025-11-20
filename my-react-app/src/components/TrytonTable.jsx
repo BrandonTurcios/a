@@ -465,42 +465,6 @@ const TrytonTable = ({
     );
   }
 
-  const quickButtonBase = {
-    borderRadius: '10px',
-    borderWidth: 0,
-    color: '#fff',
-    fontWeight: 500,
-    boxShadow: '0 6px 16px rgba(1, 118, 143, 0.18)'
-  };
-
-  const quickButtons = [
-    {
-      key: 'refresh',
-      icon: <ReloadOutlined />,
-      title: t('table.update'),
-      onClick: handleRefresh,
-      style: { ...quickButtonBase, background: 'var(--color-primary-600)' }
-    },
-    {
-      key: 'export',
-      icon: <DownloadOutlined />,
-      title: t('table.export'),
-      style: { ...quickButtonBase, background: 'var(--color-secondary-600)' }
-    },
-    {
-      key: 'filters',
-      icon: <FilterOutlined />,
-      title: t('table.filters'),
-      style: { ...quickButtonBase, background: 'var(--color-primary-400)' }
-    },
-    {
-      key: 'configure',
-      icon: <SettingOutlined />,
-      title: t('table.configure'),
-      style: { ...quickButtonBase, background: 'var(--color-secondary-700)' }
-    }
-  ];
-
   const statsCards = [
     {
       label: t('table.records'),
@@ -530,30 +494,12 @@ const TrytonTable = ({
       <div style={{
         marginBottom: '12px',
         display: 'flex',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-end',
         flexWrap: 'wrap',
         gap: '12px',
         alignItems: 'center'
       }}>
-        <Space wrap size={[12, 12]}>
-          {quickButtons.map((btn) => (
-            <Button
-              key={btn.key}
-              icon={btn.icon}
-              onClick={btn.onClick}
-              title={btn.title}
-              style={btn.style}
-            >
-              {btn.title}
-            </Button>
-          ))}
-        </Space>
-        <div style={{
-          display: 'flex',
-          gap: '10px',
-          flexWrap: 'wrap',
-          justifyContent: 'flex-end'
-        }}>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           {statsCards.map((card) => (
             <div
               key={card.label}

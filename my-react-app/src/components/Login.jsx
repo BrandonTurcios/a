@@ -98,16 +98,28 @@ const Login = ({ onLogin }) => {
     color: 'var(--color-text-primary)'
   };
 
+  const fullBackgroundStyle = {
+    position: 'fixed',
+    inset: 0,
+    background: 'radial-gradient(circle at top, rgba(1,118,143,0.25), transparent 45%), linear-gradient(135deg, var(--color-primary-900), var(--color-secondary-900))',
+    zIndex: 0
+  };
+
+  const contentShellStyle = {
+    minHeight: '100vh',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '32px',
+    position: 'relative',
+    zIndex: 1
+  };
+
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      background: 'radial-gradient(circle at top, rgba(1,118,143,0.25), transparent 45%), linear-gradient(135deg, var(--color-primary-900), var(--color-secondary-900))',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '32px'
-    }}>
-      <div style={{ width: '100%', maxWidth: '440px' }}>
+    <div style={{ minHeight: '100vh', position: 'relative' }}>
+      <div style={fullBackgroundStyle} />
+      <div style={contentShellStyle}>
+        <div style={{ width: '100%', maxWidth: '440px' }}>
         <Card 
           style={{ 
             borderRadius: '20px',
@@ -267,6 +279,7 @@ const Login = ({ onLogin }) => {
             </Form>
           </Card>
         </div>
+      </div>
     </div>
   );
 };
