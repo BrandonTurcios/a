@@ -62,7 +62,7 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
   return (
     <div style={{
       padding: '32px',
-      background: 'linear-gradient(180deg, var(--color-primary-50) 0%, var(--color-background) 40%)',
+      background: 'var(--color-background)',
       minHeight: 'calc(100vh - 64px)',
       overflowY: 'auto'
     }}>
@@ -142,7 +142,7 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
           )}
         </div>
 
-        <div style={{ flex: 1, minHeight: 0 }}>
+        <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
           <TrytonTable
             model={tableInfo.model}
             viewId={tableInfo.viewId}

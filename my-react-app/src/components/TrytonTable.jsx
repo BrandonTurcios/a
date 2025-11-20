@@ -471,7 +471,8 @@ const TrytonTable = ({
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      gap: '16px'
+      gap: '16px',
+      flex: 1
     }}>
       <div 
         className="ag-theme-alpine"
