@@ -766,97 +766,6 @@ const TrytonTable = ({
     return items;
   }, [toolbarInfo, contextMenuSelectedRows, onContextMenuAttach, onContextMenuNote, onContextMenuRelate, onContextMenuPrint, onContextMenuEmail, t, attachmentsCount, notesCount, unreadNotesCount]);
 
-  // Trackear posición del mouse y el item sobre el que está el mouse
-  const currentHoveredItemRef = useRef(null);
-  
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      window.mouseX = e.clientX;
-      window.mouseY = e.clientY;
-    };
-    
-    document.addEventListener('mousemove', handleMouseMove);
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-    };
-  }, []);
-
-  // Detectar cuando el mouse está sobre items del menú y controlar submenús
-  useEffect(() => {
-    if (!contextMenuVisible || !menuContainerRef.current) return;
-
-    const handleMouseOver = (e) => {
-      // Buscar el item del menú sobre el que está el mouse
-      const menuItem = e.target.closest('.ant-menu-item:not(.ant-menu-submenu-title)');
-      
-      if (menuItem) {
-        // Obtener todos los items del menú
-        const allMenuItems = menuContainerRef.current.querySelectorAll('.ant-menu-item:not(.ant-menu-submenu-title)');
-        const itemIndex = Array.from(allMenuItems).indexOf(menuItem);
-        
-        if (itemIndex >= 0 && itemIndex < contextMenuItems.length) {
-          const item = contextMenuItems[itemIndex];
-          currentHoveredItemRef.current = item.key;
-          
-          // Si el item tiene children, abrir el submenú después de un pequeño delay
-          if (item && item.children && item.children.length > 0) {
-            if (submenuCloseTimeoutRef.current) {
-              clearTimeout(submenuCloseTimeoutRef.current);
-            }
-            submenuCloseTimeoutRef.current = setTimeout(() => {
-              // Verificar que el mouse todavía esté sobre el mismo item
-              if (currentHoveredItemRef.current === item.key) {
-                setOpenSubmenuKeys([item.key]);
-              }
-            }, 200);
-          } else {
-            // Si el item no tiene children, cerrar todos los submenús
-            if (openSubmenuKeys.length > 0) {
-              setOpenSubmenuKeys([]);
-            }
-          }
-        }
-      } else {
-        // Si no está sobre un item, verificar si está sobre un submenú
-        const submenu = e.target.closest('.ant-menu-submenu-popup');
-        if (!submenu) {
-          // Si no está sobre item ni submenú, cerrar submenús
-          currentHoveredItemRef.current = null;
-          if (openSubmenuKeys.length > 0) {
-            if (submenuCloseTimeoutRef.current) {
-              clearTimeout(submenuCloseTimeoutRef.current);
-            }
-            submenuCloseTimeoutRef.current = setTimeout(() => {
-              setOpenSubmenuKeys([]);
-            }, 150);
-          }
-        }
-      }
-    };
-
-    const handleMouseLeave = (e) => {
-      // Verificar si el mouse está yendo a un submenú
-      const relatedTarget = e.relatedTarget;
-      const isGoingToSubmenu = relatedTarget && (
-        relatedTarget.closest('.ant-menu-submenu-popup') ||
-        relatedTarget.closest('.ant-menu-submenu')
-      );
-      
-      if (!isGoingToSubmenu) {
-        // Si no está yendo a un submenú, limpiar el item actual
-        currentHoveredItemRef.current = null;
-      }
-    };
-
-    const menuElement = menuContainerRef.current;
-    menuElement.addEventListener('mouseover', handleMouseOver, true);
-    menuElement.addEventListener('mouseleave', handleMouseLeave, true);
-
-    return () => {
-      menuElement.removeEventListener('mouseover', handleMouseOver, true);
-      menuElement.removeEventListener('mouseleave', handleMouseLeave, true);
-    };
-  }, [contextMenuVisible, contextMenuItems, openSubmenuKeys]);
 
   // Sincronizar selección cuando cambia selectedRecord
   useEffect(() => {
@@ -1097,35 +1006,14 @@ const TrytonTable = ({
               relatedTarget.closest('.ant-menu-submenu')
             );
             
-            // Verificar si está yendo a otro item del menú (no submenú)
-            const isGoingToMenuItem = relatedTarget && relatedTarget.closest('.ant-menu-item');
-            
-            // Si está yendo a otro item del menú (no submenú), cerrar submenús inmediatamente
-            if (isGoingToMenuItem && !isGoingToSubmenu && openSubmenuKeys.length > 0) {
-              // Verificar si el item al que va tiene submenú
-              const menuItems = menuContainerRef.current.querySelectorAll('.ant-menu-item:not(.ant-menu-submenu-title)');
-              const targetItem = relatedTarget.closest('.ant-menu-item');
-              if (targetItem) {
-                const itemIndex = Array.from(menuItems).indexOf(targetItem);
-                if (itemIndex >= 0 && itemIndex < contextMenuItems.length) {
-                  const item = contextMenuItems[itemIndex];
-                  // Si el item no tiene children, cerrar submenús inmediatamente
-                  if (!item || !item.children || item.children.length === 0) {
-                    setOpenSubmenuKeys([]);
-                    return;
-                  }
-                }
-              }
-            }
-            
-            // Si no está yendo a un submenú ni a otro item, cerrar todos los submenús después de un pequeño delay
-            if (!isGoingToSubmenu && !isGoingToMenuItem && openSubmenuKeys.length > 0) {
+            // Si no está yendo a un submenú, cerrar todos los submenús
+            if (!isGoingToSubmenu && openSubmenuKeys.length > 0) {
               if (submenuCloseTimeoutRef.current) {
                 clearTimeout(submenuCloseTimeoutRef.current);
               }
               submenuCloseTimeoutRef.current = setTimeout(() => {
                 setOpenSubmenuKeys([]);
-              }, 150);
+              }, 200);
             }
           }}
           onMouseEnter={() => {
@@ -1162,13 +1050,13 @@ const TrytonTable = ({
             triggerSubMenuAction="hover"
             openKeys={openSubmenuKeys}
             onOpenChange={(keys) => {
-              // Limpiar timeout al cambiar las keys
+              // Limpiar timeout
               if (submenuCloseTimeoutRef.current) {
                 clearTimeout(submenuCloseTimeoutRef.current);
                 submenuCloseTimeoutRef.current = null;
               }
               
-              // Si no hay keys, cerrar todos los submenús
+              // Si no hay keys, cerrar
               if (keys.length === 0) {
                 setOpenSubmenuKeys([]);
                 return;
@@ -1176,28 +1064,19 @@ const TrytonTable = ({
               
               const lastKey = keys[keys.length - 1];
               
-              // Solo "relate" y "print" pueden ser submenús válidos
+              // Solo permitir "relate" y "print" con children
               if (lastKey !== 'relate' && lastKey !== 'print') {
                 setOpenSubmenuKeys([]);
                 return;
               }
               
-              // Verificar que el item correspondiente realmente tenga children
               const item = contextMenuItems.find(item => item.key === lastKey);
               if (!item || !item.children || item.children.length === 0) {
                 setOpenSubmenuKeys([]);
                 return;
               }
               
-              // Verificar que el mouse realmente esté sobre el item
-              // Usar el ref que trackea el item actual
-              if (currentHoveredItemRef.current !== lastKey) {
-                // Si el mouse no está sobre este item, no abrir el submenú
-                setOpenSubmenuKeys([]);
-                return;
-              }
-              
-              // Si todo está bien, abrir el submenú
+              // Permitir que se abra
               setOpenSubmenuKeys([lastKey]);
             }}
             subMenuOpenDelay={0.1}
