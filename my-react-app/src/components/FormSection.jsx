@@ -95,7 +95,10 @@ const PageSection = ({ section, fields, form, fieldComponents, level = 0 }) => {
       {level === 0 && title && (
          <Title level={4} style={{ 
            marginBottom: 16,
-           color: '#0F4E65',
+           background: 'linear-gradient(120deg, #B3E2E9, #80CEDA, #4DBACA)',
+           WebkitBackgroundClip: 'text',
+           WebkitTextFillColor: 'transparent',
+           backgroundClip: 'text',
            fontWeight: 600,
            letterSpacing: '0.02em'
          }}>
@@ -144,7 +147,10 @@ const NotebookSection = ({ section, fields, form, fieldComponents, level = 0 }) 
       {level === 0 && title && (
          <Title level={4} style={{ 
            marginBottom: 16,
-           color: '#0F4E65',
+           background: 'linear-gradient(120deg, #B3E2E9, #80CEDA, #4DBACA)',
+           WebkitBackgroundClip: 'text',
+           WebkitTextFillColor: 'transparent',
+           backgroundClip: 'text',
            fontWeight: 600,
            letterSpacing: '0.02em'
          }}>
@@ -186,7 +192,10 @@ const SeparatorSection = ({ section }) => {
     return (
       <Divider orientation="left" style={{ margin: '24px 0' }}>
          <Text strong style={{
-           color: '#0F4E65',
+           background: 'linear-gradient(120deg, #B3E2E9, #80CEDA, #4DBACA)',
+           WebkitBackgroundClip: 'text',
+           WebkitTextFillColor: 'transparent',
+           backgroundClip: 'text',
            fontWeight: 600,
            fontSize: '15px',
            letterSpacing: '0.02em'
