@@ -654,14 +654,19 @@ body {
   color: var(--color-text-primary) !important;
 }
 
-/* Estilos para menú contextual más notorio */
+/* Estilos para menú contextual más elegante */
 .ant-menu-vertical .ant-menu-item,
 .ant-menu-vertical-left .ant-menu-item,
 .ant-menu-vertical-right .ant-menu-item {
   font-size: 15px !important;
   font-weight: 500 !important;
-  height: 40px !important;
-  line-height: 40px !important;
+  height: 44px !important;
+  line-height: 44px !important;
+  padding: 0 16px !important;
+  margin: 2px 8px !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+  color: var(--color-text-primary) !important;
 }
 
 .ant-menu-vertical .ant-menu-submenu-title,
@@ -669,13 +674,91 @@ body {
 .ant-menu-vertical-right .ant-menu-submenu-title {
   font-size: 15px !important;
   font-weight: 500 !important;
-  height: 40px !important;
-  line-height: 40px !important;
+  height: 44px !important;
+  line-height: 44px !important;
+  padding: 0 16px !important;
+  margin: 2px 8px !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+  color: var(--color-text-primary) !important;
 }
 
 .ant-menu-item:hover,
 .ant-menu-submenu-title:hover {
   font-weight: 600 !important;
+  background: var(--color-primary-50) !important;
+  color: var(--color-primary-700) !important;
+}
+
+.ant-menu-item-selected,
+.ant-menu-item-selected:hover {
+  background: var(--color-primary-100) !important;
+  color: var(--color-primary-700) !important;
+  font-weight: 600 !important;
+}
+
+.ant-menu-item-icon,
+.ant-menu-submenu-arrow {
+  font-size: 16px !important;
+  color: var(--color-primary-600) !important;
+}
+
+.ant-menu-item:hover .ant-menu-item-icon,
+.ant-menu-submenu-title:hover .ant-menu-item-icon {
+  color: var(--color-primary-700) !important;
+}
+
+.ant-menu-vertical .ant-menu-item::after,
+.ant-menu-vertical-left .ant-menu-item::after,
+.ant-menu-vertical-right .ant-menu-item::after {
+  display: none !important;
+}
+
+/* Estilos para submenús (popups) del menú contextual */
+.ant-menu-submenu-popup {
+  z-index: 10001 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid var(--color-primary-200) !important;
+  background: var(--color-card-background) !important;
+  padding: 6px 0 !important;
+  margin-top: 4px !important;
+  overflow: hidden !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+.ant-menu-submenu-popup .ant-menu {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.ant-menu-submenu-popup .ant-menu-item,
+.ant-menu-submenu-popup .ant-menu-submenu-title {
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  height: 44px !important;
+  line-height: 44px !important;
+  padding: 0 16px !important;
+  margin: 2px 8px !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+  color: var(--color-text-primary) !important;
+}
+
+.ant-menu-submenu-popup .ant-menu-item:hover {
+  font-weight: 600 !important;
+  background: var(--color-primary-50) !important;
+  color: var(--color-primary-700) !important;
+}
+
+.ant-menu-submenu-popup .ant-menu-item-icon {
+  font-size: 16px !important;
+  color: var(--color-primary-600) !important;
+}
+
+.ant-menu-submenu-popup .ant-menu-item:hover .ant-menu-item-icon {
+  color: var(--color-primary-700) !important;
 }
 
 /* Estilos para botones del toolbar más notorios */

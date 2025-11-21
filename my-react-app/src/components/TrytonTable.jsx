@@ -950,13 +950,15 @@ const TrytonTable = ({
             left: contextMenuPosition.x,
             top: contextMenuPosition.y,
             zIndex: 10000,
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-            borderRadius: '8px',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)',
+            borderRadius: '12px',
             background: 'var(--color-card-background)',
             border: '1px solid var(--color-primary-200)',
-            minWidth: '200px',
-            maxWidth: '300px',
-            pointerEvents: 'auto'
+            minWidth: '220px',
+            maxWidth: '320px',
+            pointerEvents: 'auto',
+            overflow: 'hidden',
+            backdropFilter: 'blur(10px)'
           }}
           onClick={(e) => {
             e.stopPropagation();
@@ -971,9 +973,11 @@ const TrytonTable = ({
             items={contextMenuItems}
             style={{
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '12px',
               fontSize: '15px',
-              fontWeight: '500'
+              fontWeight: '500',
+              padding: '6px 0',
+              background: 'transparent'
             }}
             onClick={(info) => {
               // El onClick ya está manejado en cada item
@@ -981,7 +985,9 @@ const TrytonTable = ({
                 info.domEvent.stopPropagation();
               }
             }}
-            getPopupContainer={(triggerNode) => triggerNode.parentElement || document.body}
+            getPopupContainer={() => document.body}
+            subMenuOpenDelay={0.1}
+            subMenuCloseDelay={0.1}
           />
         </div>,
         document.body
