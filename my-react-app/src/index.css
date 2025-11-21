@@ -714,7 +714,7 @@ body {
   display: none !important;
 }
 
-/* Estilos para submenús popup del menú contextual */
+/* Estilos para submenús popup del menú contextual - Sin animaciones */
 .ant-menu-submenu-popup {
   z-index: 10001 !important;
   border-radius: 12px !important;
@@ -731,6 +731,63 @@ body {
   visibility: visible !important;
   opacity: 1 !important;
   pointer-events: auto !important;
+  /* Sin animaciones */
+  transition: none !important;
+  animation: none !important;
+  -webkit-transition: none !important;
+  -webkit-animation: none !important;
+  -moz-transition: none !important;
+  -moz-animation: none !important;
+  -o-transition: none !important;
+  -o-animation: none !important;
+}
+
+/* Quitar todas las animaciones y transiciones del contenedor del submenú popup */
+.ant-menu-submenu-popup * {
+  transition: none !important;
+  animation: none !important;
+  -webkit-transition: none !important;
+  -webkit-animation: none !important;
+  -moz-transition: none !important;
+  -moz-animation: none !important;
+}
+
+.ant-menu-submenu-popup .ant-menu {
+  transition: none !important;
+  animation: none !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* Mantener solo la transición de hover en los items, pero sin animación de aparición */
+.ant-menu-submenu-popup .ant-menu-item {
+  transition: background-color 0.15s ease, color 0.15s ease !important;
+  animation: none !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  height: 44px !important;
+  line-height: 44px !important;
+  padding: 0 16px !important;
+  margin: 2px 8px !important;
+  border-radius: 8px !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* Desactivar animaciones de Ant Design en todas las variantes de submenú popup */
+.ant-menu-submenu-popup.ant-menu-submenu-placement-rightTop,
+.ant-menu-submenu-popup.ant-menu-submenu-placement-rightBottom,
+.ant-menu-submenu-popup.ant-menu-submenu-placement-right,
+.ant-menu-submenu-popup.ant-menu-submenu-placement-leftTop,
+.ant-menu-submenu-popup.ant-menu-submenu-placement-leftBottom,
+.ant-menu-submenu-popup.ant-menu-submenu-placement-left,
+.ant-menu-submenu-popup[class*="placement"] {
+  animation: none !important;
+  transition: none !important;
+  -webkit-animation: none !important;
+  -moz-animation: none !important;
+  -o-animation: none !important;
 }
 
 .ant-menu-submenu-popup .ant-menu {
