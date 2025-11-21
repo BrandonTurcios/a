@@ -40,7 +40,8 @@ const GroupSection = ({ section, fields, form, fieldComponents, level = 0 }) => 
             return null;
           }
           
-          const fieldSpan = Math.floor(24 / cols);
+          const baseSpan = Math.floor(24 / cols);
+          const fieldSpan = fieldComponent?.props?.['data-span'] ?? baseSpan;
           
           return (
             <Col key={`field-${fieldName}-${index}`} span={fieldSpan}>
@@ -84,9 +85,10 @@ const PageSection = ({ section, fields, form, fieldComponents, level = 0 }) => {
         {sectionFields?.map((fieldName, index) => {
           const fieldComponent = fieldComponents[fieldName];
           if (!fieldComponent) return null;
+          const span = fieldComponent?.props?.['data-span'] ?? 12;
           
           return (
-            <Col key={`field-${fieldName}-${index}`} span={12}>
+            <Col key={`field-${fieldName}-${index}`} span={span}>
               {fieldComponent}
             </Col>
           );

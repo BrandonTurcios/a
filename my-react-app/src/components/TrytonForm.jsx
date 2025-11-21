@@ -76,6 +76,11 @@ const isBase64Image = (value) => {
   return isLikelySvgBase64(value);
 };
 
+const getImageDataUrl = (base64) =>
+  isLikelySvgBase64(base64)
+    ? `data:image/svg+xml;base64,${base64}`
+    : `data:image/png;base64,${base64}`;
+
 const createFieldLabel = (labelText, required, icon = null) => (
   <div
     style={{
@@ -662,6 +667,7 @@ const One2ManyField = ({
               icon={<PlusOutlined />}
               onClick={handleAdd}
               disabled={!parentRecordId}
+              data-span={8}
             >
               Add
             </Button>
@@ -830,15 +836,15 @@ const BinaryImageField = ({
         setImageUrl(defaultValue);
       } else if (typeof defaultValue === "object" && defaultValue.base64) {
         // Si es un objeto con base64
-        setImageUrl(`data:image/png;base64,${defaultValue.base64}`);
+        setImageUrl(getImageDataUrl(defaultValue.base64));
       } else if (
         typeof defaultValue === "object" &&
         defaultValue.__class__ === "bytes"
       ) {
         // Formato Tryton bytes
-        setImageUrl(`data:image/png;base64,${defaultValue.base64}`);
+        setImageUrl(getImageDataUrl(defaultValue.base64));
       } else if (typeof defaultValue === "string" && isBase64Image(defaultValue)) {
-        setImageUrl(`data:image/png;base64,${defaultValue}`);
+        setImageUrl(getImageDataUrl(defaultValue));
       }
     }
   }, [defaultValue]);
@@ -1159,7 +1165,7 @@ const BinaryFileField = ({
               }}
             >
               <Image
-                src={`data:image/png;base64,${base64Value}`}
+                src={getImageDataUrl(base64Value)}
                 alt={fileName || label}
                 style={{ maxHeight: 260, objectFit: "contain" }}
               />
