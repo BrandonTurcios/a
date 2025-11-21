@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { Card, Spin, Alert, Button, Typography, Menu } from 'antd';
+import { Card, Spin, Alert, Button, Typography, Menu, Badge } from 'antd';
 import {
   ReloadOutlined,
   DownloadOutlined,
@@ -53,6 +53,9 @@ const TrytonTable = ({
   const [contextMenuVisible, setContextMenuVisible] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const [contextMenuSelectedRows, setContextMenuSelectedRows] = useState([]);
+  const [attachmentsCount, setAttachmentsCount] = useState(0);
+  const [notesCount, setNotesCount] = useState(0);
+  const [unreadNotesCount, setUnreadNotesCount] = useState(0);
 
   useEffect(() => {
     // Si tenemos datos pre-cargados (tabla relacionada), usarlos directamente
@@ -421,6 +424,77 @@ const TrytonTable = ({
     }
   }, [onRowDoubleClick]);
 
+  // Cargar contadores de attachments y notes cuando cambia el registro seleccionado
+  useEffect(() => {
+    const loadCounts = async () => {
+      if (!model || contextMenuSelectedRows.length === 0) {
+        setAttachmentsCount(0);
+        setNotesCount(0);
+        setUnreadNotesCount(0);
+        return;
+      }
+
+      const selectedRecord = contextMenuSelectedRows[0];
+      if (!selectedRecord?.id) return;
+
+      const resourceKey = `${model},${selectedRecord.id}`;
+      
+      try {
+        // Cargar attachments
+        const attachmentIds = await trytonService.searchAttachments(resourceKey);
+        setAttachmentsCount(attachmentIds?.length || 0);
+
+        // Cargar notes
+        const noteIds = await trytonService.searchNotes(resourceKey);
+        if (noteIds && noteIds.length > 0) {
+          const notes = await trytonService.readNotes(noteIds);
+          setNotesCount(notes?.length || 0);
+          setUnreadNotesCount(notes?.filter(n => n.unread).length || 0);
+        } else {
+          setNotesCount(0);
+          setUnreadNotesCount(0);
+        }
+      } catch (e) {
+        console.error('Error loading counts:', e);
+        setAttachmentsCount(0);
+        setNotesCount(0);
+        setUnreadNotesCount(0);
+      }
+    };
+
+    if (contextMenuVisible && contextMenuSelectedRows.length > 0) {
+      loadCounts();
+    }
+  }, [model, contextMenuSelectedRows, contextMenuVisible]);
+
+  // Calcular posición del menú para que no se salga de la pantalla
+  const calculateMenuPosition = useCallback((x, y) => {
+    const menuWidth = 250; // Ancho estimado del menú
+    const menuHeight = 300; // Alto estimado del menú
+    const padding = 10;
+
+    let finalX = x;
+    let finalY = y;
+
+    // Ajustar horizontalmente
+    if (x + menuWidth > window.innerWidth) {
+      finalX = window.innerWidth - menuWidth - padding;
+    }
+    if (finalX < padding) {
+      finalX = padding;
+    }
+
+    // Ajustar verticalmente
+    if (y + menuHeight > window.innerHeight) {
+      finalY = window.innerHeight - menuHeight - padding;
+    }
+    if (finalY < padding) {
+      finalY = padding;
+    }
+
+    return { x: finalX, y: finalY };
+  }, []);
+
   // Manejar click derecho para mostrar menú contextual
   const onCellContextMenu = useCallback((event) => {
     if (!gridRef.current) return;
@@ -437,18 +511,21 @@ const TrytonTable = ({
     event.event.preventDefault();
     event.event.stopPropagation();
 
+    // Calcular posición ajustada
+    const adjustedPosition = calculateMenuPosition(
+      event.event.clientX,
+      event.event.clientY
+    );
+
     // Guardar posición del click
-    setContextMenuPosition({
-      x: event.event.clientX,
-      y: event.event.clientY
-    });
+    setContextMenuPosition(adjustedPosition);
 
     // Guardar filas seleccionadas
     setContextMenuSelectedRows(selectedRows);
 
     // Mostrar menú
     setContextMenuVisible(true);
-  }, []);
+  }, [calculateMenuPosition]);
 
   // Cerrar menú contextual cuando se hace click fuera o se presiona ESC
   useEffect(() => {
@@ -485,17 +562,27 @@ const TrytonTable = ({
 
     const items = [];
     const { action = [], relate = [], print = [], emails = [] } = toolbarInfo;
+    const selectedRecord = contextMenuSelectedRows[0];
 
     // Attachments
     if (onContextMenuAttach) {
+      const attachLabel = (
+        <span>
+          {t('common.attach')}
+          {attachmentsCount > 0 && (
+            <Badge count={attachmentsCount} size="small" style={{ marginLeft: '8px' }} />
+          )}
+        </span>
+      );
       items.push({
         key: 'attach',
-        label: t('common.attach'),
+        label: attachLabel,
         icon: <FileOutlined />,
-        onClick: () => {
+        onClick: ({ domEvent }) => {
+          domEvent?.stopPropagation();
           setContextMenuVisible(false);
-          if (contextMenuSelectedRows.length > 0) {
-            onContextMenuAttach(contextMenuSelectedRows[0]);
+          if (selectedRecord) {
+            onContextMenuAttach(selectedRecord);
           }
         }
       });
@@ -503,14 +590,24 @@ const TrytonTable = ({
 
     // Notes
     if (onContextMenuNote) {
+      const notesBadgeText = notesCount > 0 ? `${unreadNotesCount}/${notesCount}` : null;
+      const noteLabel = (
+        <span>
+          {t('common.comment')}
+          {notesBadgeText && (
+            <Badge count={notesBadgeText} size="small" style={{ marginLeft: '8px' }} />
+          )}
+        </span>
+      );
       items.push({
         key: 'note',
-        label: t('common.comment'),
+        label: noteLabel,
         icon: <CommentOutlined />,
-        onClick: () => {
+        onClick: ({ domEvent }) => {
+          domEvent?.stopPropagation();
           setContextMenuVisible(false);
-          if (contextMenuSelectedRows.length > 0) {
-            onContextMenuNote(contextMenuSelectedRows[0]);
+          if (selectedRecord) {
+            onContextMenuNote(selectedRecord);
           }
         }
       });
@@ -523,10 +620,11 @@ const TrytonTable = ({
           key: 'relate',
           label: t('common.relate'),
           icon: <LinkOutlined />,
-          onClick: () => {
+          onClick: ({ domEvent }) => {
+            domEvent?.stopPropagation();
             setContextMenuVisible(false);
-            if (contextMenuSelectedRows.length > 0) {
-              onContextMenuRelate(relate[0], contextMenuSelectedRows[0]);
+            if (selectedRecord) {
+              onContextMenuRelate(relate[0], selectedRecord);
             }
           }
         });
@@ -538,10 +636,11 @@ const TrytonTable = ({
           children: relate.map((item, index) => ({
             key: `relate-${index}`,
             label: item.name || `Relate ${index + 1}`,
-            onClick: () => {
+            onClick: ({ domEvent }) => {
+              domEvent?.stopPropagation();
               setContextMenuVisible(false);
-              if (contextMenuSelectedRows.length > 0) {
-                onContextMenuRelate(item, contextMenuSelectedRows[0]);
+              if (selectedRecord) {
+                onContextMenuRelate(item, selectedRecord);
               }
             }
           }))
@@ -556,10 +655,11 @@ const TrytonTable = ({
           key: 'print',
           label: t('common.print'),
           icon: <PrinterOutlined />,
-          onClick: () => {
+          onClick: ({ domEvent }) => {
+            domEvent?.stopPropagation();
             setContextMenuVisible(false);
-            if (contextMenuSelectedRows.length > 0) {
-              onContextMenuPrint(print[0], contextMenuSelectedRows[0]);
+            if (selectedRecord) {
+              onContextMenuPrint(print[0], selectedRecord);
             }
           }
         });
@@ -571,10 +671,11 @@ const TrytonTable = ({
           children: print.map((item, index) => ({
             key: `print-${index}`,
             label: item.name || `Print ${index + 1}`,
-            onClick: () => {
+            onClick: ({ domEvent }) => {
+              domEvent?.stopPropagation();
               setContextMenuVisible(false);
-              if (contextMenuSelectedRows.length > 0) {
-                onContextMenuPrint(item, contextMenuSelectedRows[0]);
+              if (selectedRecord) {
+                onContextMenuPrint(item, selectedRecord);
               }
             }
           }))
@@ -588,17 +689,18 @@ const TrytonTable = ({
         key: 'email',
         label: t('common.email'),
         icon: <MailOutlined />,
-        onClick: () => {
+        onClick: ({ domEvent }) => {
+          domEvent?.stopPropagation();
           setContextMenuVisible(false);
-          if (contextMenuSelectedRows.length > 0) {
-            onContextMenuEmail(contextMenuSelectedRows[0]);
+          if (selectedRecord) {
+            onContextMenuEmail(selectedRecord);
           }
         }
       });
     }
 
     return items;
-  }, [toolbarInfo, contextMenuSelectedRows, onContextMenuAttach, onContextMenuNote, onContextMenuRelate, onContextMenuPrint, onContextMenuEmail, t]);
+  }, [toolbarInfo, contextMenuSelectedRows, onContextMenuAttach, onContextMenuNote, onContextMenuRelate, onContextMenuPrint, onContextMenuEmail, t, attachmentsCount, notesCount, unreadNotesCount]);
 
   // Sincronizar selección cuando cambia selectedRecord
   useEffect(() => {
@@ -730,6 +832,7 @@ const TrytonTable = ({
             background: 'var(--color-card-background)',
             border: '1px solid var(--color-primary-200)',
             minWidth: '200px',
+            maxWidth: '300px',
             pointerEvents: 'auto'
           }}
           onClick={(e) => {
@@ -747,9 +850,13 @@ const TrytonTable = ({
               border: 'none',
               borderRadius: '8px'
             }}
-            onClick={(e) => {
-              e.domEvent.stopPropagation();
+            onClick={(info) => {
+              // El onClick ya está manejado en cada item
+              if (info.domEvent) {
+                info.domEvent.stopPropagation();
+              }
             }}
+            getPopupContainer={(triggerNode) => triggerNode.parentElement || document.body}
           />
         </div>,
         document.body

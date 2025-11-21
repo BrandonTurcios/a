@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef, useEffect, useState } from 'react';
 import { Typography } from 'antd';
 import TrytonTable from '../../components/TrytonTable';
 import Toolbar from '../../components/Toolbar';
@@ -6,6 +6,8 @@ import Toolbar from '../../components/Toolbar';
 const { Title, Paragraph } = Typography;
 
 const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, toolbarHandlers, onRecordClick, selectedRecord, onRecordSelect }) => {
+  const [openAttachmentsModal, setOpenAttachmentsModal] = useState(false);
+  const [openNotesModal, setOpenNotesModal] = useState(false);
 
   const handleRowClick = useCallback((record) => {
     console.log('🖱️ Row clicked:', record);
@@ -137,6 +139,8 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
                 hasSelectedRecord={!!selectedRecord}
                 contextModel={selectedMenuInfo?.resModel}
                 contextId={selectedRecord?.id}
+                openAttachmentsModal={openAttachmentsModal}
+                openNotesModal={openNotesModal}
               />
             </div>
           )}
@@ -158,16 +162,28 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
             tableData={tableDataProp}
             filtered={tableInfo.filtered || false}
             onContextMenuAttach={(record) => {
-              // El Toolbar maneja attachments internamente, solo necesitamos actualizar el contexto
+              // Actualizar el registro seleccionado primero
               if (onRecordSelect) {
                 onRecordSelect(record, true);
               }
-              // El Toolbar se actualizará automáticamente cuando cambie selectedRecord
+              // Abrir modal de attachments después de un pequeño delay
+              setTimeout(() => {
+                setOpenAttachmentsModal(true);
+                // Resetear el flag después de que el Toolbar lo detecte
+                setTimeout(() => setOpenAttachmentsModal(false), 100);
+              }, 150);
             }}
             onContextMenuNote={(record) => {
+              // Actualizar el registro seleccionado primero
               if (onRecordSelect) {
                 onRecordSelect(record, true);
               }
+              // Abrir modal de notes después de un pequeño delay
+              setTimeout(() => {
+                setOpenNotesModal(true);
+                // Resetear el flag después de que el Toolbar lo detecte
+                setTimeout(() => setOpenNotesModal(false), 100);
+              }, 150);
             }}
             onContextMenuRelate={(relateItem, record) => {
               if (onRecordSelect) {

@@ -45,7 +45,9 @@ const Toolbar = ({
   isNativeForm = false, // Whether this is a native form (not converted from tree)
   hasSelectedRecord = false, // Whether a record is selected (for email button)
   contextModel = null,
-  contextId = null
+  contextId = null,
+  openAttachmentsModal = false, // Flag para abrir modal de attachments desde fuera
+  openNotesModal = false // Flag para abrir modal de notes desde fuera
 }) => {
   const { t } = useTranslation();
 
@@ -462,6 +464,22 @@ const Toolbar = ({
       setNotes([]);
     }
   }, [resourceKey, attachmentsOpen, notesOpen]);
+
+  // Abrir modales cuando se solicita desde fuera (menú contextual)
+  // Estos efectos deben estar después de las definiciones de handleManageAttachments y handleManageNotes
+  useEffect(() => {
+    if (openAttachmentsModal && resourceKey && !attachmentsOpen) {
+      handleManageAttachments();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openAttachmentsModal, resourceKey, attachmentsOpen]);
+
+  useEffect(() => {
+    if (openNotesModal && resourceKey && !notesOpen) {
+      handleManageNotes();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openNotesModal, resourceKey, notesOpen]);
 
   // Renderizar botones de navegación
   const renderNavigationButtons = () => (
