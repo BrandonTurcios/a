@@ -613,6 +613,19 @@ const TrytonTable = ({
     });
   }, [selectedRecord]);
 
+  // Prevenir menú contextual del navegador en el contenedor de la tabla
+  const handleContainerContextMenu = useCallback((e) => {
+    if (!gridRef.current) return;
+    
+    const selectedRows = gridRef.current.api.getSelectedRows();
+    
+    // Si hay filas seleccionadas, prevenir el menú del navegador
+    if (selectedRows.length > 0) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, []);
+
   const handleRefresh = () => {
     loadTableData();
   };
@@ -661,19 +674,6 @@ const TrytonTable = ({
   }
 
   const gridHeight = 'calc(100vh - 240px)';
-
-  // Prevenir menú contextual del navegador en el contenedor de la tabla
-  const handleContainerContextMenu = useCallback((e) => {
-    if (!gridRef.current) return;
-    
-    const selectedRows = gridRef.current.api.getSelectedRows();
-    
-    // Si hay filas seleccionadas, prevenir el menú del navegador
-    if (selectedRows.length > 0) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  }, []);
 
   return (
     <div 
