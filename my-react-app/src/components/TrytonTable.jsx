@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Card, Spin, Alert, Button, Typography, Menu } from 'antd';
 import {
@@ -449,16 +450,31 @@ const TrytonTable = ({
     setContextMenuVisible(true);
   }, []);
 
-  // Cerrar menú contextual cuando se hace click fuera
+  // Cerrar menú contextual cuando se hace click fuera o se presiona ESC
   useEffect(() => {
     const handleClickOutside = () => {
       setContextMenuVisible(false);
     };
 
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        setContextMenuVisible(false);
+      }
+    };
+
     if (contextMenuVisible) {
-      document.addEventListener('click', handleClickOutside);
+      // Usar setTimeout para que el click que abre el menú no lo cierre inmediatamente
+      const timeoutId = setTimeout(() => {
+        document.addEventListener('click', handleClickOutside);
+        document.addEventListener('contextmenu', handleClickOutside);
+        document.addEventListener('keydown', handleEscape);
+      }, 100);
+
       return () => {
+        clearTimeout(timeoutId);
         document.removeEventListener('click', handleClickOutside);
+        document.removeEventListener('contextmenu', handleClickOutside);
+        document.removeEventListener('keydown', handleEscape);
       };
     }
   }, [contextMenuVisible]);
@@ -646,16 +662,32 @@ const TrytonTable = ({
 
   const gridHeight = 'calc(100vh - 240px)';
 
+  // Prevenir menú contextual del navegador en el contenedor de la tabla
+  const handleContainerContextMenu = useCallback((e) => {
+    if (!gridRef.current) return;
+    
+    const selectedRows = gridRef.current.api.getSelectedRows();
+    
+    // Si hay filas seleccionadas, prevenir el menú del navegador
+    if (selectedRows.length > 0) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, []);
+
   return (
-    <div style={{
-      minHeight: '500px',
-      height: '100%',
-      width: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '16px',
-      flex: 1
-    }}>
+    <div 
+      style={{
+        minHeight: '500px',
+        height: '100%',
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '16px',
+        flex: 1
+      }}
+      onContextMenu={handleContainerContextMenu}
+    >
       <div 
         className="ag-theme-alpine"
         style={{
@@ -663,6 +695,7 @@ const TrytonTable = ({
           height: gridHeight,
           minHeight: '480px'
         }}
+        onContextMenu={handleContainerContextMenu}
       >
         <AgGridReact
           ref={gridRef}
@@ -684,21 +717,28 @@ const TrytonTable = ({
         />
       </div>
       
-      {/* Menú contextual */}
-      {contextMenuVisible && contextMenuItems.length > 0 && (
+      {/* Menú contextual - renderizado en portal para estar por encima de todo */}
+      {contextMenuVisible && contextMenuItems.length > 0 && createPortal(
         <div
           style={{
             position: 'fixed',
             left: contextMenuPosition.x,
             top: contextMenuPosition.y,
-            zIndex: 1000,
+            zIndex: 10000,
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
             borderRadius: '8px',
             background: 'var(--color-card-background)',
             border: '1px solid var(--color-primary-200)',
-            minWidth: '200px'
+            minWidth: '200px',
+            pointerEvents: 'auto'
           }}
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
         >
           <Menu
             mode="vertical"
@@ -707,8 +747,12 @@ const TrytonTable = ({
               border: 'none',
               borderRadius: '8px'
             }}
+            onClick={(e) => {
+              e.domEvent.stopPropagation();
+            }}
           />
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
