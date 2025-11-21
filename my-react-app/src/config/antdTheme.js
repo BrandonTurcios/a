@@ -47,7 +47,7 @@ export const antdThemeConfig = {
     borderRadiusSM: 4,
     
     // Tipografía
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    fontFamily: 'Arial, sans-serif',
     fontSize: 14,
     fontSizeLG: 16,
     fontSizeSM: 12,
