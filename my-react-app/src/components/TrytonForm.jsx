@@ -43,6 +43,7 @@ import {
   UploadOutlined,
   PictureOutlined,
   CopyOutlined,
+  InfoCircleOutlined,
   DownloadOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
@@ -55,11 +56,24 @@ const { Option } = Select;
 const { TextArea } = Input;
 
 const imagePrefixHints = ["iVBORw0K", "/9j/", "R0lGOD", "Qk0", "PHN2Zy"];
+const isLikelySvgBase64 = (value) => {
+  if (!value) return false;
+  if (value.trim().startsWith("<svg")) return true;
+  try {
+    const sample = value.substring(0, Math.min(120, value.length));
+    const decoded = atob(sample);
+    return decoded.trim().startsWith("<svg");
+  } catch (error) {
+    return false;
+  }
+};
+
 const isBase64Image = (value) => {
   if (!value) return false;
   const sample = value.substring(0, 10);
   if (value.startsWith("data:image")) return true;
-  return imagePrefixHints.some((hint) => sample.startsWith(hint));
+  if (imagePrefixHints.some((hint) => sample.startsWith(hint))) return true;
+  return isLikelySvgBase64(value);
 };
 
 const createFieldLabel = (labelText, required, icon = null) => (
@@ -1824,32 +1838,33 @@ const TrytonForm = forwardRef(
             ...commonProps,
             label: null,
           };
-          const labelNode = help ? (
-            <Tooltip title={help}>
-              <div
-                style={{
-                  fontWeight: 600,
-                  color: "var(--color-primary-800)",
-                  fontSize: "15px",
-                  flex: 1,
-                  whiteSpace: "normal",
-                }}
-              >
-                {label}
-              </div>
-            </Tooltip>
-          ) : (
+
+          const renderLabel = () => (
             <div
               style={{
                 fontWeight: 600,
                 color: "var(--color-primary-800)",
                 fontSize: "15px",
                 flex: 1,
-                whiteSpace: "normal",
+                lineHeight: 1.3,
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+                wordBreak: "normal",
+                hyphens: "auto",
               }}
             >
               {label}
             </div>
+          );
+
+          const labelNode = help ? (
+            <Tooltip title={help}>
+              {renderLabel()}
+            </Tooltip>
+          ) : (
+            renderLabel()
           );
 
           return (
@@ -1871,8 +1886,8 @@ const TrytonForm = forwardRef(
                   flexDirection: "column",
                   justifyContent: "space-between",
                   gap: "12px",
-                  minWidth: "180px",
-                  maxWidth: "220px",
+                  minWidth: "220px",
+                  maxWidth: "300px",
                 }}
               >
                 <div
@@ -1883,27 +1898,31 @@ const TrytonForm = forwardRef(
                     gap: "12px",
                   }}
                 >
-                  {labelNode}
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", flex: 1 }}>
+                    {labelNode}
+                    {help && (
+                      <Tooltip title={help}>
+                        <InfoCircleOutlined style={{ color: "var(--color-primary-500)", fontSize: "14px" }} />
+                      </Tooltip>
+                    )}
+                  </div>
                   <Switch disabled={isReadonly} />
                 </div>
-                {help && (
-                  <Tooltip title={help}>
-                    <Text
-                      type="secondary"
-                      style={{
-                        fontSize: "13px",
-                        lineHeight: 1.35,
-                        whiteSpace: "normal",
-                        color: "var(--color-text-secondary)",
-                        display: "block",
-                        maxHeight: "80px",
-                        overflow: "hidden",
-                      }}
-                    >
-                      {help}
-                    </Text>
-                  </Tooltip>
-                )}
+                <div
+                  style={{
+                    color: "var(--color-text-secondary)",
+                    fontSize: "13px",
+                    lineHeight: 1.4,
+                    display: "-webkit-box",
+                    WebkitLineClamp: 4,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                    wordBreak: "normal",
+                    hyphens: "auto",
+                  }}
+                >
+                  {help || ""}
+                </div>
               </div>
             </Form.Item>
           );
