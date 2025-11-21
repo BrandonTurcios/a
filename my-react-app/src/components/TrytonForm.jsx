@@ -54,6 +54,14 @@ const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
+const imagePrefixHints = ["iVBORw0K", "/9j/", "R0lGOD", "Qk0", "PHN2Zy"];
+const isBase64Image = (value) => {
+  if (!value) return false;
+  const sample = value.substring(0, 10);
+  if (value.startsWith("data:image")) return true;
+  return imagePrefixHints.some((hint) => sample.startsWith(hint));
+};
+
 const createFieldLabel = (labelText, required, icon = null) => (
   <div
     style={{
@@ -815,6 +823,8 @@ const BinaryImageField = ({
       ) {
         // Formato Tryton bytes
         setImageUrl(`data:image/png;base64,${defaultValue.base64}`);
+      } else if (typeof defaultValue === "string" && isBase64Image(defaultValue)) {
+        setImageUrl(`data:image/png;base64,${defaultValue}`);
       }
     }
   }, [defaultValue]);
@@ -1056,7 +1066,7 @@ const BinaryFileField = ({
         label={createFieldLabel(label, required)}
         style={{ marginBottom: "12px" }}
       >
-        <div
+          <div
           style={{
             border: "1px solid var(--color-neutral-200)",
             borderRadius: "14px",
@@ -1123,26 +1133,46 @@ const BinaryFileField = ({
               )}
             </Space>
           </div>
-          <div
-            style={{
-              maxHeight: "160px",
-              overflow: "auto",
-              background: "#fff",
-              borderRadius: "10px",
-              border: "1px solid var(--color-neutral-200)",
-              padding: "12px",
-              fontFamily: "monospace",
-              fontSize: "12px",
-              color: "var(--color-text-primary)",
-              wordBreak: "break-all",
-            }}
-          >
-            {base64Value
-              ? base64Value.length > 1200
-                ? `${base64Value.slice(0, 1200)}…`
-                : base64Value
-              : "Sin archivo cargado"}
-          </div>
+          {base64Value && isBase64Image(base64Value) && (
+            <div
+              style={{
+                width: "100%",
+                background: "#fff",
+                borderRadius: "12px",
+                border: "1px solid var(--color-neutral-200)",
+                padding: "12px",
+                textAlign: "center",
+              }}
+            >
+              <Image
+                src={`data:image/png;base64,${base64Value}`}
+                alt={fileName || label}
+                style={{ maxHeight: 260, objectFit: "contain" }}
+              />
+            </div>
+          )}
+          {!isBase64Image(base64Value) && (
+            <div
+              style={{
+                maxHeight: "160px",
+                overflow: "auto",
+                background: "#fff",
+                borderRadius: "10px",
+                border: "1px solid var(--color-neutral-200)",
+                padding: "12px",
+                fontFamily: "monospace",
+                fontSize: "12px",
+                color: "var(--color-text-primary)",
+                wordBreak: "break-all",
+              }}
+            >
+              {base64Value
+                ? base64Value.length > 1200
+                  ? `${base64Value.slice(0, 1200)}…`
+                  : base64Value
+                : "Sin archivo cargado"}
+            </div>
+          )}
           {help && (
             <Text type="secondary" style={{ fontSize: 12 }}>
               {help}
@@ -1794,6 +1824,34 @@ const TrytonForm = forwardRef(
             ...commonProps,
             label: null,
           };
+          const labelNode = help ? (
+            <Tooltip title={help}>
+              <div
+                style={{
+                  fontWeight: 600,
+                  color: "var(--color-primary-800)",
+                  fontSize: "15px",
+                  flex: 1,
+                  whiteSpace: "normal",
+                }}
+              >
+                {label}
+              </div>
+            </Tooltip>
+          ) : (
+            <div
+              style={{
+                fontWeight: 600,
+                color: "var(--color-primary-800)",
+                fontSize: "15px",
+                flex: 1,
+                whiteSpace: "normal",
+              }}
+            >
+              {label}
+            </div>
+          );
+
           return (
             <Form.Item
               key={name}
@@ -1805,14 +1863,16 @@ const TrytonForm = forwardRef(
               <div
                 style={{
                   border: "1px solid var(--color-neutral-200)",
-                  borderRadius: "14px",
-                  padding: "14px",
-                  background: "linear-gradient(180deg, #fff, #f7fbfd)",
-                  minHeight: "120px",
+                  borderRadius: "18px",
+                  padding: "16px",
+                  background: "linear-gradient(180deg, #fff, #f5fbff)",
+                  minHeight: "140px",
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "space-between",
                   gap: "12px",
+                  minWidth: "180px",
+                  maxWidth: "220px",
                 }}
               >
                 <div
@@ -1823,31 +1883,26 @@ const TrytonForm = forwardRef(
                     gap: "12px",
                   }}
                 >
-                  <div
-                    style={{
-                      fontWeight: 600,
-                      color: "var(--color-primary-800)",
-                      fontSize: "15px",
-                      flex: 1,
-                      wordBreak: "break-word",
-                    }}
-                  >
-                    {label}
-                  </div>
+                  {labelNode}
                   <Switch disabled={isReadonly} />
                 </div>
                 {help && (
-                  <Text
-                    type="secondary"
-                    style={{
-                      fontSize: "13px",
-                      lineHeight: 1.4,
-                      whiteSpace: "normal",
-                      color: "var(--color-text-secondary)",
-                    }}
-                  >
-                    {help}
-                  </Text>
+                  <Tooltip title={help}>
+                    <Text
+                      type="secondary"
+                      style={{
+                        fontSize: "13px",
+                        lineHeight: 1.35,
+                        whiteSpace: "normal",
+                        color: "var(--color-text-secondary)",
+                        display: "block",
+                        maxHeight: "80px",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {help}
+                    </Text>
+                  </Tooltip>
                 )}
               </div>
             </Form.Item>
