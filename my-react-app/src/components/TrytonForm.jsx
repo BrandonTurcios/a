@@ -50,6 +50,7 @@ import dayjs from "dayjs";
 import trytonService from "../services/trytonService";
 import { parseFormSections } from "../utils/formParser";
 import FormSections from "./FormSection";
+import { colors } from "../config/colors";
 
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
@@ -2531,9 +2532,19 @@ const TrytonForm = forwardRef(
                         form.submit();
                       }}
                       style={{
-                        background: "var(--color-primary-500)",
-                        borderColor: "var(--color-primary-500)",
-                        borderRadius: "6px",
+                        background: colors.success.A500,
+                        borderColor: colors.success.A500,
+                        borderRadius: "8px",
+                        fontWeight: 500,
+                        boxShadow: `0 2px 8px ${colors.success.A200}`,
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = colors.success.A600;
+                        e.currentTarget.style.borderColor = colors.success.A600;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = colors.success.A500;
+                        e.currentTarget.style.borderColor = colors.success.A500;
                       }}
                     >
                       {submitButtonText}
@@ -2542,9 +2553,21 @@ const TrytonForm = forwardRef(
                       icon={<MinusOutlined />}
                       onClick={handleCancel}
                       style={{
-                        borderColor: "var(--color-border)",
-                        color: "var(--color-text-secondary)",
-                        borderRadius: "6px",
+                        background: "transparent",
+                        borderColor: colors.danger.A300,
+                        color: colors.danger.A600,
+                        borderRadius: "8px",
+                        fontWeight: 500,
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = colors.danger.A50;
+                        e.currentTarget.style.borderColor = colors.danger.A500;
+                        e.currentTarget.style.color = colors.danger.A700;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "transparent";
+                        e.currentTarget.style.borderColor = colors.danger.A300;
+                        e.currentTarget.style.color = colors.danger.A600;
                       }}
                     >
                       Cancel
@@ -2556,9 +2579,19 @@ const TrytonForm = forwardRef(
                     icon={<EditOutlined />}
                     onClick={handleEdit}
                     style={{
-                      background: "var(--color-primary-500)",
-                      borderColor: "var(--color-primary-500)",
-                      borderRadius: "6px",
+                      background: colors.secondary.A500,
+                      borderColor: colors.secondary.A500,
+                      borderRadius: "8px",
+                      fontWeight: 500,
+                      boxShadow: `0 2px 8px ${colors.secondary.A200}`,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = colors.secondary.A600;
+                      e.currentTarget.style.borderColor = colors.secondary.A600;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = colors.secondary.A500;
+                      e.currentTarget.style.borderColor = colors.secondary.A500;
                     }}
                   >
                     Edit

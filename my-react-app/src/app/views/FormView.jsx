@@ -44,6 +44,7 @@ const FormView = ({ formInfo, selectedMenuInfo, loadingContent, formDirty, onFor
             level={2}
             style={{
               margin: 0,
+              marginLeft: '8px',
               fontSize: '38px',
               lineHeight: 1.1,
               fontWeight: 700,
