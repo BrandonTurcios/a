@@ -51,15 +51,6 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
     flexDirection: 'column',
     gap: '24px'
   };
-  const headerChipBase = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '6px',
-    padding: '6px 12px',
-    borderRadius: '999px',
-    fontSize: '13px',
-    fontWeight: 600
-  };
 
   return (
     <div style={{
@@ -83,35 +74,6 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
             <Paragraph style={{ color: 'var(--color-primary-700)', margin: 0 }}>
               {subtitle}
             </Paragraph>
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '18px' }}>
-              {selectedMenuInfo?.resModel && (
-                <span style={{
-                  ...headerChipBase,
-                  background: 'var(--color-primary-100)',
-                  color: 'var(--color-primary-800)'
-                }}>
-                  {selectedMenuInfo.resModel}
-                </span>
-              )}
-              {tableInfo?.fieldsView?.fields && (
-                <span style={{
-                  ...headerChipBase,
-                  background: 'var(--color-neutral-200)',
-                  color: 'var(--color-neutral-800)'
-                }}>
-                  {Object.keys(tableInfo.fieldsView.fields).length} columnas
-                </span>
-              )}
-              {tableInfo?.domain?.length > 0 && (
-                <span style={{
-                  ...headerChipBase,
-                  background: 'var(--color-secondary-100)',
-                  color: 'var(--color-secondary-800)'
-                }}>
-                  {tableInfo.domain.length} filtros activos
-                </span>
-              )}
-            </div>
           </div>
 
           {/* Toolbar dentro del mismo contenedor */}

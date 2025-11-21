@@ -1,134 +1,122 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Layout, Button, Input, Avatar, Typography, Tooltip } from 'antd';
-import { MenuOutlined, SearchOutlined, LogoutOutlined } from '@ant-design/icons';
+import { Menu, Search, LogOut } from 'lucide-react';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Avatar, AvatarFallback } from '../../components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../components/ui/tooltip';
 import LanguageSelector from '../../components/LanguageSelector';
-
-const { Header } = Layout;
-const { Title, Text } = Typography;
-const { Search } = Input;
+import { cn } from '../../lib/utils';
 
 const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar, onLanguageChange }) => {
   const { t } = useTranslation();
+  const [searchValue, setSearchValue] = React.useState('');
 
   return (
-    <Header style={{
-      background: 'var(--color-neutral-50)',
-      padding: '0 24px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      zIndex: 1000,
-      height: '64px',
-      borderBottom: '2px solid var(--color-primary)'
-    }}>
-      {/* Left: Menu button + Logo + Title */}
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <Button
-          type="text"
-          icon={<MenuOutlined />}
-          onClick={onToggleSidebar}
-          style={{
-            color: 'var(--color-text-primary)',
-            marginRight: '16px',
-            fontSize: '18px'
-          }}
-        />
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <div style={{
-            width: '36px',
-            height: '36px',
-            background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-400) 100%)',
-            borderRadius: '10px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginRight: '12px',
-            boxShadow: '0 2px 6px rgba(1, 118, 143, 0.3)'
-          }}>
-            <span style={{ color: 'white', fontWeight: 'bold', fontSize: '16px' }}>T</span>
-          </div>
-          <Title level={4} style={{ color: '#333333', margin: 0 }}>
-            {t('header.title')}
-          </Title>
-        </div>
-      </div>
-
-      {/* Center/Right: Search + User */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-        <Search
-          placeholder={t('header.searchPlaceholder')}
-          prefix={<SearchOutlined style={{ color: '#6C757D' }} />}
-          style={{
-            width: 320,
-            background: 'var(--color-background)',
-            border: '1px solid var(--color-border)',
-            color: 'var(--color-text-primary)',
-            borderRadius: '8px'
-          }}
-        />
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px'
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '6px 12px',
-            background: 'var(--color-primary-50)',
-            borderRadius: '10px',
-            border: '1px solid var(--color-primary-200)',
-            padding: '8px 14px'
-          }}>
-            <Avatar
-              style={{
-                background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary-500) 100%)',
-                color: 'white',
-                width: '32px',
-                height: '32px',
-                fontSize: '14px',
-                fontWeight: 'bold',
-                boxShadow: '0 2px 4px rgba(1, 118, 143, 0.2)'
-              }}
-            >
-              {sessionData?.username?.charAt(0).toUpperCase() || 'U'}
-            </Avatar>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-              <Text style={{ color: '#333333', fontSize: '13px', fontWeight: '500', lineHeight: '1.2' }}>
-                {sessionData?.username || t('header.defaultUser')}
-              </Text>
-              <Text style={{ color: '#6C757D', fontSize: '11px', lineHeight: '1.2' }}>
-                {sessionData?.database || t('header.database')}
-              </Text>
+    <TooltipProvider>
+      <header className={cn(
+        "bg-gradient-to-r from-primary-700 via-primary-600 to-secondary-600",
+        "px-6 flex items-center justify-between",
+        "shadow-lg shadow-primary-900/30",
+        "fixed top-0 left-0 right-0 z-[1000] h-[72px]",
+        "border-b-[3px] border-secondary-400"
+      )}>
+        {/* Left: Menu button + Logo + Title */}
+        <div className="flex items-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleSidebar}
+            className="mr-4 text-white hover:bg-white/20 h-10 w-10 rounded-xl transition-all"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          <div className="flex items-center gap-4">
+            <div className={cn(
+              "w-11 h-11 rounded-xl",
+              "bg-gradient-to-br from-secondary-500 to-secondary-400",
+              "flex items-center justify-center",
+              "shadow-lg shadow-secondary-500/40",
+              "border-2 border-white/30"
+            )}>
+              <span className="text-white font-bold text-xl">T</span>
             </div>
+            <h1 className={cn(
+              "text-white text-2xl font-semibold m-0",
+              "drop-shadow-md tracking-wide"
+            )}>
+              {t('header.title')}
+            </h1>
           </div>
-          <LanguageSelector
-            value={sessionData?.language || 'en'}
-            onChange={onLanguageChange}
-            style={{ width: 180 }}
-          />
-          <Tooltip title={t('header.signOut')}>
-            <Button
-              type="text"
-              icon={<LogoutOutlined />}
-              onClick={onLogout}
-              style={{
-                color: 'var(--color-text-secondary)',
-                width: '32px',
-                height: '32px'
-              }}
-            />
-          </Tooltip>
         </div>
-      </div>
-    </Header>
+
+        {/* Center/Right: Search + User */}
+        <div className="flex items-center gap-5">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-primary-600" />
+            <Input
+              placeholder={t('header.searchPlaceholder')}
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              className={cn(
+                "w-[360px] pl-10 pr-4",
+                "bg-white/95 border-2 border-white/50",
+                "rounded-xl shadow-lg",
+                "focus-visible:border-secondary-400 focus-visible:shadow-xl focus-visible:shadow-secondary-400/30",
+                "transition-all"
+              )}
+            />
+          </div>
+          <div className="flex items-center gap-4">
+            <div className={cn(
+              "flex items-center gap-2.5 px-4 py-2",
+              "bg-white/20 backdrop-blur-md",
+              "rounded-xl border-2 border-white/30",
+              "hover:bg-white/30 hover:border-white/50",
+              "transition-all cursor-pointer"
+            )}>
+              <Avatar className="h-9 w-9 border-2 border-white/50 shadow-lg shadow-secondary-500/40">
+                <AvatarFallback className="bg-gradient-to-br from-secondary-500 to-secondary-400 text-white text-base font-bold">
+                  {sessionData?.username?.charAt(0).toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col items-start">
+                <span className="text-white text-sm font-semibold leading-tight drop-shadow-sm">
+                  {sessionData?.username || t('header.defaultUser')}
+                </span>
+                <span className="text-white/85 text-[11px] leading-tight">
+                  {sessionData?.database || t('header.database')}
+                </span>
+              </div>
+            </div>
+            <LanguageSelector
+              value={sessionData?.language || 'en'}
+              onChange={onLanguageChange}
+              style={{ width: 180 }}
+            />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onLogout}
+                  className={cn(
+                    "text-white hover:bg-white/20",
+                    "h-10 w-10 rounded-xl",
+                    "transition-all"
+                  )}
+                >
+                  <LogOut className="h-[18px] w-[18px]" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t('header.signOut')}</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </div>
+      </header>
+    </TooltipProvider>
   );
 };
 

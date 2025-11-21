@@ -51,9 +51,9 @@ const Sidebar = ({ open, menuItems, loading, error, expandedMenus, activeTab, lo
         // Esto se maneja en el hook useMenuData
       }}
       style={{
-        background: 'var(--color-neutral-50)',
-        borderRight: '1px solid var(--color-border)',
-        boxShadow: '2px 0 8px rgba(0,0,0,0.05)',
+        background: 'linear-gradient(180deg, var(--color-primary-50) 0%, var(--color-neutral-50) 50%, var(--color-primary-50) 100%)',
+        borderRight: '3px solid var(--color-primary-300)',
+        boxShadow: '4px 0 16px rgba(1, 118, 143, 0.15)',
         position: 'fixed',
         height: '100vh',
         left: 0,
