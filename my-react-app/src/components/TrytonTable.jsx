@@ -1159,11 +1159,46 @@ const TrytonTable = ({
               }
             }}
             getPopupContainer={() => document.body}
-            triggerSubMenuAction="click"
+            triggerSubMenuAction="hover"
             openKeys={openSubmenuKeys}
             onOpenChange={(keys) => {
-              // Solo permitir cambios controlados manualmente
-              // No hacer nada aquí, el control se hace con los eventos de mouse
+              // Limpiar timeout al cambiar las keys
+              if (submenuCloseTimeoutRef.current) {
+                clearTimeout(submenuCloseTimeoutRef.current);
+                submenuCloseTimeoutRef.current = null;
+              }
+              
+              // Si no hay keys, cerrar todos los submenús
+              if (keys.length === 0) {
+                setOpenSubmenuKeys([]);
+                return;
+              }
+              
+              const lastKey = keys[keys.length - 1];
+              
+              // Solo "relate" y "print" pueden ser submenús válidos
+              if (lastKey !== 'relate' && lastKey !== 'print') {
+                setOpenSubmenuKeys([]);
+                return;
+              }
+              
+              // Verificar que el item correspondiente realmente tenga children
+              const item = contextMenuItems.find(item => item.key === lastKey);
+              if (!item || !item.children || item.children.length === 0) {
+                setOpenSubmenuKeys([]);
+                return;
+              }
+              
+              // Verificar que el mouse realmente esté sobre el item
+              // Usar el ref que trackea el item actual
+              if (currentHoveredItemRef.current !== lastKey) {
+                // Si el mouse no está sobre este item, no abrir el submenú
+                setOpenSubmenuKeys([]);
+                return;
+              }
+              
+              // Si todo está bien, abrir el submenú
+              setOpenSubmenuKeys([lastKey]);
             }}
             subMenuOpenDelay={0.1}
             subMenuCloseDelay={0.1}
