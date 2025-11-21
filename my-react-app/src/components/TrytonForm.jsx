@@ -1844,6 +1844,7 @@ const TrytonForm = forwardRef(
             ...commonProps,
             label: null,
           };
+          booleanProps.help = null;
 
           const renderLabel = () => (
             <div
