@@ -1,4 +1,5 @@
 import React, { useCallback, useRef, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Typography } from 'antd';
 import TrytonTable from '../../components/TrytonTable';
 import Toolbar from '../../components/Toolbar';
@@ -6,6 +7,7 @@ import Toolbar from '../../components/Toolbar';
 const { Title } = Typography;
 
 const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, toolbarHandlers, onRecordClick, selectedRecord, onRecordSelect }) => {
+  const { t } = useTranslation();
   const [openAttachmentsModal, setOpenAttachmentsModal] = useState(false);
   const [openNotesModal, setOpenNotesModal] = useState(false);
 
