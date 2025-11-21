@@ -392,7 +392,7 @@ const Many2OneField = ({
           display: "flex",
           alignItems: "center",
           gap: "8px",
-          fontWeight: "500",
+          fontWeight: "bold",
           color: "var(--color-text-primary)",
           marginBottom: "8px",
         }}
@@ -411,7 +411,7 @@ const Many2OneField = ({
           onSearch={searchOptions}
           onSelect={handleSelect}
           onChange={handleChange}
-          placeholder={t("wizard.searchField", { field: label.toLowerCase() })}
+          placeholder={label}
           disabled={readonly}
           notFoundContent={loading ? <Spin size="small" /> : null}
           style={{ width: "100%" }}
