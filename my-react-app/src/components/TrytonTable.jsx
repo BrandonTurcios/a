@@ -54,6 +54,7 @@ const TrytonTable = ({
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const [contextMenuSelectedRows, setContextMenuSelectedRows] = useState([]);
   const [openSubmenuKeys, setOpenSubmenuKeys] = useState([]);
+  const submenuCloseTimeoutRef = useRef(null);
   const [attachmentsCount, setAttachmentsCount] = useState(0);
   const [notesCount, setNotesCount] = useState(0);
   const [unreadNotesCount, setUnreadNotesCount] = useState(0);
@@ -564,12 +565,22 @@ const TrytonTable = ({
     const handleClickOutside = () => {
       setContextMenuVisible(false);
       setOpenSubmenuKeys([]);
+      // Limpiar timeout de submenú
+      if (submenuCloseTimeoutRef.current) {
+        clearTimeout(submenuCloseTimeoutRef.current);
+        submenuCloseTimeoutRef.current = null;
+      }
     };
 
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
         setContextMenuVisible(false);
         setOpenSubmenuKeys([]);
+        // Limpiar timeout de submenú
+        if (submenuCloseTimeoutRef.current) {
+          clearTimeout(submenuCloseTimeoutRef.current);
+          submenuCloseTimeoutRef.current = null;
+        }
       }
     };
 
@@ -586,10 +597,20 @@ const TrytonTable = ({
         document.removeEventListener('click', handleClickOutside);
         document.removeEventListener('contextmenu', handleClickOutside);
         document.removeEventListener('keydown', handleEscape);
+        // Limpiar timeout de submenú al desmontar
+        if (submenuCloseTimeoutRef.current) {
+          clearTimeout(submenuCloseTimeoutRef.current);
+          submenuCloseTimeoutRef.current = null;
+        }
       };
     } else {
       // Cerrar submenús cuando se cierra el menú contextual
       setOpenSubmenuKeys([]);
+      // Limpiar timeout de submenú
+      if (submenuCloseTimeoutRef.current) {
+        clearTimeout(submenuCloseTimeoutRef.current);
+        submenuCloseTimeoutRef.current = null;
+      }
     }
   }, [contextMenuVisible]);
 
@@ -974,11 +995,30 @@ const TrytonTable = ({
             e.stopPropagation();
           }}
           onMouseLeave={(e) => {
-            // Cerrar submenús cuando el mouse sale del menú principal
-            // Solo si no está entrando a un submenú
+            // Cerrar submenús cuando el mouse sale completamente del menú
             const relatedTarget = e.relatedTarget;
-            if (relatedTarget && !relatedTarget.closest('.ant-menu-submenu-popup')) {
-              setOpenSubmenuKeys([]);
+            // Si el mouse no está yendo a un submenú, cerrarlo después de un pequeño delay
+            if (!relatedTarget || !relatedTarget.closest('.ant-menu-submenu-popup')) {
+              // Limpiar timeout anterior si existe
+              if (submenuCloseTimeoutRef.current) {
+                clearTimeout(submenuCloseTimeoutRef.current);
+              }
+              // Cerrar después de un pequeño delay para permitir movimiento suave
+              submenuCloseTimeoutRef.current = setTimeout(() => {
+                // Verificar que el mouse realmente salió
+                const activeElement = document.activeElement;
+                const mouseOverPopup = document.querySelector('.ant-menu-submenu-popup:hover');
+                if (!mouseOverPopup) {
+                  setOpenSubmenuKeys([]);
+                }
+              }, 150);
+            }
+          }}
+          onMouseEnter={() => {
+            // Cancelar el cierre si el mouse vuelve al menú
+            if (submenuCloseTimeoutRef.current) {
+              clearTimeout(submenuCloseTimeoutRef.current);
+              submenuCloseTimeoutRef.current = null;
             }
           }}
         >
@@ -1008,10 +1048,16 @@ const TrytonTable = ({
             triggerSubMenuAction="hover"
             openKeys={openSubmenuKeys}
             onOpenChange={(keys) => {
-              setOpenSubmenuKeys(keys);
+              // Limpiar timeout al cambiar las keys
+              if (submenuCloseTimeoutRef.current) {
+                clearTimeout(submenuCloseTimeoutRef.current);
+                submenuCloseTimeoutRef.current = null;
+              }
+              // Asegurar que solo un submenú esté abierto a la vez
+              setOpenSubmenuKeys(keys.length > 0 ? [keys[keys.length - 1]] : []);
             }}
-            subMenuOpenDelay={0.1}
-            subMenuCloseDelay={0.1}
+            subMenuOpenDelay={0.15}
+            subMenuCloseDelay={0.2}
           />
         </div>,
         document.body

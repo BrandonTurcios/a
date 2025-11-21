@@ -743,16 +743,15 @@ body {
   -o-animation: none !important;
 }
 
-/* Permitir que el mouse pase del menú principal al submenú sin cerrarse */
-.ant-menu-submenu-popup::before {
-  content: '';
-  position: absolute;
-  left: -8px;
-  top: 0;
-  bottom: 0;
-  width: 8px;
-  pointer-events: auto;
-  z-index: -1;
+/* Zona de transición entre menú principal y submenú para evitar cierre accidental */
+.ant-menu-submenu-popup {
+  /* Espaciado entre menú principal y submenú */
+  margin-left: 8px !important;
+}
+
+/* Asegurar que solo haya un submenú visible a la vez */
+.ant-menu-submenu-popup:not(:last-child) {
+  display: none !important;
 }
 
 /* Quitar todas las animaciones y transiciones del contenedor del submenú popup */
