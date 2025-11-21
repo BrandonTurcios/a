@@ -1033,28 +1033,29 @@ const TrytonTable = ({
             triggerSubMenuAction="hover"
             openKeys={openSubmenuKeys}
             onOpenChange={(keys) => {
-              // Solo permitir abrir si el mouse realmente está sobre el item
-              if (keys.length > 0) {
-                const lastKey = keys[keys.length - 1];
-                // Verificar que sea una key válida
-                if (lastKey !== 'relate' && lastKey !== 'print') {
-                  setOpenSubmenuKeys([]);
-                  return;
-                }
-                // Verificar que el item tenga children
-                const item = contextMenuItems.find(item => item.key === lastKey);
-                if (!item || !item.children || item.children.length === 0) {
-                  setOpenSubmenuKeys([]);
-                  return;
-                }
-                // Verificar que el mouse esté sobre el item
-                if (hoveredMenuItemRef.current !== lastKey) {
-                  // Si el mouse no está sobre este item, no abrir
-                  setOpenSubmenuKeys([]);
-                  return;
-                }
+              // Filtrar solo keys válidas
+              if (keys.length === 0) {
+                setOpenSubmenuKeys([]);
+                return;
               }
-              setOpenSubmenuKeys(keys);
+              
+              const lastKey = keys[keys.length - 1];
+              
+              // Solo permitir "relate" y "print" con children
+              if (lastKey !== 'relate' && lastKey !== 'print') {
+                setOpenSubmenuKeys([]);
+                return;
+              }
+              
+              // Verificar que el item tenga children
+              const item = contextMenuItems.find(item => item.key === lastKey);
+              if (!item || !item.children || item.children.length === 0) {
+                setOpenSubmenuKeys([]);
+                return;
+              }
+              
+              // Permitir que se abra
+              setOpenSubmenuKeys([lastKey]);
             }}
             subMenuOpenDelay={0.2}
             subMenuCloseDelay={0.15}
