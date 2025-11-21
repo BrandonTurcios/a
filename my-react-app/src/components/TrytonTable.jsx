@@ -616,6 +616,39 @@ const TrytonTable = ({
     }
   }, [contextMenuVisible]);
 
+  // Detectar cuando el mouse está sobre un item sin submenú y cerrar submenús abiertos
+  useEffect(() => {
+    if (!contextMenuVisible || !menuContainerRef.current) return;
+
+    const handleMouseOver = (e) => {
+      // Solo procesar si hay submenús abiertos
+      if (openSubmenuKeys.length === 0) return;
+
+      // Buscar el item del menú sobre el que está el mouse
+      const menuItem = e.target.closest('.ant-menu-item:not(.ant-menu-submenu-title)');
+      if (!menuItem) return;
+
+      // Obtener todos los items del menú
+      const allMenuItems = menuContainerRef.current.querySelectorAll('.ant-menu-item:not(.ant-menu-submenu-title)');
+      const itemIndex = Array.from(allMenuItems).indexOf(menuItem);
+      
+      if (itemIndex >= 0 && itemIndex < contextMenuItems.length) {
+        const item = contextMenuItems[itemIndex];
+        // Si el item no tiene children (no es un submenú), cerrar todos los submenús
+        if (item && (!item.children || item.children.length === 0)) {
+          setOpenSubmenuKeys([]);
+        }
+      }
+    };
+
+    const menuElement = menuContainerRef.current;
+    menuElement.addEventListener('mouseover', handleMouseOver, true);
+
+    return () => {
+      menuElement.removeEventListener('mouseover', handleMouseOver, true);
+    };
+  }, [contextMenuVisible, contextMenuItems, openSubmenuKeys]);
+
   // Construir items del menú contextual
   const contextMenuItems = useMemo(() => {
     if (!toolbarInfo || contextMenuSelectedRows.length === 0) return [];
@@ -998,11 +1031,42 @@ const TrytonTable = ({
             e.stopPropagation();
           }}
           onMouseLeave={(e) => {
-            // Si hay submenús abiertos, no hacer nada aquí
-            // Dejar que Ant Design y el efecto de monitoreo manejen el cierre
-            // Esto permite que el mouse se mueva del menú principal al submenú sin problemas
-            if (openSubmenuKeys.length > 0) {
-              return;
+            // Verificar si el mouse está yendo a un submenú
+            const relatedTarget = e.relatedTarget;
+            const isGoingToSubmenu = relatedTarget && (
+              relatedTarget.closest('.ant-menu-submenu-popup') ||
+              relatedTarget.closest('.ant-menu-submenu')
+            );
+            
+            // Verificar si está yendo a otro item del menú (no submenú)
+            const isGoingToMenuItem = relatedTarget && relatedTarget.closest('.ant-menu-item');
+            
+            // Si está yendo a otro item del menú (no submenú), cerrar submenús inmediatamente
+            if (isGoingToMenuItem && !isGoingToSubmenu && openSubmenuKeys.length > 0) {
+              // Verificar si el item al que va tiene submenú
+              const menuItems = menuContainerRef.current.querySelectorAll('.ant-menu-item:not(.ant-menu-submenu-title)');
+              const targetItem = relatedTarget.closest('.ant-menu-item');
+              if (targetItem) {
+                const itemIndex = Array.from(menuItems).indexOf(targetItem);
+                if (itemIndex >= 0 && itemIndex < contextMenuItems.length) {
+                  const item = contextMenuItems[itemIndex];
+                  // Si el item no tiene children, cerrar submenús inmediatamente
+                  if (!item || !item.children || item.children.length === 0) {
+                    setOpenSubmenuKeys([]);
+                    return;
+                  }
+                }
+              }
+            }
+            
+            // Si no está yendo a un submenú ni a otro item, cerrar todos los submenús después de un pequeño delay
+            if (!isGoingToSubmenu && !isGoingToMenuItem && openSubmenuKeys.length > 0) {
+              if (submenuCloseTimeoutRef.current) {
+                clearTimeout(submenuCloseTimeoutRef.current);
+              }
+              submenuCloseTimeoutRef.current = setTimeout(() => {
+                setOpenSubmenuKeys([]);
+              }, 150);
             }
           }}
           onMouseEnter={() => {
@@ -1045,6 +1109,12 @@ const TrytonTable = ({
                 submenuCloseTimeoutRef.current = null;
               }
               
+              // Si no hay keys, cerrar todos los submenús inmediatamente
+              if (keys.length === 0) {
+                setOpenSubmenuKeys([]);
+                return;
+              }
+              
               // Filtrar las keys para asegurarnos de que solo se abran submenús válidos
               // Los únicos items que pueden tener submenús son "relate" y "print"
               // cuando tienen más de un elemento en sus arrays
@@ -1056,20 +1126,22 @@ const TrytonTable = ({
                 
                 // Verificar que el item correspondiente realmente tenga children
                 const item = contextMenuItems.find(item => item.key === key);
-                return item && item.children && item.children.length > 0;
+                const hasChildren = item && item.children && item.children.length > 0;
+                return hasChildren;
               });
+              
+              // Si no hay keys válidas después del filtro, cerrar todos los submenús inmediatamente
+              if (validKeys.length === 0) {
+                setOpenSubmenuKeys([]);
+                return;
+              }
               
               // Asegurar que solo un submenú esté abierto a la vez
               // Si hay keys válidas, mantener solo la última (el submenú más reciente)
-              if (validKeys.length > 0) {
-                const lastKey = validKeys[validKeys.length - 1];
-                // Solo actualizar si es diferente al actual
-                if (openSubmenuKeys[0] !== lastKey) {
-                  setOpenSubmenuKeys([lastKey]);
-                }
-              } else {
-                // Si no hay keys válidas, cerrar todos los submenús
-                setOpenSubmenuKeys([]);
+              const lastKey = validKeys[validKeys.length - 1];
+              // Solo actualizar si es diferente para evitar re-renders innecesarios
+              if (openSubmenuKeys[0] !== lastKey) {
+                setOpenSubmenuKeys([lastKey]);
               }
             }}
             subMenuOpenDelay={0.1}
