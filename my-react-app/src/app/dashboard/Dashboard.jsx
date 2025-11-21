@@ -855,7 +855,7 @@ const Dashboard = ({ sessionData, onLogout, onLanguageChange }) => {
         <Layout
           style={{
             marginLeft: menuData.sidebarOpen ? 320 : 80,
-            marginTop: 96,
+            marginTop: 84,
             transition: "margin-left 0.2s",
           }}
         >

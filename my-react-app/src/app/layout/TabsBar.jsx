@@ -54,15 +54,17 @@ const TabsBar = ({
             style={{ 
               display: 'flex', 
               alignItems: 'center', 
-              gap: '8px',
-              padding: '4px 8px',
+              gap: '10px',
+              padding: '8px 16px',
               background: isActive ? 'var(--color-primary-50)' : 'transparent',
-              borderBottom: isActive ? '3px solid var(--color-primary)' : '3px solid transparent',
+              borderBottom: isActive ? '4px solid var(--color-primary)' : '4px solid transparent',
               color: isActive ? 'var(--color-primary-700)' : 'var(--color-text-secondary)',
-              fontWeight: isActive ? '600' : '400',
-              borderRadius: '4px',
-              minWidth: '120px',
-              maxWidth: '200px'
+              fontWeight: isActive ? '600' : '500',
+              borderRadius: '8px',
+              minWidth: '140px',
+              maxWidth: '220px',
+              fontSize: '14px',
+              lineHeight: 1.2
             }}
           >
             <span 
@@ -71,7 +73,7 @@ const TabsBar = ({
                 overflow: 'hidden', 
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
-                fontSize: '13px'
+                fontSize: '14px'
               }}
               title={tab.title}
             >
@@ -134,16 +136,16 @@ const TabsBar = ({
     <div style={{
       background: 'var(--color-neutral-50)',
       borderBottom: '2px solid var(--color-primary-200)',
-      padding: '16px 24px',
-      minHeight: '44px',
+      padding: '12px 20px',
+      minHeight: '52px',
       display: 'flex',
       alignItems: 'center',
       overflowX: 'auto',
       maxWidth: '100%',
-      marginTop: '12px',
-      marginBottom: '24px',
+      marginTop: '8px',
+      marginBottom: '16px',
       borderRadius: '0 0 16px 16px',
-      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.05)'
+      boxShadow: '0 6px 20px rgba(0, 0, 0, 0.04)'
     }}>
       <Tabs
         activeKey={activeTabId}
