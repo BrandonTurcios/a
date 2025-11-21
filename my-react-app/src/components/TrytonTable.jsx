@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { Card, Spin, Alert, Button, Typography, Menu, Badge } from 'antd';
+import { Card, Spin, Alert, Button, Typography, Badge } from 'antd';
 import {
   ReloadOutlined,
   DownloadOutlined,
@@ -53,8 +53,7 @@ const TrytonTable = ({
   const [contextMenuVisible, setContextMenuVisible] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const [contextMenuSelectedRows, setContextMenuSelectedRows] = useState([]);
-  const [openSubmenuKeys, setOpenSubmenuKeys] = useState([]);
-  const hoveredMenuItemRef = useRef(null);
+  const [hoveredMenuKey, setHoveredMenuKey] = useState(null);
   const [attachmentsCount, setAttachmentsCount] = useState(0);
   const [notesCount, setNotesCount] = useState(0);
   const [unreadNotesCount, setUnreadNotesCount] = useState(0);
@@ -589,6 +588,11 @@ const TrytonTable = ({
       };
     }
   }, [contextMenuVisible]);
+  useEffect(() => {
+    if (!contextMenuVisible) {
+      setHoveredMenuKey(null);
+    }
+  }, [contextMenuVisible]);
 
   // Construir items del menú contextual
   const contextMenuItems = useMemo(() => {
@@ -740,43 +744,6 @@ const TrytonTable = ({
     return items;
   }, [toolbarInfo, contextMenuSelectedRows, onContextMenuAttach, onContextMenuNote, onContextMenuRelate, onContextMenuPrint, onContextMenuEmail, t, attachmentsCount, notesCount, unreadNotesCount]);
 
-  // Trackear qué item del menú tiene el mouse encima
-  useEffect(() => {
-    if (!contextMenuVisible) {
-      hoveredMenuItemRef.current = null;
-      return;
-    }
-
-    const handleMouseOver = (e) => {
-      const menuItem = e.target.closest('.ant-menu-item:not(.ant-menu-submenu-title)');
-      if (menuItem) {
-        // Buscar la key del item
-        const menuItems = document.querySelectorAll('.ant-menu-item:not(.ant-menu-submenu-title)');
-        const itemIndex = Array.from(menuItems).indexOf(menuItem);
-        if (itemIndex >= 0 && itemIndex < contextMenuItems.length) {
-          hoveredMenuItemRef.current = contextMenuItems[itemIndex].key;
-        }
-      } else {
-        // Si está sobre un submenú, mantener el último item hovered
-        const submenu = e.target.closest('.ant-menu-submenu-popup');
-        if (!submenu) {
-          hoveredMenuItemRef.current = null;
-        }
-      }
-    };
-
-    const handleMouseLeave = () => {
-      // No limpiar inmediatamente, dejar que onOpenChange maneje el cierre
-    };
-
-    document.addEventListener('mouseover', handleMouseOver, true);
-    document.addEventListener('mouseleave', handleMouseLeave, true);
-
-    return () => {
-      document.removeEventListener('mouseover', handleMouseOver, true);
-      document.removeEventListener('mouseleave', handleMouseLeave, true);
-    };
-  }, [contextMenuVisible, contextMenuItems]);
 
   // Sincronizar selección cuando cambia selectedRecord
   useEffect(() => {
@@ -901,6 +868,95 @@ const TrytonTable = ({
     minWidth: 120
   }), []);
 
+  const handleMenuItemClick = (item, event) => {
+    if (!item) return;
+    event.stopPropagation();
+    if (item.children && item.children.length > 0) {
+      setHoveredMenuKey(item.key);
+      return;
+    }
+    if (item.onClick) {
+      item.onClick({ domEvent: event });
+    }
+  };
+
+  const handleSubmenuItemClick = (child, event) => {
+    if (!child) return;
+    event.stopPropagation();
+    if (child.onClick) {
+      child.onClick({ domEvent: event });
+    }
+  };
+
+  const renderMenuItems = (items) => {
+    if (!items || items.length === 0) return null;
+    return items.map((item) => {
+      const hasChildren = item.children && item.children.length > 0;
+      return (
+        <div
+          key={item.key}
+          onMouseEnter={() => hasChildren && setHoveredMenuKey(item.key)}
+          onMouseLeave={() => hasChildren && setHoveredMenuKey((current) => current === item.key ? null : current)}
+          onClick={(e) => handleMenuItemClick(item, e)}
+          style={{
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '10px 14px',
+            cursor: 'pointer',
+            fontSize: '15px',
+            fontWeight: 500,
+            color: 'var(--color-text-primary)',
+            borderBottom: '1px solid rgba(0,0,0,0.05)',
+            background: hoveredMenuKey === item.key ? 'var(--color-primary-50)' : 'transparent'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+            {item.icon && <span>{item.icon}</span>}
+            <span>{item.label}</span>
+          </div>
+          {hasChildren && (
+            <span style={{ marginLeft: '8px', fontSize: '12px', color: 'var(--color-text-secondary)' }}>▶</span>
+          )}
+          {hasChildren && hoveredMenuKey === item.key && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: '100%',
+                marginLeft: '8px',
+                background: 'var(--color-card-background)',
+                border: '1px solid var(--color-primary-200)',
+                borderRadius: '10px',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                minWidth: '200px',
+                zIndex: 10001
+              }}
+            >
+              {item.children.map((child) => (
+                <div
+                  key={child.key}
+                  onClick={(e) => handleSubmenuItemClick(child, e)}
+                  style={{
+                    padding: '10px 14px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <span>{child.label}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    });
+  };
+
   if (loading) {
     return (
       <Card>
@@ -1009,57 +1065,15 @@ const TrytonTable = ({
             e.stopPropagation();
           }}
         >
-          <Menu
-            mode="vertical"
-            items={contextMenuItems}
+          <div
             style={{
-              border: 'none',
-              borderRadius: '12px',
-              fontSize: '15px',
-              fontWeight: '500',
-              padding: '6px 0',
-              background: 'transparent'
+              display: 'flex',
+              flexDirection: 'column',
+              width: '100%'
             }}
-            onClick={(info) => {
-              // El onClick ya está manejado en cada item
-              if (info.domEvent) {
-                info.domEvent.stopPropagation();
-              }
-              // Cerrar el menú contextual cuando se hace clic en un item sin submenú
-              if (!info.key.startsWith('relate-') && !info.key.startsWith('print-') && info.key !== 'relate' && info.key !== 'print') {
-                setContextMenuVisible(false);
-              }
-            }}
-            triggerSubMenuAction="hover"
-            openKeys={openSubmenuKeys}
-            onOpenChange={(keys) => {
-              // Filtrar solo keys válidas
-              if (keys.length === 0) {
-                setOpenSubmenuKeys([]);
-                return;
-              }
-              
-              const lastKey = keys[keys.length - 1];
-              
-              // Solo permitir "relate" y "print" con children
-              if (lastKey !== 'relate' && lastKey !== 'print') {
-                setOpenSubmenuKeys([]);
-                return;
-              }
-              
-              // Verificar que el item tenga children
-              const item = contextMenuItems.find(item => item.key === lastKey);
-              if (!item || !item.children || item.children.length === 0) {
-                setOpenSubmenuKeys([]);
-                return;
-              }
-              
-              // Permitir que se abra
-              setOpenSubmenuKeys([lastKey]);
-            }}
-            subMenuOpenDelay={0.2}
-            subMenuCloseDelay={0.15}
-          />
+          >
+            {renderMenuItems(contextMenuItems)}
+          </div>
         </div>,
         document.body
       )}
