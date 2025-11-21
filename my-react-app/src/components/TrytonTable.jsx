@@ -1045,19 +1045,30 @@ const TrytonTable = ({
                 submenuCloseTimeoutRef.current = null;
               }
               
+              // Filtrar las keys para asegurarnos de que solo se abran submenús válidos
+              // Los únicos items que pueden tener submenús son "relate" y "print"
+              // cuando tienen más de un elemento en sus arrays
+              const validKeys = keys.filter(key => {
+                // Solo "relate" y "print" pueden ser submenús válidos
+                if (key !== 'relate' && key !== 'print') {
+                  return false;
+                }
+                
+                // Verificar que el item correspondiente realmente tenga children
+                const item = contextMenuItems.find(item => item.key === key);
+                return item && item.children && item.children.length > 0;
+              });
+              
               // Asegurar que solo un submenú esté abierto a la vez
-              // Si hay keys, mantener solo la última (el submenú más reciente)
-              // Si el array de keys contiene múltiples elementos, significa que se está
-              // cambiando de un submenú a otro, así que solo mantener el último
-              if (keys.length > 0) {
-                const lastKey = keys[keys.length - 1];
-                // Solo actualizar si es diferente al actual para evitar re-renders innecesarios
-                // y asegurar que el submenú anterior se cierre
+              // Si hay keys válidas, mantener solo la última (el submenú más reciente)
+              if (validKeys.length > 0) {
+                const lastKey = validKeys[validKeys.length - 1];
+                // Solo actualizar si es diferente al actual
                 if (openSubmenuKeys[0] !== lastKey) {
                   setOpenSubmenuKeys([lastKey]);
                 }
               } else {
-                // Si no hay keys, cerrar todos los submenús
+                // Si no hay keys válidas, cerrar todos los submenús
                 setOpenSubmenuKeys([]);
               }
             }}
