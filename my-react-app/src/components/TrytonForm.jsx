@@ -42,6 +42,8 @@ import {
   CalendarOutlined,
   UploadOutlined,
   PictureOutlined,
+  CopyOutlined,
+  DownloadOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 import trytonService from "../services/trytonService";
@@ -729,6 +731,30 @@ const One2ManyField = ({
 };
 
 // Component for binary/image fields with upload and preview
+const fileToBase64 = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (error) => reject(error);
+  });
+
+const extractBase64Payload = (value) => {
+  if (!value) return null;
+  if (typeof value === "string") {
+    return value.startsWith("data:")
+      ? value.split(",")[1] || ""
+      : value;
+  }
+  if (typeof value === "object") {
+    if (value.base64) return value.base64;
+    if (value.__class__ === "bytes" && value.base64) {
+      return value.base64;
+    }
+  }
+  return null;
+};
+
 const BinaryImageField = ({
   name,
   label,
@@ -766,15 +792,6 @@ const BinaryImageField = ({
     }
   }, [defaultValue]);
 
-  const getBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
-    });
-  };
-
   const handleChange = async (info) => {
     if (info.file.status === "uploading") {
       setLoading(true);
@@ -784,7 +801,7 @@ const BinaryImageField = ({
     if (info.file.status === "done") {
       try {
         // Convertir a base64
-        const base64 = await getBase64(info.file.originFileObj);
+        const base64 = await fileToBase64(info.file.originFileObj);
         setImageUrl(base64);
 
         // Extraer solo la parte base64 (sin el prefijo data:image/...)
@@ -932,6 +949,180 @@ const BinaryImageField = ({
           </Text>
         </div>
       )}
+    </div>
+  );
+};
+
+const BinaryFileField = ({
+  name,
+  label,
+  required,
+  readonly,
+  help,
+  form,
+  defaultValue,
+}) => {
+  const { t } = useTranslation();
+  const [base64Value, setBase64Value] = useState(
+    extractBase64Payload(defaultValue)
+  );
+  const [fileName, setFileName] = useState(
+    defaultValue?.filename || defaultValue?.name || label || name
+  );
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    setBase64Value(extractBase64Payload(defaultValue));
+    setFileName(defaultValue?.filename || defaultValue?.name || label || name);
+  }, [defaultValue, label, name]);
+
+  const approxSize = base64Value
+    ? Math.max(1, Math.round((base64Value.length * 3) / 4 / 1024))
+    : 0;
+
+  const handleCopy = async () => {
+    if (!base64Value) return;
+    try {
+      await navigator.clipboard.writeText(base64Value);
+      message.success("Base64 copiado al portapapeles");
+    } catch (error) {
+      message.warning("No se pudo copiar al portapapeles");
+    }
+  };
+
+  const handleDownload = () => {
+    if (!base64Value) return;
+    const link = document.createElement("a");
+    link.href = `data:application/octet-stream;base64,${base64Value}`;
+    link.download = fileName || `${name}.bin`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
+
+  const beforeUpload = async (file) => {
+    try {
+      setUploading(true);
+      const base64 = await fileToBase64(file);
+      const payload = base64.split(",")[1] || base64;
+      setBase64Value(payload);
+      setFileName(file.name);
+      form.setFieldValue(name, {
+        __class__: "bytes",
+        base64: payload,
+        filename: file.name,
+      });
+      message.success(`${file.name} listo`);
+    } catch (error) {
+      console.error("Error loading file:", error);
+      message.error("No se pudo procesar el archivo");
+    } finally {
+      setUploading(false);
+    }
+    return false;
+  };
+
+  return (
+    <div style={{ marginBottom: "24px" }}>
+      <Form.Item
+        name={name}
+        label={createFieldLabel(label, required)}
+        style={{ marginBottom: "12px" }}
+      >
+        <div
+          style={{
+            border: "1px solid var(--color-neutral-200)",
+            borderRadius: "14px",
+            background: "var(--color-neutral-25)",
+            padding: "16px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              gap: "12px",
+              flexWrap: "wrap",
+              alignItems: "center",
+            }}
+          >
+            <div>
+              <Text strong style={{ color: "var(--color-primary-800)" }}>
+                {fileName || "Sin nombre"}
+              </Text>
+              <div style={{ color: "var(--color-text-secondary)", fontSize: 12 }}>
+                {base64Value
+                  ? `${approxSize} KB • base64`
+                  : "Sin archivo cargado"}
+              </div>
+            </div>
+            <Space size={8}>
+              {base64Value && (
+                <>
+                  <Button
+                    icon={<CopyOutlined />}
+                    onClick={handleCopy}
+                    size="small"
+                  >
+                    Copiar base64
+                  </Button>
+                  <Button
+                    icon={<DownloadOutlined />}
+                    onClick={handleDownload}
+                    size="small"
+                    type="primary"
+                  >
+                    Descargar archivo
+                  </Button>
+                </>
+              )}
+              {!readonly && (
+                <Upload
+                  showUploadList={false}
+                  beforeUpload={beforeUpload}
+                  disabled={uploading}
+                >
+                  <Button
+                    icon={<UploadOutlined />}
+                    size="small"
+                    loading={uploading}
+                  >
+                    Cargar archivo
+                  </Button>
+                </Upload>
+              )}
+            </Space>
+          </div>
+          <div
+            style={{
+              maxHeight: "160px",
+              overflow: "auto",
+              background: "#fff",
+              borderRadius: "10px",
+              border: "1px solid var(--color-neutral-200)",
+              padding: "12px",
+              fontFamily: "monospace",
+              fontSize: "12px",
+              color: "var(--color-text-primary)",
+              wordBreak: "break-all",
+            }}
+          >
+            {base64Value
+              ? base64Value.length > 1200
+                ? `${base64Value.slice(0, 1200)}…`
+                : base64Value
+              : "Sin archivo cargado"}
+          </div>
+          {help && (
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              {help}
+            </Text>
+          )}
+        </div>
+      </Form.Item>
     </div>
   );
 };
@@ -1600,12 +1791,70 @@ const TrytonForm = forwardRef(
             </Form.Item>
           );
 
-        case "boolean":
+        case "boolean": {
+          const booleanProps = {
+            ...commonProps,
+            label: null,
+          };
           return (
-            <Form.Item key={name} {...commonProps} valuePropName="checked">
-              <Switch disabled={isReadonly} />
+            <Form.Item
+              key={name}
+              {...booleanProps}
+              valuePropName="checked"
+              colon={false}
+              style={{ marginBottom: "20px" }}
+            >
+              <div
+                style={{
+                  border: "1px solid var(--color-neutral-200)",
+                  borderRadius: "14px",
+                  padding: "14px",
+                  background: "linear-gradient(180deg, #fff, #f7fbfd)",
+                  minHeight: "120px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  gap: "12px",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: "12px",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontWeight: 600,
+                      color: "var(--color-primary-800)",
+                      fontSize: "15px",
+                      flex: 1,
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    {label}
+                  </div>
+                  <Switch disabled={isReadonly} />
+                </div>
+                {help && (
+                  <Text
+                    type="secondary"
+                    style={{
+                      fontSize: "13px",
+                      lineHeight: 1.4,
+                      whiteSpace: "normal",
+                      color: "var(--color-text-secondary)",
+                    }}
+                  >
+                    {help}
+                  </Text>
+                )}
+              </div>
             </Form.Item>
           );
+        }
 
         case "date": {
           const dateProps = {
@@ -1886,23 +2135,16 @@ const TrytonForm = forwardRef(
 
           // Para otros campos binary (archivos), mostrar un componente básico
           return (
-            <Form.Item key={name} {...commonProps}>
-              <div
-                style={{
-                  padding: "12px",
-                  border: "1px dashed #d9d9d9",
-                  borderRadius: "6px",
-                  textAlign: "center",
-                  color: "#8c8c8c",
-                }}
-              >
-                <Text type="secondary">{t("form.fileField")}</Text>
-                <br />
-                <Text type="secondary" style={{ fontSize: "12px" }}>
-                  {t("form.futureImplementation")}
-                </Text>
-              </div>
-            </Form.Item>
+            <BinaryFileField
+              key={name}
+              name={name}
+              label={label}
+              required={required}
+              readonly={isReadonly}
+              help={help}
+              form={form}
+              defaultValue={formData[name]}
+            />
           );
 
         default:
