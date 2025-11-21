@@ -1879,21 +1879,24 @@ const TrytonForm = forwardRef(
               {...booleanProps}
               valuePropName="checked"
               colon={false}
+              className="boolean-card-item"
               style={{ marginBottom: "20px" }}
+              data-span={6}
             >
               <div
+                className="boolean-card"
                 style={{
                   border: "1px solid var(--color-neutral-200)",
-                  borderRadius: "18px",
-                  padding: "16px",
+                  borderRadius: "22px",
+                  padding: "18px",
                   background: "linear-gradient(180deg, #fff, #f5fbff)",
-                  minHeight: "140px",
+                  minHeight: "160px",
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "space-between",
-                  gap: "12px",
-                  minWidth: "220px",
-                  maxWidth: "300px",
+                  gap: "14px",
+                  minWidth: "260px",
+                  maxWidth: "360px",
                 }}
               >
                 <div
