@@ -3,7 +3,7 @@ import { Typography } from 'antd';
 import TrytonTable from '../../components/TrytonTable';
 import Toolbar from '../../components/Toolbar';
 
-const { Title, Paragraph } = Typography;
+const { Title } = Typography;
 
 const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, toolbarHandlers, onRecordClick, selectedRecord, onRecordSelect }) => {
   const [openAttachmentsModal, setOpenAttachmentsModal] = useState(false);
@@ -39,7 +39,6 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
   console.log('🔧 TableView - selectedRecord:', selectedRecord);
 
   const title = selectedMenuInfo?.actionName || selectedMenuInfo?.menuItem?.name || 'Table';
-  const subtitle = `${selectedMenuInfo?.resModel || 'Tryton'} · ${tableInfo?.viewType || 'tree'} view`;
   const containerStyles = {
     background: 'var(--color-neutral-50)',
     borderRadius: '28px',
@@ -68,12 +67,9 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
           flexWrap: 'wrap'
         }}>
           <div style={{ flex: 1, minWidth: '320px' }}>
-            <Title level={2} style={{ margin: '0 0 6px', color: 'var(--color-primary-900)' }}>
+            <Title level={2} style={{ margin: 0, color: 'var(--color-primary-900)' }}>
               {title}
             </Title>
-            <Paragraph style={{ color: 'var(--color-primary-700)', margin: 0 }}>
-              {subtitle}
-            </Paragraph>
           </div>
 
           {/* Toolbar dentro del mismo contenedor */}
