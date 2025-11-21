@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button, Space, Typography } from 'antd';
-import { ChevronRight, ChevronDown } from 'lucide-react';
+import { ChevronRight, ChevronDown, Minus } from 'lucide-react';
 import { getIconComponent } from '../utils/iconMapper.jsx'
 
 const { Text } = Typography;
@@ -15,14 +15,25 @@ const MenuItem = ({ item, isActive, isExpanded, hasChildren, level = 0, onClick,
       padding: '0 16px'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
-        {/* Flecha indicadora para elementos hijo */}
+        {/* Indicador visual de nivel para elementos hijo */}
         {isChild && sidebarOpen && (
           <div style={{
-            marginRight: '8px',
-            color: 'var(--color-text-secondary)',
-            fontSize: '12px'
+            marginRight: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '20px',
+            height: '20px',
+            color: 'var(--color-primary-600)',
+            opacity: 0.6
           }}>
-            →
+            <Minus 
+              size={16} 
+              strokeWidth={3}
+              style={{
+                transform: 'rotate(90deg)'
+              }}
+            />
           </div>
         )}
 
