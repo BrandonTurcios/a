@@ -15,11 +15,11 @@ const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar, onLanguageCha
   return (
     <TooltipProvider>
       <header className={cn(
-        "bg-gradient-to-r from-primary-700 via-primary-600 to-secondary-600",
+        "bg-gradient-to-r from-primary-800 via-primary-700 to-primary-600",
         "px-6 flex items-center justify-between",
         "shadow-lg shadow-primary-900/30",
         "fixed top-0 left-0 right-0 z-[1000] h-[72px]",
-        "border-b-[3px] border-secondary-400"
+        "border-b-[3px] border-primary-600"
       )}>
         {/* Left: Menu button + Logo + Title */}
         <div className="flex items-center">
@@ -34,9 +34,9 @@ const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar, onLanguageCha
           <div className="flex items-center gap-4">
             <div className={cn(
               "w-11 h-11 rounded-xl",
-              "bg-gradient-to-br from-secondary-500 to-secondary-400",
+              "bg-gradient-to-br from-primary-500 to-primary-400",
               "flex items-center justify-center",
-              "shadow-lg shadow-secondary-500/40",
+              "shadow-lg shadow-primary-500/40",
               "border-2 border-white/30"
             )}>
               <span className="text-white font-bold text-xl">T</span>
@@ -62,7 +62,7 @@ const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar, onLanguageCha
                 "w-[360px] pl-10 pr-4",
                 "bg-white/95 border-2 border-white/50",
                 "rounded-xl shadow-lg",
-                "focus-visible:border-secondary-400 focus-visible:shadow-xl focus-visible:shadow-secondary-400/30",
+                "focus-visible:border-primary-400 focus-visible:shadow-xl focus-visible:shadow-primary-400/30",
                 "transition-all"
               )}
             />
@@ -75,8 +75,8 @@ const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar, onLanguageCha
               "hover:bg-white/30 hover:border-white/50",
               "transition-all cursor-pointer"
             )}>
-              <Avatar className="h-9 w-9 border-2 border-white/50 shadow-lg shadow-secondary-500/40">
-                <AvatarFallback className="bg-gradient-to-br from-secondary-500 to-secondary-400 text-white text-base font-bold">
+              <Avatar className="h-9 w-9 border-2 border-white/50 shadow-lg shadow-primary-500/40">
+                <AvatarFallback className="bg-gradient-to-br from-primary-500 to-primary-400 text-white text-base font-bold">
                   {sessionData?.username?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
