@@ -228,7 +228,8 @@
     "sentSuccess": "Correo enviado exitosamente"
   },
   "sidebar": {
-    "loadingMenu": "Cargando menú..."
+    "loadingMenu": "Cargando menú...",
+    "loadingChildren": "Cargando..."
   },
   "loading": {
     "content": "Cargando contenido..."

@@ -43,11 +43,11 @@ const TrytonTable = ({
     if (tableData && filtered) {
       console.log('🔗 Using pre-loaded filtered data');
       setTableInfo(tableData);
-      
+
       // Process data
       const processedData = processData(tableData.data);
       setRowData(processedData);
-      
+
       setLoading(false);
     } else {
       // Cargar datos normalmente
@@ -59,34 +59,34 @@ const TrytonTable = ({
     try {
       setLoading(true);
       setError(null);
-      
+
       console.log(`🔍 Loading table for model: ${model}`);
-      
+
       // First verify the view type
       const fieldsView = await trytonService.getFieldsView(model, viewId, viewType);
       console.log('🔍 View obtained:', fieldsView);
-      
+
       // Only proceed if it's a "tree" type view
       if (!fieldsView || fieldsView.type !== 'tree') {
         throw new Error(t('errors.viewNotTree'));
       }
-      
+
       const info = await trytonService.getTableInfo(
-        model, 
-        viewId, 
-        viewType, 
-        domain, 
+        model,
+        viewId,
+        viewType,
+        domain,
         limit
       );
-      
+
       console.log('✅ Table information loaded:', info);
-      
+
       setTableInfo(info);
-      
+
       // Process data
       const processedData = processData(info.data);
       setRowData(processedData);
-      
+
     } catch (error) {
       console.error('❌ Error loading table:', error);
       setError(error.message);
@@ -100,13 +100,13 @@ const TrytonTable = ({
     if (arch && arch.includes(`name="${fieldName}"`)) {
       return true;
     }
-    
+
     // Basic fields to always include
     const basicFields = ['id', 'name', 'code', 'rec_name'];
-    
+
     // Important related fields to show
     const relatedFields = ['party', 'template', 'product', 'company', 'supplier'];
-    
+
     return basicFields.includes(fieldName) || relatedFields.includes(fieldName);
   };
 
@@ -167,7 +167,7 @@ const TrytonTable = ({
       if (value === 'm-f') return t('table.maleFemale');
       return value;
     }
-    
+
     // Handle dates
     if (fieldDef.type === 'date' || fieldDef.type === 'timestamp' || fieldDef.type === 'datetime') {
       // Tryton can return objects { __class__: 'datetime', ... }
@@ -181,31 +181,31 @@ const TrytonTable = ({
       }
       return String(value);
     }
-    
+
     // Handle IDs that have related objects
     if (typeof value === 'number' && record) {
       const fieldName = fieldDef.name || '';
-      
+
       // Search for the related object with the same name but ending in "."
       const relatedFieldName = fieldName + '.';
       const relatedObject = record[relatedFieldName];
-      
+
       if (relatedObject && typeof relatedObject === 'object' && relatedObject.rec_name) {
         return relatedObject.rec_name;
       }
     }
-    
+
     // If it's null but there's a related object, try to show that
     if (value === null && record) {
       const fieldName = fieldDef.name || '';
       const relatedFieldName = fieldName + '.';
       const relatedObject = record[relatedFieldName];
-      
+
       if (relatedObject && typeof relatedObject === 'object' && relatedObject.rec_name) {
         return relatedObject.rec_name;
       }
     }
-    
+
     return String(value);
   };
 
@@ -221,7 +221,7 @@ const TrytonTable = ({
     if (!tableInfo?.fieldsView?.fields) return [];
 
     const cols = [];
-    
+
     // Agregar columna de selección si está habilitada
     if (enableRowSelection) {
       cols.push({
@@ -236,15 +236,27 @@ const TrytonTable = ({
         sortable: false,
         filter: false,
         suppressMovable: true,
-        cellStyle: { 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          padding: '8px'
+        cellStyle: (params) => {
+          const baseStyle = {
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '8px'
+          };
+
+          // Aplicar el mismo color de fondo que las demás columnas cuando está seleccionada
+          if (params.node && params.node.isSelected && params.node.isSelected()) {
+            return {
+              ...baseStyle,
+              backgroundColor: 'var(--color-primary-100)'
+            };
+          }
+
+          return baseStyle;
         }
       });
     }
-    
+
     // Process view fields
     Object.entries(tableInfo.fieldsView.fields).forEach(([fieldName, fieldDef]) => {
       // Only include fields that are in the tree view
@@ -262,13 +274,13 @@ const TrytonTable = ({
             const value = params.value;
             const record = params.data;
             const formatted = formatCellValue(value, fieldDef, record);
-            
+
             // Si es un boolean, renderizar solo el símbolo centrado
             if (fieldDef.type === 'boolean') {
               return (
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: '16px',
                   fontWeight: 'bold',
@@ -280,7 +292,7 @@ const TrytonTable = ({
                 </div>
               );
             }
-            
+
             return formatted;
           },
           cellStyle: (params) => {
@@ -295,11 +307,11 @@ const TrytonTable = ({
               lineHeight: '1.5'
             };
 
-            // Resaltar fila seleccionada
-            if (selectedRecord && params.data?.id === selectedRecord.id) {
+            // Resaltar fila seleccionada (con checkbox marcado)
+            if (params.node && params.node.isSelected && params.node.isSelected()) {
               return {
                 ...baseStyle,
-                backgroundColor: 'var(--color-primary-50)',
+                backgroundColor: 'var(--color-primary-100)',
                 fontWeight: '500'
               };
             }
@@ -312,7 +324,7 @@ const TrytonTable = ({
         });
       }
     });
-    
+
     return cols;
   }, [tableInfo, enableRowSelection, selectedRecord]);
 
@@ -323,7 +335,7 @@ const TrytonTable = ({
   // Manejar selección de filas (cuando cambia la selección)
   const onSelectionChanged = useCallback(() => {
     if (!gridRef.current) return;
-    
+
     const selectedRows = gridRef.current.api.getSelectedRows();
     if (selectedRows.length > 0) {
       // Buscar el nodo seleccionado
@@ -333,14 +345,14 @@ const TrytonTable = ({
           selectionTimestampRef.current = Date.now();
         }
       });
-      
+
       if (onRowSelect) {
         onRowSelect(selectedRows[0], true);
       }
     } else {
       currentSelectedNodeRef.current = null;
       selectionTimestampRef.current = 0;
-      
+
       if (onRowSelect) {
         onRowSelect(null, false);
       }
@@ -355,15 +367,27 @@ const TrytonTable = ({
     const target = event.event?.target;
     if (target) {
       // Buscar si el click fue en un checkbox o en un elemento relacionado con el checkbox
-      const isCheckboxClick = target.type === 'checkbox' || 
+      const isCheckboxClick = target.type === 'checkbox' ||
                               target.closest('.ag-selection-checkbox') ||
                               target.closest('[role="checkbox"]') ||
                               target.closest('.ag-checkbox') ||
                               target.closest('input[type="checkbox"]');
-      
+
       if (isCheckboxClick) {
         // AG Grid manejará la selección automáticamente cuando se hace click en el checkbox
         // El evento onSelectionChanged se llamará después
+
+        setTimeout(() => {
+          const activeElement = document.activeElement;
+          if (activeElement && (
+            activeElement.type === 'checkbox' ||
+            activeElement.classList.contains('ag-checkbox-input') ||
+            activeElement.closest('.ag-checkbox-input-wrapper')
+          )) {
+            activeElement.blur();
+          }
+        }, 50);
+
         return;
       }
     }
@@ -372,7 +396,7 @@ const TrytonTable = ({
     // Como suppressRowClickSelection={true}, AG Grid no cambiará la selección automáticamente
     const isCurrentlySelected = event.node.isSelected();
     const currentTime = Date.now();
-    
+
     // Verificar si esta fila ya estaba seleccionada ANTES del click
     // Usar timestamp para distinguir entre selección reciente (por este click) y selección previa
     const isSameNode = currentSelectedNodeRef.current === event.node;
@@ -392,11 +416,11 @@ const TrytonTable = ({
     if (!isCurrentlySelected) {
       // Seleccionar la fila
       event.node.setSelected(true);
-      
+
       // Actualizar el timestamp inmediatamente para evitar que el siguiente click abra el formulario
       // onSelectionChanged se llamará después y también actualizará el timestamp
       selectionTimestampRef.current = currentTime;
-      
+
       // NO llamar a onRowClick aquí porque eso abriría el formulario
       // onSelectionChanged se llamará automáticamente y actualizará currentSelectedNodeRef
     }
@@ -413,7 +437,7 @@ const TrytonTable = ({
   // Sincronizar selección cuando cambia selectedRecord
   useEffect(() => {
     if (!gridRef.current || !selectedRecord) return;
-    
+
     gridRef.current.api.forEachNode((node) => {
       if (node.data?.id === selectedRecord.id) {
         node.setSelected(true);
@@ -508,8 +532,8 @@ const TrytonTable = ({
           </Button>
         </Space>
       </div>
-      
-      <div 
+
+      <div
         className="ag-theme-alpine"
         style={{
           height: 'calc(100% - 80px)',
@@ -534,16 +558,16 @@ const TrytonTable = ({
           paginationPageSizeSelector={[10, 20, 50, 100]}
         />
       </div>
-      
+
       {/* Debug information (development only) */}
       {process.env.NODE_ENV === 'development' && (
         <details style={{ marginTop: '16px' }}>
           <summary style={{ cursor: 'pointer', color: '#666' }}>
             JSON
           </summary>
-          <pre style={{ 
-            background: '#f5f5f5', 
-            padding: '12px', 
+          <pre style={{
+            background: '#f5f5f5',
+            padding: '12px',
             borderRadius: '4px',
             fontSize: '12px',
             overflow: 'auto',

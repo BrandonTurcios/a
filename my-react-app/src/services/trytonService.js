@@ -1288,6 +1288,41 @@ class TrytonService {
         };
       });
 
+      // Precargar iconos de los hijos
+      try {
+        const iconNames = [];
+        for (const child of children) {
+          // Solo agregar si iconName es un string válido
+          if (
+            child.iconName &&
+            typeof child.iconName === "string" &&
+            child.iconName !== "📋" &&
+            child.iconName.trim() !== "" &&
+            isNaN(Number(child.iconName))
+          ) {
+            iconNames.push(child.iconName);
+          }
+        }
+
+        if (iconNames.length > 0) {
+          console.log(`Preloading ${iconNames.length} icons for children...`);
+          const iconUrls = await this.preloadIcons(iconNames, "#267f82");
+
+          // Agregar URLs de iconos a los hijos
+          for (const child of children) {
+            if (child.iconName && iconUrls[child.iconName]) {
+              child.iconUrl = iconUrls[child.iconName];
+            }
+          }
+          console.log(`Icons loaded for children`);
+        }
+      } catch (iconError) {
+        console.warn(
+          "No se pudieron cargar los iconos SVG para los hijos, usando iconos por defecto:",
+          iconError
+        );
+      }
+
       return children;
     } catch (error) {
       console.error(`❌ Error loading children for menu ${menuId}:`, error);

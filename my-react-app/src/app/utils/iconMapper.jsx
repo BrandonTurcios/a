@@ -27,9 +27,12 @@ export const getIconComponent = (item) => {
         src={item.iconUrl}
         alt={item.name || 'icon'}
         style={{
-          width: '16px',
-          height: '16px',
-          objectFit: 'contain'
+          width: '20px',
+          height: '20px',
+          minWidth: '20px',
+          minHeight: '20px',
+          objectFit: 'contain',
+          flexShrink: 0
         }}
       />
     );
@@ -86,5 +89,5 @@ export const getIconComponent = (item) => {
   }
 
   // Último fallback
-  return <FileText size={16} />;
+  return <FileText size={20} />;
 };

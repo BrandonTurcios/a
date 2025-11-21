@@ -1,8 +1,11 @@
 import React from 'react';
 import { Spin } from 'antd';
+import { useTranslation } from 'react-i18next';
 import MenuItem from './MenuItem';
 
 const MenuTree = ({ items, activeTab, expandedMenus, loadingMenuChildren, onMenuClick, level = 0, sidebarOpen }) => {
+  const { t } = useTranslation();
+
   if (!items || items.length === 0) return null;
 
   return (
@@ -37,7 +40,7 @@ const MenuTree = ({ items, activeTab, expandedMenus, loadingMenuChildren, onMenu
                     color: 'var(--color-neutral-600)'
                   }}>
                     <Spin size="small" />
-                    <span style={{ fontSize: '12px' }}>Cargando...</span>
+                    <span style={{ fontSize: '12px' }}>{t('sidebar.loadingChildren')}</span>
                   </div>
                 )}
                 {!isLoadingChildren && item.childs && item.childs.length > 0 && (
