@@ -123,7 +123,7 @@ const createFieldLabel = (labelText, required, icon = null) => (
       display: "flex",
       alignItems: "center",
       gap: "8px",
-      fontWeight: "500",
+      fontWeight: "bold",
       color: "var(--color-text-primary)",
     }}
   >
@@ -1824,9 +1824,7 @@ const TrytonForm = forwardRef(
             <Form.Item key={name} {...commonProps}>
               <Input
                 disabled={isReadonly}
-                placeholder={t("form.enterField", {
-                  field: label.toLowerCase(),
-                })}
+                placeholder={label}
                 className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 text-base"
               />
             </Form.Item>
@@ -1838,9 +1836,7 @@ const TrytonForm = forwardRef(
               <Input.TextArea
                 disabled={isReadonly}
                 rows={4}
-                placeholder={t("form.enterField", {
-                  field: label.toLowerCase(),
-                })}
+                placeholder={label}
                 className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 text-base resize-y"
               />
             </Form.Item>
@@ -1853,9 +1849,7 @@ const TrytonForm = forwardRef(
               <InputNumber
                 disabled={isReadonly}
                 style={{ width: "100%" }}
-                placeholder={t("form.enterField", {
-                  field: label.toLowerCase(),
-                })}
+                placeholder={label}
                 className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 text-base w-full"
               />
             </Form.Item>
@@ -1869,9 +1863,7 @@ const TrytonForm = forwardRef(
                 disabled={isReadonly}
                 style={{ width: "100%", ...inputStyle }}
                 step={0.01}
-                placeholder={t("form.enterField", {
-                  field: label.toLowerCase(),
-                })}
+                placeholder={label}
                 className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 text-base w-full"
               />
             </Form.Item>
@@ -1995,9 +1987,7 @@ const TrytonForm = forwardRef(
               <DatePicker
                 disabled={isReadonly}
                 style={{ width: "100%" }}
-                placeholder={t("form.selectField", {
-                  field: label.toLowerCase(),
-                })}
+                placeholder={label}
                 className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 w-full"
               />
             </Form.Item>
@@ -2030,9 +2020,7 @@ const TrytonForm = forwardRef(
                 disabled={isReadonly}
                 showTime
                 style={{ width: "100%" }}
-                placeholder={t("form.selectField", {
-                  field: label.toLowerCase(),
-                })}
+                placeholder={label}
                 className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 w-full"
               />
             </Form.Item>
@@ -2073,9 +2061,7 @@ const TrytonForm = forwardRef(
               <Form.Item key={name} {...commonProps}>
                 <Select
                   disabled={isReadonly}
-                  placeholder={t("form.selectField", {
-                    field: label.toLowerCase(),
-                  })}
+                  placeholder={label}
                   className="w-full rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12"
                 >
                   {dynamicOptions.length > 0 ? (
@@ -2095,9 +2081,7 @@ const TrytonForm = forwardRef(
             <Form.Item key={name} {...commonProps}>
               <Select
                 disabled={isReadonly}
-                placeholder={t("form.selectField", {
-                  field: label.toLowerCase(),
-                })}
+                placeholder={label}
                 className="w-full rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12"
               >
                 {options.map(([value, label]) => (
@@ -2132,9 +2116,7 @@ const TrytonForm = forwardRef(
             <Form.Item key={name} {...commonProps}>
               <Select
                 mode="multiple"
-                placeholder={t("form.selectField", {
-                  field: label.toLowerCase(),
-                })}
+                placeholder={label}
                 style={{ width: "100%" }}
               >
                 {multiselectionOptions.map(([value, label]) => (
@@ -2151,9 +2133,7 @@ const TrytonForm = forwardRef(
             <Form.Item key={name} {...commonProps}>
               <Select
                 mode="multiple"
-                placeholder={t("form.selectField", {
-                  field: label.toLowerCase(),
-                })}
+                placeholder={label}
                 style={{ width: "100%" }}
               >
                 {/* Las opciones se cargarían dinámicamente */}
@@ -2265,9 +2245,7 @@ const TrytonForm = forwardRef(
           return (
             <Form.Item key={name} {...commonProps}>
               <Input
-                placeholder={t("form.enterField", {
-                  field: label.toLowerCase(),
-                })}
+                placeholder={label}
               />
             </Form.Item>
           );
