@@ -986,8 +986,7 @@ const TrytonTable = ({
               }
             }}
             getPopupContainer={() => document.body}
-            subMenuOpenDelay={0.1}
-            subMenuCloseDelay={0.1}
+            triggerSubMenuAction="hover"
           />
         </div>,
         document.body
