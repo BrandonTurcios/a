@@ -53,6 +53,7 @@ const TrytonTable = ({
   const [contextMenuVisible, setContextMenuVisible] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const [contextMenuSelectedRows, setContextMenuSelectedRows] = useState([]);
+  const [openSubmenuKeys, setOpenSubmenuKeys] = useState([]);
   const [attachmentsCount, setAttachmentsCount] = useState(0);
   const [notesCount, setNotesCount] = useState(0);
   const [unreadNotesCount, setUnreadNotesCount] = useState(0);
@@ -562,11 +563,13 @@ const TrytonTable = ({
   useEffect(() => {
     const handleClickOutside = () => {
       setContextMenuVisible(false);
+      setOpenSubmenuKeys([]);
     };
 
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
         setContextMenuVisible(false);
+        setOpenSubmenuKeys([]);
       }
     };
 
@@ -584,6 +587,9 @@ const TrytonTable = ({
         document.removeEventListener('contextmenu', handleClickOutside);
         document.removeEventListener('keydown', handleEscape);
       };
+    } else {
+      // Cerrar submenús cuando se cierra el menú contextual
+      setOpenSubmenuKeys([]);
     }
   }, [contextMenuVisible]);
 
@@ -984,9 +990,18 @@ const TrytonTable = ({
               if (info.domEvent) {
                 info.domEvent.stopPropagation();
               }
+              // Cerrar el menú contextual cuando se hace clic en un item sin submenú
+              if (!info.key.startsWith('relate-') && !info.key.startsWith('print-') && info.key !== 'relate' && info.key !== 'print') {
+                setContextMenuVisible(false);
+                setOpenSubmenuKeys([]);
+              }
             }}
             getPopupContainer={() => document.body}
-            triggerSubMenuAction="hover"
+            triggerSubMenuAction="click"
+            openKeys={openSubmenuKeys}
+            onOpenChange={(keys) => {
+              setOpenSubmenuKeys(keys);
+            }}
           />
         </div>,
         document.body
