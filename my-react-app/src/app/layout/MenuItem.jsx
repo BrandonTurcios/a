@@ -10,9 +10,10 @@ const MenuItem = ({ item, isActive, isExpanded, hasChildren, level = 0, onClick,
 
   return (
     <div style={{
-      marginLeft: isChild && sidebarOpen ? `${level * 20}px` : '0',
+      marginLeft: isChild && sidebarOpen ? `${level * 16}px` : '0',
       position: 'relative',
-      padding: '0 16px'
+      padding: '0 8px',
+      marginBottom: '2px'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
         {/* Indicador visual de nivel para elementos hijo */}
@@ -45,7 +46,7 @@ const MenuItem = ({ item, isActive, isExpanded, hasChildren, level = 0, onClick,
           style={{
             flex: 1,
             height: 'auto',
-            padding: sidebarOpen ? '12px 16px' : '12px 8px',
+            padding: sidebarOpen ? '14px 18px' : '12px 8px',
             textAlign: 'left',
             display: 'flex',
             alignItems: 'center',
@@ -54,11 +55,12 @@ const MenuItem = ({ item, isActive, isExpanded, hasChildren, level = 0, onClick,
             border: 'none',
             borderRadius: '8px',
             color: isActive ? 'var(--color-primary-600)' : 'var(--color-text-primary)',
-            minHeight: '40px',
+            minHeight: '44px',
             position: 'relative',
             maxWidth: '100%',
             overflow: 'hidden',
-            transition: 'all 0.3s ease'
+            transition: 'all 0.3s ease',
+            width: '100%'
           }}
           title={sidebarOpen ? (item.description || item.name) : item.name}
         >
@@ -70,7 +72,8 @@ const MenuItem = ({ item, isActive, isExpanded, hasChildren, level = 0, onClick,
                 flexDirection: 'column',
                 alignItems: 'flex-start',
                 minWidth: 0,
-                flex: 1
+                flex: 1,
+                width: '100%'
               }}>
                 <Text
                   style={{

@@ -66,7 +66,9 @@ const Sidebar = ({ open, menuItems, loading, error, expandedMenus, activeTab, lo
         overflowY: 'auto',
         overflowX: 'hidden',
         paddingTop: '64px',
-        paddingBottom: '16px'
+        paddingBottom: '16px',
+        paddingLeft: '8px',
+        paddingRight: '8px'
       }}>
         {loading ? (
           <div style={{ padding: '24px', textAlign: 'center' }}>
