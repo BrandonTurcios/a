@@ -766,36 +766,95 @@ const TrytonTable = ({
     return items;
   }, [toolbarInfo, contextMenuSelectedRows, onContextMenuAttach, onContextMenuNote, onContextMenuRelate, onContextMenuPrint, onContextMenuEmail, t, attachmentsCount, notesCount, unreadNotesCount]);
 
-  // Detectar cuando el mouse está sobre un item sin submenú y cerrar submenús abiertos
+  // Trackear posición del mouse y el item sobre el que está el mouse
+  const currentHoveredItemRef = useRef(null);
+  
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      window.mouseX = e.clientX;
+      window.mouseY = e.clientY;
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
+
+  // Detectar cuando el mouse está sobre items del menú y controlar submenús
   useEffect(() => {
     if (!contextMenuVisible || !menuContainerRef.current) return;
 
     const handleMouseOver = (e) => {
-      // Solo procesar si hay submenús abiertos
-      if (openSubmenuKeys.length === 0) return;
-
       // Buscar el item del menú sobre el que está el mouse
       const menuItem = e.target.closest('.ant-menu-item:not(.ant-menu-submenu-title)');
-      if (!menuItem) return;
-
-      // Obtener todos los items del menú
-      const allMenuItems = menuContainerRef.current.querySelectorAll('.ant-menu-item:not(.ant-menu-submenu-title)');
-      const itemIndex = Array.from(allMenuItems).indexOf(menuItem);
       
-      if (itemIndex >= 0 && itemIndex < contextMenuItems.length) {
-        const item = contextMenuItems[itemIndex];
-        // Si el item no tiene children (no es un submenú), cerrar todos los submenús
-        if (item && (!item.children || item.children.length === 0)) {
-          setOpenSubmenuKeys([]);
+      if (menuItem) {
+        // Obtener todos los items del menú
+        const allMenuItems = menuContainerRef.current.querySelectorAll('.ant-menu-item:not(.ant-menu-submenu-title)');
+        const itemIndex = Array.from(allMenuItems).indexOf(menuItem);
+        
+        if (itemIndex >= 0 && itemIndex < contextMenuItems.length) {
+          const item = contextMenuItems[itemIndex];
+          currentHoveredItemRef.current = item.key;
+          
+          // Si el item tiene children, abrir el submenú después de un pequeño delay
+          if (item && item.children && item.children.length > 0) {
+            if (submenuCloseTimeoutRef.current) {
+              clearTimeout(submenuCloseTimeoutRef.current);
+            }
+            submenuCloseTimeoutRef.current = setTimeout(() => {
+              // Verificar que el mouse todavía esté sobre el mismo item
+              if (currentHoveredItemRef.current === item.key) {
+                setOpenSubmenuKeys([item.key]);
+              }
+            }, 200);
+          } else {
+            // Si el item no tiene children, cerrar todos los submenús
+            if (openSubmenuKeys.length > 0) {
+              setOpenSubmenuKeys([]);
+            }
+          }
         }
+      } else {
+        // Si no está sobre un item, verificar si está sobre un submenú
+        const submenu = e.target.closest('.ant-menu-submenu-popup');
+        if (!submenu) {
+          // Si no está sobre item ni submenú, cerrar submenús
+          currentHoveredItemRef.current = null;
+          if (openSubmenuKeys.length > 0) {
+            if (submenuCloseTimeoutRef.current) {
+              clearTimeout(submenuCloseTimeoutRef.current);
+            }
+            submenuCloseTimeoutRef.current = setTimeout(() => {
+              setOpenSubmenuKeys([]);
+            }, 150);
+          }
+        }
+      }
+    };
+
+    const handleMouseLeave = (e) => {
+      // Verificar si el mouse está yendo a un submenú
+      const relatedTarget = e.relatedTarget;
+      const isGoingToSubmenu = relatedTarget && (
+        relatedTarget.closest('.ant-menu-submenu-popup') ||
+        relatedTarget.closest('.ant-menu-submenu')
+      );
+      
+      if (!isGoingToSubmenu) {
+        // Si no está yendo a un submenú, limpiar el item actual
+        currentHoveredItemRef.current = null;
       }
     };
 
     const menuElement = menuContainerRef.current;
     menuElement.addEventListener('mouseover', handleMouseOver, true);
+    menuElement.addEventListener('mouseleave', handleMouseLeave, true);
 
     return () => {
       menuElement.removeEventListener('mouseover', handleMouseOver, true);
+      menuElement.removeEventListener('mouseleave', handleMouseLeave, true);
     };
   }, [contextMenuVisible, contextMenuItems, openSubmenuKeys]);
 
@@ -1100,49 +1159,11 @@ const TrytonTable = ({
               }
             }}
             getPopupContainer={() => document.body}
-            triggerSubMenuAction="hover"
+            triggerSubMenuAction="click"
             openKeys={openSubmenuKeys}
             onOpenChange={(keys) => {
-              // Limpiar timeout al cambiar las keys
-              if (submenuCloseTimeoutRef.current) {
-                clearTimeout(submenuCloseTimeoutRef.current);
-                submenuCloseTimeoutRef.current = null;
-              }
-              
-              // Si no hay keys, cerrar todos los submenús inmediatamente
-              if (keys.length === 0) {
-                setOpenSubmenuKeys([]);
-                return;
-              }
-              
-              // Filtrar las keys para asegurarnos de que solo se abran submenús válidos
-              // Los únicos items que pueden tener submenús son "relate" y "print"
-              // cuando tienen más de un elemento en sus arrays
-              const validKeys = keys.filter(key => {
-                // Solo "relate" y "print" pueden ser submenús válidos
-                if (key !== 'relate' && key !== 'print') {
-                  return false;
-                }
-                
-                // Verificar que el item correspondiente realmente tenga children
-                const item = contextMenuItems.find(item => item.key === key);
-                const hasChildren = item && item.children && item.children.length > 0;
-                return hasChildren;
-              });
-              
-              // Si no hay keys válidas después del filtro, cerrar todos los submenús inmediatamente
-              if (validKeys.length === 0) {
-                setOpenSubmenuKeys([]);
-                return;
-              }
-              
-              // Asegurar que solo un submenú esté abierto a la vez
-              // Si hay keys válidas, mantener solo la última (el submenú más reciente)
-              const lastKey = validKeys[validKeys.length - 1];
-              // Solo actualizar si es diferente para evitar re-renders innecesarios
-              if (openSubmenuKeys[0] !== lastKey) {
-                setOpenSubmenuKeys([lastKey]);
-              }
+              // Solo permitir cambios controlados manualmente
+              // No hacer nada aquí, el control se hace con los eventos de mouse
             }}
             subMenuOpenDelay={0.1}
             subMenuCloseDelay={0.1}
