@@ -93,7 +93,7 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
                 fontWeight: 600,
                 color: 'var(--color-primary-500)'
               }}>
-                {t('common.currentView') || 'Current View'}
+                Current View
               </span>
               <Title
                 level={2}
