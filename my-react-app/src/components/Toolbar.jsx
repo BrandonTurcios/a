@@ -85,17 +85,18 @@ const Toolbar = ({
   };
 
   const toolbarWrapperStyles = {
-    padding: '3px',
-    borderRadius: '20px',
-    background: 'linear-gradient(135deg, var(--color-primary-700), var(--color-secondary-600))',
-    border: '1px solid var(--color-primary-200)',
-    minWidth: 'fit-content'
+    padding: '2px',
+    borderRadius: '18px',
+    background: 'var(--color-card-background)',
+    border: '1px solid rgba(1, 76, 107, 0.15)',
+    minWidth: 'fit-content',
+    boxShadow: '0 4px 12px rgba(1, 76, 107, 0.08)'
   };
 
   const toolbarInnerStyles = {
-    background: 'var(--color-card-background)',
-    borderRadius: '16px',
-    padding: '12px 16px',
+    background: 'linear-gradient(120deg, rgba(255,255,255,0.95), rgba(240,247,250,0.95))',
+    borderRadius: '14px',
+    padding: '10px 14px',
     display: 'flex',
     flexDirection: 'row',
     gap: '12px',

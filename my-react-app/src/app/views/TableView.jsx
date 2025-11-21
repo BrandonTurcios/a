@@ -80,7 +80,7 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'flex-start',
+          alignItems: 'center',
           gap: '16px',
           flexWrap: 'wrap'
         }}>
