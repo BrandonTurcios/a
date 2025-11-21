@@ -808,6 +808,58 @@ const TrytonTable = ({
     );
   }
 
+  // Agregar estilos personalizados para headers de AG Grid
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      .ag-theme-alpine .ag-header {
+        background: linear-gradient(135deg, var(--color-primary-700) 0%, var(--color-primary-600) 100%) !important;
+        color: white !important;
+        font-weight: 600 !important;
+        border-bottom: 2px solid var(--color-primary-800) !important;
+      }
+      .ag-theme-alpine .ag-header-cell {
+        background: transparent !important;
+        color: white !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.2) !important;
+      }
+      .ag-theme-alpine .ag-header-cell-text {
+        color: white !important;
+        font-weight: 600 !important;
+      }
+      .ag-theme-alpine .ag-header-cell-label {
+        color: white !important;
+      }
+      .ag-theme-alpine .ag-icon {
+        color: white !important;
+        opacity: 0.9 !important;
+      }
+      .ag-theme-alpine .ag-icon-asc::before,
+      .ag-theme-alpine .ag-icon-desc::before,
+      .ag-theme-alpine .ag-icon-menu::before {
+        color: white !important;
+      }
+      .ag-theme-alpine .ag-header-cell-resize {
+        background: rgba(255, 255, 255, 0.3) !important;
+      }
+      .ag-theme-alpine .ag-header-cell:hover {
+        background: rgba(255, 255, 255, 0.1) !important;
+      }
+      .ag-theme-alpine .ag-row {
+        background: white !important;
+        border-bottom: 1px solid var(--color-neutral-200) !important;
+      }
+      .ag-theme-alpine .ag-row:hover {
+        background: var(--color-primary-50) !important;
+      }
+      .ag-theme-alpine .ag-row-selected {
+        background: var(--color-primary-100) !important;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => document.head.removeChild(style);
+  }, []);
+
   const gridHeight = 'calc(100vh - 240px)';
 
   return (
@@ -819,7 +871,8 @@ const TrytonTable = ({
         display: 'flex',
         flexDirection: 'column',
         gap: '16px',
-        flex: 1
+        flex: 1,
+        background: 'var(--color-neutral-50)'
       }}
       onContextMenu={handleContainerContextMenu}
     >
@@ -828,7 +881,10 @@ const TrytonTable = ({
         style={{
           width: '100%',
           height: gridHeight,
-          minHeight: '480px'
+          minHeight: '480px',
+          background: 'white',
+          borderRadius: '8px',
+          overflow: 'hidden'
         }}
         onContextMenu={handleContainerContextMenu}
       >

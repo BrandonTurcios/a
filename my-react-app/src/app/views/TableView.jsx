@@ -41,12 +41,12 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
   const title = selectedMenuInfo?.actionName || selectedMenuInfo?.menuItem?.name || 'Table';
   const subtitle = `${selectedMenuInfo?.resModel || 'Tryton'} · ${tableInfo?.viewType || 'tree'} view`;
   const containerStyles = {
-    background: 'linear-gradient(180deg, rgba(38,173,195,0.12) 0%, rgba(0,191,166,0.08) 100%)',
+    background: 'var(--color-neutral-50)',
     borderRadius: '28px',
-    border: '1px solid var(--color-primary-100)',
+    border: '1px solid var(--color-neutral-200)',
     padding: '28px',
     minHeight: 'calc(100vh - 96px)',
-    boxShadow: '0 30px 60px rgba(1,118,143,0.1)',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
     display: 'flex',
     flexDirection: 'column',
     gap: '24px'
