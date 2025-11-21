@@ -74,8 +74,8 @@ const MenuItem = ({ item, isActive, isExpanded, hasChildren, level = 0, onClick,
               }}>
                 <Text
                   style={{
-                    fontSize: '14px',
-                    fontWeight: isChild ? '400' : '500',
+                    fontSize: '15px',
+                    fontWeight: isChild ? '500' : '600',
                     color: isActive ? 'var(--color-primary-600)' : 'var(--color-text-primary)',
                     wordBreak: 'break-word',
                     lineHeight: '1.3'
@@ -87,7 +87,8 @@ const MenuItem = ({ item, isActive, isExpanded, hasChildren, level = 0, onClick,
                 {item.type === 'module' && item.model && (
                   <Text
                     style={{
-                      fontSize: '12px',
+                      fontSize: '13px',
+                      fontWeight: '500',
                       color: 'var(--color-text-secondary)',
                       wordBreak: 'break-word',
                       lineHeight: '1.2'

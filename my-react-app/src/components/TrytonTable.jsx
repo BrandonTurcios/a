@@ -323,7 +323,9 @@ const TrytonTable = ({
               whiteSpace: 'normal',
               wordBreak: 'break-word',
               overflowWrap: 'break-word',
-              lineHeight: '1.5'
+              lineHeight: '1.5',
+              fontSize: '15px',
+              fontWeight: '500'
             };
 
             // Resaltar fila seleccionada (con checkbox marcado)
@@ -331,7 +333,7 @@ const TrytonTable = ({
               return {
                 ...baseStyle,
                 backgroundColor: 'var(--color-primary-100)',
-                fontWeight: '500'
+                fontWeight: '600'
               };
             }
 
@@ -969,7 +971,9 @@ const TrytonTable = ({
             items={contextMenuItems}
             style={{
               border: 'none',
-              borderRadius: '8px'
+              borderRadius: '8px',
+              fontSize: '15px',
+              fontWeight: '500'
             }}
             onClick={(info) => {
               // El onClick ya está manejado en cada item

@@ -86,6 +86,16 @@
   border-color: var(--color-primary-500);
 }
 
+/* Estilos para celdas de tabla más notorias */
+.ag-theme-alpine .ag-cell {
+  font-size: 15px !important;
+  font-weight: 500 !important;
+}
+
+.ag-theme-alpine .ag-row-selected .ag-cell {
+  font-weight: 600 !important;
+}
+
 /* Variables CSS para la paleta de colores */
 :root {
   /* Primary */
@@ -641,4 +651,43 @@ body {
 
 .custom-notification-success .ant-notification-notice-close:hover {
   color: var(--color-text-primary) !important;
+}
+
+/* Estilos para menú contextual más notorio */
+.ant-menu-vertical .ant-menu-item,
+.ant-menu-vertical-left .ant-menu-item,
+.ant-menu-vertical-right .ant-menu-item {
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  height: 40px !important;
+  line-height: 40px !important;
+}
+
+.ant-menu-vertical .ant-menu-submenu-title,
+.ant-menu-vertical-left .ant-menu-submenu-title,
+.ant-menu-vertical-right .ant-menu-submenu-title {
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  height: 40px !important;
+  line-height: 40px !important;
+}
+
+.ant-menu-item:hover,
+.ant-menu-submenu-title:hover {
+  font-weight: 600 !important;
+}
+
+/* Estilos para botones del toolbar más notorios */
+.ant-btn {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+.ant-btn-primary,
+.ant-btn-default {
+  font-weight: 600 !important;
+}
+
+.ant-btn:hover {
+  font-weight: 600 !important;
 }
