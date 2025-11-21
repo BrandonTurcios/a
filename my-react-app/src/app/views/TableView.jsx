@@ -38,7 +38,23 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
   console.log('🔧 TableView - toolbarInfo:', selectedMenuInfo?.toolbarInfo);
   console.log('🔧 TableView - selectedRecord:', selectedRecord);
 
-  const title = selectedMenuInfo?.actionName || selectedMenuInfo?.menuItem?.name || 'Table';
+  const title = React.useMemo(() => {
+    const rawTitle = selectedMenuInfo?.actionName || selectedMenuInfo?.menuItem?.name || 'Table';
+    if (!rawTitle) return 'Table';
+    if (rawTitle.includes('/')) {
+      return rawTitle
+        .split('/')
+        .map((part) => part.trim())
+        .join('  →  ');
+    }
+    if (rawTitle.includes('->')) {
+      return rawTitle
+        .split('->')
+        .map((part) => part.trim())
+        .join('  →  ');
+    }
+    return rawTitle;
+  }, [selectedMenuInfo?.actionName, selectedMenuInfo?.menuItem?.name]);
   const containerStyles = {
     background: 'var(--color-neutral-50)',
     borderRadius: '28px',
@@ -67,9 +83,33 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
           flexWrap: 'wrap'
         }}>
           <div style={{ flex: 1, minWidth: '320px' }}>
-            <Title level={2} style={{ margin: 0, color: 'var(--color-primary-900)' }}>
-              {title}
-            </Title>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <span style={{
+                textTransform: 'uppercase',
+                letterSpacing: '0.35em',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: 'var(--color-primary-500)'
+              }}>
+                {t('common.currentView') || 'Current View'}
+              </span>
+              <Title
+                level={2}
+                style={{
+                  margin: 0,
+                  fontSize: '38px',
+                  lineHeight: 1.1,
+                  fontWeight: 700,
+                  color: 'var(--color-primary-900)',
+                  background: 'linear-gradient(120deg, var(--color-primary-800), #012f44)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  textShadow: '0 6px 18px rgba(1, 76, 107, 0.15)'
+                }}
+              >
+                {title}
+              </Title>
+            </div>
           </div>
 
           {/* Toolbar dentro del mismo contenedor */}
