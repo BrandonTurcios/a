@@ -54,6 +54,7 @@ const TrytonTable = ({
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const [contextMenuSelectedRows, setContextMenuSelectedRows] = useState([]);
   const [hoveredMenuKey, setHoveredMenuKey] = useState(null);
+  const submenuCloseTimeoutRef = useRef(null);
   const [attachmentsCount, setAttachmentsCount] = useState(0);
   const [notesCount, setNotesCount] = useState(0);
   const [unreadNotesCount, setUnreadNotesCount] = useState(0);
@@ -868,24 +869,54 @@ const TrytonTable = ({
     minWidth: 120
   }), []);
 
+  const cancelSubmenuClose = () => {
+    if (submenuCloseTimeoutRef.current) {
+      clearTimeout(submenuCloseTimeoutRef.current);
+      submenuCloseTimeoutRef.current = null;
+    }
+  };
+
+  const scheduleSubmenuClose = () => {
+    cancelSubmenuClose();
+    submenuCloseTimeoutRef.current = setTimeout(() => {
+      setHoveredMenuKey(null);
+      submenuCloseTimeoutRef.current = null;
+    }, 200);
+  };
+
+  useEffect(() => {
+    if (!contextMenuVisible) {
+      cancelSubmenuClose();
+      setHoveredMenuKey(null);
+    }
+    return () => cancelSubmenuClose();
+  }, [contextMenuVisible]);
+
   const handleMenuItemClick = (item, event) => {
     if (!item) return;
     event.stopPropagation();
     if (item.children && item.children.length > 0) {
+      cancelSubmenuClose();
       setHoveredMenuKey(item.key);
       return;
     }
+    cancelSubmenuClose();
+    setHoveredMenuKey(null);
     if (item.onClick) {
       item.onClick({ domEvent: event });
     }
+    setContextMenuVisible(false);
   };
 
   const handleSubmenuItemClick = (child, event) => {
     if (!child) return;
     event.stopPropagation();
+    cancelSubmenuClose();
+    setHoveredMenuKey(null);
     if (child.onClick) {
       child.onClick({ domEvent: event });
     }
+    setContextMenuVisible(false);
   };
 
   const renderMenuItems = (items) => {
@@ -896,10 +927,15 @@ const TrytonTable = ({
       return (
         <div
           key={item.key}
-          onMouseEnter={() => hasChildren && setHoveredMenuKey(item.key)}
-          onMouseLeave={() => {
-            // No cerrar inmediatamente, dejar que el submenú maneje su propio hover
+          onMouseEnter={() => {
+            cancelSubmenuClose();
+            if (hasChildren) {
+              setHoveredMenuKey(item.key);
+            } else {
+              setHoveredMenuKey(null);
+            }
           }}
+          onMouseLeave={() => hasChildren && scheduleSubmenuClose()}
           onClick={(e) => handleMenuItemClick(item, e)}
           style={{
             position: 'relative',
@@ -924,8 +960,11 @@ const TrytonTable = ({
           )}
           {hasChildren && hoveredMenuKey === item.key && createPortal(
             <div
-              onMouseEnter={() => setHoveredMenuKey(item.key)}
-              onMouseLeave={() => setHoveredMenuKey(null)}
+              onMouseEnter={() => {
+                cancelSubmenuClose();
+                setHoveredMenuKey(item.key);
+              }}
+              onMouseLeave={() => scheduleSubmenuClose()}
               style={{
                 position: 'fixed',
                 top: contextMenuPosition.y + (index * itemHeight),
