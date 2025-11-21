@@ -53,6 +53,8 @@ const TrytonTable = ({
   const [contextMenuVisible, setContextMenuVisible] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const [contextMenuSelectedRows, setContextMenuSelectedRows] = useState([]);
+  const [openSubmenuKeys, setOpenSubmenuKeys] = useState([]);
+  const hoveredMenuItemRef = useRef(null);
   const [attachmentsCount, setAttachmentsCount] = useState(0);
   const [notesCount, setNotesCount] = useState(0);
   const [unreadNotesCount, setUnreadNotesCount] = useState(0);
@@ -588,6 +590,44 @@ const TrytonTable = ({
     }
   }, [contextMenuVisible]);
 
+  // Trackear qué item del menú tiene el mouse encima
+  useEffect(() => {
+    if (!contextMenuVisible) {
+      hoveredMenuItemRef.current = null;
+      return;
+    }
+
+    const handleMouseOver = (e) => {
+      const menuItem = e.target.closest('.ant-menu-item:not(.ant-menu-submenu-title)');
+      if (menuItem) {
+        // Buscar la key del item
+        const menuItems = document.querySelectorAll('.ant-menu-item:not(.ant-menu-submenu-title)');
+        const itemIndex = Array.from(menuItems).indexOf(menuItem);
+        if (itemIndex >= 0 && itemIndex < contextMenuItems.length) {
+          hoveredMenuItemRef.current = contextMenuItems[itemIndex].key;
+        }
+      } else {
+        // Si está sobre un submenú, mantener el último item hovered
+        const submenu = e.target.closest('.ant-menu-submenu-popup');
+        if (!submenu) {
+          hoveredMenuItemRef.current = null;
+        }
+      }
+    };
+
+    const handleMouseLeave = () => {
+      // No limpiar inmediatamente, dejar que onOpenChange maneje el cierre
+    };
+
+    document.addEventListener('mouseover', handleMouseOver, true);
+    document.addEventListener('mouseleave', handleMouseLeave, true);
+
+    return () => {
+      document.removeEventListener('mouseover', handleMouseOver, true);
+      document.removeEventListener('mouseleave', handleMouseLeave, true);
+    };
+  }, [contextMenuVisible, contextMenuItems]);
+
   // Construir items del menú contextual
   const contextMenuItems = useMemo(() => {
     if (!toolbarInfo || contextMenuSelectedRows.length === 0) return [];
@@ -991,8 +1031,34 @@ const TrytonTable = ({
                 setContextMenuVisible(false);
               }
             }}
-            getPopupContainer={() => document.body}
             triggerSubMenuAction="hover"
+            openKeys={openSubmenuKeys}
+            onOpenChange={(keys) => {
+              // Solo permitir abrir si el mouse realmente está sobre el item
+              if (keys.length > 0) {
+                const lastKey = keys[keys.length - 1];
+                // Verificar que sea una key válida
+                if (lastKey !== 'relate' && lastKey !== 'print') {
+                  setOpenSubmenuKeys([]);
+                  return;
+                }
+                // Verificar que el item tenga children
+                const item = contextMenuItems.find(item => item.key === lastKey);
+                if (!item || !item.children || item.children.length === 0) {
+                  setOpenSubmenuKeys([]);
+                  return;
+                }
+                // Verificar que el mouse esté sobre el item
+                if (hoveredMenuItemRef.current !== lastKey) {
+                  // Si el mouse no está sobre este item, no abrir
+                  setOpenSubmenuKeys([]);
+                  return;
+                }
+              }
+              setOpenSubmenuKeys(keys);
+            }}
+            subMenuOpenDelay={0.2}
+            subMenuCloseDelay={0.15}
           />
         </div>,
         document.body
