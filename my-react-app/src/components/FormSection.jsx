@@ -23,12 +23,14 @@ const GroupSection = ({ section, fields, form, fieldComponents, level = 0 }) => 
   return (
     <Card 
       title={
-        <span style={{
-          color: '#fff',
-          fontWeight: 600,
-          fontSize: '16px',
-          letterSpacing: '0.02em'
-        }}>
+        <span
+          style={{
+            color: '#015D70',
+            fontWeight: 600,
+            fontSize: '16px',
+            letterSpacing: '0.02em'
+          }}
+        >
           {title}
         </span>
       }
