@@ -795,25 +795,40 @@ const TrytonTable = ({
       .ag-theme-alpine .ag-header-cell-resize {
         background: rgba(255, 255, 255, 0.3) !important;
       }
-      .ag-theme-alpine .ag-header-cell:hover {
-        background: var(--color-primary-800) !important;
+      .ag-theme-alpine .ag-header-cell:hover,
+      .ag-theme-alpine .ag-header-cell.ag-header-cell-hover,
+      .ag-theme-alpine .ag-header-cell[class*="hover"],
+      .ag-theme-alpine .ag-header-row .ag-header-cell:hover {
+        background: #014E5F !important;
+        background-color: #014E5F !important;
         color: white !important;
       }
-      .ag-theme-alpine .ag-header-cell:hover .ag-header-cell-text {
+      .ag-theme-alpine .ag-header-cell:hover *,
+      .ag-theme-alpine .ag-header-cell.ag-header-cell-hover *,
+      .ag-theme-alpine .ag-header-cell:hover .ag-header-cell-text,
+      .ag-theme-alpine .ag-header-cell:hover .ag-header-cell-label,
+      .ag-theme-alpine .ag-header-row .ag-header-cell:hover * {
         color: white !important;
       }
-      .ag-theme-alpine .ag-header-cell:hover .ag-header-cell-label {
-        color: white !important;
-      }
-      .ag-theme-alpine .ag-header-cell:hover .ag-icon {
+      .ag-theme-alpine .ag-header-cell:hover .ag-icon,
+      .ag-theme-alpine .ag-header-cell.ag-header-cell-hover .ag-icon,
+      .ag-theme-alpine .ag-header-row .ag-header-cell:hover .ag-icon {
         color: white !important;
         opacity: 1 !important;
+        fill: white !important;
       }
       .ag-theme-alpine .ag-header-cell:hover .ag-icon-asc::before,
       .ag-theme-alpine .ag-header-cell:hover .ag-icon-desc::before,
-      .ag-theme-alpine .ag-header-cell:hover .ag-icon-menu::before {
+      .ag-theme-alpine .ag-header-cell:hover .ag-icon-menu::before,
+      .ag-theme-alpine .ag-header-cell.ag-header-cell-hover .ag-icon-asc::before,
+      .ag-theme-alpine .ag-header-cell.ag-header-cell-hover .ag-icon-desc::before,
+      .ag-theme-alpine .ag-header-cell.ag-header-cell-hover .ag-icon-menu::before,
+      .ag-theme-alpine .ag-header-row .ag-header-cell:hover .ag-icon-asc::before,
+      .ag-theme-alpine .ag-header-row .ag-header-cell:hover .ag-icon-desc::before,
+      .ag-theme-alpine .ag-header-row .ag-header-cell:hover .ag-icon-menu::before {
         color: white !important;
         opacity: 1 !important;
+        fill: white !important;
       }
       .ag-theme-alpine .ag-row {
         background: white !important;
