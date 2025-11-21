@@ -97,7 +97,9 @@
     "elements": "elemento(s)",
     "male": "Masculino",
     "female": "Femenino",
-    "maleFemale": "Masculino-Femenino"
+    "maleFemale": "Masculino-Femenino",
+    "contextMenuNoSelection": "Seleccione una fila para ver las opciones",
+    "contextMenuTitle": "Acciones"
   },
   "form": {
     "view": "Vista de formulario",

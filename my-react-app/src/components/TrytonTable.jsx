@@ -1,11 +1,16 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, Spin, Alert, Button, Typography } from 'antd';
+import { Card, Spin, Alert, Button, Typography, Menu } from 'antd';
 import {
   ReloadOutlined,
   DownloadOutlined,
   FilterOutlined,
-  SettingOutlined
+  SettingOutlined,
+  FileOutlined,
+  CommentOutlined,
+  LinkOutlined,
+  PrinterOutlined,
+  MailOutlined
 } from '@ant-design/icons';
 import { AgGridReact } from 'ag-grid-react';
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
@@ -29,7 +34,14 @@ const TrytonTable = ({
   enableRowSelection = false,
   selectedRecord = null,
   tableData = null, // Datos pre-cargados (para tablas relacionadas)
-  filtered = false // Indicar si está filtrado
+  filtered = false, // Indicar si está filtrado
+  // Handlers para el menú contextual
+  onContextMenuAttach = null,
+  onContextMenuNote = null,
+  onContextMenuRelate = null,
+  onContextMenuPrint = null,
+  onContextMenuEmail = null,
+  toolbarInfo = null // Información del toolbar para saber qué opciones mostrar
 }) => {
   const { t } = useTranslation();
   const [tableInfo, setTableInfo] = useState(null);
@@ -37,6 +49,9 @@ const TrytonTable = ({
   const [error, setError] = useState(null);
   const [rowData, setRowData] = useState([]);
   const gridRef = useRef(null);
+  const [contextMenuVisible, setContextMenuVisible] = useState(false);
+  const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+  const [contextMenuSelectedRows, setContextMenuSelectedRows] = useState([]);
 
   useEffect(() => {
     // Si tenemos datos pre-cargados (tabla relacionada), usarlos directamente
@@ -405,6 +420,170 @@ const TrytonTable = ({
     }
   }, [onRowDoubleClick]);
 
+  // Manejar click derecho para mostrar menú contextual
+  const onCellContextMenu = useCallback((event) => {
+    if (!gridRef.current) return;
+
+    // Obtener filas seleccionadas
+    const selectedRows = gridRef.current.api.getSelectedRows();
+    
+    // Solo mostrar menú si hay filas seleccionadas
+    if (selectedRows.length === 0) {
+      return;
+    }
+
+    // Prevenir el menú contextual por defecto
+    event.event.preventDefault();
+    event.event.stopPropagation();
+
+    // Guardar posición del click
+    setContextMenuPosition({
+      x: event.event.clientX,
+      y: event.event.clientY
+    });
+
+    // Guardar filas seleccionadas
+    setContextMenuSelectedRows(selectedRows);
+
+    // Mostrar menú
+    setContextMenuVisible(true);
+  }, []);
+
+  // Cerrar menú contextual cuando se hace click fuera
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setContextMenuVisible(false);
+    };
+
+    if (contextMenuVisible) {
+      document.addEventListener('click', handleClickOutside);
+      return () => {
+        document.removeEventListener('click', handleClickOutside);
+      };
+    }
+  }, [contextMenuVisible]);
+
+  // Construir items del menú contextual
+  const contextMenuItems = useMemo(() => {
+    if (!toolbarInfo || contextMenuSelectedRows.length === 0) return [];
+
+    const items = [];
+    const { action = [], relate = [], print = [], emails = [] } = toolbarInfo;
+
+    // Attachments
+    if (onContextMenuAttach) {
+      items.push({
+        key: 'attach',
+        label: t('common.attach'),
+        icon: <FileOutlined />,
+        onClick: () => {
+          setContextMenuVisible(false);
+          if (contextMenuSelectedRows.length > 0) {
+            onContextMenuAttach(contextMenuSelectedRows[0]);
+          }
+        }
+      });
+    }
+
+    // Notes
+    if (onContextMenuNote) {
+      items.push({
+        key: 'note',
+        label: t('common.comment'),
+        icon: <CommentOutlined />,
+        onClick: () => {
+          setContextMenuVisible(false);
+          if (contextMenuSelectedRows.length > 0) {
+            onContextMenuNote(contextMenuSelectedRows[0]);
+          }
+        }
+      });
+    }
+
+    // Relate
+    if (relate.length > 0 && onContextMenuRelate) {
+      if (relate.length === 1) {
+        items.push({
+          key: 'relate',
+          label: t('common.relate'),
+          icon: <LinkOutlined />,
+          onClick: () => {
+            setContextMenuVisible(false);
+            if (contextMenuSelectedRows.length > 0) {
+              onContextMenuRelate(relate[0], contextMenuSelectedRows[0]);
+            }
+          }
+        });
+      } else {
+        items.push({
+          key: 'relate',
+          label: t('common.relate'),
+          icon: <LinkOutlined />,
+          children: relate.map((item, index) => ({
+            key: `relate-${index}`,
+            label: item.name || `Relate ${index + 1}`,
+            onClick: () => {
+              setContextMenuVisible(false);
+              if (contextMenuSelectedRows.length > 0) {
+                onContextMenuRelate(item, contextMenuSelectedRows[0]);
+              }
+            }
+          }))
+        });
+      }
+    }
+
+    // Print
+    if (print.length > 0 && onContextMenuPrint) {
+      if (print.length === 1) {
+        items.push({
+          key: 'print',
+          label: t('common.print'),
+          icon: <PrinterOutlined />,
+          onClick: () => {
+            setContextMenuVisible(false);
+            if (contextMenuSelectedRows.length > 0) {
+              onContextMenuPrint(print[0], contextMenuSelectedRows[0]);
+            }
+          }
+        });
+      } else {
+        items.push({
+          key: 'print',
+          label: t('common.print'),
+          icon: <PrinterOutlined />,
+          children: print.map((item, index) => ({
+            key: `print-${index}`,
+            label: item.name || `Print ${index + 1}`,
+            onClick: () => {
+              setContextMenuVisible(false);
+              if (contextMenuSelectedRows.length > 0) {
+                onContextMenuPrint(item, contextMenuSelectedRows[0]);
+              }
+            }
+          }))
+        });
+      }
+    }
+
+    // Email
+    if (onContextMenuEmail) {
+      items.push({
+        key: 'email',
+        label: t('common.email'),
+        icon: <MailOutlined />,
+        onClick: () => {
+          setContextMenuVisible(false);
+          if (contextMenuSelectedRows.length > 0) {
+            onContextMenuEmail(contextMenuSelectedRows[0]);
+          }
+        }
+      });
+    }
+
+    return items;
+  }, [toolbarInfo, contextMenuSelectedRows, onContextMenuAttach, onContextMenuNote, onContextMenuRelate, onContextMenuPrint, onContextMenuEmail, t]);
+
   // Sincronizar selección cuando cambia selectedRecord
   useEffect(() => {
     if (!gridRef.current || !selectedRecord) return;
@@ -493,6 +672,7 @@ const TrytonTable = ({
           onSelectionChanged={onSelectionChanged}
           onRowClicked={onRowClicked}
           onRowDoubleClicked={onRowDoubleClicked}
+          onCellContextMenu={onCellContextMenu}
           suppressRowClickSelection={true}
           rowSelection={enableRowSelection ? 'multiple' : 'single'}
           suppressCellFocus={true}
@@ -504,7 +684,32 @@ const TrytonTable = ({
         />
       </div>
       
-      {/* Debug information (development only) */}
+      {/* Menú contextual */}
+      {contextMenuVisible && contextMenuItems.length > 0 && (
+        <div
+          style={{
+            position: 'fixed',
+            left: contextMenuPosition.x,
+            top: contextMenuPosition.y,
+            zIndex: 1000,
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            borderRadius: '8px',
+            background: 'var(--color-card-background)',
+            border: '1px solid var(--color-primary-200)',
+            minWidth: '200px'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Menu
+            mode="vertical"
+            items={contextMenuItems}
+            style={{
+              border: 'none',
+              borderRadius: '8px'
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 };

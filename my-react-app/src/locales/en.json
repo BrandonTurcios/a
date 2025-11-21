@@ -97,7 +97,9 @@
     "elements": "element(s)",
     "male": "Male",
     "female": "Female",
-    "maleFemale": "Male-Female"
+    "maleFemale": "Male-Female",
+    "contextMenuNoSelection": "Select a row to see options",
+    "contextMenuTitle": "Actions"
   },
   "form": {
     "view": "Form view",

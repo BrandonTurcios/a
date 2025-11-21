@@ -157,6 +157,44 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
             selectedRecord={selectedRecord}
             tableData={tableDataProp}
             filtered={tableInfo.filtered || false}
+            onContextMenuAttach={(record) => {
+              // El Toolbar maneja attachments internamente, solo necesitamos actualizar el contexto
+              if (onRecordSelect) {
+                onRecordSelect(record, true);
+              }
+              // El Toolbar se actualizará automáticamente cuando cambie selectedRecord
+            }}
+            onContextMenuNote={(record) => {
+              if (onRecordSelect) {
+                onRecordSelect(record, true);
+              }
+            }}
+            onContextMenuRelate={(relateItem, record) => {
+              if (onRecordSelect) {
+                onRecordSelect(record, true);
+              }
+              // Pequeño delay para asegurar que el contexto se actualice
+              setTimeout(() => {
+                toolbarHandlers.onRelate?.(relateItem);
+              }, 100);
+            }}
+            onContextMenuPrint={(printItem, record) => {
+              if (onRecordSelect) {
+                onRecordSelect(record, true);
+              }
+              setTimeout(() => {
+                toolbarHandlers.onPrint?.(printItem);
+              }, 100);
+            }}
+            onContextMenuEmail={(record) => {
+              if (onRecordSelect) {
+                onRecordSelect(record, true);
+              }
+              setTimeout(() => {
+                toolbarHandlers.onEmail?.();
+              }, 100);
+            }}
+            toolbarInfo={selectedMenuInfo?.toolbarInfo}
           />
         </div>
       </div>

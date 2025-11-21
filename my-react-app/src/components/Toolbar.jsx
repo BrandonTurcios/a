@@ -542,7 +542,11 @@ const Toolbar = ({
   );
 
   // Attachments dropdown (Add, Manage, Preview) + Comments button
+  // Solo mostrar en vista de formulario (no en tabla)
   const renderAttachmentDropdown = () => {
+    // Ocultar en vista de tabla - estos botones están en el menú contextual
+    if (viewType === 'tree') return null;
+
     const disabled = loading || !resourceKey;
     const items = [
       { key: 'add', label: t('common.add'), icon: <UploadOutlined />, onClick: handleAddAttachment },
@@ -608,8 +612,11 @@ const Toolbar = ({
   };
 
   // Renderizar dropdown de relaciones
+  // Solo mostrar en vista de formulario (no en tabla)
   const renderRelateDropdown = () => {
     if (!relate || relate.length === 0) return null;
+    // Ocultar en vista de tabla - estos botones están en el menú contextual
+    if (viewType === 'tree') return null;
 
     const isDisabled = loading || !hasSelectedRecord;
 
@@ -635,8 +642,11 @@ const Toolbar = ({
   };
 
   // Renderizar dropdown de impresión
+  // Solo mostrar en vista de formulario (no en tabla)
   const renderPrintDropdown = () => {
     if (!print || print.length === 0) return null;
+    // Ocultar en vista de tabla - estos botones están en el menú contextual
+    if (viewType === 'tree') return null;
 
     const isDisabled = loading || !hasSelectedRecord;
 
@@ -661,10 +671,10 @@ const Toolbar = ({
   };
 
   // Renderizar botón de email
+  // Ocultar en vista de tabla - este botón está en el menú contextual
   const renderEmailButton = () => {
-    // Always show email button for table views, even if emails array is empty
-    // This allows us to handle email functionality manually
-    if (viewType !== 'tree') return null;
+    // Ocultar en vista de tabla - este botón está en el menú contextual
+    if (viewType === 'tree') return null;
 
     return (
       <Tooltip title={hasSelectedRecord ? t('toolbar.sendEmail') : t('toolbar.selectRecordForEmail')}>
