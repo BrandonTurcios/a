@@ -54,6 +54,33 @@ const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
+const createFieldLabel = (labelText, required, icon = null) => (
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
+      fontWeight: "500",
+      color: "var(--color-text-primary)",
+    }}
+  >
+    {required && (
+      <span style={{ color: "var(--color-danger-500)" }}>*</span>
+    )}
+    {icon && (
+      <span style={{ color: "var(--color-primary-500)" }}>{icon}</span>
+    )}
+    {labelText}
+  </div>
+);
+
+const createFieldHelp = (helpText) =>
+  helpText ? (
+    <Text type="secondary" style={{ fontSize: "12px" }}>
+      {helpText}
+    </Text>
+  ) : null;
+
 // Evaluador PYSON simple para estados dinámicos
 const evaluatePYSON = (pysonNode, record) => {
   if (!pysonNode || typeof pysonNode !== "object") return pysonNode;
@@ -1645,35 +1672,6 @@ const TrytonForm = forwardRef(
 
       return defaults;
     };
-
-    // Helper function para crear labels consistentes
-    const createFieldLabel = (labelText, required, icon = null) => (
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          fontWeight: "500",
-          color: "var(--color-text-primary)",
-        }}
-      >
-        {required && (
-          <span style={{ color: "var(--color-danger-500)" }}>*</span>
-        )}
-        {icon && (
-          <span style={{ color: "var(--color-primary-500)" }}>{icon}</span>
-        )}
-        {labelText}
-      </div>
-    );
-
-    // Helper function para crear help text
-    const createFieldHelp = (helpText) =>
-      helpText ? (
-        <Text type="secondary" style={{ fontSize: "12px" }}>
-          {helpText}
-        </Text>
-      ) : null;
 
     // Helper function para estilos comunes de inputs
     const inputStyle = {
