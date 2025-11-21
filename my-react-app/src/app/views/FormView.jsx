@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Typography } from 'antd';
 import TrytonForm from '../../components/TrytonForm';
@@ -8,6 +8,7 @@ const { Title, Paragraph } = Typography;
 
 const FormView = ({ formInfo, selectedMenuInfo, loadingContent, formDirty, onFormChange, toolbarHandlers }) => {
   const { t } = useTranslation();
+  const formRef = useRef(null);
   return (
     <div style={{
       padding: '24px',
