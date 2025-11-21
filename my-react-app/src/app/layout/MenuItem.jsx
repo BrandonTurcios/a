@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button, Space, Typography } from 'antd';
-import { RightOutlined, DownOutlined } from '@ant-design/icons';
+import { ChevronRight, ChevronDown } from 'lucide-react';
 import { getIconComponent } from '../utils/iconMapper.jsx'
 
 const { Text } = Typography;
@@ -96,11 +96,30 @@ const MenuItem = ({ item, isActive, isExpanded, hasChildren, level = 0, onClick,
         {/* Indicador de expansión/contracción (solo si sidebar está abierto) */}
         {hasChildren && sidebarOpen && (
           <div style={{
-            marginLeft: '4px',
-            color: 'var(--color-text-secondary)',
-            fontSize: '12px'
+            marginLeft: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: isActive ? 'var(--color-primary-600)' : 'var(--color-primary-700)',
+            transition: 'all 0.2s ease'
           }}>
-            {isExpanded ? <DownOutlined /> : <RightOutlined />}
+            {isExpanded ? (
+              <ChevronDown 
+                size={20} 
+                strokeWidth={2.5}
+                style={{
+                  fontWeight: 'bold'
+                }}
+              />
+            ) : (
+              <ChevronRight 
+                size={20} 
+                strokeWidth={2.5}
+                style={{
+                  fontWeight: 'bold'
+                }}
+              />
+            )}
           </div>
         )}
       </div>
