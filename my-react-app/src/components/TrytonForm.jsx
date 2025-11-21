@@ -1865,13 +1865,7 @@ const TrytonForm = forwardRef(
             </div>
           );
 
-          const labelNode = help ? (
-            <Tooltip title={help}>
-              {renderLabel()}
-            </Tooltip>
-          ) : (
-            renderLabel()
-          );
+          const labelNode = renderLabel();
 
           return (
             <Form.Item
