@@ -796,7 +796,24 @@ const TrytonTable = ({
         background: rgba(255, 255, 255, 0.3) !important;
       }
       .ag-theme-alpine .ag-header-cell:hover {
-        background: rgba(255, 255, 255, 0.1) !important;
+        background: var(--color-primary-800) !important;
+        color: white !important;
+      }
+      .ag-theme-alpine .ag-header-cell:hover .ag-header-cell-text {
+        color: white !important;
+      }
+      .ag-theme-alpine .ag-header-cell:hover .ag-header-cell-label {
+        color: white !important;
+      }
+      .ag-theme-alpine .ag-header-cell:hover .ag-icon {
+        color: white !important;
+        opacity: 1 !important;
+      }
+      .ag-theme-alpine .ag-header-cell:hover .ag-icon-asc::before,
+      .ag-theme-alpine .ag-header-cell:hover .ag-icon-desc::before,
+      .ag-theme-alpine .ag-header-cell:hover .ag-icon-menu::before {
+        color: white !important;
+        opacity: 1 !important;
       }
       .ag-theme-alpine .ag-row {
         background: white !important;
