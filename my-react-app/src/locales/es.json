@@ -252,9 +252,12 @@
     "failedDeleteNotes": "Error al eliminar notas",
     "emailTemplateLoad": "Error al cargar plantilla de correo",
     "emailSendFailed": "Error al enviar correo",
-    "printFailed": "Error al abrir el reporte",
+    "printFailed": "Error al ejecutar el reporte",
     "invalidPrintItem": "Item de impresión inválido",
-    "popupBlocked": "Por favor permita ventanas emergentes para ver el reporte"
+    "popupBlocked": "Por favor permita ventanas emergentes para ver el reporte",
+    "noModelForPrint": "No hay modelo disponible para imprimir",
+    "invalidPdfData": "Formato de datos PDF inválido",
+    "invalidReportResult": "Formato de resultado del reporte inválido"
   },
   "validation": {
     "required": "es requerido",

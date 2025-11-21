@@ -409,33 +409,83 @@ const Dashboard = ({ sessionData, onLogout, onLanguageChange }) => {
     }
 
     try {
-      // Construir la URL del reporte
-      // En Tryton, los reportes se acceden a través de: /{database}/report/{report_name}?ids={record_ids}
-      const database = trytonService.database;
-      const baseURL = trytonService.baseURL;
       const reportName = printItem.report_name;
       const recordId = selectedRecord.id;
+      const model = menuActions.selectedMenuInfo?.resModel;
 
-      // Obtener el token de sesión para autenticación
-      const authHeader = trytonService.getAuthHeader();
-      
-      // Construir la URL completa del reporte con autenticación
-      // Tryton acepta el token de sesión como parámetro 'session' o en el header
-      // Usaremos el parámetro 'session' en la URL
-      const reportURL = `${baseURL}/${database}/report/${reportName}?ids=${recordId}&session=${authHeader}`;
+      if (!model) {
+        console.warn("⚠️ No model available for print");
+        message.error(t('errors.noModelForPrint') || 'No hay modelo disponible para imprimir');
+        return;
+      }
 
-      console.log("🖨️ Opening report URL:", reportURL);
+      console.log("🖨️ Executing report:", reportName, "for record:", recordId, "in model:", model);
 
-      // Abrir el PDF en una nueva pestaña
-      const newWindow = window.open(reportURL, '_blank');
-      
-      if (!newWindow) {
-        // Si el navegador bloquea la ventana emergente, mostrar mensaje
-        message.warning(t('errors.popupBlocked') || 'Por favor permita ventanas emergentes para ver el reporte');
+      // Construir el método RPC: report.{report_name}.execute
+      const rpcMethod = `report.${reportName}.execute`;
+
+      // Construir los parámetros según el formato de Tryton
+      // [ids], context, session_context
+      const ids = [recordId];
+      const context = {
+        action_id: printItem.id,
+        id: recordId,
+        ids: ids,
+        model: model,
+        model_context: null,
+        paths: [ids]
+      };
+
+      // Ejecutar el reporte
+      const result = await trytonService.makeRpcCall(rpcMethod, [
+        ids,
+        context,
+        {} // El contexto de sesión se agrega automáticamente
+      ]);
+
+      console.log("🖨️ Report result:", result);
+
+      // La respuesta es un array: ["pdf", {__class__: "bytes", base64: "..."}, false, "filename"]
+      if (result && Array.isArray(result) && result.length >= 2) {
+        const pdfType = result[0];
+        const pdfData = result[1];
+        const filename = result[3] || `${reportName}.pdf`;
+
+        if (pdfType === "pdf" && pdfData && pdfData.base64) {
+          // Convertir base64 a blob
+          const base64Data = pdfData.base64;
+          const byteCharacters = atob(base64Data);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: 'application/pdf' });
+          
+          // Crear URL del blob y abrir en nueva pestaña
+          const url = URL.createObjectURL(blob);
+          const newWindow = window.open(url, '_blank');
+          
+          if (!newWindow) {
+            // Si el navegador bloquea la ventana emergente, mostrar mensaje
+            message.warning(t('errors.popupBlocked') || 'Por favor permita ventanas emergentes para ver el reporte');
+          } else {
+            // Limpiar la URL del blob después de un tiempo
+            setTimeout(() => {
+              URL.revokeObjectURL(url);
+            }, 1000);
+          }
+        } else {
+          console.error("❌ Invalid PDF data format:", result);
+          message.error(t('errors.invalidPdfData') || 'Formato de datos PDF inválido');
+        }
+      } else {
+        console.error("❌ Invalid report result format:", result);
+        message.error(t('errors.invalidReportResult') || 'Formato de resultado del reporte inválido');
       }
     } catch (error) {
-      console.error("❌ Error opening print report:", error);
-      message.error(t('errors.printFailed') || 'Error al abrir el reporte');
+      console.error("❌ Error executing print report:", error);
+      message.error(t('errors.printFailed') || 'Error al ejecutar el reporte');
     }
   };
 
