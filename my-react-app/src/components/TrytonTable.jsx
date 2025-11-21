@@ -766,13 +766,13 @@ const TrytonTable = ({
     const style = document.createElement('style');
     style.textContent = `
       .ag-theme-alpine .ag-header {
-        background: linear-gradient(135deg, var(--color-primary-700) 0%, var(--color-primary-600) 100%) !important;
+        background: var(--color-primary-700) !important;
         color: white !important;
         font-weight: 600 !important;
         border-bottom: 2px solid var(--color-primary-800) !important;
       }
       .ag-theme-alpine .ag-header-cell {
-        background: transparent !important;
+        background: var(--color-primary-700) !important;
         color: white !important;
         border-right: 1px solid rgba(255, 255, 255, 0.2) !important;
       }
