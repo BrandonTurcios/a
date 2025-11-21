@@ -2261,20 +2261,6 @@ const TrytonForm = forwardRef(
           </Form>
         </div>
 
-        {formInfo && process.env.NODE_ENV === "development" && (
-          <div
-            style={{
-              padding: "12px 24px",
-              borderTop: "1px solid var(--color-border)",
-              background: "var(--color-neutral-100)",
-            }}
-          >
-            <Text type="secondary" style={{ fontSize: "12px" }}>
-              {t("form.view")} {viewId} | {t("form.type")} {formInfo.type} |{" "}
-              {t("form.fields")} {fields.length}
-            </Text>
-          </div>
-        )}
       </div>
     );
   }
