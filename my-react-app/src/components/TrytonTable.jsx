@@ -1006,14 +1006,34 @@ const TrytonTable = ({
               relatedTarget.closest('.ant-menu-submenu')
             );
             
-            // Si no está yendo a un submenú, cerrar todos los submenús
-            if (!isGoingToSubmenu && openSubmenuKeys.length > 0) {
+            // Verificar si está yendo a otro item del menú
+            const isGoingToMenuItem = relatedTarget && relatedTarget.closest('.ant-menu-item');
+            
+            // Si está yendo a otro item del menú, verificar si tiene submenú
+            if (isGoingToMenuItem && !isGoingToSubmenu) {
+              const menuItems = menuContainerRef.current?.querySelectorAll('.ant-menu-item:not(.ant-menu-submenu-title)');
+              const targetItem = relatedTarget.closest('.ant-menu-item');
+              if (targetItem && menuItems) {
+                const itemIndex = Array.from(menuItems).indexOf(targetItem);
+                if (itemIndex >= 0 && itemIndex < contextMenuItems.length) {
+                  const item = contextMenuItems[itemIndex];
+                  // Si el item no tiene children, cerrar submenús
+                  if (!item || !item.children || item.children.length === 0) {
+                    setOpenSubmenuKeys([]);
+                    return;
+                  }
+                }
+              }
+            }
+            
+            // Solo cerrar si no está yendo a un submenú ni a otro item del menú
+            if (!isGoingToSubmenu && !isGoingToMenuItem && openSubmenuKeys.length > 0) {
               if (submenuCloseTimeoutRef.current) {
                 clearTimeout(submenuCloseTimeoutRef.current);
               }
               submenuCloseTimeoutRef.current = setTimeout(() => {
                 setOpenSubmenuKeys([]);
-              }, 200);
+              }, 250);
             }
           }}
           onMouseEnter={() => {
@@ -1062,22 +1082,23 @@ const TrytonTable = ({
                 return;
               }
               
-              const lastKey = keys[keys.length - 1];
+              // Filtrar solo keys válidas
+              const validKeys = keys.filter(key => {
+                // Solo "relate" y "print"
+                if (key !== 'relate' && key !== 'print') {
+                  return false;
+                }
+                // Verificar que tenga children
+                const item = contextMenuItems.find(item => item.key === key);
+                return item && item.children && item.children.length > 0;
+              });
               
-              // Solo permitir "relate" y "print" con children
-              if (lastKey !== 'relate' && lastKey !== 'print') {
+              // Mantener solo el último submenú válido
+              if (validKeys.length > 0) {
+                setOpenSubmenuKeys([validKeys[validKeys.length - 1]]);
+              } else {
                 setOpenSubmenuKeys([]);
-                return;
               }
-              
-              const item = contextMenuItems.find(item => item.key === lastKey);
-              if (!item || !item.children || item.children.length === 0) {
-                setOpenSubmenuKeys([]);
-                return;
-              }
-              
-              // Permitir que se abra
-              setOpenSubmenuKeys([lastKey]);
             }}
             subMenuOpenDelay={0.1}
             subMenuCloseDelay={0.1}
