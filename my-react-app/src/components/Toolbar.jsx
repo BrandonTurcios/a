@@ -88,7 +88,6 @@ const Toolbar = ({
     padding: '3px',
     borderRadius: '20px',
     background: 'linear-gradient(135deg, var(--color-primary-700), var(--color-secondary-600))',
-    boxShadow: '0 18px 28px rgba(1, 68, 82, 0.25)',
     border: '1px solid var(--color-primary-200)',
     minWidth: 'fit-content'
   };

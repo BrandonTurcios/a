@@ -85,16 +85,6 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
           flexWrap: 'wrap'
         }}>
           <div style={{ flex: 1, minWidth: '320px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{
-                textTransform: 'uppercase',
-                letterSpacing: '0.35em',
-                fontSize: '12px',
-                fontWeight: 600,
-                color: 'var(--color-primary-500)'
-              }}>
-                Current View
-              </span>
               <Title
                 level={2}
                 style={{
@@ -111,7 +101,6 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
               >
                 {title}
               </Title>
-            </div>
           </div>
 
           {/* Toolbar dentro del mismo contenedor */}
