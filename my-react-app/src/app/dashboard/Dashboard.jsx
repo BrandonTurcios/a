@@ -6,7 +6,7 @@ import React, {
   useRef,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { Layout } from "antd";
+import { Layout, message } from "antd";
 import DashboardHeader from "./DashboardHeader";
 import Sidebar from "../layout/Sidebar";
 import ContentArea from "../layout/ContentArea";
@@ -392,18 +392,51 @@ const Dashboard = ({ sessionData, onLogout, onLanguageChange }) => {
     }
   };
 
-  const handleToolbarPrint = (printItem) => {
+  const handleToolbarPrint = async (printItem) => {
     console.log("🖨️ Toolbar print clicked:", printItem);
     console.log("📋 Selected record:", selectedRecord);
     
     if (!selectedRecord) {
       console.warn("⚠️ No record selected for print");
+      message.warning(t('toolbar.selectRecordForPrint') || 'Por favor seleccione un registro para imprimir');
       return;
     }
-    
-    // TODO: Implementar impresión con printItem y selectedRecord
-    // El printItem contiene la información de la acción de impresión
-    // El selectedRecord contiene el registro seleccionado
+
+    if (!printItem || !printItem.report_name) {
+      console.warn("⚠️ Invalid print item:", printItem);
+      message.error(t('errors.invalidPrintItem') || 'Item de impresión inválido');
+      return;
+    }
+
+    try {
+      // Construir la URL del reporte
+      // En Tryton, los reportes se acceden a través de: /{database}/report/{report_name}?ids={record_ids}
+      const database = trytonService.database;
+      const baseURL = trytonService.baseURL;
+      const reportName = printItem.report_name;
+      const recordId = selectedRecord.id;
+
+      // Obtener el token de sesión para autenticación
+      const authHeader = trytonService.getAuthHeader();
+      
+      // Construir la URL completa del reporte con autenticación
+      // Tryton acepta el token de sesión como parámetro 'session' o en el header
+      // Usaremos el parámetro 'session' en la URL
+      const reportURL = `${baseURL}/${database}/report/${reportName}?ids=${recordId}&session=${authHeader}`;
+
+      console.log("🖨️ Opening report URL:", reportURL);
+
+      // Abrir el PDF en una nueva pestaña
+      const newWindow = window.open(reportURL, '_blank');
+      
+      if (!newWindow) {
+        // Si el navegador bloquea la ventana emergente, mostrar mensaje
+        message.warning(t('errors.popupBlocked') || 'Por favor permita ventanas emergentes para ver el reporte');
+      }
+    } catch (error) {
+      console.error("❌ Error opening print report:", error);
+      message.error(t('errors.printFailed') || 'Error al abrir el reporte');
+    }
   };
 
   const handleToolbarEmail = (emailItem) => {

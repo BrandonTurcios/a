@@ -185,7 +185,8 @@
     "attachmentAdded": "Adjunto agregado",
     "attachmentsDeleted": "adjunto(s) eliminado(s) exitosamente",
     "noteCreated": "Nota creada exitosamente",
-    "notesDeleted": "nota(s) eliminada(s) exitosamente"
+    "notesDeleted": "nota(s) eliminada(s) exitosamente",
+    "selectRecordForPrint": "Por favor seleccione un registro para imprimir"
   },
   "wizard": {
     "title": "Asistente",
@@ -250,7 +251,10 @@
     "failedCreateNote": "Error al crear nota",
     "failedDeleteNotes": "Error al eliminar notas",
     "emailTemplateLoad": "Error al cargar plantilla de correo",
-    "emailSendFailed": "Error al enviar correo"
+    "emailSendFailed": "Error al enviar correo",
+    "printFailed": "Error al abrir el reporte",
+    "invalidPrintItem": "Item de impresión inválido",
+    "popupBlocked": "Por favor permita ventanas emergentes para ver el reporte"
   },
   "validation": {
     "required": "es requerido",
