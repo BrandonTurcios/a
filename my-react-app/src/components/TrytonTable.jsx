@@ -761,53 +761,6 @@ const TrytonTable = ({
     }
   }, []);
 
-  const handleRefresh = () => {
-    loadTableData();
-  };
-
-  // Configuración por defecto de AG Grid
-  const defaultColDef = useMemo(() => ({
-    sortable: true,
-    filter: true,
-    resizable: true,
-    flex: 1,
-    minWidth: 120
-  }), []);
-
-  if (loading) {
-    return (
-      <Card>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '200px'
-        }}>
-          <Spin size="large" />
-          <Text style={{ marginLeft: '16px' }}>{t('table.loading')}</Text>
-        </div>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card>
-        <Alert
-          message={t('common.error')}
-          description={error}
-          type="error"
-          showIcon
-          action={
-            <Button size="small" onClick={handleRefresh}>
-              {t('common.retry')}
-            </Button>
-          }
-        />
-      </Card>
-    );
-  }
-
   // Agregar estilos personalizados para headers de AG Grid
   useEffect(() => {
     const style = document.createElement('style');
@@ -859,6 +812,53 @@ const TrytonTable = ({
     document.head.appendChild(style);
     return () => document.head.removeChild(style);
   }, []);
+
+  const handleRefresh = () => {
+    loadTableData();
+  };
+
+  // Configuración por defecto de AG Grid
+  const defaultColDef = useMemo(() => ({
+    sortable: true,
+    filter: true,
+    resizable: true,
+    flex: 1,
+    minWidth: 120
+  }), []);
+
+  if (loading) {
+    return (
+      <Card>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '200px'
+        }}>
+          <Spin size="large" />
+          <Text style={{ marginLeft: '16px' }}>{t('table.loading')}</Text>
+        </div>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <Alert
+          message={t('common.error')}
+          description={error}
+          type="error"
+          showIcon
+          action={
+            <Button size="small" onClick={handleRefresh}>
+              {t('common.retry')}
+            </Button>
+          }
+        />
+      </Card>
+    );
+  }
 
   const gridHeight = 'calc(100vh - 240px)';
 
