@@ -9,7 +9,7 @@ const MenuTree = ({ items, activeTab, expandedMenus, loadingMenuChildren, onMenu
   if (!items || items.length === 0) return null;
 
   return (
-    <div style={{ padding: level === 0 ? '8px 0' : '0' }}>
+    <div style={{ padding: level === 0 ? '4px 0' : '0', width: '100%' }}>
       {items.map((item) => {
         const hasChildren = (item.childs && item.childs.length > 0) || item.hasChildren;
         const isExpanded = expandedMenus.has(item.id);

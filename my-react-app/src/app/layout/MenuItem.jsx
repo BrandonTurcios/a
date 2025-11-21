@@ -12,10 +12,11 @@ const MenuItem = ({ item, isActive, isExpanded, hasChildren, level = 0, onClick,
     <div style={{
       marginLeft: isChild && sidebarOpen ? `${level * 16}px` : '0',
       position: 'relative',
-      padding: '0 8px',
-      marginBottom: '2px'
+      padding: '0 4px',
+      marginBottom: '2px',
+      width: '100%'
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px', width: '100%' }}>
         {/* Indicador visual de nivel para elementos hijo */}
         {isChild && sidebarOpen && (
           <div style={{
@@ -46,7 +47,7 @@ const MenuItem = ({ item, isActive, isExpanded, hasChildren, level = 0, onClick,
           style={{
             flex: 1,
             height: 'auto',
-            padding: sidebarOpen ? '14px 18px' : '12px 8px',
+            padding: sidebarOpen ? '14px 20px' : '12px 8px',
             textAlign: 'left',
             display: 'flex',
             alignItems: 'center',
@@ -55,17 +56,17 @@ const MenuItem = ({ item, isActive, isExpanded, hasChildren, level = 0, onClick,
             border: 'none',
             borderRadius: '8px',
             color: isActive ? 'var(--color-primary-600)' : 'var(--color-text-primary)',
-            minHeight: '44px',
+            minHeight: '48px',
             position: 'relative',
-            maxWidth: '100%',
             overflow: 'hidden',
             transition: 'all 0.3s ease',
-            width: '100%'
+            width: '100%',
+            boxSizing: 'border-box'
           }}
           title={sidebarOpen ? (item.description || item.name) : item.name}
         >
           {sidebarOpen ? (
-            <Space style={{ width: '100%', minWidth: 0 }}>
+            <Space style={{ width: '100%', minWidth: 0, flex: 1 }}>
               {getIconComponent(item)}
               <div style={{
                 display: 'flex',
@@ -73,7 +74,8 @@ const MenuItem = ({ item, isActive, isExpanded, hasChildren, level = 0, onClick,
                 alignItems: 'flex-start',
                 minWidth: 0,
                 flex: 1,
-                width: '100%'
+                width: '100%',
+                overflow: 'hidden'
               }}>
                 <Text
                   style={{
