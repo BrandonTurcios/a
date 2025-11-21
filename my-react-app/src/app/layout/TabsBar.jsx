@@ -134,12 +134,16 @@ const TabsBar = ({
     <div style={{
       background: 'var(--color-neutral-50)',
       borderBottom: '2px solid var(--color-primary-200)',
-      padding: '0 16px',
+      padding: '16px 24px',
       minHeight: '44px',
       display: 'flex',
       alignItems: 'center',
       overflowX: 'auto',
-      maxWidth: '100%'
+      maxWidth: '100%',
+      marginTop: '12px',
+      marginBottom: '24px',
+      borderRadius: '0 0 16px 16px',
+      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.05)'
     }}>
       <Tabs
         activeKey={activeTabId}
