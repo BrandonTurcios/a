@@ -41,11 +41,11 @@ const GroupSection = ({ section, fields, form, fieldComponents, level = 0 }) => 
         border: '1px solid var(--color-neutral-200)',
         boxShadow: '0 12px 28px rgba(1, 76, 107, 0.08)'
       }}
-      headStyle={{
-        background: 'linear-gradient(120deg, var(--color-primary-500), var(--color-secondary-500))',
-        padding: '12px 20px',
-        borderBottom: '1px solid rgba(255,255,255,0.4)'
-      }}
+       headStyle={{
+         background: 'linear-gradient(120deg, #B3E2E9, #80CEDA, #4DBACA)',
+         padding: '12px 20px',
+         borderBottom: '1px solid rgba(255,255,255,0.35)'
+       }}
       bodyStyle={{ padding: '20px', background: 'var(--color-card-background)' }}
     >
       <Row gutter={[16, 16]}>
@@ -93,14 +93,12 @@ const PageSection = ({ section, fields, form, fieldComponents, level = 0 }) => {
     <div style={{ marginLeft: level * 16 }}>
       {/* Título de la página si no está en un tab */}
       {level === 0 && title && (
-        <Title level={4} style={{ 
-          marginBottom: 16,
-          color: 'var(--color-primary-700)',
-          fontWeight: 600,
-          background: 'linear-gradient(135deg, var(--color-primary-600), var(--color-secondary-600))',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent'
-        }}>
+         <Title level={4} style={{ 
+           marginBottom: 16,
+           color: '#0F4E65',
+           fontWeight: 600,
+           letterSpacing: '0.02em'
+         }}>
           {title}
         </Title>
       )}
@@ -144,14 +142,12 @@ const NotebookSection = ({ section, fields, form, fieldComponents, level = 0 }) 
     <div style={{ marginLeft: level * 16 }}>
       {/* Título del notebook si no está en un tab */}
       {level === 0 && title && (
-        <Title level={4} style={{ 
-          marginBottom: 16,
-          color: 'var(--color-primary-700)',
-          fontWeight: 600,
-          background: 'linear-gradient(135deg, var(--color-primary-600), var(--color-secondary-600))',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent'
-        }}>
+         <Title level={4} style={{ 
+           marginBottom: 16,
+           color: '#0F4E65',
+           fontWeight: 600,
+           letterSpacing: '0.02em'
+         }}>
           {title}
         </Title>
       )}
@@ -189,14 +185,12 @@ const SeparatorSection = ({ section }) => {
   if (title) {
     return (
       <Divider orientation="left" style={{ margin: '24px 0' }}>
-        <Text strong style={{
-          color: 'var(--color-primary-700)',
-          fontWeight: 600,
-          fontSize: '15px',
-          background: 'linear-gradient(135deg, var(--color-primary-600), var(--color-secondary-600))',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent'
-        }}>
+         <Text strong style={{
+           color: '#0F4E65',
+           fontWeight: 600,
+           fontSize: '15px',
+           letterSpacing: '0.02em'
+         }}>
           {title}
         </Text>
       </Divider>
