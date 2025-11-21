@@ -52,8 +52,7 @@ const Sidebar = ({ open, menuItems, loading, error, expandedMenus, activeTab, lo
       }}
       style={{
         background: 'linear-gradient(180deg, var(--color-primary-50) 0%, var(--color-neutral-50) 50%, var(--color-primary-50) 100%)',
-        borderRight: '3px solid var(--color-primary-300)',
-        boxShadow: '4px 0 16px rgba(1, 118, 143, 0.15)',
+        borderRight: '1px solid var(--color-neutral-300)',
         position: 'fixed',
         height: '100vh',
         left: 0,
