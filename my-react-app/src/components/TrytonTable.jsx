@@ -973,6 +973,14 @@ const TrytonTable = ({
             e.preventDefault();
             e.stopPropagation();
           }}
+          onMouseLeave={(e) => {
+            // Cerrar submenús cuando el mouse sale del menú principal
+            // Solo si no está entrando a un submenú
+            const relatedTarget = e.relatedTarget;
+            if (relatedTarget && !relatedTarget.closest('.ant-menu-submenu-popup')) {
+              setOpenSubmenuKeys([]);
+            }
+          }}
         >
           <Menu
             mode="vertical"
@@ -997,11 +1005,13 @@ const TrytonTable = ({
               }
             }}
             getPopupContainer={() => document.body}
-            triggerSubMenuAction="click"
+            triggerSubMenuAction="hover"
             openKeys={openSubmenuKeys}
             onOpenChange={(keys) => {
               setOpenSubmenuKeys(keys);
             }}
+            subMenuOpenDelay={0.1}
+            subMenuCloseDelay={0.1}
           />
         </div>,
         document.body
