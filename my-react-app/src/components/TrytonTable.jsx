@@ -616,39 +616,6 @@ const TrytonTable = ({
     }
   }, [contextMenuVisible]);
 
-  // Detectar cuando el mouse está sobre un item sin submenú y cerrar submenús abiertos
-  useEffect(() => {
-    if (!contextMenuVisible || !menuContainerRef.current) return;
-
-    const handleMouseOver = (e) => {
-      // Solo procesar si hay submenús abiertos
-      if (openSubmenuKeys.length === 0) return;
-
-      // Buscar el item del menú sobre el que está el mouse
-      const menuItem = e.target.closest('.ant-menu-item:not(.ant-menu-submenu-title)');
-      if (!menuItem) return;
-
-      // Obtener todos los items del menú
-      const allMenuItems = menuContainerRef.current.querySelectorAll('.ant-menu-item:not(.ant-menu-submenu-title)');
-      const itemIndex = Array.from(allMenuItems).indexOf(menuItem);
-      
-      if (itemIndex >= 0 && itemIndex < contextMenuItems.length) {
-        const item = contextMenuItems[itemIndex];
-        // Si el item no tiene children (no es un submenú), cerrar todos los submenús
-        if (item && (!item.children || item.children.length === 0)) {
-          setOpenSubmenuKeys([]);
-        }
-      }
-    };
-
-    const menuElement = menuContainerRef.current;
-    menuElement.addEventListener('mouseover', handleMouseOver, true);
-
-    return () => {
-      menuElement.removeEventListener('mouseover', handleMouseOver, true);
-    };
-  }, [contextMenuVisible, contextMenuItems, openSubmenuKeys]);
-
   // Construir items del menú contextual
   const contextMenuItems = useMemo(() => {
     if (!toolbarInfo || contextMenuSelectedRows.length === 0) return [];
@@ -798,6 +765,39 @@ const TrytonTable = ({
 
     return items;
   }, [toolbarInfo, contextMenuSelectedRows, onContextMenuAttach, onContextMenuNote, onContextMenuRelate, onContextMenuPrint, onContextMenuEmail, t, attachmentsCount, notesCount, unreadNotesCount]);
+
+  // Detectar cuando el mouse está sobre un item sin submenú y cerrar submenús abiertos
+  useEffect(() => {
+    if (!contextMenuVisible || !menuContainerRef.current) return;
+
+    const handleMouseOver = (e) => {
+      // Solo procesar si hay submenús abiertos
+      if (openSubmenuKeys.length === 0) return;
+
+      // Buscar el item del menú sobre el que está el mouse
+      const menuItem = e.target.closest('.ant-menu-item:not(.ant-menu-submenu-title)');
+      if (!menuItem) return;
+
+      // Obtener todos los items del menú
+      const allMenuItems = menuContainerRef.current.querySelectorAll('.ant-menu-item:not(.ant-menu-submenu-title)');
+      const itemIndex = Array.from(allMenuItems).indexOf(menuItem);
+      
+      if (itemIndex >= 0 && itemIndex < contextMenuItems.length) {
+        const item = contextMenuItems[itemIndex];
+        // Si el item no tiene children (no es un submenú), cerrar todos los submenús
+        if (item && (!item.children || item.children.length === 0)) {
+          setOpenSubmenuKeys([]);
+        }
+      }
+    };
+
+    const menuElement = menuContainerRef.current;
+    menuElement.addEventListener('mouseover', handleMouseOver, true);
+
+    return () => {
+      menuElement.removeEventListener('mouseover', handleMouseOver, true);
+    };
+  }, [contextMenuVisible, contextMenuItems, openSubmenuKeys]);
 
   // Sincronizar selección cuando cambia selectedRecord
   useEffect(() => {
