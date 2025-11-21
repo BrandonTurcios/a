@@ -60,7 +60,9 @@ export const useMenuData = (sessionData) => {
           type: 'dashboard',
           model: '',
           description: 'Dashboard principal',
-          childs: []
+          childs: [],
+          hasChildren: false,
+          childrenLoaded: true
         },
         ...result.menuItems.map(item => ({
           id: item.id,
@@ -71,7 +73,10 @@ export const useMenuData = (sessionData) => {
           type: 'module',
           model: item.model,
           description: item.description,
-          childs: item.childs || []
+          childs: item.childs || null,
+          childIds: item.childIds || [],
+          hasChildren: item.hasChildren || false,
+          childrenLoaded: item.childrenLoaded || false
         }))
       ];
 
@@ -99,12 +104,48 @@ export const useMenuData = (sessionData) => {
     setSidebarOpen(prev => !prev);
   };
 
+  const loadMenuChildren = async (menuId) => {
+    try {
+
+      const children = await trytonService.loadMenuChildren(menuId);
+
+      setMenuItems(prevItems => {
+        const updateMenuItem = (items) => {
+          return items.map(item => {
+            if (item.id === menuId) {
+              return {
+                ...item,
+                childs: children,
+                childrenLoaded: true
+              };
+            } else if (item.childs && Array.isArray(item.childs) && item.childs.length > 0) {
+              return {
+                ...item,
+                childs: updateMenuItem(item.childs)
+              };
+            }
+            return item;
+          });
+        };
+
+        return updateMenuItem(prevItems);
+      });
+
+      console.log(`✅ Children loaded for menu ${menuId}`);
+      return children;
+    } catch (error) {
+      console.error(`❌ Error loading children for menu ${menuId}:`, error);
+      throw error;
+    }
+  };
+
   return {
     items: menuItems,
     loading,
     error,
     sidebarOpen,
     toggleSidebar,
-    reload: loadMenu
+    reload: loadMenu,
+    loadMenuChildren
   };
 };

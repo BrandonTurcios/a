@@ -29,7 +29,7 @@ const Dashboard = ({ sessionData, onLogout, onLanguageChange }) => {
 
   // Custom hooks encapsulan toda la lógica
   const menuData = useMenuData(sessionData);
-  const menuActions = useMenuActions();
+  const menuActions = useMenuActions(menuData.loadMenuChildren);
   const wizards = useWizards();
   const actionOptions = useActionOptions();
   const tabs = useTabs();
@@ -54,24 +54,36 @@ const Dashboard = ({ sessionData, onLogout, onLanguageChange }) => {
     if (!menuData.loading && menuData.items.length > 0) {
       const savedNavState = sessionStorage.getItem("tryton_nav_state");
       if (savedNavState) {
-        try {
-          const navState = JSON.parse(savedNavState);
-          // 1. Restaurar tabs abiertos
-          if (navState.tabs && navState.activeTabId) {
-            // Helper para buscar item del menú por ID
-            const findMenuItemById = (items, id) => {
-              for (const item of items) {
-                if (item.id === id) return item;
-                if (item.childs && item.childs.length > 0) {
-                  const found = findMenuItemById(item.childs, id);
-                  if (found) return found;
+        (async () => {
+          try {
+            const navState = JSON.parse(savedNavState);
+            // 1. Restaurar tabs abiertos
+            if (navState.tabs && navState.activeTabId) {
+              const findMenuItemById = async (items, id) => {
+                // Buscar localmente primero
+                for (const item of items) {
+                  if (item.id === id) return item;
+                  if (item.childs && Array.isArray(item.childs) && item.childs.length > 0) {
+                    const found = await findMenuItemById(item.childs, id);
+                    if (found) return found;
+                  }
                 }
-              }
-              return null;
-            };
 
-            console.log(`Actualizando ${navState.tabs.length} tabs...`);
-            const updatedTabs = navState.tabs.map((tab) => {
+                // Si no se encuentra localmente, intentar cargar del backend
+                try {
+                  const menuItem = await trytonService.getMenuItemById(id);
+                  if (menuItem) {
+                    return menuItem;
+                  }
+                } catch (error) {
+                  console.error(`Error fetching menu item ${id} from backend:`, error);
+                }
+
+                return null;
+              };
+
+              console.log(`Actualizando ${navState.tabs.length} tabs...`);
+              const updatedTabs = await Promise.all(navState.tabs.map(async (tab) => {
               console.log(`Tab "${tab.title}":`, {
                 hasData: !!tab.data,
                 hasMenuItem: !!(tab.data && tab.data.menuItem),
@@ -79,7 +91,7 @@ const Dashboard = ({ sessionData, onLogout, onLanguageChange }) => {
               });
 
               if (tab.data && tab.data.menuItem && tab.data.menuItem.id) {
-                const updatedMenuItem = findMenuItemById(
+                const updatedMenuItem = await findMenuItemById(
                   menuData.items,
                   tab.data.menuItem.id
                 );
@@ -118,7 +130,7 @@ const Dashboard = ({ sessionData, onLogout, onLanguageChange }) => {
                 );
               }
               return tab;
-            });
+            }));
 
             const restored = tabs.restoreTabs(
               updatedTabs,
@@ -166,13 +178,14 @@ const Dashboard = ({ sessionData, onLogout, onLanguageChange }) => {
             console.log("✅ Menús expandidos restaurados");
           }
 
-          // Limpiar el estado guardado después de restaurarlo
-          sessionStorage.removeItem("tryton_nav_state");
-          console.log("✅ Estado de navegación completamente restaurado");
-        } catch (error) {
-          console.error("❌ Error restaurando estado de navegación:", error);
-          sessionStorage.removeItem("tryton_nav_state");
-        }
+            // Limpiar el estado guardado después de restaurarlo
+            sessionStorage.removeItem("tryton_nav_state");
+            console.log("✅ Estado de navegación completamente restaurado");
+          } catch (error) {
+            console.error("❌ Error restaurando estado de navegación:", error);
+            sessionStorage.removeItem("tryton_nav_state");
+          }
+        })();
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -832,6 +845,7 @@ const Dashboard = ({ sessionData, onLogout, onLanguageChange }) => {
           error={menuData.error}
           expandedMenus={menuActions.expandedMenus}
           activeTab={menuActions.activeTab}
+          loadingMenuChildren={menuActions.loadingMenuChildren}
           onMenuClick={handleMenuClick}
           onToggleExpansion={menuActions.toggleExpansion}
           onRetry={menuData.reload}

@@ -6,7 +6,7 @@ import MenuTree from './MenuTree';
 
 const { Sider } = Layout;
 
-const Sidebar = ({ open, menuItems, loading, error, expandedMenus, activeTab, onMenuClick, onRetry }) => {
+const Sidebar = ({ open, menuItems, loading, error, expandedMenus, activeTab, loadingMenuChildren, onMenuClick, onRetry }) => {
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -93,6 +93,7 @@ const Sidebar = ({ open, menuItems, loading, error, expandedMenus, activeTab, on
             items={menuItems}
             activeTab={activeTab}
             expandedMenus={expandedMenus}
+            loadingMenuChildren={loadingMenuChildren}
             onMenuClick={onMenuClick}
             sidebarOpen={open}
           />

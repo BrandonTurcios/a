@@ -4,22 +4,41 @@ import trytonService from '../../services/trytonService';
 /**
  * Hook para manejar las acciones del menú (clicks, expansión, datos)
  */
-export const useMenuActions = () => {
+export const useMenuActions = (loadMenuChildren) => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [expandedMenus, setExpandedMenus] = useState(new Set());
   const [selectedMenuInfo, setSelectedMenuInfo] = useState(null);
   const [tableInfo, setTableInfo] = useState(null);
   const [formInfo, setFormInfo] = useState(null);
   const [loadingContent, setLoadingContent] = useState(false);
+  const [loadingMenuChildren, setLoadingMenuChildren] = useState(new Set());
 
-  const toggleExpansion = (menuId) => {
+  const toggleExpansion = async (menuId, item) => {
     const newExpanded = new Set(expandedMenus);
+    const isExpanding = !newExpanded.has(menuId);
+
     if (newExpanded.has(menuId)) {
       newExpanded.delete(menuId);
     } else {
       newExpanded.add(menuId);
     }
     setExpandedMenus(newExpanded);
+
+    // Si está expandiendo y tiene hijos no cargados, cargarlos
+    if (isExpanding && item.hasChildren && !item.childrenLoaded && loadMenuChildren) {
+      try {
+        setLoadingMenuChildren(prev => new Set(prev).add(menuId));
+        await loadMenuChildren(menuId);
+      } catch (err) {
+        console.error(`Error loading children for menu ${menuId}:`, err);
+      } finally {
+        setLoadingMenuChildren(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(menuId);
+          return newSet;
+        });
+      }
+    }
   };
 
   const clearState = () => {
@@ -38,10 +57,10 @@ export const useMenuActions = () => {
         return { type: 'dashboard' };
       }
 
-      // Items con hijos: solo expandir/contraer
-      const hasChildren = item.childs && item.childs.length > 0;
+      // Items con hijos cargados: solo expandir/contraer
+      const hasChildren = (item.childs && item.childs.length > 0) || item.hasChildren;
       if (hasChildren) {
-        toggleExpansion(item.id);
+        await toggleExpansion(item.id, item);
         return { type: 'expand' };
       }
 
@@ -222,6 +241,7 @@ export const useMenuActions = () => {
     tableInfo,
     formInfo,
     loadingContent,
+    loadingMenuChildren,
     handleMenuClick,
     toggleExpansion,
     clearState,

@@ -6,7 +6,7 @@ import Toolbar from '../../components/Toolbar';
 
 const { Title, Paragraph } = Typography;
 
-const FormView = ({ formInfo, selectedMenuInfo, loadingContent, formDirty, onFormChange, toolbarHandlers }) => {
+const FormView = ({ formInfo, selectedMenuInfo, loadingContent, formDirty, onFormChange, toolbarHandlers, formRef }) => {
   const { t } = useTranslation();
   const formRef = useRef(null);
   return (

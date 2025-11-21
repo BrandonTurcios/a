@@ -55,7 +55,8 @@
     "loadingTryton": "Cargando Tryton...",
     "changingLanguage": "Cambiando idioma...",
     "languageChangeWarning": "Por favor inicie sesión nuevamente para cambiar el idioma",
-    "languageChangeError": "Error al cambiar el idioma"
+    "languageChangeError": "Error al cambiar el idioma",
+    "passwordRequired": "Por favor ingrese su contraseña para cambiar el idioma"
   },
   "header": {
     "title": "Sistema de Gestión Tryton",
@@ -233,7 +234,8 @@
     "sentSuccess": "Correo enviado exitosamente"
   },
   "sidebar": {
-    "loadingMenu": "Cargando menú..."
+    "loadingMenu": "Cargando menú...",
+    "loadingChildren": "Cargando..."
   },
   "loading": {
     "content": "Cargando contenido..."

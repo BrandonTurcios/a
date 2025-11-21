@@ -55,7 +55,8 @@
     "loadingTryton": "Loading Tryton...",
     "changingLanguage": "Changing language...",
     "languageChangeWarning": "Please log in again to change language",
-    "languageChangeError": "Failed to change language"
+    "languageChangeError": "Failed to change language",
+    "passwordRequired": "Please enter your password to change language"
   },
   "header": {
     "title": "Tryton Management System",
@@ -232,7 +233,8 @@
     "sentSuccess": "Email sent successfully"
   },
   "sidebar": {
-    "loadingMenu": "Loading menu..."
+    "loadingMenu": "Loading menu...",
+    "loadingChildren": "Loading..."
   },
   "loading": {
     "content": "Loading content..."
