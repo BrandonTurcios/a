@@ -22,7 +22,18 @@ const GroupSection = ({ section, fields, form, fieldComponents, level = 0 }) => 
   
   return (
     <Card 
-      title={title}
+      title={
+        <span style={{
+          color: 'var(--color-primary-700)',
+          fontWeight: 600,
+          fontSize: '16px',
+          background: 'linear-gradient(135deg, var(--color-primary-600), var(--color-secondary-600))',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent'
+        }}>
+          {title}
+        </span>
+      }
       size="small"
       style={{ 
         marginBottom: 16,
@@ -75,7 +86,14 @@ const PageSection = ({ section, fields, form, fieldComponents, level = 0 }) => {
     <div style={{ marginLeft: level * 16 }}>
       {/* Título de la página si no está en un tab */}
       {level === 0 && title && (
-        <Title level={4} style={{ marginBottom: 16 }}>
+        <Title level={4} style={{ 
+          marginBottom: 16,
+          color: 'var(--color-primary-700)',
+          fontWeight: 600,
+          background: 'linear-gradient(135deg, var(--color-primary-600), var(--color-secondary-600))',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent'
+        }}>
           {title}
         </Title>
       )}
@@ -119,7 +137,14 @@ const NotebookSection = ({ section, fields, form, fieldComponents, level = 0 }) 
     <div style={{ marginLeft: level * 16 }}>
       {/* Título del notebook si no está en un tab */}
       {level === 0 && title && (
-        <Title level={4} style={{ marginBottom: 16 }}>
+        <Title level={4} style={{ 
+          marginBottom: 16,
+          color: 'var(--color-primary-700)',
+          fontWeight: 600,
+          background: 'linear-gradient(135deg, var(--color-primary-600), var(--color-secondary-600))',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent'
+        }}>
           {title}
         </Title>
       )}
@@ -157,7 +182,16 @@ const SeparatorSection = ({ section }) => {
   if (title) {
     return (
       <Divider orientation="left" style={{ margin: '24px 0' }}>
-        <Text strong>{title}</Text>
+        <Text strong style={{
+          color: 'var(--color-primary-700)',
+          fontWeight: 600,
+          fontSize: '15px',
+          background: 'linear-gradient(135deg, var(--color-primary-600), var(--color-secondary-600))',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent'
+        }}>
+          {title}
+        </Text>
       </Divider>
     );
   }

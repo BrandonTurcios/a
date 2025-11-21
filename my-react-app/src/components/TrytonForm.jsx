@@ -55,31 +55,66 @@ const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
-const imagePrefixHints = ["iVBORw0K", "/9j/", "R0lGOD", "Qk0", "PHN2Zy"];
+const imagePrefixHints = ["iVBORw0K", "/9j/", "R0lGOD", "Qk0"];
+// SVG base64 starts with "PHN2Zy" (which is "<svg" encoded)
+const svgBase64Prefix = "PHN2Zy";
 const isLikelySvgBase64 = (value) => {
-  if (!value) return false;
-  if (value.trim().startsWith("<svg")) return true;
+  if (!value || typeof value !== "string") return false;
+  const trimmed = value.trim();
+  // Check if it's already an SVG string
+  if (trimmed.startsWith("<svg") || trimmed.startsWith("<?xml")) return true;
+  // Check base64 prefix for SVG
+  if (trimmed.startsWith(svgBase64Prefix)) return true;
+  // Try to decode a larger sample to check for SVG content
   try {
-    const sample = value.substring(0, Math.min(120, value.length));
-    const decoded = atob(sample);
-    return decoded.trim().startsWith("<svg");
+    // Take a larger sample to ensure we catch SVG declarations
+    const sample = trimmed.substring(0, Math.min(200, trimmed.length));
+    // Remove any padding
+    const cleanSample = sample.replace(/=+$/, "");
+    if (cleanSample.length < 4) return false;
+    const decoded = atob(cleanSample);
+    const decodedTrimmed = decoded.trim();
+    // Check for SVG markers
+    return (
+      decodedTrimmed.startsWith("<svg") ||
+      decodedTrimmed.startsWith("<?xml") ||
+      decodedTrimmed.includes("<svg") ||
+      decodedTrimmed.includes("xmlns=\"http://www.w3.org/2000/svg\"")
+    );
   } catch (error) {
+    // If decoding fails, it's not valid base64, so not an SVG
     return false;
   }
 };
 
 const isBase64Image = (value) => {
-  if (!value) return false;
-  const sample = value.substring(0, 10);
-  if (value.startsWith("data:image")) return true;
+  if (!value || typeof value !== "string") return false;
+  const trimmed = value.trim();
+  // Check for data URLs
+  if (trimmed.startsWith("data:image")) {
+    // Check if it's SVG in data URL
+    if (trimmed.includes("svg+xml")) return true;
+    return true; // Other image types
+  }
+  // Check for base64 image prefixes (PNG, JPG, GIF, etc.)
+  const sample = trimmed.substring(0, 20);
   if (imagePrefixHints.some((hint) => sample.startsWith(hint))) return true;
-  return isLikelySvgBase64(value);
+  // Check for SVG
+  return isLikelySvgBase64(trimmed);
 };
 
-const getImageDataUrl = (base64) =>
-  isLikelySvgBase64(base64)
-    ? `data:image/svg+xml;base64,${base64}`
-    : `data:image/png;base64,${base64}`;
+const getImageDataUrl = (base64) => {
+  if (!base64) return null;
+  const trimmed = base64.trim();
+  // If it's already a data URL, return as is
+  if (trimmed.startsWith("data:")) return trimmed;
+  // Check if it's SVG
+  if (isLikelySvgBase64(trimmed)) {
+    return `data:image/svg+xml;base64,${trimmed}`;
+  }
+  // Default to PNG for other images
+  return `data:image/png;base64,${trimmed}`;
+};
 
 const createFieldLabel = (labelText, required, icon = null) => (
   <div
@@ -859,10 +894,12 @@ const BinaryImageField = ({
       try {
         // Convertir a base64
         const base64 = await fileToBase64(info.file.originFileObj);
-        setImageUrl(base64);
-
         // Extraer solo la parte base64 (sin el prefijo data:image/...)
-        const base64Data = base64.split(",")[1];
+        const base64Data = base64.split(",")[1] || base64;
+        
+        // Usar getImageDataUrl para asegurar el formato correcto (especialmente para SVG)
+        const imageDataUrl = getImageDataUrl(base64Data);
+        setImageUrl(imageDataUrl);
 
         // Guardar en formato Tryton bytes
         form.setFieldValue(name, {
@@ -933,7 +970,7 @@ const BinaryImageField = ({
         className="avatar-uploader"
         showUploadList={false}
         beforeUpload={(file) => {
-          const isImage = file.type.startsWith("image/");
+          const isImage = file.type.startsWith("image/") || file.type === "image/svg+xml" || file.name.toLowerCase().endsWith(".svg");
           if (!isImage) {
             message.error("You can only upload image files!");
             return false;
