@@ -15,7 +15,7 @@ const DashboardHeader = ({ sessionData, onLogout, onToggleSidebar, onLanguageCha
   return (
     <TooltipProvider>
       <header className={cn(
-        "bg-gradient-to-r from-primary-700 via-primary-600 to-secondary-600",
+        "bg-gradient-to-r from-primary-700 via-primary-600 to-secondary-700",
         "px-6 flex items-center justify-between",
         "shadow-lg shadow-primary-900/30",
         "fixed top-0 left-0 right-0 z-[1000] h-[72px]",
