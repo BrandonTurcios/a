@@ -890,13 +890,16 @@ const TrytonTable = ({
 
   const renderMenuItems = (items) => {
     if (!items || items.length === 0) return null;
-    return items.map((item) => {
+    return items.map((item, index) => {
       const hasChildren = item.children && item.children.length > 0;
+      const itemHeight = 44; // Altura aproximada de cada item
       return (
         <div
           key={item.key}
           onMouseEnter={() => hasChildren && setHoveredMenuKey(item.key)}
-          onMouseLeave={() => hasChildren && setHoveredMenuKey((current) => current === item.key ? null : current)}
+          onMouseLeave={() => {
+            // No cerrar inmediatamente, dejar que el submenú maneje su propio hover
+          }}
           onClick={(e) => handleMenuItemClick(item, e)}
           style={{
             position: 'relative',
@@ -919,38 +922,48 @@ const TrytonTable = ({
           {hasChildren && (
             <span style={{ marginLeft: '8px', fontSize: '12px', color: 'var(--color-text-secondary)' }}>▶</span>
           )}
-          {hasChildren && hoveredMenuKey === item.key && (
+          {hasChildren && hoveredMenuKey === item.key && createPortal(
             <div
+              onMouseEnter={() => setHoveredMenuKey(item.key)}
+              onMouseLeave={() => setHoveredMenuKey(null)}
               style={{
-                position: 'absolute',
-                top: 0,
-                left: '100%',
-                marginLeft: '8px',
+                position: 'fixed',
+                top: contextMenuPosition.y + (index * itemHeight),
+                left: contextMenuPosition.x + 220,
                 background: 'var(--color-card-background)',
                 border: '1px solid var(--color-primary-200)',
                 borderRadius: '10px',
                 boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
                 minWidth: '200px',
-                zIndex: 10001
+                zIndex: 10001,
+                padding: '6px 0'
               }}
             >
               {item.children.map((child) => (
                 <div
                   key={child.key}
                   onClick={(e) => handleSubmenuItemClick(child, e)}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'var(--color-primary-50)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                  }}
                   style={{
                     padding: '10px 14px',
                     cursor: 'pointer',
                     fontSize: '14px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px'
+                    gap: '8px',
+                    transition: 'background 0.15s'
                   }}
                 >
                   <span>{child.label}</span>
                 </div>
               ))}
-            </div>
+            </div>,
+            document.body
           )}
         </div>
       );
