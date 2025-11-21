@@ -766,13 +766,13 @@ const TrytonTable = ({
     const style = document.createElement('style');
     style.textContent = `
       .ag-theme-alpine .ag-header {
-        background: var(--color-primary-700) !important;
+        background: var(--color-primary-800) !important;
         color: white !important;
         font-weight: 600 !important;
-        border-bottom: 2px solid var(--color-primary-800) !important;
+        border-bottom: 2px solid var(--color-primary-900) !important;
       }
       .ag-theme-alpine .ag-header-cell {
-        background: var(--color-primary-700) !important;
+        background: var(--color-primary-800) !important;
         color: white !important;
         border-right: 1px solid rgba(255, 255, 255, 0.2) !important;
       }
@@ -799,8 +799,8 @@ const TrytonTable = ({
       .ag-theme-alpine .ag-header-cell.ag-header-cell-hover,
       .ag-theme-alpine .ag-header-cell[class*="hover"],
       .ag-theme-alpine .ag-header-row .ag-header-cell:hover {
-        background: #014E5F !important;
-        background-color: #014E5F !important;
+        background: #003B47 !important;
+        background-color: #003B47 !important;
         color: white !important;
       }
       .ag-theme-alpine .ag-header-cell:hover *,

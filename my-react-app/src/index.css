@@ -8,10 +8,10 @@
 
 /* Custom AG Grid Theme Overrides */
 .ag-theme-alpine {
-  --ag-header-background-color: var(--color-primary-700);
+  --ag-header-background-color: var(--color-primary-800);
   --ag-header-foreground-color: white;
-  --ag-header-cell-hover-background-color: var(--color-primary-800);
-  --ag-header-cell-moving-background-color: var(--color-primary-800);
+  --ag-header-cell-hover-background-color: var(--color-primary-900);
+  --ag-header-cell-moving-background-color: var(--color-primary-900);
   --ag-border-color: var(--color-border);
   --ag-row-hover-color: var(--color-primary-50);
   --ag-selected-row-background-color: var(--color-primary-100);
