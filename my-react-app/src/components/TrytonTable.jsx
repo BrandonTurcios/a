@@ -55,6 +55,7 @@ const TrytonTable = ({
   const [contextMenuSelectedRows, setContextMenuSelectedRows] = useState([]);
   const [openSubmenuKeys, setOpenSubmenuKeys] = useState([]);
   const submenuCloseTimeoutRef = useRef(null);
+  const menuContainerRef = useRef(null);
   const [attachmentsCount, setAttachmentsCount] = useState(0);
   const [notesCount, setNotesCount] = useState(0);
   const [unreadNotesCount, setUnreadNotesCount] = useState(0);
@@ -560,6 +561,104 @@ const TrytonTable = ({
     setContextMenuVisible(true);
   }, [calculateMenuPosition]);
 
+  // Mantener submenús abiertos cuando el mouse está sobre ellos
+  useEffect(() => {
+    if (!contextMenuVisible || openSubmenuKeys.length === 0) return;
+
+    const handleSubmenuMouseEnter = () => {
+      // Cancelar cualquier cierre programado cuando el mouse entra al submenú
+      if (submenuCloseTimeoutRef.current) {
+        clearTimeout(submenuCloseTimeoutRef.current);
+        submenuCloseTimeoutRef.current = null;
+      }
+    };
+
+    const handleSubmenuMouseLeave = (e) => {
+      // Verificar si el mouse está yendo de vuelta al menú principal
+      const relatedTarget = e.relatedTarget;
+      const isGoingToMainMenu = relatedTarget && menuContainerRef.current && 
+        menuContainerRef.current.contains(relatedTarget);
+      
+      if (!isGoingToMainMenu) {
+        // Si no está yendo al menú principal, cerrar el submenú después de un delay
+        if (submenuCloseTimeoutRef.current) {
+          clearTimeout(submenuCloseTimeoutRef.current);
+        }
+        submenuCloseTimeoutRef.current = setTimeout(() => {
+          // Verificar la posición actual del mouse usando las coordenadas del evento
+          const mouseX = e.clientX || 0;
+          const mouseY = e.clientY || 0;
+          const elementAtPoint = document.elementFromPoint(mouseX, mouseY);
+          const isMouseOverSubmenu = elementAtPoint && (
+            elementAtPoint.closest('.ant-menu-submenu-popup') ||
+            elementAtPoint.closest('.ant-menu-submenu') ||
+            (menuContainerRef.current && menuContainerRef.current.contains(elementAtPoint))
+          );
+          
+          if (!isMouseOverSubmenu) {
+            setOpenSubmenuKeys([]);
+          }
+        }, 250);
+      }
+    };
+
+    // Función para verificar periódicamente si el mouse está sobre el submenú
+    const checkMousePosition = () => {
+      const submenuPopup = document.querySelector('.ant-menu-submenu-popup');
+      if (submenuPopup) {
+        // Si el submenú existe, mantenerlo abierto
+        // El listener de mouseleave se encargará de cerrarlo cuando sea necesario
+        return true;
+      }
+      return false;
+    };
+
+    // Buscar el popup del submenú y agregar listeners
+    const checkForSubmenu = () => {
+      const submenuPopup = document.querySelector('.ant-menu-submenu-popup');
+      if (submenuPopup) {
+        submenuPopup.addEventListener('mouseenter', handleSubmenuMouseEnter, true);
+        submenuPopup.addEventListener('mouseleave', handleSubmenuMouseLeave, true);
+        
+        // Verificar periódicamente la posición del mouse
+        const intervalId = setInterval(() => {
+          if (!checkMousePosition()) {
+            clearInterval(intervalId);
+          }
+        }, 100);
+        
+        return () => {
+          clearInterval(intervalId);
+          submenuPopup.removeEventListener('mouseenter', handleSubmenuMouseEnter, true);
+          submenuPopup.removeEventListener('mouseleave', handleSubmenuMouseLeave, true);
+        };
+      }
+      return null;
+    };
+
+    // Intentar encontrar el submenú con múltiples intentos
+    let cleanup = null;
+    const tryFindSubmenu = () => {
+      const result = checkForSubmenu();
+      if (result) {
+        cleanup = result;
+      }
+    };
+
+    // Intentar inmediatamente y también después de delays para asegurar que el submenú esté renderizado
+    tryFindSubmenu();
+    const timeoutId1 = setTimeout(tryFindSubmenu, 50);
+    const timeoutId2 = setTimeout(tryFindSubmenu, 150);
+    const timeoutId3 = setTimeout(tryFindSubmenu, 300);
+
+    return () => {
+      clearTimeout(timeoutId1);
+      clearTimeout(timeoutId2);
+      clearTimeout(timeoutId3);
+      if (cleanup) cleanup();
+    };
+  }, [contextMenuVisible, openSubmenuKeys]);
+
   // Cerrar menú contextual cuando se hace click fuera o se presiona ESC
   useEffect(() => {
     const handleClickOutside = () => {
@@ -972,6 +1071,7 @@ const TrytonTable = ({
       {/* Menú contextual - renderizado en portal para estar por encima de todo */}
       {contextMenuVisible && contextMenuItems.length > 0 && createPortal(
         <div
+          ref={menuContainerRef}
           style={{
             position: 'fixed',
             left: contextMenuPosition.x,
@@ -995,23 +1095,11 @@ const TrytonTable = ({
             e.stopPropagation();
           }}
           onMouseLeave={(e) => {
-            // Cerrar submenús cuando el mouse sale completamente del menú
-            const relatedTarget = e.relatedTarget;
-            // Si el mouse no está yendo a un submenú, cerrarlo después de un pequeño delay
-            if (!relatedTarget || !relatedTarget.closest('.ant-menu-submenu-popup')) {
-              // Limpiar timeout anterior si existe
-              if (submenuCloseTimeoutRef.current) {
-                clearTimeout(submenuCloseTimeoutRef.current);
-              }
-              // Cerrar después de un pequeño delay para permitir movimiento suave
-              submenuCloseTimeoutRef.current = setTimeout(() => {
-                // Verificar que el mouse realmente salió
-                const activeElement = document.activeElement;
-                const mouseOverPopup = document.querySelector('.ant-menu-submenu-popup:hover');
-                if (!mouseOverPopup) {
-                  setOpenSubmenuKeys([]);
-                }
-              }, 150);
+            // Si hay submenús abiertos, no hacer nada aquí
+            // Dejar que Ant Design y el efecto de monitoreo manejen el cierre
+            // Esto permite que el mouse se mueva del menú principal al submenú sin problemas
+            if (openSubmenuKeys.length > 0) {
+              return;
             }
           }}
           onMouseEnter={() => {
@@ -1056,8 +1144,8 @@ const TrytonTable = ({
               // Asegurar que solo un submenú esté abierto a la vez
               setOpenSubmenuKeys(keys.length > 0 ? [keys[keys.length - 1]] : []);
             }}
-            subMenuOpenDelay={0.15}
-            subMenuCloseDelay={0.2}
+            subMenuOpenDelay={0.1}
+            subMenuCloseDelay={0.3}
           />
         </div>,
         document.body
