@@ -590,44 +590,6 @@ const TrytonTable = ({
     }
   }, [contextMenuVisible]);
 
-  // Trackear qué item del menú tiene el mouse encima
-  useEffect(() => {
-    if (!contextMenuVisible) {
-      hoveredMenuItemRef.current = null;
-      return;
-    }
-
-    const handleMouseOver = (e) => {
-      const menuItem = e.target.closest('.ant-menu-item:not(.ant-menu-submenu-title)');
-      if (menuItem) {
-        // Buscar la key del item
-        const menuItems = document.querySelectorAll('.ant-menu-item:not(.ant-menu-submenu-title)');
-        const itemIndex = Array.from(menuItems).indexOf(menuItem);
-        if (itemIndex >= 0 && itemIndex < contextMenuItems.length) {
-          hoveredMenuItemRef.current = contextMenuItems[itemIndex].key;
-        }
-      } else {
-        // Si está sobre un submenú, mantener el último item hovered
-        const submenu = e.target.closest('.ant-menu-submenu-popup');
-        if (!submenu) {
-          hoveredMenuItemRef.current = null;
-        }
-      }
-    };
-
-    const handleMouseLeave = () => {
-      // No limpiar inmediatamente, dejar que onOpenChange maneje el cierre
-    };
-
-    document.addEventListener('mouseover', handleMouseOver, true);
-    document.addEventListener('mouseleave', handleMouseLeave, true);
-
-    return () => {
-      document.removeEventListener('mouseover', handleMouseOver, true);
-      document.removeEventListener('mouseleave', handleMouseLeave, true);
-    };
-  }, [contextMenuVisible, contextMenuItems]);
-
   // Construir items del menú contextual
   const contextMenuItems = useMemo(() => {
     if (!toolbarInfo || contextMenuSelectedRows.length === 0) return [];
@@ -778,6 +740,43 @@ const TrytonTable = ({
     return items;
   }, [toolbarInfo, contextMenuSelectedRows, onContextMenuAttach, onContextMenuNote, onContextMenuRelate, onContextMenuPrint, onContextMenuEmail, t, attachmentsCount, notesCount, unreadNotesCount]);
 
+  // Trackear qué item del menú tiene el mouse encima
+  useEffect(() => {
+    if (!contextMenuVisible) {
+      hoveredMenuItemRef.current = null;
+      return;
+    }
+
+    const handleMouseOver = (e) => {
+      const menuItem = e.target.closest('.ant-menu-item:not(.ant-menu-submenu-title)');
+      if (menuItem) {
+        // Buscar la key del item
+        const menuItems = document.querySelectorAll('.ant-menu-item:not(.ant-menu-submenu-title)');
+        const itemIndex = Array.from(menuItems).indexOf(menuItem);
+        if (itemIndex >= 0 && itemIndex < contextMenuItems.length) {
+          hoveredMenuItemRef.current = contextMenuItems[itemIndex].key;
+        }
+      } else {
+        // Si está sobre un submenú, mantener el último item hovered
+        const submenu = e.target.closest('.ant-menu-submenu-popup');
+        if (!submenu) {
+          hoveredMenuItemRef.current = null;
+        }
+      }
+    };
+
+    const handleMouseLeave = () => {
+      // No limpiar inmediatamente, dejar que onOpenChange maneje el cierre
+    };
+
+    document.addEventListener('mouseover', handleMouseOver, true);
+    document.addEventListener('mouseleave', handleMouseLeave, true);
+
+    return () => {
+      document.removeEventListener('mouseover', handleMouseOver, true);
+      document.removeEventListener('mouseleave', handleMouseLeave, true);
+    };
+  }, [contextMenuVisible, contextMenuItems]);
 
   // Sincronizar selección cuando cambia selectedRecord
   useEffect(() => {
