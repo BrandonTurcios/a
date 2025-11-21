@@ -93,15 +93,15 @@ const PageSection = ({ section, fields, form, fieldComponents, level = 0 }) => {
     <div style={{ marginLeft: level * 16 }}>
       {/* Título de la página si no está en un tab */}
       {level === 0 && title && (
-         <Title level={4} style={{ 
-           marginBottom: 16,
-           background: 'linear-gradient(120deg, #B3E2E9, #80CEDA, #4DBACA)',
-           WebkitBackgroundClip: 'text',
-           WebkitTextFillColor: 'transparent',
-           backgroundClip: 'text',
-           fontWeight: 600,
-           letterSpacing: '0.02em'
-         }}>
+        <Title
+          level={4}
+          style={{
+            marginBottom: 16,
+            color: '#015D70',
+            fontWeight: 600,
+            letterSpacing: '0.02em'
+          }}
+        >
           {title}
         </Title>
       )}
@@ -145,15 +145,15 @@ const NotebookSection = ({ section, fields, form, fieldComponents, level = 0 }) 
     <div style={{ marginLeft: level * 16 }}>
       {/* Título del notebook si no está en un tab */}
       {level === 0 && title && (
-         <Title level={4} style={{ 
-           marginBottom: 16,
-           background: 'linear-gradient(120deg, #B3E2E9, #80CEDA, #4DBACA)',
-           WebkitBackgroundClip: 'text',
-           WebkitTextFillColor: 'transparent',
-           backgroundClip: 'text',
-           fontWeight: 600,
-           letterSpacing: '0.02em'
-         }}>
+        <Title
+          level={4}
+          style={{
+            marginBottom: 16,
+            color: '#015D70',
+            fontWeight: 600,
+            letterSpacing: '0.02em'
+          }}
+        >
           {title}
         </Title>
       )}
@@ -191,15 +191,15 @@ const SeparatorSection = ({ section }) => {
   if (title) {
     return (
       <Divider orientation="left" style={{ margin: '24px 0' }}>
-         <Text strong style={{
-           background: 'linear-gradient(120deg, #B3E2E9, #80CEDA, #4DBACA)',
-           WebkitBackgroundClip: 'text',
-           WebkitTextFillColor: 'transparent',
-           backgroundClip: 'text',
-           fontWeight: 600,
-           fontSize: '15px',
-           letterSpacing: '0.02em'
-         }}>
+        <Text
+          strong
+          style={{
+            color: '#015D70',
+            fontWeight: 600,
+            fontSize: '15px',
+            letterSpacing: '0.02em'
+          }}
+        >
           {title}
         </Text>
       </Divider>

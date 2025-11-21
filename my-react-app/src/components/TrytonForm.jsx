@@ -2536,7 +2536,6 @@ const TrytonForm = forwardRef(
                         borderColor: colors.success.A500,
                         borderRadius: "8px",
                         fontWeight: 500,
-                        boxShadow: `0 2px 8px ${colors.success.A200}`,
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.background = colors.success.A600;
@@ -2578,13 +2577,12 @@ const TrytonForm = forwardRef(
                     type="primary"
                     icon={<EditOutlined />}
                     onClick={handleEdit}
-                    style={{
-                      background: colors.secondary.A500,
-                      borderColor: colors.secondary.A500,
-                      borderRadius: "8px",
-                      fontWeight: 500,
-                      boxShadow: `0 2px 8px ${colors.secondary.A200}`,
-                    }}
+                      style={{
+                        background: colors.secondary.A500,
+                        borderColor: colors.secondary.A500,
+                        borderRadius: "8px",
+                        fontWeight: 500,
+                      }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.background = colors.secondary.A600;
                       e.currentTarget.style.borderColor = colors.secondary.A600;
