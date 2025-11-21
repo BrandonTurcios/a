@@ -24,12 +24,10 @@ const GroupSection = ({ section, fields, form, fieldComponents, level = 0 }) => 
     <Card 
       title={
         <span style={{
-          color: 'var(--color-primary-700)',
+          color: '#fff',
           fontWeight: 600,
           fontSize: '16px',
-          background: 'linear-gradient(135deg, var(--color-primary-600), var(--color-secondary-600))',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent'
+          letterSpacing: '0.02em'
         }}>
           {title}
         </span>
@@ -37,9 +35,18 @@ const GroupSection = ({ section, fields, form, fieldComponents, level = 0 }) => 
       size="small"
       style={{ 
         marginBottom: 16,
-        marginLeft: level * 16
+        marginLeft: level * 16,
+        borderRadius: 20,
+        overflow: 'hidden',
+        border: '1px solid var(--color-neutral-200)',
+        boxShadow: '0 12px 28px rgba(1, 76, 107, 0.08)'
       }}
-      bodyStyle={{ padding: '16px' }}
+      headStyle={{
+        background: 'linear-gradient(120deg, var(--color-primary-500), var(--color-secondary-500))',
+        padding: '12px 20px',
+        borderBottom: '1px solid rgba(255,255,255,0.4)'
+      }}
+      bodyStyle={{ padding: '20px', background: 'var(--color-card-background)' }}
     >
       <Row gutter={[16, 16]}>
         {/* Renderizar campos directos del grupo */}
