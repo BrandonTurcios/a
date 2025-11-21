@@ -658,8 +658,10 @@ const TrytonTable = ({
           onClick: ({ domEvent }) => {
             domEvent?.stopPropagation();
             setContextMenuVisible(false);
-            if (selectedRecord) {
-              onContextMenuPrint(print[0], selectedRecord);
+            const record = contextMenuSelectedRows[0];
+            if (record) {
+              console.log('🖨️ Context menu print clicked:', print[0], 'for record:', record);
+              onContextMenuPrint(print[0], record);
             }
           }
         });
@@ -674,8 +676,10 @@ const TrytonTable = ({
             onClick: ({ domEvent }) => {
               domEvent?.stopPropagation();
               setContextMenuVisible(false);
-              if (selectedRecord) {
-                onContextMenuPrint(item, selectedRecord);
+              const record = contextMenuSelectedRows[0];
+              if (record) {
+                console.log('🖨️ Context menu print clicked:', item, 'for record:', record);
+                onContextMenuPrint(item, record);
               }
             }
           }))

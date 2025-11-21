@@ -195,12 +195,26 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
               }, 100);
             }}
             onContextMenuPrint={(printItem, record) => {
+              console.log('🖨️ Context menu print triggered:', printItem, 'for record:', record);
+              
+              // Actualizar el registro seleccionado primero
               if (onRecordSelect) {
                 onRecordSelect(record, true);
               }
-              setTimeout(() => {
-                toolbarHandlers.onPrint?.(printItem);
-              }, 100);
+              
+              // Llamar al handler de print con un delay para asegurar que el contexto se actualice
+              // El handler de print necesita el selectedRecord actualizado en el estado de Dashboard
+              // Usamos requestAnimationFrame + setTimeout para asegurar que el estado se haya actualizado
+              requestAnimationFrame(() => {
+                setTimeout(() => {
+                  if (toolbarHandlers.onPrint) {
+                    console.log('🖨️ Calling onPrint handler with:', printItem);
+                    toolbarHandlers.onPrint(printItem);
+                  } else {
+                    console.warn('⚠️ onPrint handler not available');
+                  }
+                }, 200);
+              });
             }}
             onContextMenuEmail={(record) => {
               if (onRecordSelect) {

@@ -393,8 +393,17 @@ const Dashboard = ({ sessionData, onLogout, onLanguageChange }) => {
   };
 
   const handleToolbarPrint = (printItem) => {
-    console.log("Toolbar print clicked:", printItem);
-    // TODO: Implementar impresión
+    console.log("🖨️ Toolbar print clicked:", printItem);
+    console.log("📋 Selected record:", selectedRecord);
+    
+    if (!selectedRecord) {
+      console.warn("⚠️ No record selected for print");
+      return;
+    }
+    
+    // TODO: Implementar impresión con printItem y selectedRecord
+    // El printItem contiene la información de la acción de impresión
+    // El selectedRecord contiene el registro seleccionado
   };
 
   const handleToolbarEmail = (emailItem) => {
