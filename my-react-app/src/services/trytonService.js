@@ -273,6 +273,10 @@ class TrytonService {
       } else if (method === "common.db.login") {
         // Para login, NO agregar contexto adicional - ya tiene el formato correcto
         // El login ya tiene sus 4 parámetros: username, password, language, context
+      } else if (method === "model.res.user.set_preferences") {
+        // Para set_preferences, agregar el contexto como segundo parámetro separado
+        // Formato: set_preferences(values, context)
+        rpcParams.push({ ...this.context });
       } else {
         // Para otros métodos, mezclar con el último parámetro como antes
         const lastParam = rpcParams.pop() || {};
@@ -394,8 +398,14 @@ class TrytonService {
 
     // Debug: Ver si algo cambió con los iconos
     const afterTranslation = JSON.stringify(result);
-    if (beforeTranslation !== afterTranslation && beforeTranslation.includes("icon")) {
-      console.log("📋 DATOS CON ICONOS - ANTES:", JSON.parse(beforeTranslation));
+    if (
+      beforeTranslation !== afterTranslation &&
+      beforeTranslation.includes("icon")
+    ) {
+      console.log(
+        "📋 DATOS CON ICONOS - ANTES:",
+        JSON.parse(beforeTranslation)
+      );
       console.log("📋 DATOS CON ICONOS - DESPUÉS:", result);
     }
 
@@ -590,6 +600,60 @@ class TrytonService {
       return preferences;
     } catch (error) {
       console.error("Error obteniendo preferencias:", error);
+      throw error;
+    }
+  }
+
+  // Obtener TODOS los idiomas de Tryton
+  async getAvailableLanguages() {
+    try {
+      console.log("🌐 Obteniendo TODOS los idiomas desde Tryton...");
+
+      const languageIds = await this.makeRpcCall("model.ir.lang.search", [
+        [["translatable", "=", true]],
+        0,
+        100,
+        null,
+        {},
+      ]);
+
+      return languageIds;
+    } catch (error) {
+      console.error("❌ Error obteniendo idiomas:", error);
+      return [];
+    }
+  }
+
+  // Cambiar idioma del usuario sin necesidad de re-login
+  async changeUserLanguage(newLanguage) {
+    if (!this.sessionData) {
+      throw new Error("No hay sesión activa");
+    }
+
+    try {
+      console.log(`🌐 Cambiando idioma a: ${newLanguage}`);
+
+      const trytonLanguage = getLanguageForTryton(newLanguage);
+
+      // set_preferences recibe solo el objeto de valores
+      // El contexto se agrega automáticamente por makeRpcCall
+      await this.makeRpcCall("model.res.user.set_preferences", [
+        { language: trytonLanguage },
+      ]);
+
+      console.log(`✓ Preferencias actualizadas en el backend`);
+
+      // Actualizar el idioma local del servicio
+      this.userLanguage = newLanguage;
+
+      // Recargar el contexto desde el backend para sincronizar
+      await this.loadUserContext();
+
+      console.log(`✓ Contexto actualizado localmente`);
+
+      return { success: true, language: newLanguage };
+    } catch (error) {
+      console.error("Error cambiando idioma:", error);
       throw error;
     }
   }

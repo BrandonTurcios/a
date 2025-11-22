@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { message, Spin, Modal, Input, Form } from "antd";
+import { message, Spin } from "antd";
 import { useTranslation } from "react-i18next";
-import { LockOutlined } from '@ant-design/icons';
 import Login from "./components/Login";
 import Dashboard from "./app/dashboard/Dashboard";
 import trytonService from "./services/trytonService";
@@ -11,9 +10,6 @@ function App() {
   const [sessionData, setSessionData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isChangingLanguage, setIsChangingLanguage] = useState(false);
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [pendingLanguageChange, setPendingLanguageChange] = useState(null);
-  const [passwordForm] = Form.useForm();
 
   useEffect(() => {
     // Verificar si hay una sesión guardada al cargar la aplicación
@@ -65,19 +61,8 @@ function App() {
       return;
     }
 
-    setPendingLanguageChange({ newLanguage, navigationState });
-    setShowPasswordModal(true);
-  };
-
-  const handlePasswordSubmit = async (values) => {
-    if (!pendingLanguageChange) return;
-
-    const { newLanguage, navigationState } = pendingLanguageChange;
-
     try {
       setIsChangingLanguage(true);
-      setShowPasswordModal(false);
-      passwordForm.resetFields();
 
       // Guardar estado de navegación antes de recargar
       if (navigationState) {
@@ -87,17 +72,16 @@ function App() {
         );
       }
 
-      // Hacer re-login con el nuevo idioma
-      const newSession = await trytonService.login(
-        sessionData.database,
-        sessionData.username,
-        values.password,
-        newLanguage
-      );
+      // Cambiar idioma usando el método del servicio
+      await trytonService.changeUserLanguage(newLanguage);
 
-      // Actualizar sesión
-      setSessionData(newSession);
-      localStorage.setItem("tryton_session", JSON.stringify(newSession));
+      // Actualizar la sesión local con el nuevo idioma
+      const updatedSession = {
+        ...sessionData,
+        language: newLanguage,
+      };
+      setSessionData(updatedSession);
+      localStorage.setItem("tryton_session", JSON.stringify(updatedSession));
 
       // Guardar el idioma seleccionado
       localStorage.setItem("tryton_language", newLanguage);
@@ -114,12 +98,6 @@ function App() {
       message.error(t("app.languageChangeError") + ": " + error.message);
       console.error("Error changing language:", error);
     }
-  };
-
-  const handlePasswordModalCancel = () => {
-    setShowPasswordModal(false);
-    setPendingLanguageChange(null);
-    passwordForm.resetFields();
   };
 
   if (isLoading) {
@@ -159,41 +137,6 @@ function App() {
           </p>
         </div>
       )}
-
-      {/* Modal para pedir contraseña al cambiar idioma */}
-      <Modal
-        title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <LockOutlined />
-            {t("app.passwordRequired")}
-          </div>
-        }
-        open={showPasswordModal}
-        onOk={() => passwordForm.submit()}
-        onCancel={handlePasswordModalCancel}
-        okText={t("common.confirm")}
-        cancelText={t("common.cancel")}
-        destroyOnClose
-      >
-        <Form
-          form={passwordForm}
-          onFinish={handlePasswordSubmit}
-          layout="vertical"
-        >
-          <Form.Item
-            name="password"
-            label={t("login.password")}
-            rules={[{ required: true, message: t("login.enterPassword") }]}
-          >
-            <Input.Password
-              prefix={<LockOutlined />}
-              placeholder={t("login.password")}
-              autoFocus
-              size="large"
-            />
-          </Form.Item>
-        </Form>
-      </Modal>
 
       {sessionData ? (
         <Dashboard
