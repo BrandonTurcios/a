@@ -10,25 +10,10 @@ export const parseFormSections = (fieldsView, recordData = null) => {
   // Si el arch es de tipo tree, incluir todos los campos del fieldsView en una sección por defecto
   const isTreeArch = arch.includes("<tree");
   
-  // Si hay datos del registro, obtener todos los campos que están en los datos
-  const hasRecordData = recordData && Object.keys(recordData).length > 0;
-  const fieldsInRecordData = hasRecordData 
-    ? Object.keys(recordData).filter(key => !key.includes(".") && recordData.hasOwnProperty(key))
-    : [];
-  
-  if (isTreeArch || hasRecordData) {
-    // Si el arch es tree o hay datos del registro, incluir todos los campos relevantes
-    let allFieldNames;
-    if (hasRecordData) {
-      // Si hay datos del registro, incluir todos los campos que están en los datos
-      // Esto asegura que campos con valor null también se incluyan
-      allFieldNames = fieldsInRecordData.filter(fieldName => fields[fieldName]);
-      console.log("🔍 Hay datos del registro, incluyendo campos de recordData:", allFieldNames);
-    } else {
-      // Si no hay datos pero el arch es tree, incluir todos los campos del fieldsView
-      allFieldNames = Object.keys(fields).filter(fieldName => !fieldName.includes("."));
-      console.log("🔍 Arch es de tipo tree, incluyendo todos los campos del fieldsView");
-    }
+  // Si el arch es tree, crear una sección por defecto con todos los campos
+  if (isTreeArch) {
+    const allFieldNames = Object.keys(fields).filter(fieldName => !fieldName.includes("."));
+    console.log("🔍 Arch es de tipo tree, incluyendo todos los campos del fieldsView");
     
     return {
       sections: [{
@@ -227,6 +212,57 @@ export const parseFormSections = (fieldsView, recordData = null) => {
     
     if (rootElement) {
       const sections = extractSections(rootElement);
+      
+      // Si hay datos del registro, agregar campos que están en los datos pero no en el arch
+      // Solo si hay campos adicionales que no están en las secciones parseadas
+      const hasRecordData = recordData && Object.keys(recordData).length > 0;
+      if (hasRecordData) {
+        const fieldsInRecordData = Object.keys(recordData).filter(
+          key => !key.includes(".") && recordData.hasOwnProperty(key)
+        );
+        
+        // Obtener todos los campos que están en las secciones parseadas
+        const fieldsInSections = new Set();
+        const collectFieldsFromSections = (secs) => {
+          secs.forEach(sec => {
+            if (sec.fields) {
+              sec.fields.forEach(field => fieldsInSections.add(field));
+            }
+            if (sec.children) {
+              collectFieldsFromSections(sec.children);
+            }
+            if (sec.pages) {
+              sec.pages.forEach(page => {
+                if (page.fields) {
+                  page.fields.forEach(field => fieldsInSections.add(field));
+                }
+                if (page.children) {
+                  collectFieldsFromSections(page.children);
+                }
+              });
+            }
+          });
+        };
+        collectFieldsFromSections(sections);
+        
+        // Encontrar campos que están en recordData pero no en las secciones
+        const missingFields = fieldsInRecordData.filter(
+          fieldName => !fieldsInSections.has(fieldName) && fields[fieldName]
+        );
+        
+        if (missingFields.length > 0) {
+          console.log("🔍 Campos en recordData que no están en el arch, agregando a sección adicional:", missingFields);
+          // Agregar una sección adicional al final solo con los campos faltantes
+          sections.push({
+            type: 'group',
+            title: '',
+            id: 'additional_fields',
+            fields: missingFields,
+            children: []
+          });
+        }
+      }
+      
       return {
         sections: sections,
         fields: fields,
