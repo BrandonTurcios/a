@@ -882,3 +882,143 @@ body {
 .ant-btn:hover {
   font-weight: 600 !important;
 }
+
+/* Modern Input Styles - Aligned with boolean toggle design */
+.modern-input:hover:not(:disabled):not(:focus) {
+  border-color: var(--color-primary-400) !important;
+}
+
+.modern-input:focus {
+  border-color: var(--color-primary-500) !important;
+  background: linear-gradient(180deg, #fff, #f0f9ff) !important;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1) !important;
+}
+
+.modern-textarea:hover:not(:disabled):not(:focus) {
+  border-color: var(--color-primary-400) !important;
+}
+
+.modern-textarea:focus {
+  border-color: var(--color-primary-500) !important;
+  background: linear-gradient(180deg, #fff, #f0f9ff) !important;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1) !important;
+}
+
+/* Modern InputNumber Styles */
+.modern-input-number .ant-input-number-input {
+  height: 48px !important;
+  border-radius: 16px !important;
+  border: 1.5px solid var(--color-neutral-200) !important;
+  background: linear-gradient(180deg, #fff, #fafbfc) !important;
+  font-size: 15px !important;
+  padding: 12px 16px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.modern-input-number:hover:not(.ant-input-number-disabled) .ant-input-number-input {
+  border-color: var(--color-primary-400) !important;
+}
+
+.modern-input-number.ant-input-number-focused .ant-input-number-input {
+  border-color: var(--color-primary-500) !important;
+  background: linear-gradient(180deg, #fff, #f0f9ff) !important;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1) !important;
+}
+
+.modern-input-number .ant-input-number-handler-wrap {
+  border-radius: 0 16px 16px 0 !important;
+}
+
+.modern-input-number .ant-input-number-handler {
+  color: var(--color-primary-500) !important;
+}
+
+/* Modern DatePicker Styles */
+.modern-datepicker .ant-picker-input > input {
+  font-size: 15px !important;
+  height: 48px !important;
+  padding: 12px 16px !important;
+}
+
+.modern-datepicker:hover:not(.ant-picker-disabled) {
+  border-color: var(--color-primary-400) !important;
+}
+
+.modern-datepicker.ant-picker-focused {
+  border-color: var(--color-primary-500) !important;
+  background: linear-gradient(180deg, #fff, #f0f9ff) !important;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1) !important;
+}
+
+.modern-datepicker .ant-picker-suffix {
+  color: var(--color-primary-500) !important;
+}
+
+/* Modern Select Styles */
+.modern-select .ant-select-selector {
+  border-radius: 16px !important;
+  border: 1.5px solid var(--color-neutral-200) !important;
+  background: linear-gradient(180deg, #fff, #fafbfc) !important;
+  height: 48px !important;
+  font-size: 15px !important;
+  padding: 4px 16px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.modern-select:hover:not(.ant-select-disabled) .ant-select-selector {
+  border-color: var(--color-primary-400) !important;
+}
+
+.modern-select.ant-select-focused:not(.ant-select-disabled) .ant-select-selector {
+  border-color: var(--color-primary-500) !important;
+  background: linear-gradient(180deg, #fff, #f0f9ff) !important;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1) !important;
+}
+
+.modern-select .ant-select-arrow {
+  color: var(--color-primary-500) !important;
+}
+
+.modern-select-dropdown {
+  border-radius: 16px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  padding: 8px !important;
+}
+
+.modern-select-dropdown .ant-select-item {
+  border-radius: 12px !important;
+  margin: 4px 0 !important;
+  transition: all 0.2s ease !important;
+}
+
+.modern-select-dropdown .ant-select-item:hover {
+  background: linear-gradient(180deg, #f0f9ff, #e0f2fe) !important;
+}
+
+.modern-select-dropdown .ant-select-item-option-selected {
+  background: linear-gradient(180deg, #d1fae5, #a7f3d0) !important;
+  color: var(--color-primary-800) !important;
+  font-weight: 500 !important;
+}
+
+/* Modern AutoComplete Styles */
+.modern-autocomplete .ant-select-selector {
+  border-radius: 16px !important;
+  border: 1.5px solid var(--color-neutral-200) !important;
+  background: linear-gradient(180deg, #fff, #fafbfc) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.modern-autocomplete:hover:not(.ant-select-disabled) .ant-select-selector {
+  border-color: var(--color-primary-400) !important;
+}
+
+.modern-autocomplete.ant-select-focused:not(.ant-select-disabled) .ant-select-selector {
+  border-color: var(--color-primary-500) !important;
+  background: linear-gradient(180deg, #fff, #f0f9ff) !important;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1) !important;
+}
+
+.modern-autocomplete .ant-select-arrow {
+  color: var(--color-primary-500) !important;
+}

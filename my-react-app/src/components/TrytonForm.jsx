@@ -463,7 +463,7 @@ const Many2OneField = ({
         {label}
       </div>
 
-      <div style={{ marginBottom: help ? "12px" : "0", display: "flex", gap: "8px", alignItems: "flex-start" }}>
+      <div style={{ marginBottom: help ? "12px" : "0", display: "flex", gap: "12px", alignItems: "flex-start" }}>
         <div style={{ flex: 1 }}>
           <AutoComplete
             value={inputValue}
@@ -476,6 +476,7 @@ const Many2OneField = ({
             notFoundContent={loading ? <Spin size="small" /> : null}
             style={{ width: "100%" }}
             filterOption={false}
+            className="modern-autocomplete"
           >
             <Input
               suffix={
@@ -483,14 +484,38 @@ const Many2OneField = ({
                   <Spin size="small" />
                 ) : (
                   <SearchOutlined
-                    style={{ color: "var(--color-text-secondary)" }}
+                    style={{ color: "var(--color-primary-500)" }}
                   />
                 )
               }
               style={{
-                borderRadius: "6px",
-                height: "40px",
-                fontSize: "14px",
+                borderRadius: "16px",
+                border: "1.5px solid var(--color-neutral-200)",
+                height: "48px",
+                fontSize: "15px",
+                padding: "12px 16px",
+                background: "linear-gradient(180deg, #fff, #fafbfc)",
+                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = "var(--color-primary-500)";
+                e.target.style.background = "linear-gradient(180deg, #fff, #f0f9ff)";
+                e.target.style.boxShadow = "0 0 0 3px rgba(20, 184, 166, 0.1)";
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = "var(--color-neutral-200)";
+                e.target.style.background = "linear-gradient(180deg, #fff, #fafbfc)";
+                e.target.style.boxShadow = "none";
+              }}
+              onMouseEnter={(e) => {
+                if (!e.target.disabled && document.activeElement !== e.target) {
+                  e.target.style.borderColor = "var(--color-primary-400)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (document.activeElement !== e.target) {
+                  e.target.style.borderColor = "var(--color-neutral-200)";
+                }
               }}
             />
           </AutoComplete>
@@ -501,11 +526,28 @@ const Many2OneField = ({
           onClick={handleOpenRecord}
           disabled={!getCurrentRecordId() || readonly}
           style={{
-            height: "40px",
-            borderRadius: "6px",
+            height: "48px",
+            borderRadius: "16px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            border: "1.5px solid var(--color-neutral-200)",
+            background: "linear-gradient(180deg, #fff, #fafbfc)",
+            color: "var(--color-primary-700)",
+            fontWeight: 500,
+            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          }}
+          onMouseEnter={(e) => {
+            if (!e.currentTarget.disabled) {
+              e.currentTarget.style.borderColor = "var(--color-primary-400)";
+              e.currentTarget.style.background = "linear-gradient(180deg, #fff, #f0f9ff)";
+              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(20, 184, 166, 0.1)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = "var(--color-neutral-200)";
+            e.currentTarget.style.background = "linear-gradient(180deg, #fff, #fafbfc)";
+            e.currentTarget.style.boxShadow = "none";
           }}
           title={t("form.openRecord")}
         >
@@ -2047,7 +2089,36 @@ const TrytonForm = forwardRef(
               <Input
                 disabled={isReadonly}
                 placeholder={label}
-                className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 text-base"
+                style={{
+                  borderRadius: "16px",
+                  border: "1.5px solid var(--color-neutral-200)",
+                  height: "48px",
+                  fontSize: "15px",
+                  padding: "12px 16px",
+                  background: "linear-gradient(180deg, #fff, #fafbfc)",
+                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                }}
+                className="modern-input"
+                onFocus={(e) => {
+                  e.target.style.borderColor = "var(--color-primary-500)";
+                  e.target.style.background = "linear-gradient(180deg, #fff, #f0f9ff)";
+                  e.target.style.boxShadow = "0 0 0 3px rgba(20, 184, 166, 0.1)";
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "var(--color-neutral-200)";
+                  e.target.style.background = "linear-gradient(180deg, #fff, #fafbfc)";
+                  e.target.style.boxShadow = "none";
+                }}
+                onMouseEnter={(e) => {
+                  if (!e.target.disabled && document.activeElement !== e.target) {
+                    e.target.style.borderColor = "var(--color-primary-400)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (document.activeElement !== e.target) {
+                    e.target.style.borderColor = "var(--color-neutral-200)";
+                  }
+                }}
               />
             </Form.Item>
           );
@@ -2059,7 +2130,37 @@ const TrytonForm = forwardRef(
                 disabled={isReadonly}
                 rows={4}
                 placeholder={label}
-                className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 text-base resize-y"
+                style={{
+                  borderRadius: "16px",
+                  border: "1.5px solid var(--color-neutral-200)",
+                  fontSize: "15px",
+                  padding: "12px 16px",
+                  background: "linear-gradient(180deg, #fff, #fafbfc)",
+                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                  resize: "vertical",
+                  minHeight: "120px",
+                }}
+                className="modern-textarea"
+                onFocus={(e) => {
+                  e.target.style.borderColor = "var(--color-primary-500)";
+                  e.target.style.background = "linear-gradient(180deg, #fff, #f0f9ff)";
+                  e.target.style.boxShadow = "0 0 0 3px rgba(20, 184, 166, 0.1)";
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "var(--color-neutral-200)";
+                  e.target.style.background = "linear-gradient(180deg, #fff, #fafbfc)";
+                  e.target.style.boxShadow = "none";
+                }}
+                onMouseEnter={(e) => {
+                  if (!e.target.disabled && document.activeElement !== e.target) {
+                    e.target.style.borderColor = "var(--color-primary-400)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (document.activeElement !== e.target) {
+                    e.target.style.borderColor = "var(--color-neutral-200)";
+                  }
+                }}
               />
             </Form.Item>
           );
@@ -2072,7 +2173,12 @@ const TrytonForm = forwardRef(
                 disabled={isReadonly}
                 style={{ width: "100%" }}
                 placeholder={label}
-                className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 text-base w-full"
+                className="modern-input-number"
+                controls={{
+                  style: {
+                    color: "var(--color-primary-500)",
+                  }
+                }}
               />
             </Form.Item>
           );
@@ -2086,7 +2192,12 @@ const TrytonForm = forwardRef(
                 style={{ width: "100%", ...inputStyle }}
                 step={0.01}
                 placeholder={label}
-                className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 text-base w-full"
+                className="modern-input-number"
+                controls={{
+                  style: {
+                    color: "var(--color-primary-500)",
+                  }
+                }}
               />
             </Form.Item>
           );
@@ -2208,9 +2319,20 @@ const TrytonForm = forwardRef(
             <Form.Item key={name} {...dateProps}>
               <DatePicker
                 disabled={isReadonly}
-                style={{ width: "100%" }}
+                style={{ 
+                  width: "100%",
+                  borderRadius: "16px",
+                  border: "1.5px solid var(--color-neutral-200)",
+                  height: "48px",
+                  fontSize: "15px",
+                  background: "linear-gradient(180deg, #fff, #fafbfc)",
+                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                }}
                 placeholder={label}
-                className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 w-full"
+                className="modern-datepicker"
+                popupStyle={{
+                  borderRadius: "16px",
+                }}
               />
             </Form.Item>
           );
@@ -2241,9 +2363,20 @@ const TrytonForm = forwardRef(
               <DatePicker
                 disabled={isReadonly}
                 showTime
-                style={{ width: "100%" }}
+                style={{ 
+                  width: "100%",
+                  borderRadius: "16px",
+                  border: "1.5px solid var(--color-neutral-200)",
+                  height: "48px",
+                  fontSize: "15px",
+                  background: "linear-gradient(180deg, #fff, #fafbfc)",
+                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                }}
                 placeholder={label}
-                className="rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12 w-full"
+                className="modern-datepicker"
+                popupStyle={{
+                  borderRadius: "16px",
+                }}
               />
             </Form.Item>
           );
@@ -2284,7 +2417,17 @@ const TrytonForm = forwardRef(
                 <Select
                   disabled={isReadonly}
                   placeholder={label}
-                  className="w-full rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12"
+                  style={{
+                    width: "100%",
+                    borderRadius: "16px",
+                    border: "1.5px solid var(--color-neutral-200)",
+                    height: "48px",
+                    fontSize: "15px",
+                    background: "linear-gradient(180deg, #fff, #fafbfc)",
+                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                  }}
+                  className="modern-select"
+                  popupClassName="modern-select-dropdown"
                 >
                   {dynamicOptions.length > 0 ? (
                     dynamicOptions.map(([value, optionLabel]) => (
@@ -2304,7 +2447,17 @@ const TrytonForm = forwardRef(
               <Select
                 disabled={isReadonly}
                 placeholder={label}
-                className="w-full rounded-lg border-2 border-gray-200 hover:border-teal-600 focus:border-teal-600 focus:shadow-teal-200 focus:shadow-lg transition-all duration-300 h-12"
+                style={{
+                  width: "100%",
+                  borderRadius: "16px",
+                  border: "1.5px solid var(--color-neutral-200)",
+                  height: "48px",
+                  fontSize: "15px",
+                  background: "linear-gradient(180deg, #fff, #fafbfc)",
+                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                }}
+                className="modern-select"
+                popupClassName="modern-select-dropdown"
               >
                 {options.map(([value, label]) => (
                   <Option key={value} value={value}>
