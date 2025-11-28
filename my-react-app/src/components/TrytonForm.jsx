@@ -454,17 +454,20 @@ const Many2OneField = ({
           fontWeight: "bold",
           color: "var(--color-text-primary)",
           marginBottom: "8px",
+          overflow: "visible",
+          width: "100%",
+          minWidth: 0,
         }}
       >
         {required && (
-          <span style={{ color: "var(--color-danger-500)" }}>*</span>
+          <span style={{ color: "var(--color-danger-500)", flexShrink: 0 }}>*</span>
         )}
-        <SearchOutlined style={{ color: "var(--color-primary-500)" }} />
-        {label}
+        <SearchOutlined style={{ color: "var(--color-primary-500)", flexShrink: 0 }} />
+        <span style={{ overflow: "visible", textOverflow: "clip", whiteSpace: "normal", wordWrap: "break-word", flex: 1, minWidth: 0 }}>{label}</span>
       </div>
 
-      <div style={{ marginBottom: help ? "12px" : "0", display: "flex", gap: "12px", alignItems: "flex-start", width: "100%", minWidth: 0, overflow: "visible" }}>
-        <div style={{ flex: 1, minWidth: 0, overflow: "visible", width: "100%" }}>
+      <div style={{ marginBottom: help ? "12px" : "0", display: "flex", gap: "12px", alignItems: "flex-start", width: "100%", minWidth: "200px", overflow: "visible" }}>
+        <div style={{ flex: 1, minWidth: "150px", overflow: "visible", width: "100%" }}>
           <AutoComplete
             value={inputValue}
             options={options}
@@ -2494,6 +2497,7 @@ const TrytonForm = forwardRef(
               help={help}
               form={form}
               defaultValue={formData[name]}
+              data-min-width="200px"
             />
           );
 

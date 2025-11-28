@@ -63,9 +63,12 @@ const GroupSection = ({ section, fields, form, fieldComponents, level = 0 }) => 
           const baseSpan = Math.floor(24 / cols);
           const fieldSpan = fieldComponent?.props?.['data-span'] ?? baseSpan;
           
+          // Asegurar un ancho mínimo para campos que lo requieran (Many2OneField, etc.)
+          const minWidth = fieldComponent?.props?.['data-min-width'] || "0";
+          
           return (
-            <Col key={`field-${fieldName}-${index}`} span={fieldSpan} style={{ minWidth: 0, overflow: "visible", width: "100%" }}>
-              <div style={{ width: "100%", minWidth: 0, overflow: "visible" }}>
+            <Col key={`field-${fieldName}-${index}`} span={fieldSpan} style={{ minWidth: minWidth, overflow: "visible", width: "100%" }}>
+              <div style={{ width: "100%", minWidth: minWidth, overflow: "visible" }}>
                 {fieldComponent}
               </div>
             </Col>

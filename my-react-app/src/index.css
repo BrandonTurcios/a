@@ -1033,10 +1033,11 @@ body {
   color: var(--color-text-secondary) !important;
   opacity: 0.7 !important;
   font-size: 14px !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  max-width: 100% !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  max-width: none !important;
+  word-wrap: break-word !important;
 }
 
 /* Ensure placeholders have enough space */
@@ -1137,6 +1138,23 @@ body {
   text-overflow: clip !important;
   overflow: visible !important;
   white-space: normal !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+/* Ensure the input value text is not truncated */
+.modern-autocomplete .ant-select-selection-search-input {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+/* Make sure placeholder text is fully visible */
+.modern-autocomplete .ant-select-selection-placeholder {
+  width: 100% !important;
+  min-width: 0 !important;
+  display: block !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
 }
 
 /* Prevent horizontal scrolling issues */
@@ -1208,10 +1226,22 @@ body {
   width: auto !important;
 }
 
+/* Allow Col to have minimum width when specified */
+.ant-col[style*="min-width"] {
+  flex-shrink: 0 !important;
+}
+
 /* Ensure Row doesn't restrict width */
 .ant-row {
   width: 100% !important;
   overflow: visible !important;
+  flex-wrap: wrap !important;
+}
+
+/* Allow Col to grow when needed */
+.ant-col {
+  flex-grow: 0 !important;
+  flex-shrink: 1 !important;
 }
 
 /* Ensure Card body doesn't restrict width */
