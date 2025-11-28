@@ -683,12 +683,26 @@ const One2ManyField = ({
                 key: fieldName,
                 render: (value, record) => {
                   if (value === null || value === undefined) return "-";
+                  
+                  // Si el valor es un objeto con rec_name, usarlo directamente
                   if (typeof value === "object" && value.rec_name) {
                     return value.rec_name;
                   }
+                  
+                  // Si el valor es un número, verificar si hay un campo relacionado con punto
+                  // Por ejemplo, si fieldName es "patient" y value es 1, buscar "patient." en el record
+                  if (typeof value === "number" && record) {
+                    const relatedFieldName = `${fieldName}.`;
+                    const relatedField = record[relatedFieldName];
+                    if (relatedField && typeof relatedField === "object" && relatedField.rec_name) {
+                      return relatedField.rec_name;
+                    }
+                  }
+                  
                   if (Array.isArray(value)) {
                     return `${value.length} item(s)`;
                   }
+                  
                   return String(value);
                 },
               });
