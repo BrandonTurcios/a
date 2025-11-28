@@ -1075,7 +1075,7 @@ body {
 .modern-autocomplete .ant-select-selection-search-input {
   width: 100% !important;
   min-width: 0 !important;
-  max-width: 100% !important;
+  max-width: none !important;
   overflow: visible !important;
   text-overflow: clip !important;
   white-space: normal !important;
@@ -1086,6 +1086,8 @@ body {
   text-overflow: clip !important;
   white-space: normal !important;
   max-width: none !important;
+  width: auto !important;
+  min-width: 0 !important;
 }
 
 .modern-autocomplete .ant-select-selection-placeholder {
@@ -1098,7 +1100,7 @@ body {
 .modern-autocomplete input {
   width: 100% !important;
   min-width: 0 !important;
-  max-width: 100% !important;
+  max-width: none !important;
   overflow: visible !important;
   text-overflow: clip !important;
   white-space: normal !important;
@@ -1107,7 +1109,7 @@ body {
 .modern-autocomplete .ant-input {
   width: 100% !important;
   min-width: 0 !important;
-  max-width: 100% !important;
+  max-width: none !important;
   overflow: visible !important;
   text-overflow: clip !important;
   white-space: normal !important;
@@ -1120,6 +1122,27 @@ body {
   white-space: normal !important;
   word-wrap: break-word !important;
   overflow-wrap: break-word !important;
+  text-overflow: clip !important;
+  overflow: visible !important;
+}
+
+/* Ensure the selector itself doesn't truncate */
+.modern-autocomplete .ant-select-selector {
+  overflow: visible !important;
+}
+
+/* Ensure input field shows full text */
+.modern-autocomplete .ant-input,
+.modern-autocomplete input[type="text"] {
+  text-overflow: clip !important;
+  overflow: visible !important;
+  white-space: normal !important;
+}
+
+/* Prevent horizontal scrolling issues */
+.modern-autocomplete .ant-select-selection-search {
+  width: 100% !important;
+  max-width: none !important;
 }
 
 /* Ensure Select and other form fields don't get cut off in flex containers */
@@ -1182,6 +1205,19 @@ body {
 .ant-col {
   min-width: 0 !important;
   overflow: visible !important;
+  width: auto !important;
+}
+
+/* Ensure Row doesn't restrict width */
+.ant-row {
+  width: 100% !important;
+  overflow: visible !important;
+}
+
+/* Ensure Card body doesn't restrict width */
+.ant-card-body {
+  overflow: visible !important;
+  width: 100% !important;
 }
 
 /* Better placeholder visibility for empty fields */

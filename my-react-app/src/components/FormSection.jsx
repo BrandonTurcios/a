@@ -64,8 +64,10 @@ const GroupSection = ({ section, fields, form, fieldComponents, level = 0 }) => 
           const fieldSpan = fieldComponent?.props?.['data-span'] ?? baseSpan;
           
           return (
-            <Col key={`field-${fieldName}-${index}`} span={fieldSpan} style={{ minWidth: 0 }}>
-              {fieldComponent}
+            <Col key={`field-${fieldName}-${index}`} span={fieldSpan} style={{ minWidth: 0, overflow: "visible", width: "100%" }}>
+              <div style={{ width: "100%", minWidth: 0, overflow: "visible" }}>
+                {fieldComponent}
+              </div>
             </Col>
           );
         })}
@@ -116,8 +118,10 @@ const PageSection = ({ section, fields, form, fieldComponents, level = 0 }) => {
           const span = fieldComponent?.props?.['data-span'] ?? 12;
           
           return (
-            <Col key={`field-${fieldName}-${index}`} span={span} style={{ minWidth: 0 }}>
-              {fieldComponent}
+            <Col key={`field-${fieldName}-${index}`} span={span} style={{ minWidth: 0, overflow: "visible", width: "100%" }}>
+              <div style={{ width: "100%", minWidth: 0, overflow: "visible" }}>
+                {fieldComponent}
+              </div>
             </Col>
           );
         })}

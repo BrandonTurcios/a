@@ -464,7 +464,7 @@ const Many2OneField = ({
       </div>
 
       <div style={{ marginBottom: help ? "12px" : "0", display: "flex", gap: "12px", alignItems: "flex-start", width: "100%", minWidth: 0, overflow: "visible" }}>
-        <div style={{ flex: 1, minWidth: 0, maxWidth: "100%", overflow: "visible", width: "100%" }}>
+        <div style={{ flex: 1, minWidth: 0, overflow: "visible", width: "100%" }}>
           <AutoComplete
             value={inputValue}
             options={options}
@@ -474,7 +474,7 @@ const Many2OneField = ({
             placeholder={help || `Type in the ${label.toLowerCase()}`}
             disabled={readonly}
             notFoundContent={loading ? <Spin size="small" /> : null}
-            style={{ width: "100%", minWidth: 0, maxWidth: "100%" }}
+            style={{ width: "100%", minWidth: 0 }}
             filterOption={false}
             className="modern-autocomplete"
           >
@@ -498,6 +498,7 @@ const Many2OneField = ({
                 transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                 width: "100%",
                 minWidth: 0,
+                overflow: "visible",
               }}
               onFocus={(e) => {
                 e.target.style.borderColor = "var(--color-primary-500)";
