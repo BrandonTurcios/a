@@ -227,6 +227,22 @@ const TrytonTable = ({
   };
 
   const processData = (rawData) => {
+    if (!rawData || rawData.length === 0) return [];
+    
+    // Debug: Log first record structure to see if expanded fields are present
+    if (rawData.length > 0) {
+      const firstRecord = rawData[0];
+      const expandedFields = Object.keys(firstRecord).filter(k => k.endsWith('.'));
+      console.log('🔍 First record structure:', {
+        keys: Object.keys(firstRecord),
+        expandedFields: expandedFields,
+        patient: firstRecord.patient,
+        'patient.': firstRecord['patient.'],
+        disease_gene: firstRecord.disease_gene,
+        'disease_gene.': firstRecord['disease_gene.']
+      });
+    }
+    
     return rawData.map((record, index) => ({
       ...record,
       _index: index + 1
@@ -290,6 +306,22 @@ const TrytonTable = ({
           cellRenderer: (params) => {
             const value = params.value;
             const record = params.data;
+            
+            // Debug log for many2one fields
+            if (fieldDef.type === 'many2one' && (typeof value === 'number' || (typeof value === 'string' && !isNaN(value)))) {
+              const relatedFieldName = fieldName + '.';
+              const relatedObject = record[relatedFieldName];
+              console.log(`🔍 CellRenderer ${fieldName}:`, {
+                value,
+                valueType: typeof value,
+                fieldName,
+                relatedFieldName,
+                relatedObject,
+                hasRecName: relatedObject?.rec_name,
+                recordKeys: Object.keys(record).filter(k => k.includes(fieldName))
+              });
+            }
+            
             const formatted = formatCellValue(value, fieldDef, record, fieldName);
 
             // Si es un boolean, renderizar solo el símbolo centrado
