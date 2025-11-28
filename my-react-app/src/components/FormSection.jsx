@@ -50,7 +50,7 @@ const GroupSection = ({ section, fields, form, fieldComponents, level = 0 }) => 
        }}
       bodyStyle={{ padding: '20px', background: 'var(--color-card-background)', overflow: 'visible' }}
     >
-      <Row gutter={[16, 16]}>
+      <Row gutter={[12, 16]}>
         {/* Renderizar campos directos del grupo */}
         {sectionFields?.map((fieldName, index) => {
           const fieldComponent = fieldComponents[fieldName];
@@ -60,7 +60,12 @@ const GroupSection = ({ section, fields, form, fieldComponents, level = 0 }) => 
             return null;
           }
           
-          const baseSpan = Math.floor(24 / cols);
+          // Calcular span con más espacio cuando hay muchos campos
+          let baseSpan = Math.floor(24 / cols);
+          // Si hay más de 4 campos, dar más espacio a cada uno
+          if (sectionFields && sectionFields.length > 4) {
+            baseSpan = Math.max(baseSpan, Math.floor(24 / Math.min(sectionFields.length, 4)));
+          }
           const fieldSpan = fieldComponent?.props?.['data-span'] ?? baseSpan;
           
           // Asegurar un ancho mínimo para campos que lo requieran (Many2OneField, etc.)
@@ -113,7 +118,7 @@ const PageSection = ({ section, fields, form, fieldComponents, level = 0 }) => {
         </Title>
       )}
       
-      <Row gutter={[16, 16]}>
+      <Row gutter={[12, 16]}>
         {/* Renderizar campos directos de la página */}
         {sectionFields?.map((fieldName, index) => {
           const fieldComponent = fieldComponents[fieldName];

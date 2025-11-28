@@ -466,8 +466,8 @@ const Many2OneField = ({
         <span style={{ overflow: "visible", textOverflow: "clip", whiteSpace: "normal", wordWrap: "break-word", flex: 1, minWidth: 0 }}>{label}</span>
       </div>
 
-      <div style={{ marginBottom: help ? "12px" : "0", display: "flex", gap: "12px", alignItems: "flex-start", width: "100%", minWidth: "200px", overflow: "visible" }}>
-        <div style={{ flex: 1, minWidth: "150px", overflow: "visible", width: "100%" }}>
+      <div style={{ marginBottom: help ? "12px" : "0", display: "flex", gap: "12px", alignItems: "flex-start", width: "100%", minWidth: "250px", overflow: "visible" }}>
+        <div style={{ flex: 1, minWidth: "200px", overflow: "visible", width: "100%" }}>
           <AutoComplete
             value={inputValue}
             options={options}
@@ -2497,7 +2497,7 @@ const TrytonForm = forwardRef(
               help={help}
               form={form}
               defaultValue={formData[name]}
-              data-min-width="200px"
+              data-min-width="250px"
             />
           );
 
@@ -2996,7 +2996,7 @@ const TrytonForm = forwardRef(
                 loading={currentLoading}
               />
             ) : (
-              <Row gutter={[24, 16]}>
+              <Row gutter={[16, 16]}>
                 {fields.map((field) => (
                   <Col
                     key={field.name}
