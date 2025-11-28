@@ -471,7 +471,7 @@ const Many2OneField = ({
             onSearch={searchOptions}
             onSelect={handleSelect}
             onChange={handleChange}
-            placeholder={label}
+            placeholder={help || `Type in the ${label.toLowerCase()}`}
             disabled={readonly}
             notFoundContent={loading ? <Spin size="small" /> : null}
             style={{ width: "100%" }}
@@ -526,6 +526,7 @@ const Many2OneField = ({
           onClick={handleOpenRecord}
           disabled={!getCurrentRecordId() || readonly}
           style={{
+            width: "48px",
             height: "48px",
             borderRadius: "16px",
             display: "flex",
@@ -536,6 +537,7 @@ const Many2OneField = ({
             color: "var(--color-primary-700)",
             fontWeight: 500,
             transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+            padding: 0,
           }}
           onMouseEnter={(e) => {
             if (!e.currentTarget.disabled) {
@@ -550,9 +552,7 @@ const Many2OneField = ({
             e.currentTarget.style.boxShadow = "none";
           }}
           title={t("form.openRecord")}
-        >
-          {t("form.openRecord")}
-        </Button>
+        />
       </div>
 
       {/* Campo oculto para almacenar el ID en el formulario */}
@@ -2081,6 +2081,16 @@ const TrytonForm = forwardRef(
         commonProps.help = createFieldHelp(help);
       }
 
+      // Helper function to create descriptive placeholder
+      const createPlaceholder = (fieldLabel, fieldHelp) => {
+        if (fieldHelp) {
+          // Use help text if available, truncate if too long
+          return fieldHelp.length > 60 ? fieldHelp.substring(0, 57) + "..." : fieldHelp;
+        }
+        // Create placeholder from label
+        return `Type in the ${fieldLabel.toLowerCase()}`;
+      };
+
       switch (fieldType) {
         case "char":
         case "varchar":
@@ -2088,7 +2098,7 @@ const TrytonForm = forwardRef(
             <Form.Item key={name} {...commonProps}>
               <Input
                 disabled={isReadonly}
-                placeholder={label}
+                placeholder={createPlaceholder(label, help)}
                 style={{
                   borderRadius: "16px",
                   border: "1.5px solid var(--color-neutral-200)",
@@ -2129,7 +2139,7 @@ const TrytonForm = forwardRef(
               <Input.TextArea
                 disabled={isReadonly}
                 rows={4}
-                placeholder={label}
+                placeholder={createPlaceholder(label, help)}
                 style={{
                   borderRadius: "16px",
                   border: "1.5px solid var(--color-neutral-200)",
@@ -2172,7 +2182,7 @@ const TrytonForm = forwardRef(
               <InputNumber
                 disabled={isReadonly}
                 style={{ width: "100%" }}
-                placeholder={label}
+                placeholder={createPlaceholder(label, help)}
                 className="modern-input-number"
                 controls={{
                   style: {
@@ -2191,7 +2201,7 @@ const TrytonForm = forwardRef(
                 disabled={isReadonly}
                 style={{ width: "100%", ...inputStyle }}
                 step={0.01}
-                placeholder={label}
+                placeholder={createPlaceholder(label, help)}
                 className="modern-input-number"
                 controls={{
                   style: {
@@ -2328,7 +2338,7 @@ const TrytonForm = forwardRef(
                   background: "linear-gradient(180deg, #fff, #fafbfc)",
                   transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
-                placeholder={label}
+                placeholder={createPlaceholder(label, help) || label}
                 className="modern-datepicker"
                 popupStyle={{
                   borderRadius: "16px",
@@ -2372,7 +2382,7 @@ const TrytonForm = forwardRef(
                   background: "linear-gradient(180deg, #fff, #fafbfc)",
                   transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
-                placeholder={label}
+                placeholder={createPlaceholder(label, help) || label}
                 className="modern-datepicker"
                 popupStyle={{
                   borderRadius: "16px",
@@ -2416,7 +2426,7 @@ const TrytonForm = forwardRef(
               <Form.Item key={name} {...commonProps}>
                 <Select
                   disabled={isReadonly}
-                  placeholder={label}
+                  placeholder={createPlaceholder(label, help)}
                   style={{
                     width: "100%",
                     borderRadius: "16px",
@@ -2446,7 +2456,7 @@ const TrytonForm = forwardRef(
             <Form.Item key={name} {...commonProps}>
               <Select
                 disabled={isReadonly}
-                placeholder={label}
+                placeholder={createPlaceholder(label, help)}
                 style={{
                   width: "100%",
                   borderRadius: "16px",
