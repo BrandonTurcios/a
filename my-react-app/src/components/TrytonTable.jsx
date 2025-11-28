@@ -203,21 +203,38 @@ const TrytonTable = ({
       return String(value);
     }
 
-    // Handle IDs that have related objects
-    if (typeof value === 'number' && record) {
+    // Handle many2one fields: if value is a number (ID), look for expanded object with rec_name
+    if (fieldDef.type === 'many2one' && record) {
       const fieldName = fieldDef.name || '';
-
-      // Search for the related object with the same name but ending in "."
-      const relatedFieldName = fieldName + '.';
-      const relatedObject = record[relatedFieldName];
-
-      if (relatedObject && typeof relatedObject === 'object' && relatedObject.rec_name) {
-        return relatedObject.rec_name;
+      
+      // First check if value is already an object with rec_name
+      if (typeof value === 'object' && value.rec_name) {
+        return value.rec_name;
+      }
+      
+      // If value is a number (ID), search for the expanded object (fieldName + ".")
+      if (typeof value === 'number') {
+        const relatedFieldName = fieldName + '.';
+        const relatedObject = record[relatedFieldName];
+        
+        if (relatedObject && typeof relatedObject === 'object' && relatedObject.rec_name) {
+          return relatedObject.rec_name;
+        }
+      }
+      
+      // If value is null, also check for expanded object
+      if (value === null) {
+        const relatedFieldName = fieldName + '.';
+        const relatedObject = record[relatedFieldName];
+        
+        if (relatedObject && typeof relatedObject === 'object' && relatedObject.rec_name) {
+          return relatedObject.rec_name;
+        }
       }
     }
-
-    // If it's null but there's a related object, try to show that
-    if (value === null && record) {
+    
+    // Handle other IDs that might have related objects (fallback for non-many2one fields)
+    if (typeof value === 'number' && record && fieldDef.type !== 'many2one') {
       const fieldName = fieldDef.name || '';
       const relatedFieldName = fieldName + '.';
       const relatedObject = record[relatedFieldName];
