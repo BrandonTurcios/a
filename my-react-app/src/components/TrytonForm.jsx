@@ -1852,9 +1852,30 @@ const TrytonForm = forwardRef(
       // Obtener campos del arch XML
       const archFields = parseArchFields(fieldsView.arch);
       console.log("🔍 Campos encontrados en arch:", archFields);
+      console.log("🔍 Tipo de vista:", fieldsView.type);
+      console.log("🔍 Arch contiene:", fieldsView.arch?.substring(0, 200));
+      
+      // Verificar si el arch es de tipo tree (aunque el type del fieldsView sea "form")
+      // Esto sucede cuando se hace fields_get desde una vista tree editable
+      const isTreeArch = fieldsView.arch && fieldsView.arch.includes("<tree");
+      const hasArchFields = archFields.length > 0;
+      
+      // Si estamos renderizando un formulario (viewType === "form" o readonly === false)
+      // pero el arch es de tipo tree, o si no hay campos en el arch,
+      // incluir TODOS los campos del fieldsView
+      // Esto asegura que campos con valor null también se muestren cuando se abre desde tree
+      const isFormMode = viewType === "form" || !readonly;
+      const shouldIncludeAllFields = (isTreeArch && isFormMode) || !hasArchFields;
+
+      console.log(`🔍 shouldIncludeAllFields: ${shouldIncludeAllFields} (isTreeArch: ${isTreeArch}, isFormMode: ${isFormMode}, hasArchFields: ${hasArchFields})`);
 
       // Process fields that are in arch or are basic
       Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
+        // Omitir campos expandidos (que tienen punto en el nombre)
+        if (fieldName.includes(".")) {
+          return;
+        }
+
         const isInArch = archFields.includes(fieldName);
         const isBasicField = [
           "id",
@@ -1864,9 +1885,10 @@ const TrytonForm = forwardRef(
           "active",
         ].includes(fieldName);
 
-        if (isInArch || isBasicField) {
+        // Incluir si está en arch, es básico, o si debemos incluir todos los campos
+        if (isInArch || isBasicField || shouldIncludeAllFields) {
           console.log(
-            `✅ Incluyendo campo: ${fieldName} (tipo: ${fieldDef.type}, readonly: ${fieldDef.readonly})`
+            `✅ Incluyendo campo: ${fieldName} (tipo: ${fieldDef.type}, readonly: ${fieldDef.readonly}, shouldIncludeAll: ${shouldIncludeAllFields})`
           );
           formFields.push({
             name: fieldName,
