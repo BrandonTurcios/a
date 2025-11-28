@@ -1,4 +1,9 @@
 import trytonConfig from "../../env.config.js";
+import {
+  getLanguageForTryton,
+  shouldApplyHondurasOverrides,
+  applyHondurasOverridesToObject,
+} from "../utils/translationOverrides.js";
 
 // Servicio para conectar con la API de Tryton
 class TrytonService {
@@ -8,6 +13,7 @@ class TrytonService {
     this.database = null;
     this.context = {};
     this.rpcId = 0;
+    this.userLanguage = null; // Idioma seleccionado por el usuario (ej: es_HN)
   }
 
   // Attachments helpers
@@ -267,6 +273,10 @@ class TrytonService {
       } else if (method === "common.db.login") {
         // Para login, NO agregar contexto adicional - ya tiene el formato correcto
         // El login ya tiene sus 4 parámetros: username, password, language, context
+      } else if (method === "model.res.user.set_preferences") {
+        // Para set_preferences, agregar el contexto como segundo parámetro separado
+        // Formato: set_preferences(values, context)
+        rpcParams.push({ ...this.context });
       } else {
         // Para otros métodos, mezclar con el último parámetro como antes
         const lastParam = rpcParams.pop() || {};
@@ -355,13 +365,14 @@ class TrytonService {
 
   // Procesar respuesta de manera consistente
   processResponse(data) {
+    let result;
+
     // Manejar respuestas directas de Tryton (como ["health50"])
     if (Array.isArray(data)) {
-      return data;
+      result = data;
     }
-
     // Manejar respuestas JSON-RPC estándar
-    if (data && typeof data === "object") {
+    else if (data && typeof data === "object") {
       // Manejar errores JSON-RPC
       if (data.error) {
         const [errorType, errorMessage] = data.error;
@@ -370,11 +381,35 @@ class TrytonService {
       }
 
       // Retornar resultado
-      return data.result;
+      result = data.result;
+    }
+    // Fallback para otros tipos de respuesta
+    else {
+      result = data;
     }
 
-    // Fallback para otros tipos de respuesta
-    return data;
+    // Debug: Log antes de traducir (solo para menús con iconos)
+    const beforeTranslation = JSON.stringify(result);
+
+    // Aplicar overrides de Honduras si el usuario tiene es_HN seleccionado
+    if (this.userLanguage && shouldApplyHondurasOverrides(this.userLanguage)) {
+      result = applyHondurasOverridesToObject(result);
+    }
+
+    // Debug: Ver si algo cambió con los iconos
+    const afterTranslation = JSON.stringify(result);
+    if (
+      beforeTranslation !== afterTranslation &&
+      beforeTranslation.includes("icon")
+    ) {
+      console.log(
+        "📋 DATOS CON ICONOS - ANTES:",
+        JSON.parse(beforeTranslation)
+      );
+      console.log("📋 DATOS CON ICONOS - DESPUÉS:", result);
+    }
+
+    return result;
   }
 
   // Login
@@ -382,6 +417,12 @@ class TrytonService {
     try {
       // Guardar base de datos
       this.database = database;
+
+      // Guardar idioma seleccionado por el usuario
+      this.userLanguage = language;
+
+      // Convertir el idioma para Tryton si es necesario
+      const trytonLanguage = getLanguageForTryton(language);
 
       // Primero obtener lista de bases de datos (sin base de datos específica)
       const databases = await this.makeRpcCall("common.db.list");
@@ -403,7 +444,7 @@ class TrytonService {
           device_cookie: "a8e18b090c9c40989af64040c0ec9f1f",
           password: password,
         },
-        language, // Idioma configurable
+        trytonLanguage, // Idioma convertido para Tryton
       ];
 
       const result = await this.makeRpcCall("common.db.login", loginParams);
@@ -416,7 +457,7 @@ class TrytonService {
           sessionId: result[1], // session viene segundo
           database: database,
           username: username,
-          language: language, // Guardar idioma en sesión
+          language: language, // Guardar idioma ORIGINAL (es_HN)
           loginTime: new Date().toISOString(),
         };
 
@@ -442,12 +483,10 @@ class TrytonService {
       ]);
       this.context = context || {};
 
-      // Sobrescribir el idioma del contexto con el idioma de sesiónno
-      if (this.sessionData && this.sessionData.language) {
-        this.context.language = this.sessionData.language;
-        console.log(
-          `🌍 Forzando idioma del contexto a: ${this.sessionData.language}`
-        );
+      // Sobrescribir el idioma del contexto con el idioma de Tryton
+      if (this.userLanguage) {
+        const trytonLanguage = getLanguageForTryton(this.userLanguage);
+        this.context.language = trytonLanguage;
       }
     } catch (error) {
       console.warn("No se pudo cargar el contexto del usuario:", error.message);
@@ -505,6 +544,9 @@ class TrytonService {
       this.sessionData = sessionData;
       this.database = sessionData.database;
 
+      // Restaurar el idioma del usuario para aplicar overrides correctamente
+      this.userLanguage = sessionData.language || null;
+
       // NO cargar contexto automáticamente aquí - se hará en getSidebarMenu
 
       return true;
@@ -558,6 +600,60 @@ class TrytonService {
       return preferences;
     } catch (error) {
       console.error("Error obteniendo preferencias:", error);
+      throw error;
+    }
+  }
+
+  // Obtener TODOS los idiomas de Tryton
+  async getAvailableLanguages() {
+    try {
+      console.log("🌐 Obteniendo TODOS los idiomas desde Tryton...");
+
+      const languageIds = await this.makeRpcCall("model.ir.lang.search", [
+        [["translatable", "=", true]],
+        0,
+        100,
+        null,
+        {},
+      ]);
+
+      return languageIds;
+    } catch (error) {
+      console.error("❌ Error obteniendo idiomas:", error);
+      return [];
+    }
+  }
+
+  // Cambiar idioma del usuario sin necesidad de re-login
+  async changeUserLanguage(newLanguage) {
+    if (!this.sessionData) {
+      throw new Error("No hay sesión activa");
+    }
+
+    try {
+      console.log(`🌐 Cambiando idioma a: ${newLanguage}`);
+
+      const trytonLanguage = getLanguageForTryton(newLanguage);
+
+      // set_preferences recibe solo el objeto de valores
+      // El contexto se agrega automáticamente por makeRpcCall
+      await this.makeRpcCall("model.res.user.set_preferences", [
+        { language: trytonLanguage },
+      ]);
+
+      console.log(`✓ Preferencias actualizadas en el backend`);
+
+      // Actualizar el idioma local del servicio
+      this.userLanguage = newLanguage;
+
+      // Recargar el contexto desde el backend para sincronizar
+      await this.loadUserContext();
+
+      console.log(`✓ Contexto actualizado localmente`);
+
+      return { success: true, language: newLanguage };
+    } catch (error) {
+      console.error("Error cambiando idioma:", error);
       throw error;
     }
   }
@@ -3494,12 +3590,12 @@ class TrytonService {
     }
 
     try {
-      // CheQquear si está en caché
+      // Chequear si está en caché
       if (this.iconCache && this.iconCache[iconName]) {
         return this.iconCache[iconName];
       }
 
-      // Innicializar caché si no existe
+      // Inicializar caché si no existe
       if (!this.iconCache) {
         this.iconCache = {};
       }
@@ -3514,12 +3610,25 @@ class TrytonService {
       }
 
       const iconId = this.iconNameToId[iconName];
+
+      // Si el icono NO está en el backend, intentar cargarlo desde archivos locales
       if (!iconId) {
-        console.warn(`Icon not found: ${iconName}`);
-        return "";
+        try {
+          const response = await fetch(`/images/${iconName}.svg`);
+          if (response.ok) {
+            const svgText = await response.text();
+            const url = this.convertSvgToUrl(svgText, color);
+            this.iconCache[iconName] = url;
+            return url;
+          } else {
+            return "";
+          }
+        } catch (fetchError) {
+          return "";
+        }
       }
 
-      //  CConseguir la data del SVG
+      // Conseguir la data del SVG desde el backend
       const iconData = await this.getIconData([iconId]);
       if (iconData.length === 0 || !iconData[0].icon) {
         console.warn(`No SVG data for icon: ${iconName}`);
@@ -3543,8 +3652,6 @@ class TrytonService {
     }
 
     try {
-      console.log(`🔄 Preloading ${iconNames.length} icons...`);
-
       if (!this.iconNameToId) {
         const iconList = await this.listIcons();
         this.iconNameToId = {};
@@ -3553,32 +3660,59 @@ class TrytonService {
         });
       }
 
-      const iconIds = iconNames
-        .map((name) => this.iconNameToId[name])
-        .filter((id) => id);
+      // Separar iconos del backend vs locales
+      const backendIcons = [];
+      const localIcons = [];
 
-      if (iconIds.length === 0) {
-        console.warn("No valid icon IDs found for preloading");
-        return {};
-      }
-
-      // Fetch all SVG data at once
-      const iconsData = await this.getIconData(iconIds);
+      iconNames.forEach((name) => {
+        if (this.iconNameToId[name]) {
+          backendIcons.push(name);
+        } else {
+          localIcons.push(name);
+        }
+      });
 
       // Initialize cache if not exists
       if (!this.iconCache) {
         this.iconCache = {};
       }
 
-      // Convert all to URLs and cache
       const iconMap = {};
-      iconsData.forEach((iconData) => {
-        const url = this.convertSvgToUrl(iconData.icon, color);
-        this.iconCache[iconData.name] = url;
-        iconMap[iconData.name] = url;
-      });
 
-      console.log(`✅ Preloaded ${Object.keys(iconMap).length} icons`);
+      // 1. Cargar iconos del backend
+      if (backendIcons.length > 0) {
+        const iconIds = backendIcons
+          .map((name) => this.iconNameToId[name])
+          .filter((id) => id);
+
+        const iconsData = await this.getIconData(iconIds);
+
+        iconsData.forEach((iconData) => {
+          const url = this.convertSvgToUrl(iconData.icon, color);
+          this.iconCache[iconData.name] = url;
+          iconMap[iconData.name] = url;
+        });
+      }
+
+      // 2. Cargar iconos desde archivos locales
+      if (localIcons.length > 0) {
+        const localPromises = localIcons.map(async (iconName) => {
+          try {
+            const response = await fetch(`/images/${iconName}.svg`);
+            if (response.ok) {
+              const svgText = await response.text();
+              const url = this.convertSvgToUrl(svgText, color);
+              this.iconCache[iconName] = url;
+              iconMap[iconName] = url;
+            }
+          } catch (error) {
+            // Silently fail for missing local icons
+          }
+        });
+
+        await Promise.all(localPromises);
+      }
+
       return iconMap;
     } catch (error) {
       console.error("Error preloading icons:", error);

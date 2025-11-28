@@ -3,22 +3,32 @@ import { Select } from "antd";
 
 const { Option } = Select;
 
-// Lista completa de idiomas de Tryton con sus banderas
+// Idiomas instalados en el servidor Tryton
+// Solo estos 6 idiomas están disponibles (translatable = true)
 const LANGUAGES = [
+  // ✅ Idiomas DISPONIBLES (instalados en Tryton)
   { code: "en", name: "English", flag: "🇬🇧", disabled: false },
   { code: "es", name: "Español", flag: "🇪🇸", disabled: false },
+  {
+    code: "es_HN",
+    name: "Español (Honduras)",
+    flag: "🇭🇳",
+    disabled: false,
+  },
+  { code: "fr", name: "Français", flag: "🇫🇷", disabled: false },
+  { code: "de", name: "Deutsch", flag: "🇩🇪", disabled: false },
+  { code: "zh_CN", name: "中文 (简体)", flag: "🇨🇳", disabled: false },
+
+  // ❌ Idiomas NO DISPONIBLES (no instalados)
   {
     code: "es_419",
     name: "Español (Latinoamérica)",
     flag: "🇲🇽",
     disabled: true,
   },
-  { code: "fr", name: "Français", flag: "🇫🇷", disabled: true },
-  { code: "de", name: "Deutsch", flag: "🇩🇪", disabled: true },
   { code: "it", name: "Italiano", flag: "🇮🇹", disabled: true },
   { code: "pt", name: "Português", flag: "🇵🇹", disabled: true },
   { code: "ru", name: "Русский", flag: "🇷🇺", disabled: true },
-  { code: "zh_CN", name: "中文 (简体)", flag: "🇨🇳", disabled: true },
   { code: "ca", name: "Català", flag: "🇪🇸", disabled: true },
   { code: "nl", name: "Nederlands", flag: "🇳🇱", disabled: true },
   { code: "pl", name: "Polski", flag: "🇵🇱", disabled: true },

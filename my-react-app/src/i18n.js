@@ -2,6 +2,10 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import en from './locales/en.json';
 import es from './locales/es.json';
+import es_HN from './locales/es_HN.json';
+import fr from './locales/fr.json';
+import de from './locales/de.json';
+import zh_CN from './locales/zh_CN.json';
 
 const savedLanguage = localStorage.getItem('tryton_language') || 'en';
 
@@ -10,7 +14,11 @@ i18n
   .init({
     resources: {
       en: { translation: en },
-      es: { translation: es }
+      es: { translation: es },
+      es_HN: { translation: es_HN },
+      fr: { translation: fr },
+      de: { translation: de },
+      zh_CN: { translation: zh_CN }
     },
     lng: savedLanguage,
     fallbackLng: 'en',
