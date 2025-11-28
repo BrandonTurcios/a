@@ -1860,14 +1860,28 @@ const TrytonForm = forwardRef(
       const isTreeArch = fieldsView.arch && fieldsView.arch.includes("<tree");
       const hasArchFields = archFields.length > 0;
       
+      // Si hay datos del registro (recordData), incluir todos los campos que están en los datos
+      // Esto asegura que campos con valor null también se muestren
+      const hasRecordData = recordData && Object.keys(recordData).length > 0;
+      // Obtener todos los campos que están en recordData (incluyendo los que tienen valor null explícito)
+      const fieldsInRecordData = hasRecordData 
+        ? Object.keys(recordData).filter(key => !key.includes(".") && recordData.hasOwnProperty(key))
+        : [];
+      
       // Si estamos renderizando un formulario (viewType === "form" o readonly === false)
       // pero el arch es de tipo tree, o si no hay campos en el arch,
+      // o si hay datos del registro (para mostrar todos los campos disponibles, incluso los null),
       // incluir TODOS los campos del fieldsView
-      // Esto asegura que campos con valor null también se muestren cuando se abre desde tree
+      // Esto asegura que campos con valor null también se muestren cuando se abre desde tree o cuando hay datos
       const isFormMode = viewType === "form" || !readonly;
-      const shouldIncludeAllFields = (isTreeArch && isFormMode) || !hasArchFields;
+      const hasFieldsNotInArch = hasRecordData && fieldsInRecordData.some(field => !archFields.includes(field));
+      // Si hay datos del registro, incluir todos los campos para asegurar que los null se muestren
+      const shouldIncludeAllFields = (isTreeArch && isFormMode) || !hasArchFields || (hasRecordData && isFormMode);
 
-      console.log(`🔍 shouldIncludeAllFields: ${shouldIncludeAllFields} (isTreeArch: ${isTreeArch}, isFormMode: ${isFormMode}, hasArchFields: ${hasArchFields})`);
+      console.log(`🔍 shouldIncludeAllFields: ${shouldIncludeAllFields} (isTreeArch: ${isTreeArch}, isFormMode: ${isFormMode}, hasArchFields: ${hasArchFields}, hasFieldsNotInArch: ${hasFieldsNotInArch})`);
+      if (hasRecordData) {
+        console.log(`🔍 Campos en recordData que no están en arch:`, fieldsInRecordData.filter(field => !archFields.includes(field)));
+      }
 
       // Process fields that are in arch or are basic
       Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
@@ -1884,11 +1898,15 @@ const TrytonForm = forwardRef(
           "rec_name",
           "active",
         ].includes(fieldName);
+        
+        // Verificar si el campo está en los datos del registro (incluso si es null)
+        // Usar hasOwnProperty para detectar campos que están explícitamente como null
+        const isInRecordData = hasRecordData && recordData.hasOwnProperty(fieldName);
 
-        // Incluir si está en arch, es básico, o si debemos incluir todos los campos
-        if (isInArch || isBasicField || shouldIncludeAllFields) {
+        // Incluir si está en arch, es básico, está en los datos del registro, o si debemos incluir todos los campos
+        if (isInArch || isBasicField || isInRecordData || shouldIncludeAllFields) {
           console.log(
-            `✅ Incluyendo campo: ${fieldName} (tipo: ${fieldDef.type}, readonly: ${fieldDef.readonly}, shouldIncludeAll: ${shouldIncludeAllFields})`
+            `✅ Incluyendo campo: ${fieldName} (tipo: ${fieldDef.type}, readonly: ${fieldDef.readonly}, isInArch: ${isInArch}, isInRecordData: ${isInRecordData}, shouldIncludeAll: ${shouldIncludeAllFields})`
           );
           formFields.push({
             name: fieldName,
@@ -1900,7 +1918,7 @@ const TrytonForm = forwardRef(
           });
         } else {
           console.log(
-            `⏭️ Omitiendo campo: ${fieldName} (no está en arch ni es básico)`
+            `⏭️ Omitiendo campo: ${fieldName} (no está en arch ni es básico ni en recordData)`
           );
         }
       });
