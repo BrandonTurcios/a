@@ -1,11 +1,47 @@
 // Parser para extraer secciones y organizar campos del XML de Tryton
-export const parseFormSections = (fieldsView) => {
+export const parseFormSections = (fieldsView, recordData = null) => {
   if (!fieldsView || !fieldsView.arch) {
     return { sections: [], fields: {} };
   }
 
   const arch = fieldsView.arch;
   const fields = fieldsView.fields || {};
+  
+  // Si el arch es de tipo tree, incluir todos los campos del fieldsView en una sección por defecto
+  const isTreeArch = arch.includes("<tree");
+  
+  // Si hay datos del registro, obtener todos los campos que están en los datos
+  const hasRecordData = recordData && Object.keys(recordData).length > 0;
+  const fieldsInRecordData = hasRecordData 
+    ? Object.keys(recordData).filter(key => !key.includes(".") && recordData.hasOwnProperty(key))
+    : [];
+  
+  if (isTreeArch || hasRecordData) {
+    // Si el arch es tree o hay datos del registro, incluir todos los campos relevantes
+    let allFieldNames;
+    if (hasRecordData) {
+      // Si hay datos del registro, incluir todos los campos que están en los datos
+      // Esto asegura que campos con valor null también se incluyan
+      allFieldNames = fieldsInRecordData.filter(fieldName => fields[fieldName]);
+      console.log("🔍 Hay datos del registro, incluyendo campos de recordData:", allFieldNames);
+    } else {
+      // Si no hay datos pero el arch es tree, incluir todos los campos del fieldsView
+      allFieldNames = Object.keys(fields).filter(fieldName => !fieldName.includes("."));
+      console.log("🔍 Arch es de tipo tree, incluyendo todos los campos del fieldsView");
+    }
+    
+    return {
+      sections: [{
+        type: 'group',
+        title: '',
+        id: 'default',
+        fields: allFieldNames,
+        children: []
+      }],
+      fields: fields,
+      originalArch: arch
+    };
+  }
   
   // Crear un parser XML simple
   const parseXML = (xmlString) => {
