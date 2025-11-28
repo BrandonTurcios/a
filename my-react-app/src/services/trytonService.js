@@ -1923,11 +1923,18 @@ class TrytonService {
       return expandedFields;
     }
 
-    // En Tryton, cuando solicitas un campo many2one, automáticamente devuelve
-    // el objeto expandido como "campo." en la respuesta. No necesitamos
-    // solicitarlo explícitamente, solo necesitamos solicitar el campo base.
-    // Los campos many2one ya están en la lista de campos, así que no necesitamos
-    // agregar nada adicional aquí.
+    // Para campos many2one, necesitamos solicitar explícitamente "campo.rec_name"
+    // para que Tryton devuelva el objeto expandido "campo." con el rec_name
+    Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
+      if (fieldDef.type === 'many2one' && expandedFields.includes(fieldName)) {
+        // Agregar "campo.rec_name" para obtener el objeto expandido "campo."
+        const expandedFieldName = `${fieldName}.rec_name`;
+        if (!expandedFields.includes(expandedFieldName)) {
+          expandedFields.push(expandedFieldName);
+          console.log(`✅ Agregando campo expandido: ${expandedFieldName} para obtener ${fieldName}.`);
+        }
+      }
+    });
 
     // Agregar campos básicos que siempre queremos
     const basicFields = ["rec_name", "_timestamp", "_write", "_delete"];
