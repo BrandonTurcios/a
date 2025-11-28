@@ -156,7 +156,7 @@ const TrytonTable = ({
     return null;
   };
 
-  const formatCellValue = (value, fieldDef, record = null) => {
+  const formatCellValue = (value, fieldDef, record = null, fieldName = null) => {
     if (value === null || value === undefined) {
       return '-';
     }
@@ -182,7 +182,8 @@ const TrytonTable = ({
     }
 
     // Handle gender field - convertir m/f a Male/Female
-    if (fieldDef.name === 'gender' && fieldDef.type === 'selection') {
+    const actualFieldName = fieldName || fieldDef.name || '';
+    if (actualFieldName === 'gender' && fieldDef.type === 'selection') {
       if (value === 'm') return t('table.male');
       if (value === 'f') return t('table.female');
       if (value === 'm-f') return t('table.maleFemale');
@@ -203,25 +204,30 @@ const TrytonTable = ({
       return String(value);
     }
 
-    // Handle IDs that have related objects
-    if (typeof value === 'number' && record) {
-      const fieldName = fieldDef.name || '';
-
-      // Search for the related object with the same name but ending in "."
-      const relatedFieldName = fieldName + '.';
+    // Handle many2one fields: Check for related objects with field name + "."
+    // This should be checked BEFORE converting to string
+    // Priority: Check for related object first, regardless of field type
+    if (record && actualFieldName) {
+      const relatedFieldName = actualFieldName + '.';
       const relatedObject = record[relatedFieldName];
 
+      // If there's a related object with rec_name, use it
+      // This works for any field type that has a related object (many2one, etc.)
       if (relatedObject && typeof relatedObject === 'object' && relatedObject.rec_name) {
-        return relatedObject.rec_name;
+        // Use rec_name if the value is a number/ID, null, or numeric string
+        // This ensures we show the text representation instead of the ID
+        if (value === null || typeof value === 'number' || (typeof value === 'string' && !isNaN(value) && value.trim() !== '')) {
+          return relatedObject.rec_name;
+        }
       }
     }
 
-    // If it's null but there's a related object, try to show that
-    if (value === null && record) {
-      const fieldName = fieldDef.name || '';
-      const relatedFieldName = fieldName + '.';
+    // Additional check: If value is a number or numeric string and field is many2one,
+    // try to find related object (fallback in case the above didn't catch it)
+    if ((typeof value === 'number' || (typeof value === 'string' && !isNaN(value) && value.trim() !== '')) && fieldDef.type === 'many2one' && record && actualFieldName) {
+      const relatedFieldName = actualFieldName + '.';
       const relatedObject = record[relatedFieldName];
-
+      
       if (relatedObject && typeof relatedObject === 'object' && relatedObject.rec_name) {
         return relatedObject.rec_name;
       }
@@ -294,7 +300,7 @@ const TrytonTable = ({
           cellRenderer: (params) => {
             const value = params.value;
             const record = params.data;
-            const formatted = formatCellValue(value, fieldDef, record);
+            const formatted = formatCellValue(value, fieldDef, record, fieldName);
 
             // Si es un boolean, renderizar solo el símbolo centrado
             if (fieldDef.type === 'boolean') {
