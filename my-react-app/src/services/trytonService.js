@@ -1891,26 +1891,18 @@ class TrytonService {
 
   // Expandir campos para incluir relaciones basándose en fieldsView
   expandFieldsForRelationsFromFieldsView(fields, fieldsView) {
-    const expandedFields = [...fields];
+    // Filtrar campos vacíos o nulos
+    const expandedFields = fields.filter(field => field && field.trim() !== '');
 
     if (!fieldsView.fields) {
       return expandedFields;
     }
 
-    // Recorrer todos los campos y expandir los many2one
-    Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
-      if (fieldDef.type === "many2one" && fields.includes(fieldName)) {
-        // Agregar campo. (con punto al final) para obtener el objeto expandido completo
-        // Tryton devuelve campo. con {id, rec_name, ...} en la respuesta
-        const expandedFieldName = `${fieldName}.`;
-        if (!expandedFields.includes(expandedFieldName)) {
-          expandedFields.push(expandedFieldName);
-          console.log(
-            `Agregando campo relacionado many2one expandido: ${expandedFieldName}`
-          );
-        }
-      }
-    });
+    // En Tryton, cuando solicitas un campo many2one, automáticamente devuelve
+    // el objeto expandido como "campo." en la respuesta. No necesitamos
+    // solicitarlo explícitamente, solo necesitamos solicitar el campo base.
+    // Los campos many2one ya están en la lista de campos, así que no necesitamos
+    // agregar nada adicional aquí.
 
     // Agregar campos básicos que siempre queremos
     const basicFields = ["rec_name", "_timestamp", "_write", "_delete"];
@@ -1920,7 +1912,8 @@ class TrytonService {
       }
     });
 
-    return expandedFields;
+    // Filtrar nuevamente para asegurar que no hay campos vacíos
+    return expandedFields.filter(field => field && field.trim() !== '');
   }
 
   // Obtener datos de un registro específico para formularios
