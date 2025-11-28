@@ -188,6 +188,19 @@ const TrytonTable = ({
     if (record && actualFieldName) {
       const relatedFieldName = actualFieldName + '.';
       const relatedObject = record[relatedFieldName];
+      
+      // Debug log for many2one fields
+      if (fieldDef.type === 'many2one' && (typeof value === 'number' || (typeof value === 'string' && !isNaN(value)))) {
+        console.log(`🔍 formatCellValue ${actualFieldName}:`, {
+          value,
+          actualFieldName,
+          relatedFieldName,
+          relatedObject,
+          recordKeys: Object.keys(record),
+          recordHasExpandedFields: Object.keys(record).filter(k => k.endsWith('.')),
+          record: record // Log completo del record para debug
+        });
+      }
 
       // If there's a related object with rec_name, use it
       // This works for any field type that has a related object (many2one, etc.)
@@ -195,6 +208,7 @@ const TrytonTable = ({
         // Use rec_name if the value is a number/ID, null, or numeric string
         // This ensures we show the text representation instead of the ID
         if (value === null || typeof value === 'number' || (typeof value === 'string' && !isNaN(value) && value.trim() !== '')) {
+          console.log(`✅ formatCellValue usando rec_name para ${actualFieldName}: ${relatedObject.rec_name}`);
           return relatedObject.rec_name;
         }
       }

@@ -1696,11 +1696,22 @@ class TrytonService {
       console.log(`Campos expandidos:`, expandedFields);
 
       // PASO 3: Obtener datos con read incluyendo campos relacionados
-      const data = await this.makeRpcCall(`model.${model}.read`, [
+      const rawResponse = await this.makeRpcCall(`model.${model}.read`, [
         ids,
         expandedFields,
         {},
       ]);
+      
+      // Debug: Ver la respuesta cruda antes de cualquier procesamiento
+      console.log('🔍 Raw response from read:', rawResponse);
+      if (rawResponse && rawResponse.length > 0) {
+        const firstRecord = rawResponse[0];
+        console.log('🔍 First record from raw response:', firstRecord);
+        console.log('🔍 First record keys:', Object.keys(firstRecord));
+        console.log('🔍 Expanded fields in raw response:', Object.keys(firstRecord).filter(k => k.endsWith('.')));
+      }
+      
+      const data = rawResponse;
 
       console.log("Datos obtenidos:", data);
       
