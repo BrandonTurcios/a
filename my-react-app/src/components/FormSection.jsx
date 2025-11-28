@@ -48,7 +48,7 @@ const GroupSection = ({ section, fields, form, fieldComponents, level = 0 }) => 
          padding: '12px 20px',
          borderBottom: '1px solid rgba(255,255,255,0.35)'
        }}
-      bodyStyle={{ padding: '20px', background: 'var(--color-card-background)' }}
+      bodyStyle={{ padding: '20px', background: 'var(--color-card-background)', overflow: 'visible' }}
     >
       <Row gutter={[16, 16]}>
         {/* Renderizar campos directos del grupo */}

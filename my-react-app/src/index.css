@@ -1054,50 +1054,134 @@ body {
 .modern-autocomplete {
   width: 100% !important;
   min-width: 0 !important;
+  flex: 1 !important;
 }
 
 .modern-autocomplete .ant-select-selector {
   width: 100% !important;
   min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: visible !important;
+}
+
+.modern-autocomplete .ant-select-selection-search {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  left: 0 !important;
+  right: 0 !important;
 }
 
 .modern-autocomplete .ant-select-selection-search-input {
   width: 100% !important;
   min-width: 0 !important;
+  max-width: 100% !important;
   overflow: visible !important;
-  text-overflow: ellipsis !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+}
+
+.modern-autocomplete .ant-select-selection-item {
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  max-width: none !important;
+}
+
+.modern-autocomplete .ant-select-selection-placeholder {
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  max-width: none !important;
+}
+
+.modern-autocomplete input {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+}
+
+.modern-autocomplete .ant-input {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+}
+
+/* Override Ant Design default text truncation */
+.modern-autocomplete .ant-select-selection-search-input,
+.modern-autocomplete .ant-select-selection-item,
+.modern-autocomplete .ant-select-selection-placeholder {
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
 }
 
 /* Ensure Select and other form fields don't get cut off in flex containers */
 .modern-select {
   width: 100% !important;
   min-width: 0 !important;
+  flex: 1 !important;
 }
 
 .modern-select .ant-select-selector {
   width: 100% !important;
   min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: visible !important;
+}
+
+.modern-select .ant-select-selection-item {
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  max-width: none !important;
+}
+
+.modern-select .ant-select-selection-placeholder {
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  max-width: none !important;
 }
 
 /* Ensure form items in Col components have proper width */
 .ant-form-item {
   width: 100% !important;
   min-width: 0 !important;
+  max-width: 100% !important;
 }
 
 .ant-form-item-control {
   width: 100% !important;
   min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: visible !important;
 }
 
 .ant-form-item-control-input {
   width: 100% !important;
   min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: visible !important;
 }
 
 .ant-form-item-control-input-content {
   width: 100% !important;
   min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: visible !important;
+}
+
+/* Ensure Col components don't restrict width */
+.ant-col {
+  min-width: 0 !important;
+  overflow: visible !important;
 }
 
 /* Better placeholder visibility for empty fields */

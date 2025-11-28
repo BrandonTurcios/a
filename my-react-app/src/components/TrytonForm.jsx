@@ -463,8 +463,8 @@ const Many2OneField = ({
         {label}
       </div>
 
-      <div style={{ marginBottom: help ? "12px" : "0", display: "flex", gap: "12px", alignItems: "flex-start", width: "100%" }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ marginBottom: help ? "12px" : "0", display: "flex", gap: "12px", alignItems: "flex-start", width: "100%", minWidth: 0, overflow: "visible" }}>
+        <div style={{ flex: 1, minWidth: 0, maxWidth: "100%", overflow: "visible", width: "100%" }}>
           <AutoComplete
             value={inputValue}
             options={options}
@@ -474,7 +474,7 @@ const Many2OneField = ({
             placeholder={help || `Type in the ${label.toLowerCase()}`}
             disabled={readonly}
             notFoundContent={loading ? <Spin size="small" /> : null}
-            style={{ width: "100%", minWidth: 0 }}
+            style={{ width: "100%", minWidth: 0, maxWidth: "100%" }}
             filterOption={false}
             className="modern-autocomplete"
           >
@@ -2970,6 +2970,8 @@ const TrytonForm = forwardRef(
           style={{
             padding: "24px",
             background: "var(--color-card-background)",
+            overflow: "visible",
+            minWidth: 0,
           }}
         >
           <Form
@@ -2996,7 +2998,7 @@ const TrytonForm = forwardRef(
                     xs={24}
                     sm={12}
                     lg={8}
-                    style={{ marginBottom: "16px" }}
+                    style={{ marginBottom: "16px", minWidth: 0, overflow: "visible" }}
                   >
                     {renderFormField(field)}
                   </Col>
