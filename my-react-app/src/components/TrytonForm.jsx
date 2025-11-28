@@ -254,6 +254,10 @@ const Many2OneField = ({
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const [modalVisible, setModalVisible] = useState(false);
+  const [recordData, setRecordData] = useState(null);
+  const [fieldsView, setFieldsView] = useState(null);
+  const [loadingRecord, setLoadingRecord] = useState(false);
   const relation = fieldDef.relation;
 
   // Function to search options based on text
@@ -385,6 +389,61 @@ const Many2OneField = ({
     }
   };
 
+  // Function to handle opening the record in a modal
+  const handleOpenRecord = async () => {
+    const currentValue = form.getFieldValue(name);
+    if (!currentValue || !relation) {
+      message.warning(t("form.selectField", { field: label }));
+      return;
+    }
+
+    try {
+      setLoadingRecord(true);
+      setModalVisible(true);
+
+      // Get form view for the related model
+      const formFieldsView = await trytonService.getFieldsView(
+        relation,
+        null,
+        "form"
+      );
+
+      if (!formFieldsView) {
+        throw new Error(t("errors.couldNotGetFormView"));
+      }
+
+      setFieldsView(formFieldsView);
+
+      // Get expanded fields for relations
+      const fields = Object.keys(formFieldsView.fields || {});
+      const expandedFields =
+        trytonService.expandFieldsForRelationsFromFieldsView(
+          fields,
+          formFieldsView
+        );
+
+      // Get record data using model.read
+      const recordDataResult = await trytonService.getFormRecordData(
+        relation,
+        currentValue,
+        expandedFields
+      );
+
+      setRecordData(recordDataResult);
+    } catch (error) {
+      console.error("Error opening record:", error);
+      message.error(`Error opening record: ${error.message}`);
+      setModalVisible(false);
+    } finally {
+      setLoadingRecord(false);
+    }
+  };
+
+  // Get current record ID from form
+  const getCurrentRecordId = () => {
+    return form.getFieldValue(name);
+  };
+
   return (
     <div style={{ marginBottom: "24px" }}>
       <div
@@ -404,36 +463,54 @@ const Many2OneField = ({
         {label}
       </div>
 
-      <div style={{ marginBottom: help ? "12px" : "0" }}>
-        <AutoComplete
-          value={inputValue}
-          options={options}
-          onSearch={searchOptions}
-          onSelect={handleSelect}
-          onChange={handleChange}
-          placeholder={label}
-          disabled={readonly}
-          notFoundContent={loading ? <Spin size="small" /> : null}
-          style={{ width: "100%" }}
-          filterOption={false}
+      <div style={{ marginBottom: help ? "12px" : "0", display: "flex", gap: "8px", alignItems: "flex-start" }}>
+        <div style={{ flex: 1 }}>
+          <AutoComplete
+            value={inputValue}
+            options={options}
+            onSearch={searchOptions}
+            onSelect={handleSelect}
+            onChange={handleChange}
+            placeholder={label}
+            disabled={readonly}
+            notFoundContent={loading ? <Spin size="small" /> : null}
+            style={{ width: "100%" }}
+            filterOption={false}
+          >
+            <Input
+              suffix={
+                loading ? (
+                  <Spin size="small" />
+                ) : (
+                  <SearchOutlined
+                    style={{ color: "var(--color-text-secondary)" }}
+                  />
+                )
+              }
+              style={{
+                borderRadius: "6px",
+                height: "40px",
+                fontSize: "14px",
+              }}
+            />
+          </AutoComplete>
+        </div>
+        <Button
+          type="default"
+          icon={<EyeOutlined />}
+          onClick={handleOpenRecord}
+          disabled={!getCurrentRecordId() || readonly}
+          style={{
+            height: "40px",
+            borderRadius: "6px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          title={t("form.openRecord")}
         >
-          <Input
-            suffix={
-              loading ? (
-                <Spin size="small" />
-              ) : (
-                <SearchOutlined
-                  style={{ color: "var(--color-text-secondary)" }}
-                />
-              )
-            }
-            style={{
-              borderRadius: "6px",
-              height: "40px",
-              fontSize: "14px",
-            }}
-          />
-        </AutoComplete>
+          {t("form.openRecord")}
+        </Button>
       </div>
 
       {/* Campo oculto para almacenar el ID en el formulario */}
@@ -460,6 +537,66 @@ const Many2OneField = ({
           </Text>
         </div>
       )}
+
+      {/* Modal to show the related record */}
+      <Modal
+        title={
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <EyeOutlined style={{ color: "var(--color-primary-500)" }} />
+            <span>{label} - {t("form.view")}</span>
+          </div>
+        }
+        open={modalVisible}
+        onCancel={() => {
+          setModalVisible(false);
+          setRecordData(null);
+          setFieldsView(null);
+        }}
+        footer={null}
+        width="90vw"
+        style={{ maxWidth: "1200px" }}
+        destroyOnClose
+      >
+        <Spin spinning={loadingRecord}>
+          {fieldsView && recordData && (
+            <TrytonForm
+              model={relation}
+              fieldsView={fieldsView}
+              recordData={recordData}
+              recordId={getCurrentRecordId()}
+              readonly={false}
+              title={`${label} - ${t("form.view")}`}
+              onSave={async (values, savedRecordId) => {
+                try {
+                  // El TrytonForm ya maneja el guardado, solo necesitamos recargar los datos
+                  message.success(t("common.success"));
+                  // Recargar los datos del registro actualizado
+                  const fields = Object.keys(fieldsView.fields || {});
+                  const expandedFields =
+                    trytonService.expandFieldsForRelationsFromFieldsView(
+                      fields,
+                      fieldsView
+                    );
+                  const updatedData = await trytonService.getFormRecordData(
+                    relation,
+                    savedRecordId || getCurrentRecordId(),
+                    expandedFields
+                  );
+                  setRecordData(updatedData);
+                } catch (error) {
+                  console.error("Error saving record:", error);
+                  message.error(`Error saving: ${error.message}`);
+                }
+              }}
+              onCancel={() => {
+                setModalVisible(false);
+                setRecordData(null);
+                setFieldsView(null);
+              }}
+            />
+          )}
+        </Spin>
+      </Modal>
     </div>
   );
 };
@@ -1392,57 +1529,81 @@ const parseTrytonDate = (value) => {
 
 // Helper function to extract only the IDs from many2one fields for form values
 const extractFormValues = (data, fieldsView) => {
-  if (!data || !fieldsView || !fieldsView.fields) {
-    return data;
+  if (!fieldsView || !fieldsView.fields) {
+    return data || {};
   }
 
-  const formValues = { ...data };
+  // Inicializar formValues con todos los campos del fieldsView
+  // Esto asegura que todos los campos se muestren, incluso si son null o no están en data
+  const formValues = {};
+  
+  // Primero, inicializar todos los campos del fieldsView con null o su valor de data
+  Object.keys(fieldsView.fields).forEach((fieldName) => {
+    // Omitir campos expandidos (que tienen punto en el nombre)
+    if (!fieldName.includes(".")) {
+      formValues[fieldName] = data && data[fieldName] !== undefined ? data[fieldName] : null;
+    }
+  });
+
+  // Copiar otros valores de data que no están en fieldsView (por si acaso)
+  if (data) {
+    Object.keys(data).forEach((key) => {
+      if (!key.includes(".") && !fieldsView.fields[key]) {
+        formValues[key] = data[key];
+      }
+    });
+  }
 
   // Process each field based on its type
   Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
+    // Omitir campos expandidos
+    if (fieldName.includes(".")) {
+      return;
+    }
+
     // Para campos many2one, extraer solo el ID
-    if (fieldDef.type === "many2one" && data[fieldName]) {
-      if (typeof data[fieldName] === "object" && data[fieldName].id) {
+    if (fieldDef.type === "many2one" && formValues[fieldName]) {
+      if (typeof formValues[fieldName] === "object" && formValues[fieldName].id) {
         // Si es un objeto procesado, extraer el ID
-        formValues[fieldName] = data[fieldName].id;
-        console.log(`✅ Extrayendo ID de ${fieldName}:`, data[fieldName].id);
+        formValues[fieldName] = formValues[fieldName].id;
+        console.log(`✅ Extrayendo ID de ${fieldName}:`, formValues[fieldName]);
       }
       // If it's already a number (direct ID), keep it as is
-      else if (typeof data[fieldName] === "number") {
-        formValues[fieldName] = data[fieldName];
+      else if (typeof formValues[fieldName] === "number") {
+        // Ya está bien
         console.log(
           `✅ Manteniendo ID directo de ${fieldName}:`,
-          data[fieldName]
+          formValues[fieldName]
         );
       }
+    } else if (fieldDef.type === "many2one" && !formValues[fieldName]) {
+      // Campo many2one sin valor, establecer null explícitamente
+      formValues[fieldName] = null;
     }
 
     // Para campos date/datetime, convertir a dayjs
-    if (
-      (fieldDef.type === "date" || fieldDef.type === "datetime") &&
-      data[fieldName]
-    ) {
-      const parsed = parseTrytonDate(data[fieldName]);
-      if (parsed) {
-        formValues[fieldName] = parsed;
-        console.log(
-          `✅ Convirtiendo fecha ${fieldName}:`,
-          data[fieldName],
-          "→",
-          parsed.format("YYYY-MM-DD")
-        );
+    if (fieldDef.type === "date" || fieldDef.type === "datetime") {
+      if (formValues[fieldName]) {
+        const parsed = parseTrytonDate(formValues[fieldName]);
+        if (parsed) {
+          formValues[fieldName] = parsed;
+          console.log(
+            `✅ Convirtiendo fecha ${fieldName}:`,
+            formValues[fieldName],
+            "→",
+            parsed.format("YYYY-MM-DD")
+          );
+        } else {
+          formValues[fieldName] = null;
+          console.warn(
+            `⚠️ Could not parse date for ${fieldName}:`,
+            formValues[fieldName]
+          );
+        }
       } else {
+        // Campo date/datetime sin valor, establecer null explícitamente
         formValues[fieldName] = null;
-        console.warn(
-          `⚠️ Could not parse date for ${fieldName}:`,
-          data[fieldName]
-        );
       }
-    }
-
-    // Remover campos expandidos (.rec_name) del formulario
-    if (fieldName.includes(".")) {
-      delete formValues[fieldName];
     }
   });
 

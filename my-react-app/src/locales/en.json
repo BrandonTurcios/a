@@ -127,7 +127,8 @@
     "noFields": "No fields available for this form",
     "view": "View:",
     "type": "Type:",
-    "fields": "Fields:"
+    "fields": "Fields:",
+    "openRecord": "Open the record"
   },
   "toolbar": {
     "currentRecord": "Current record",

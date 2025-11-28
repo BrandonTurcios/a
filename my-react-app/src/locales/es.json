@@ -127,7 +127,8 @@
     "noFields": "No hay campos disponibles para este formulario",
     "view": "Vista:",
     "type": "Tipo:",
-    "fields": "Campos:"
+    "fields": "Campos:",
+    "openRecord": "Abrir el registro"
   },
   "toolbar": {
     "currentRecord": "Registro actual",
