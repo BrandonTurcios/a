@@ -161,6 +161,8 @@ const TrytonTable = ({
       return '-';
     }
 
+    const actualFieldName = fieldName || fieldDef.name || '';
+
     // Handle complex objects (relations with rec_name)
     if (typeof value === 'object' && value.rec_name) {
       return value.rec_name;
@@ -169,6 +171,24 @@ const TrytonTable = ({
     // Handle arrays (many2many, one2many)
     if (Array.isArray(value)) {
       return value.length > 0 ? `${value.length} element(s)` : '-';
+    }
+
+    // PRIORITY: Handle many2one fields FIRST - Check for related objects with field name + "."
+    // Tryton returns expanded objects as "fieldName." (with dot at the end)
+    // This must be checked BEFORE other type checks to ensure we show text instead of numbers
+    if (record && actualFieldName) {
+      const relatedFieldName = actualFieldName + '.';
+      const relatedObject = record[relatedFieldName];
+
+      // If there's a related object with rec_name, use it
+      // This works for any field type that has a related object (many2one, etc.)
+      if (relatedObject && typeof relatedObject === 'object' && relatedObject.rec_name) {
+        // Use rec_name if the value is a number/ID, null, or numeric string
+        // This ensures we show the text representation instead of the ID
+        if (value === null || typeof value === 'number' || (typeof value === 'string' && !isNaN(value) && value.trim() !== '')) {
+          return relatedObject.rec_name;
+        }
+      }
     }
 
     // Handle decimal numbers
@@ -182,7 +202,6 @@ const TrytonTable = ({
     }
 
     // Handle gender field - convertir m/f a Male/Female
-    const actualFieldName = fieldName || fieldDef.name || '';
     if (actualFieldName === 'gender' && fieldDef.type === 'selection') {
       if (value === 'm') return t('table.male');
       if (value === 'f') return t('table.female');
@@ -202,35 +221,6 @@ const TrytonTable = ({
         return dt.toLocaleDateString();
       }
       return String(value);
-    }
-
-    // Handle many2one fields: Check for related objects with field name + "."
-    // This should be checked BEFORE converting to string
-    // Priority: Check for related object first, regardless of field type
-    if (record && actualFieldName) {
-      const relatedFieldName = actualFieldName + '.';
-      const relatedObject = record[relatedFieldName];
-
-      // If there's a related object with rec_name, use it
-      // This works for any field type that has a related object (many2one, etc.)
-      if (relatedObject && typeof relatedObject === 'object' && relatedObject.rec_name) {
-        // Use rec_name if the value is a number/ID, null, or numeric string
-        // This ensures we show the text representation instead of the ID
-        if (value === null || typeof value === 'number' || (typeof value === 'string' && !isNaN(value) && value.trim() !== '')) {
-          return relatedObject.rec_name;
-        }
-      }
-    }
-
-    // Additional check: If value is a number or numeric string and field is many2one,
-    // try to find related object (fallback in case the above didn't catch it)
-    if ((typeof value === 'number' || (typeof value === 'string' && !isNaN(value) && value.trim() !== '')) && fieldDef.type === 'many2one' && record && actualFieldName) {
-      const relatedFieldName = actualFieldName + '.';
-      const relatedObject = record[relatedFieldName];
-      
-      if (relatedObject && typeof relatedObject === 'object' && relatedObject.rec_name) {
-        return relatedObject.rec_name;
-      }
     }
 
     return String(value);
