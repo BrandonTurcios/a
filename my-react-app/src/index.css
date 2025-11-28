@@ -1047,7 +1047,57 @@ body {
 .modern-select .ant-select-selector,
 .modern-autocomplete .ant-select-selector {
   min-width: 0 !important;
-  overflow: hidden !important;
+  overflow: visible !important;
+}
+
+/* Ensure AutoComplete input doesn't get cut off */
+.modern-autocomplete {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.modern-autocomplete .ant-select-selector {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.modern-autocomplete .ant-select-selection-search-input {
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow: visible !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Ensure Select and other form fields don't get cut off in flex containers */
+.modern-select {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.modern-select .ant-select-selector {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+/* Ensure form items in Col components have proper width */
+.ant-form-item {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.ant-form-item-control {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.ant-form-item-control-input {
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.ant-form-item-control-input-content {
+  width: 100% !important;
+  min-width: 0 !important;
 }
 
 /* Better placeholder visibility for empty fields */

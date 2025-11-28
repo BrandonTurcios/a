@@ -64,7 +64,7 @@ const GroupSection = ({ section, fields, form, fieldComponents, level = 0 }) => 
           const fieldSpan = fieldComponent?.props?.['data-span'] ?? baseSpan;
           
           return (
-            <Col key={`field-${fieldName}-${index}`} span={fieldSpan}>
+            <Col key={`field-${fieldName}-${index}`} span={fieldSpan} style={{ minWidth: 0 }}>
               {fieldComponent}
             </Col>
           );
@@ -116,7 +116,7 @@ const PageSection = ({ section, fields, form, fieldComponents, level = 0 }) => {
           const span = fieldComponent?.props?.['data-span'] ?? 12;
           
           return (
-            <Col key={`field-${fieldName}-${index}`} span={span}>
+            <Col key={`field-${fieldName}-${index}`} span={span} style={{ minWidth: 0 }}>
               {fieldComponent}
             </Col>
           );
