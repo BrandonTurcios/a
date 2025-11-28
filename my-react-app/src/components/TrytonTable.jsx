@@ -101,6 +101,15 @@ const TrytonTable = ({
       );
 
       console.log('✅ Table information loaded:', info);
+      
+      // Debug: Check if data contains expanded fields
+      if (info.data && info.data.length > 0) {
+        const firstRecord = info.data[0];
+        console.log('🔍 Raw data first record keys:', Object.keys(firstRecord));
+        console.log('🔍 Raw data first record expanded fields:', Object.keys(firstRecord).filter(k => k.endsWith('.')));
+        console.log('🔍 Raw data patient:', firstRecord.patient, 'patient.:', firstRecord['patient.']);
+        console.log('🔍 Raw data disease_gene:', firstRecord.disease_gene, 'disease_gene.:', firstRecord['disease_gene.']);
+      }
 
       setTableInfo(info);
 

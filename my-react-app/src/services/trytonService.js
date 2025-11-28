@@ -1703,6 +1703,20 @@ class TrytonService {
       ]);
 
       console.log("Datos obtenidos:", data);
+      
+      // Debug: Check if data contains expanded fields
+      if (data && data.length > 0) {
+        const firstRecord = data[0];
+        const expandedFields = Object.keys(firstRecord).filter(k => k.endsWith('.'));
+        console.log("🔍 getModelData - First record keys:", Object.keys(firstRecord));
+        console.log("🔍 getModelData - Expanded fields found:", expandedFields);
+        if (firstRecord['patient.']) {
+          console.log("🔍 getModelData - patient. exists:", firstRecord['patient.']);
+        }
+        if (firstRecord['disease_gene.']) {
+          console.log("🔍 getModelData - disease_gene. exists:", firstRecord['disease_gene.']);
+        }
+      }
 
       return data;
     } catch (error) {
