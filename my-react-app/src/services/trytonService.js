@@ -1786,11 +1786,18 @@ class TrytonService {
       // PASO 3: Extraer campos de la vista
       const fields = fieldsView.fields ? Object.keys(fieldsView.fields) : [];
 
-      // PASO 4: Obtener datos
+      // PASO 4: Expandir campos para incluir relaciones many2one
+      // Esto asegura que obtengamos los campos con punto (campo.) que contienen rec_name
+      const expandedFields = this.expandFieldsForRelationsFromFieldsView(
+        fields,
+        fieldsView
+      );
+
+      // PASO 5: Obtener datos con campos expandidos
       const data = await this.getModelData(
         model,
         domain,
-        fields,
+        expandedFields,
         limit,
         offset
       );
@@ -1893,12 +1900,13 @@ class TrytonService {
     // Recorrer todos los campos y expandir los many2one
     Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
       if (fieldDef.type === "many2one" && fields.includes(fieldName)) {
-        // Agregar .rec_name para obtener el nombre legible
-        // Tryton devuelve campo. (con punto) en la respuesta
-        if (!expandedFields.includes(`${fieldName}.rec_name`)) {
-          expandedFields.push(`${fieldName}.rec_name`);
+        // Agregar campo. (con punto al final) para obtener el objeto expandido completo
+        // Tryton devuelve campo. con {id, rec_name, ...} en la respuesta
+        const expandedFieldName = `${fieldName}.`;
+        if (!expandedFields.includes(expandedFieldName)) {
+          expandedFields.push(expandedFieldName);
           console.log(
-            `Agregando campo relacionado many2one: ${fieldName}.rec_name`
+            `Agregando campo relacionado many2one expandido: ${expandedFieldName}`
           );
         }
       }
