@@ -259,6 +259,9 @@ const Many2OneField = ({
   const [fieldsView, setFieldsView] = useState(null);
   const [loadingRecord, setLoadingRecord] = useState(false);
   const relation = fieldDef.relation;
+  
+  // Watch the form value in real-time to update button state
+  const formValue = Form.useWatch(name, form);
 
   // Function to search options based on text
   const searchOptions = async (searchText) => {
@@ -465,9 +468,10 @@ const Many2OneField = ({
   };
 
   // Get current record ID from form
+  // Use formValue from useWatch for real-time updates, fallback to form.getFieldValue
   const getCurrentRecordId = () => {
-    const value = form.getFieldValue(name);
-    console.log(`🔍 getCurrentRecordId for ${name}:`, { value, type: typeof value });
+    const value = formValue !== undefined ? formValue : form.getFieldValue(name);
+    console.log(`🔍 getCurrentRecordId for ${name}:`, { value, type: typeof value, formValue, fromWatch: formValue !== undefined });
     
     // Handle different value formats:
     // - If it's a number, return it
