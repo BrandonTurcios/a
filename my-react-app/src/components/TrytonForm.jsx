@@ -494,17 +494,20 @@ const Many2OneField = ({
       result = isNaN(parsed) ? null : parsed;
     }
     
-    const isDisabled = !result || readonly;
+    // Button should only be disabled if there's no record ID
+    // readonly should NOT disable the "view" button, as viewing is allowed even in readonly mode
+    const isDisabled = !result;
     console.log(`🔍 Button state for ${name}:`, { 
       value, 
       currentRecordId: result,
       readonly,
       isDisabled,
-      willBeEnabled: !isDisabled
+      willBeEnabled: !isDisabled,
+      note: "readonly does not disable view button"
     });
     
     return result;
-  }, [formValue, name, form, readonly]);
+  }, [formValue, name, form]);
   
   // Keep getCurrentRecordId function for backward compatibility
   const getCurrentRecordId = () => currentRecordId;
@@ -598,15 +601,15 @@ const Many2OneField = ({
             console.log(`🖱️ Button clicked for ${name}:`, {
               currentRecordId,
               readonly,
-              disabled: !currentRecordId || readonly
+              disabled: !currentRecordId
             });
-            if (!currentRecordId || readonly) {
-              console.warn(`⚠️ Button should be disabled for ${name}`);
+            if (!currentRecordId) {
+              console.warn(`⚠️ Button should be disabled for ${name} - no record ID`);
               return;
             }
             handleOpenRecord();
           }}
-          disabled={!currentRecordId || readonly}
+          disabled={!currentRecordId}
           style={{
             width: "48px",
             height: "48px",
@@ -615,17 +618,17 @@ const Many2OneField = ({
             alignItems: "center",
             justifyContent: "center",
             border: "1.5px solid var(--color-neutral-200)",
-            background: !currentRecordId || readonly 
+            background: !currentRecordId
               ? "linear-gradient(180deg, #f5f5f5, #e8e8e8)" 
               : "linear-gradient(180deg, #fff, #fafbfc)",
-            color: !currentRecordId || readonly 
+            color: !currentRecordId
               ? "var(--color-neutral-400)" 
               : "var(--color-primary-700)",
             fontWeight: 500,
             transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
             padding: 0,
-            cursor: !currentRecordId || readonly ? "not-allowed" : "pointer",
-            opacity: !currentRecordId || readonly ? 0.5 : 1,
+            cursor: !currentRecordId ? "not-allowed" : "pointer",
+            opacity: !currentRecordId ? 0.5 : 1,
           }}
           onMouseEnter={(e) => {
             if (!e.currentTarget.disabled) {
