@@ -1,6 +1,7 @@
 import {
   useState,
   useEffect,
+  useMemo,
   forwardRef,
   useImperativeHandle,
 } from "react";
@@ -467,9 +468,9 @@ const Many2OneField = ({
     }
   };
 
-  // Get current record ID from form
-  // Use formValue from useWatch for real-time updates, fallback to form.getFieldValue
-  const getCurrentRecordId = () => {
+  // Get current record ID from form value
+  // Use useMemo to recalculate when formValue changes
+  const currentRecordId = useMemo(() => {
     const value = formValue !== undefined ? formValue : form.getFieldValue(name);
     console.log(`🔍 getCurrentRecordId for ${name}:`, { value, type: typeof value, formValue, fromWatch: formValue !== undefined });
     
@@ -505,7 +506,10 @@ const Many2OneField = ({
     }
     console.log(`⚠️ getCurrentRecordId: unknown value type for ${name}:`, value);
     return null;
-  };
+  }, [formValue, name, form]);
+  
+  // Keep getCurrentRecordId function for backward compatibility
+  const getCurrentRecordId = () => currentRecordId;
 
   return (
     <div style={{ marginBottom: "24px", width: "100%", minWidth: 0 }}>
@@ -593,7 +597,7 @@ const Many2OneField = ({
           type="default"
           icon={<EyeOutlined />}
           onClick={handleOpenRecord}
-          disabled={!getCurrentRecordId() || readonly}
+          disabled={!currentRecordId || readonly}
           style={{
             width: "48px",
             height: "48px",
