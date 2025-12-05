@@ -472,41 +472,39 @@ const Many2OneField = ({
   // Use useMemo to recalculate when formValue changes
   const currentRecordId = useMemo(() => {
     const value = formValue !== undefined ? formValue : form.getFieldValue(name);
-    console.log(`🔍 getCurrentRecordId for ${name}:`, { value, type: typeof value, formValue, fromWatch: formValue !== undefined });
     
     // Handle different value formats:
     // - If it's a number, return it
     // - If it's an object with an id property, return the id
     // - If it's null or undefined, return null
+    let result = null;
     if (value === null || value === undefined) {
-      console.log(`⚠️ getCurrentRecordId: value is null/undefined for ${name}`);
-      return null;
-    }
-    if (typeof value === 'number') {
-      console.log(`✅ getCurrentRecordId: returning number ${value} for ${name}`);
-      return value;
-    }
-    if (typeof value === 'object' && value !== null) {
+      result = null;
+    } else if (typeof value === 'number') {
+      result = value;
+    } else if (typeof value === 'object' && value !== null) {
       // Handle object with id property
       if (value.id !== undefined && value.id !== null) {
         const id = typeof value.id === 'number' ? value.id : parseInt(value.id);
-        console.log(`✅ getCurrentRecordId: returning id ${id} from object for ${name}`);
-        return isNaN(id) ? null : id;
+        result = isNaN(id) ? null : id;
       }
-      // If object doesn't have id, try to use the object itself as ID (if it's a number-like object)
-      console.log(`⚠️ getCurrentRecordId: object has no id property for ${name}:`, value);
-      return null;
-    }
-    // Try to parse as integer if it's a string
-    if (typeof value === 'string') {
+    } else if (typeof value === 'string') {
+      // Try to parse as integer if it's a string
       const parsed = parseInt(value);
-      const result = isNaN(parsed) ? null : parsed;
-      console.log(`✅ getCurrentRecordId: parsed string "${value}" to ${result} for ${name}`);
-      return result;
+      result = isNaN(parsed) ? null : parsed;
     }
-    console.log(`⚠️ getCurrentRecordId: unknown value type for ${name}:`, value);
-    return null;
-  }, [formValue, name, form]);
+    
+    const isDisabled = !result || readonly;
+    console.log(`🔍 Button state for ${name}:`, { 
+      value, 
+      currentRecordId: result,
+      readonly,
+      isDisabled,
+      willBeEnabled: !isDisabled
+    });
+    
+    return result;
+  }, [formValue, name, form, readonly]);
   
   // Keep getCurrentRecordId function for backward compatibility
   const getCurrentRecordId = () => currentRecordId;
@@ -596,7 +594,18 @@ const Many2OneField = ({
         <Button
           type="default"
           icon={<EyeOutlined />}
-          onClick={handleOpenRecord}
+          onClick={(e) => {
+            console.log(`🖱️ Button clicked for ${name}:`, {
+              currentRecordId,
+              readonly,
+              disabled: !currentRecordId || readonly
+            });
+            if (!currentRecordId || readonly) {
+              console.warn(`⚠️ Button should be disabled for ${name}`);
+              return;
+            }
+            handleOpenRecord();
+          }}
           disabled={!currentRecordId || readonly}
           style={{
             width: "48px",
@@ -606,11 +615,17 @@ const Many2OneField = ({
             alignItems: "center",
             justifyContent: "center",
             border: "1.5px solid var(--color-neutral-200)",
-            background: "linear-gradient(180deg, #fff, #fafbfc)",
-            color: "var(--color-primary-700)",
+            background: !currentRecordId || readonly 
+              ? "linear-gradient(180deg, #f5f5f5, #e8e8e8)" 
+              : "linear-gradient(180deg, #fff, #fafbfc)",
+            color: !currentRecordId || readonly 
+              ? "var(--color-neutral-400)" 
+              : "var(--color-primary-700)",
             fontWeight: 500,
             transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
             padding: 0,
+            cursor: !currentRecordId || readonly ? "not-allowed" : "pointer",
+            opacity: !currentRecordId || readonly ? 0.5 : 1,
           }}
           onMouseEnter={(e) => {
             if (!e.currentTarget.disabled) {
