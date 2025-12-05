@@ -59,19 +59,19 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
   }, [selectedMenuInfo?.actionName, selectedMenuInfo?.menuItem?.name]);
   const containerStyles = {
     background: 'var(--color-neutral-50)',
-    borderRadius: '28px',
+    borderRadius: '20px',
     border: '1px solid var(--color-neutral-200)',
-    padding: '28px',
+    padding: '12px',
     minHeight: 'calc(100vh - 96px)',
     boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
     display: 'flex',
     flexDirection: 'column',
-    gap: '24px'
+    gap: '12px'
   };
 
   return (
     <div style={{
-      padding: '32px',
+      padding: '12px',
       background: 'var(--color-background)',
       minHeight: 'calc(100vh - 64px)',
       overflowY: 'auto'
@@ -81,7 +81,7 @@ const TableView = ({ tableInfo, selectedMenuInfo, loadingContent, formDirty, too
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          gap: '16px',
+          gap: '12px',
           flexWrap: 'wrap'
         }}>
           <div style={{ flex: 1, minWidth: '320px' }}>

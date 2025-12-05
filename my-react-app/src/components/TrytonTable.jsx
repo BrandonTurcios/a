@@ -371,13 +371,13 @@ const TrytonTable = ({
             const baseStyle = {
               display: 'flex',
               alignItems: 'center',
-              padding: '8px 12px',
+              padding: '6px 10px',
               cursor: 'pointer',
               whiteSpace: 'normal',
               wordBreak: 'break-word',
               overflowWrap: 'break-word',
-              lineHeight: '1.5',
-              fontSize: '15px',
+              lineHeight: '1.4',
+              fontSize: '14px',
               fontWeight: '500'
             };
 
@@ -993,7 +993,7 @@ const TrytonTable = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '10px 14px',
+            padding: '8px 12px',
             cursor: 'pointer',
             fontSize: '15px',
             fontWeight: 500,
@@ -1040,12 +1040,12 @@ const TrytonTable = ({
                     e.currentTarget.style.background = 'transparent';
                   }}
                   style={{
-                    padding: '10px 14px',
+                    padding: '8px 12px',
                     cursor: 'pointer',
-                    fontSize: '14px',
+                    fontSize: '13px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
+                    gap: '6px',
                     transition: 'background 0.15s'
                   }}
                 >
@@ -1070,7 +1070,7 @@ const TrytonTable = ({
           minHeight: '200px'
         }}>
           <Spin size="large" />
-          <Text style={{ marginLeft: '16px' }}>{t('table.loading')}</Text>
+          <Text style={{ marginLeft: '12px' }}>{t('table.loading')}</Text>
         </div>
       </Card>
     );
@@ -1104,7 +1104,7 @@ const TrytonTable = ({
         width: '100%',
         display: 'flex',
         flexDirection: 'column',
-        gap: '16px',
+        gap: '8px',
         flex: 1,
         background: 'var(--color-neutral-50)'
       }}
@@ -1112,14 +1112,14 @@ const TrytonTable = ({
     >
       <div 
         className="ag-theme-alpine"
-        style={{
-          width: '100%',
-          height: gridHeight,
-          minHeight: '480px',
-          background: 'white',
-          borderRadius: '8px',
-          overflow: 'hidden'
-        }}
+          style={{
+            width: '100%',
+            height: gridHeight,
+            minHeight: '480px',
+            background: 'white',
+            borderRadius: '6px',
+            overflow: 'hidden'
+          }}
         onContextMenu={handleContainerContextMenu}
       >
         <AgGridReact
