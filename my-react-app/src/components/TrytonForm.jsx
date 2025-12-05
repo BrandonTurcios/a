@@ -513,15 +513,15 @@ const Many2OneField = ({
   const getCurrentRecordId = () => currentRecordId;
 
   return (
-    <div style={{ marginBottom: "16px", width: "100%", minWidth: 0 }}>
+    <div style={{ marginBottom: "12px", width: "100%", minWidth: 0 }}>
       <div
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "8px",
+          gap: "6px",
           fontWeight: "bold",
           color: "var(--color-text-primary)",
-          marginBottom: "6px",
+          marginBottom: "4px",
           overflow: "visible",
           width: "100%",
           minWidth: 0,
@@ -534,7 +534,7 @@ const Many2OneField = ({
         <span style={{ overflow: "visible", textOverflow: "clip", whiteSpace: "normal", wordWrap: "break-word", flex: 1, minWidth: 0 }}>{label}</span>
       </div>
 
-      <div style={{ marginBottom: help ? "8px" : "0", display: "flex", gap: "12px", alignItems: "flex-start", width: "100%", minWidth: "250px", overflow: "visible" }}>
+      <div style={{ marginBottom: help ? "6px" : "0", display: "flex", gap: "8px", alignItems: "flex-start", width: "100%", minWidth: "250px", overflow: "visible" }}>
         <div style={{ flex: 1, minWidth: "200px", overflow: "visible", width: "100%" }}>
           <AutoComplete
             value={inputValue}
@@ -564,7 +564,7 @@ const Many2OneField = ({
                 border: "1.5px solid var(--color-neutral-200)",
                 height: "48px",
                 fontSize: "15px",
-                padding: "12px 16px",
+                padding: "10px 12px",
                 background: "linear-gradient(180deg, #fff, #fafbfc)",
                 transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                 width: "100%",
@@ -661,10 +661,10 @@ const Many2OneField = ({
       </Form.Item>
 
       {help && (
-        <div style={{ marginTop: "4px", marginBottom: "8px" }}>
+        <div style={{ marginTop: "2px", marginBottom: "6px" }}>
           <Text
             type="secondary"
-            style={{ fontSize: "12px", lineHeight: "1.4" }}
+            style={{ fontSize: "11px", lineHeight: "1.3" }}
           >
             {help}
           </Text>
@@ -944,7 +944,7 @@ const One2ManyField = ({
   };
 
   return (
-    <div style={{ marginBottom: "16px" }}>
+    <div style={{ marginBottom: "12px" }}>
       <div
         style={{
           display: "flex",
@@ -952,7 +952,7 @@ const One2ManyField = ({
           gap: "8px",
           fontWeight: "500",
           color: "var(--color-text-primary)",
-          marginBottom: "6px",
+          marginBottom: "4px",
         }}
       >
         {required && (
@@ -963,7 +963,7 @@ const One2ManyField = ({
 
       <div
         style={{
-          padding: "12px",
+          padding: "10px",
           border: "1px solid var(--color-border)",
           borderRadius: "8px",
           background: "var(--color-neutral-100)",
@@ -995,7 +995,7 @@ const One2ManyField = ({
         </div>
 
         {loading ? (
-          <div style={{ textAlign: "center", padding: "16px" }}>
+          <div style={{ textAlign: "center", padding: "12px" }}>
             <Spin />
           </div>
         ) : relatedRecords.length > 0 ? (
@@ -1046,7 +1046,7 @@ const One2ManyField = ({
           <div
             style={{
               textAlign: "center",
-              padding: "12px",
+              padding: "10px",
               color: "#8c8c8c",
             }}
           >
@@ -1092,10 +1092,10 @@ const One2ManyField = ({
       </Form.Item>
 
       {help && (
-        <div style={{ marginTop: "4px", marginBottom: "8px" }}>
+        <div style={{ marginTop: "2px", marginBottom: "6px" }}>
           <Text
             type="secondary"
-            style={{ fontSize: "12px", lineHeight: "1.4" }}
+            style={{ fontSize: "11px", lineHeight: "1.3" }}
           >
             {help}
           </Text>
@@ -1231,7 +1231,7 @@ const BinaryImageField = ({
   );
 
   return (
-    <div style={{ marginBottom: "16px" }}>
+    <div style={{ marginBottom: "12px" }}>
       <div
         style={{
           display: "flex",
@@ -1239,7 +1239,7 @@ const BinaryImageField = ({
           gap: "8px",
           fontWeight: "500",
           color: "var(--color-text-primary)",
-          marginBottom: "6px",
+          marginBottom: "4px",
         }}
       >
         {required && (
@@ -1319,10 +1319,10 @@ const BinaryImageField = ({
       </Form.Item>
 
       {help && (
-        <div style={{ marginTop: "4px", marginBottom: "8px" }}>
+        <div style={{ marginTop: "2px", marginBottom: "6px" }}>
           <Text
             type="secondary"
-            style={{ fontSize: "12px", lineHeight: "1.4" }}
+            style={{ fontSize: "11px", lineHeight: "1.3" }}
           >
             {help}
           </Text>
@@ -1402,7 +1402,7 @@ const BinaryFileField = ({
   };
 
   return (
-    <div style={{ marginBottom: "16px" }}>
+    <div style={{ marginBottom: "12px" }}>
       <Form.Item
         name={name}
         label={createFieldLabel(label, required)}
@@ -1413,7 +1413,7 @@ const BinaryFileField = ({
             border: "1px solid var(--color-neutral-200)",
             borderRadius: "14px",
             background: "var(--color-neutral-25)",
-            padding: "12px",
+            padding: "10px",
             display: "flex",
             flexDirection: "column",
             gap: "12px",
@@ -1482,7 +1482,7 @@ const BinaryFileField = ({
                 background: "#fff",
                 borderRadius: "12px",
                 border: "1px solid var(--color-neutral-200)",
-                padding: "12px",
+                padding: "10px",
                 textAlign: "center",
               }}
             >
@@ -1501,7 +1501,7 @@ const BinaryFileField = ({
                 background: "#fff",
                 borderRadius: "10px",
                 border: "1px solid var(--color-neutral-200)",
-                padding: "12px",
+                padding: "10px",
                 fontFamily: "monospace",
                 fontSize: "12px",
                 color: "var(--color-text-primary)",
@@ -2164,7 +2164,7 @@ const TrytonForm = forwardRef(
         label: createFieldLabel(label, required),
         required,
         disabled: isReadonly,
-        style: { marginBottom: "16px" },
+        style: { marginBottom: "12px" },
       };
 
       // Si hay help, agregarlo como prop help
@@ -2195,7 +2195,7 @@ const TrytonForm = forwardRef(
                   border: "1.5px solid var(--color-neutral-200)",
                   height: "48px",
                   fontSize: "15px",
-                  padding: "12px 16px",
+                  padding: "10px 12px",
                   background: "linear-gradient(180deg, #fff, #fafbfc)",
                   transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                 }}
@@ -2235,7 +2235,7 @@ const TrytonForm = forwardRef(
                   borderRadius: "16px",
                   border: "1.5px solid var(--color-neutral-200)",
                   fontSize: "15px",
-                  padding: "12px 16px",
+                  padding: "10px 12px",
                   background: "linear-gradient(180deg, #fff, #fafbfc)",
                   transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                   resize: "vertical",
@@ -2339,7 +2339,7 @@ const TrytonForm = forwardRef(
               valuePropName="checked"
               colon={false}
               className="boolean-card-item"
-              style={{ marginBottom: "16px" }}
+              style={{ marginBottom: "12px" }}
               data-span={6}
             >
               <div
@@ -2347,7 +2347,7 @@ const TrytonForm = forwardRef(
                 style={{
                   border: "1px solid var(--color-neutral-200)",
                   borderRadius: "22px",
-                  padding: "12px",
+                  padding: "10px",
                   background: "linear-gradient(180deg, #fff, #f5fbff)",
                   minHeight: "160px",
                   display: "flex",
@@ -2624,7 +2624,7 @@ const TrytonForm = forwardRef(
             <Form.Item key={name} {...commonProps}>
               <div
                 style={{
-                  padding: "12px",
+                  padding: "10px",
                   border: "1px solid #d9d9d9",
                   borderRadius: "6px",
                   background: "#fafafa",
@@ -2635,7 +2635,7 @@ const TrytonForm = forwardRef(
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    marginBottom: "6px",
+                    marginBottom: "4px",
                   }}
                 >
                   <Text type="secondary" style={{ fontWeight: "500" }}>
@@ -2968,7 +2968,7 @@ const TrytonForm = forwardRef(
             display: "flex",
             justifyContent: "flex-end",
             alignItems: "center",
-            padding: "12px 16px",
+            padding: "10px 12px",
             borderBottom: "1px solid var(--color-border)",
             background: "var(--color-neutral-50)",
           }}
@@ -3058,7 +3058,7 @@ const TrytonForm = forwardRef(
         {/* Contenido del formulario */}
         <div
           style={{
-            padding: "12px",
+            padding: "10px",
             background: "var(--color-card-background)",
             overflow: "visible",
             minWidth: 0,
@@ -3088,7 +3088,7 @@ const TrytonForm = forwardRef(
                     xs={24}
                     sm={12}
                     lg={8}
-                    style={{ marginBottom: "12px", minWidth: 0, overflow: "visible" }}
+                    style={{ marginBottom: "10px", minWidth: 0, overflow: "visible" }}
                   >
                     {renderFormField(field)}
                   </Col>

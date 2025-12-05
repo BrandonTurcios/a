@@ -36,21 +36,21 @@ const GroupSection = ({ section, fields, form, fieldComponents, level = 0 }) => 
       }
       size="small"
       style={{ 
-        marginBottom: 12,
-        marginLeft: level * 12,
-        borderRadius: 16,
+        marginBottom: 10,
+        marginLeft: level * 10,
+        borderRadius: 12,
         overflow: 'hidden',
         border: '1px solid var(--color-neutral-200)',
-        boxShadow: '0 8px 20px rgba(1, 76, 107, 0.06)'
+        boxShadow: '0 4px 12px rgba(1, 76, 107, 0.05)'
       }}
        headStyle={{
          background: 'linear-gradient(120deg, #B3E2E9, #80CEDA, #4DBACA)',
-         padding: '10px 16px',
+         padding: '8px 12px',
          borderBottom: '1px solid rgba(255,255,255,0.35)'
        }}
-      bodyStyle={{ padding: '12px', background: 'var(--color-card-background)', overflow: 'visible' }}
+      bodyStyle={{ padding: '10px', background: 'var(--color-card-background)', overflow: 'visible' }}
     >
-      <Row gutter={[12, 12]}>
+      <Row gutter={[10, 10]}>
         {/* Renderizar campos directos del grupo */}
         {sectionFields?.map((fieldName, index) => {
           const fieldComponent = fieldComponents[fieldName];
@@ -108,7 +108,7 @@ const PageSection = ({ section, fields, form, fieldComponents, level = 0 }) => {
         <Title
           level={4}
           style={{
-            marginBottom: 12,
+            marginBottom: 10,
             color: '#015D70',
             fontWeight: 600,
             letterSpacing: '0.02em'
@@ -118,7 +118,7 @@ const PageSection = ({ section, fields, form, fieldComponents, level = 0 }) => {
         </Title>
       )}
       
-      <Row gutter={[12, 12]}>
+      <Row gutter={[10, 10]}>
         {/* Renderizar campos directos de la página */}
         {sectionFields?.map((fieldName, index) => {
           const fieldComponent = fieldComponents[fieldName];
@@ -162,7 +162,7 @@ const NotebookSection = ({ section, fields, form, fieldComponents, level = 0 }) 
         <Title
           level={4}
           style={{
-            marginBottom: 12,
+            marginBottom: 10,
             color: '#015D70',
             fontWeight: 600,
             letterSpacing: '0.02em'
@@ -176,13 +176,13 @@ const NotebookSection = ({ section, fields, form, fieldComponents, level = 0 }) 
         defaultActiveKey={pages?.[0]?.id || '0'}
         type="card"
         size="small"
-        style={{ marginTop: 12 }}
+        style={{ marginTop: 10 }}
       >
         {pages?.map((page, index) => (
           <TabPane 
             tab={page.title} 
             key={page.id || index}
-            style={{ padding: '12px 0' }}
+            style={{ padding: '8px 0' }}
           >
             <FormSectionRenderer 
               section={page}
@@ -204,7 +204,7 @@ const SeparatorSection = ({ section }) => {
   
   if (title) {
     return (
-      <Divider orientation="left" style={{ margin: '16px 0' }}>
+      <Divider orientation="left" style={{ margin: '12px 0' }}>
         <Text
           strong
           style={{
@@ -220,7 +220,7 @@ const SeparatorSection = ({ section }) => {
     );
   }
   
-  return <div style={{ height: 12 }} />;
+  return <div style={{ height: 8 }} />;
 };
 
 // Renderizador principal de secciones
@@ -296,8 +296,8 @@ const FormSections = ({
   }
 
   return (
-    <div style={{ padding: '8px' }}>
-      <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+    <div style={{ padding: '6px' }}>
+      <Space direction="vertical" size="small" style={{ width: '100%' }}>
         {sections.map((section, index) => (
           <FormSectionRenderer
             key={`section-${section.id || index}`}

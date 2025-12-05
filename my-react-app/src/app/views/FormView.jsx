@@ -27,7 +27,7 @@ const FormView = ({ formInfo, selectedMenuInfo, loadingContent, formDirty, onFor
 
   return (
     <div style={{
-      padding: '16px',
+      padding: '12px',
       background: 'var(--color-background)',
       minHeight: 'calc(100vh - 64px)',
       overflowY: 'auto'
@@ -36,8 +36,8 @@ const FormView = ({ formInfo, selectedMenuInfo, loadingContent, formDirty, onFor
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: '16px',
-        gap: '16px'
+        marginBottom: '12px',
+        gap: '12px'
       }}>
         <div style={{ flex: 1 }}>
           <Title
