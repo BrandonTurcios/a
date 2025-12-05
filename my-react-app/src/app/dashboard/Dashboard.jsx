@@ -234,17 +234,30 @@ const Dashboard = ({ sessionData, onLogout, onLanguageChange }) => {
         "🔧 Toolbar create clicked - cambiando a vista de formulario"
       );
 
-      if (
-        !menuActions.selectedMenuInfo ||
-        !menuActions.selectedMenuInfo.resModel
-      ) {
-        console.warn("No hay información del menú seleccionado");
+      // Intentar obtener menuInfo de múltiples fuentes
+      let menuInfo = menuActions.selectedMenuInfo;
+      let activeTab = null;
+      
+      // Si no está en menuActions, intentar obtenerlo de la tab activa
+      if (!menuInfo && tabs.activeTabId) {
+        activeTab = tabs.getActiveTab();
+        if (activeTab?.data?.selectedMenuInfo) {
+          menuInfo = activeTab.data.selectedMenuInfo;
+        }
+      }
+
+      if (!menuInfo || !menuInfo.resModel) {
+        console.warn("No hay información del menú seleccionado", {
+          hasMenuActions: !!menuActions.selectedMenuInfo,
+          hasActiveTab: !!tabs.activeTabId,
+          activeTabData: activeTab?.data?.selectedMenuInfo ? "available" : "not available",
+        });
         return;
       }
 
       menuActions.setLoadingContent(true);
 
-      const model = menuActions.selectedMenuInfo.resModel;
+      const model = menuInfo.resModel;
       console.log(`📝 Creando nuevo registro para modelo: ${model}`);
 
       // Obtener vista de formulario
@@ -276,10 +289,20 @@ const Dashboard = ({ sessionData, onLogout, onLanguageChange }) => {
 
       menuActions.setFormInfo(formData);
       menuActions.setTableInfo(null); // Limpiar tabla
-      menuActions.setSelectedMenuInfo((prev) => ({
-        ...prev,
-        viewType: "form",
-      }));
+      menuActions.setSelectedMenuInfo((prev) => {
+        if (!prev) {
+          // Si no hay prev, crear un nuevo objeto con la información mínima
+          return {
+            resModel: model,
+            viewType: "form",
+            viewId: formFieldsView.view_id,
+          };
+        }
+        return {
+          ...prev,
+          viewType: "form",
+        };
+      });
       setFormDirty(false);
       menuActions.setLoadingContent(false);
     } catch (error) {
@@ -580,17 +603,30 @@ const Dashboard = ({ sessionData, onLogout, onLanguageChange }) => {
           }
         }
 
-        if (
-          !menuActions.selectedMenuInfo ||
-          !menuActions.selectedMenuInfo.resModel
-        ) {
-          console.warn(t("dashboard.noModelInfo"));
+        // Intentar obtener menuInfo de múltiples fuentes
+        let menuInfo = menuActions.selectedMenuInfo;
+        let activeTab = null;
+        
+        // Si no está en menuActions, intentar obtenerlo de la tab activa
+        if (!menuInfo && tabs.activeTabId) {
+          activeTab = tabs.getActiveTab();
+          if (activeTab?.data?.selectedMenuInfo) {
+            menuInfo = activeTab.data.selectedMenuInfo;
+          }
+        }
+
+        if (!menuInfo || !menuInfo.resModel) {
+          console.warn(t("dashboard.noModelInfo"), {
+            hasMenuActions: !!menuActions.selectedMenuInfo,
+            hasActiveTab: !!tabs.activeTabId,
+            activeTabData: activeTab?.data?.selectedMenuInfo ? "available" : "not available",
+          });
           return;
         }
 
         menuActions.setLoadingContent(true);
 
-        const model = menuActions.selectedMenuInfo.resModel;
+        const model = menuInfo.resModel;
         console.log(`📝 Opening record ${recordId} for model: ${model}`);
 
         // Obtener vista de formulario
@@ -636,10 +672,20 @@ const Dashboard = ({ sessionData, onLogout, onLanguageChange }) => {
         menuActions.setTableInfo(null);
 
         console.log("✅ Updating selectedMenuInfo to form view");
-        menuActions.setSelectedMenuInfo((prev) => ({
-          ...prev,
-          viewType: "form",
-        }));
+        menuActions.setSelectedMenuInfo((prev) => {
+          if (!prev) {
+            // Si no hay prev, crear un nuevo objeto con la información mínima
+            return {
+              resModel: model,
+              viewType: "form",
+              viewId: formFieldsView.view_id,
+            };
+          }
+          return {
+            ...prev,
+            viewType: "form",
+          };
+        });
 
         setFormDirty(false);
         menuActions.setLoadingContent(false);
@@ -649,7 +695,7 @@ const Dashboard = ({ sessionData, onLogout, onLanguageChange }) => {
         menuActions.setLoadingContent(false);
       }
     },
-    [formDirty, menuActions]
+    [formDirty, menuActions, tabs, t]
   );
 
   const handleRecordSelect = useCallback((record, isSelected) => {
@@ -712,9 +758,18 @@ const Dashboard = ({ sessionData, onLogout, onLanguageChange }) => {
   };
 
   // Obtener datos de la tab activa usando useMemo para optimización
+  // Priorizar datos de menuActions sobre datos de la tab para evitar problemas de sincronización
   const activeTabData = useMemo(() => {
-    // Si no hay tab activa, mostrar dashboard
+    // Si no hay tab activa, usar datos de menuActions si están disponibles
     if (!tabs.activeTabId || tabs.tabs.length === 0) {
+      if (menuActions.selectedMenuInfo) {
+        return {
+          selectedMenuInfo: menuActions.selectedMenuInfo,
+          tableInfo: menuActions.tableInfo,
+          formInfo: menuActions.formInfo,
+          activeTab: menuActions.activeTab || "content",
+        };
+      }
       return {
         selectedMenuInfo: null,
         tableInfo: null,
@@ -725,6 +780,18 @@ const Dashboard = ({ sessionData, onLogout, onLanguageChange }) => {
 
     const activeTab = tabs.tabs.find((t) => t.id === tabs.activeTabId);
     if (activeTab && activeTab.data) {
+      // Priorizar datos de menuActions si están disponibles y son más recientes
+      // Esto asegura que los cambios recientes (como abrir un formulario) se reflejen inmediatamente
+      if (menuActions.selectedMenuInfo) {
+        return {
+          selectedMenuInfo: menuActions.selectedMenuInfo,
+          tableInfo: menuActions.tableInfo,
+          formInfo: menuActions.formInfo,
+          activeTab: activeTab.data.menuItem?.id || "content",
+        };
+      }
+      
+      // Fallback a datos de la tab si no hay datos en menuActions
       return {
         selectedMenuInfo: activeTab.data.selectedMenuInfo,
         tableInfo: activeTab.data.tableInfo,
@@ -739,7 +806,14 @@ const Dashboard = ({ sessionData, onLogout, onLanguageChange }) => {
       formInfo: null,
       activeTab: "dashboard",
     };
-  }, [tabs.activeTabId, tabs.tabs]);
+  }, [
+    tabs.activeTabId,
+    tabs.tabs,
+    menuActions.selectedMenuInfo,
+    menuActions.tableInfo,
+    menuActions.formInfo,
+    menuActions.activeTab,
+  ]);
 
   // Crear tab cuando los datos estén listos
   useEffect(() => {
@@ -791,6 +865,7 @@ const Dashboard = ({ sessionData, onLogout, onLanguageChange }) => {
   // Sincronizar datos de la tab activa cuando cambien los datos del menú
   // Solo actualizar si estamos en una tab de contenido y no hay conflictos
   useEffect(() => {
+    // Si hay una tab activa y hay datos en menuActions, sincronizar
     if (
       tabs.activeTabId &&
       menuActions.selectedMenuInfo &&
@@ -807,7 +882,11 @@ const Dashboard = ({ sessionData, onLogout, onLanguageChange }) => {
           currentData.formInfo !== menuActions.formInfo;
 
         if (hasChanged) {
-          console.log("🔄 Actualizando datos de tab activa");
+          console.log("🔄 Actualizando datos de tab activa", {
+            hasFormInfo: !!menuActions.formInfo,
+            hasTableInfo: !!menuActions.tableInfo,
+            viewType: menuActions.selectedMenuInfo?.viewType,
+          });
           tabs.updateTabData(tabs.activeTabId, {
             selectedMenuInfo: menuActions.selectedMenuInfo,
             tableInfo: menuActions.tableInfo,
