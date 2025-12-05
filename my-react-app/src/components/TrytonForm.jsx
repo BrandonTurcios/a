@@ -350,19 +350,44 @@ const Many2OneField = ({
           defaultValue.rec_name
         );
         setInputValue(defaultValue.rec_name);
-        // Set the actual ID value in the form
-        const actualId = defaultValue.id || defaultValue;
-        form.setFieldValue(name, actualId);
+        // Set the actual ID value in the form (ensure it's a number)
+        const actualId = defaultValue.id !== undefined ? defaultValue.id : null;
+        if (actualId !== null) {
+          const idValue = typeof actualId === 'number' ? actualId : parseInt(actualId);
+          if (!isNaN(idValue)) {
+            console.log(`✅ Setting form value for ${name} to ID:`, idValue);
+            form.setFieldValue(name, idValue);
+          } else {
+            console.warn(`⚠️ Invalid ID value for ${name}:`, actualId);
+            form.setFieldValue(name, null);
+          }
+        } else {
+          console.warn(`⚠️ Object defaultValue for ${name} has no id:`, defaultValue);
+          form.setFieldValue(name, null);
+        }
       } else {
         console.log(
           `⚠️ Object defaultValue for ${name} has no rec_name:`,
           defaultValue
         );
+        // Try to extract ID from object anyway
+        if (defaultValue.id !== undefined) {
+          const idValue = typeof defaultValue.id === 'number' ? defaultValue.id : parseInt(defaultValue.id);
+          if (!isNaN(idValue)) {
+            form.setFieldValue(name, idValue);
+          }
+        }
       }
     } else if (defaultValue) {
       // If defaultValue is just an ID, try to load the record name
       console.log(`🔍 Loading record name for ${name} with ID:`, defaultValue);
-      loadRecordName(defaultValue);
+      // Ensure defaultValue is a number
+      const idValue = typeof defaultValue === 'number' ? defaultValue : parseInt(defaultValue);
+      if (!isNaN(idValue)) {
+        loadRecordName(idValue);
+      } else {
+        console.warn(`⚠️ Invalid defaultValue for ${name}:`, defaultValue);
+      }
     } else {
       console.log(`⚠️ No defaultValue for ${name}`);
     }
@@ -391,7 +416,7 @@ const Many2OneField = ({
 
   // Function to handle opening the record in a modal
   const handleOpenRecord = async () => {
-    const currentValue = form.getFieldValue(name);
+    const currentValue = getCurrentRecordId();
     if (!currentValue || !relation) {
       message.warning(t("form.selectField", { field: label }));
       return;
@@ -441,7 +466,41 @@ const Many2OneField = ({
 
   // Get current record ID from form
   const getCurrentRecordId = () => {
-    return form.getFieldValue(name);
+    const value = form.getFieldValue(name);
+    console.log(`🔍 getCurrentRecordId for ${name}:`, { value, type: typeof value });
+    
+    // Handle different value formats:
+    // - If it's a number, return it
+    // - If it's an object with an id property, return the id
+    // - If it's null or undefined, return null
+    if (value === null || value === undefined) {
+      console.log(`⚠️ getCurrentRecordId: value is null/undefined for ${name}`);
+      return null;
+    }
+    if (typeof value === 'number') {
+      console.log(`✅ getCurrentRecordId: returning number ${value} for ${name}`);
+      return value;
+    }
+    if (typeof value === 'object' && value !== null) {
+      // Handle object with id property
+      if (value.id !== undefined && value.id !== null) {
+        const id = typeof value.id === 'number' ? value.id : parseInt(value.id);
+        console.log(`✅ getCurrentRecordId: returning id ${id} from object for ${name}`);
+        return isNaN(id) ? null : id;
+      }
+      // If object doesn't have id, try to use the object itself as ID (if it's a number-like object)
+      console.log(`⚠️ getCurrentRecordId: object has no id property for ${name}:`, value);
+      return null;
+    }
+    // Try to parse as integer if it's a string
+    if (typeof value === 'string') {
+      const parsed = parseInt(value);
+      const result = isNaN(parsed) ? null : parsed;
+      console.log(`✅ getCurrentRecordId: parsed string "${value}" to ${result} for ${name}`);
+      return result;
+    }
+    console.log(`⚠️ getCurrentRecordId: unknown value type for ${name}:`, value);
+    return null;
   };
 
   return (
