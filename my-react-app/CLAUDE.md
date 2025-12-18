@@ -27,7 +27,8 @@ npm run preview  # Preview production build
 - **React 19.1** with Vite 7.1
 - **Ant Design** for UI components
 - **Tailwind CSS** for styling
-- **TanStack Table** for data tables
+- **AG Grid Community** for data tables
+- **i18next** for internationalization
 - **JSON-RPC** for Tryton communication
 
 ### Authentication & Session Flow
@@ -39,7 +40,7 @@ npm run preview  # Preview production build
 
 ### Key Service: trytonService.js
 
-Central service (~1785 lines) implementing complete Tryton JSON-RPC protocol:
+Central service (~4097 lines) implementing complete Tryton JSON-RPC protocol:
 
 **Core Methods:**
 - `login(database, username, password)` - Authentication with Tryton server
@@ -52,6 +53,11 @@ Central service (~1785 lines) implementing complete Tryton JSON-RPC protocol:
 - `deleteRecords(model, ids)` - Delete records
 - `executeAction(actionId, context)` - Execute Tryton actions
 - `executeWizard(wizardName, action, data, context)` - Handle wizard flows
+- `searchAttachments(resourceKey, offset, limit)` - Search for attachments
+- `readAttachments(ids)` - Read attachment metadata
+- `readAttachmentData(ids, options)` - Read attachment binary data
+- `createAttachment(options)` - Create new attachments
+- `changeUserLanguage(newLanguage)` - Change user's language preference
 
 **URL Construction:**
 - Methods use `buildURL(method)` which formats as `${baseURL}/${database}/`
@@ -65,35 +71,57 @@ Central service (~1785 lines) implementing complete Tryton JSON-RPC protocol:
 
 ### Component Structure
 
-**App.jsx** - Root component managing session state and routing between Login/Dashboard
+**App.jsx** - Root component managing session state and routing between Login/Dashboard:
+- Manages session persistence via localStorage (`tryton_session`)
+- Handles language changes with page reload to update translations
+- Restores user session on app mount
+- Displays loading overlay during language changes
 
-**Dashboard.jsx** (~1538 lines) - Main application interface:
+**Dashboard.jsx** (~1052 lines) - Main application interface:
+- Uses custom hooks for modular state management (useMenuData, useMenuActions, useWizards, useActionOptions, useTabs)
 - Loads hierarchical menu from Tryton via `loadSidebarMenu()`
 - Handles menu actions: `ir.action.act_window`, `ir.action.wizard`, `ir.action.report`
 - Manages expandable/collapsible menu tree with icons
-- Switches between table view and form view based on actions
+- Multi-tab interface for viewing multiple forms/tables simultaneously
+- Restores navigation state after language changes via sessionStorage
 - Modal handling for action options and wizards
 
-**TrytonTable.jsx** (~339 lines) - Dynamic data table component:
-- Uses TanStack Table for rendering
+**TrytonTable.jsx** (~1187 lines) - Dynamic data table component:
+- Uses AG Grid Community for rendering
 - Handles pagination, sorting, and filtering
+- Context menu with actions (Attach, Note, Relate, Print, Email)
 - Action buttons (Create, Edit, Delete, Actions, Reports)
 - Renders fields based on Tryton field definitions (many2one, selection, boolean, etc.)
+- Supports both standalone and embedded table modes (for one2many fields)
 
-**TrytonForm.jsx** (~664 lines) - Dynamic form component:
+**TrytonForm.jsx** (~3114 lines) - Dynamic form component:
 - Renders forms based on Tryton view XML definitions
-- Handles various field types: char, text, selection, many2one, one2many, date, datetime, boolean, integer, float
+- Handles various field types: char, text, selection, many2one, one2many, date, datetime, boolean, integer, float, binary, image
 - Form validation and submission
 - Supports notebooks (tabbed interfaces) and groups
+- Attachment management (view, upload, download attachments)
+- Inline editing for one2many fields
+- forwardRef pattern for parent components to access form methods
 
 **WizardModal.jsx** - Handles Tryton wizard workflows (multi-step processes)
 
 **ActionOptionsModal.jsx** - Displays available actions/reports for selected records
 
+**EmailModal.jsx** - Handles email sending functionality for records
+
+### Custom Hooks (src/app/hooks/)
+Modular state management hooks used by Dashboard:
+- `useMenuData.js` - Manages menu loading and state
+- `useMenuActions.js` - Handles menu click actions
+- `useWizards.js` - Wizard modal state and execution
+- `useActionOptions.js` - Action options modal state
+- `useTabs.js` - Multi-tab navigation state
+
 ### UI Component Library (src/components/ui/)
 - `table.jsx` - Base table components (shadcn/ui style)
 - `dialog.jsx` - Modal dialog components
 - `data-table.jsx` - Enhanced data table with features
+- `button.jsx`, `input.jsx`, `avatar.jsx` - Common UI components
 
 ### Configuration
 
@@ -106,6 +134,13 @@ Central service (~1785 lines) implementing complete Tryton JSON-RPC protocol:
   defaultHeaders: { ... }
 }
 ```
+
+**i18n.js** - Internationalization configuration:
+- Uses i18next and react-i18next
+- Supported languages: en, es, es_HN, fr, de, zh_CN
+- Translations stored in `src/locales/*.json`
+- Language preference saved in localStorage as `tryton_language`
+- Integration with Tryton's language system via `trytonService.changeUserLanguage()`
 
 **Tryton Server Setup** (documented in README.md):
 - JSON-RPC API: Port 8000
@@ -207,11 +242,38 @@ _convert: function(svgData) {
 - One2many fields render as nested tables
 
 ### Session Management
-- Sessions persist across page refreshes via localStorage
+- Sessions persist across page refreshes via localStorage (`tryton_session`)
+- Navigation state persists during language changes via sessionStorage (`tryton_nav_state`)
 - 401 errors trigger `clearSession()` and redirect to login
 - No automatic token refresh - users must re-login on expiry
 
+### Internationalization (i18n)
+- Language changes require page reload to update all Tryton-generated content
+- User's language preference is saved in both Tryton backend and localStorage
+- Special handling for regional variants (e.g., es_HN for Honduras Spanish)
+- Translation overrides system in `src/utils/translationOverrides.js`
+- Language selector in dashboard header allows runtime language switching
+
 ## Common Patterns
+
+### Using Custom Hooks in Dashboard
+The Dashboard component uses a modular architecture with custom hooks to manage different aspects of state:
+
+```javascript
+// In Dashboard.jsx
+const menuData = useMenuData(sessionData);           // Menu loading & state
+const menuActions = useMenuActions(menuData.loadMenuChildren); // Menu actions
+const wizards = useWizards();                        // Wizard state
+const actionOptions = useActionOptions();            // Action options state
+const tabs = useTabs();                              // Tab navigation state
+
+// Each hook exposes its own state and methods
+const { items, loading, error } = menuData;
+const { handleMenuClick } = menuActions;
+const { openWizard, closeWizard } = wizards;
+```
+
+This pattern keeps the Dashboard component clean and makes state management more maintainable.
 
 ### Adding a New Model View
 1. Ensure Tryton has model and views defined
@@ -243,6 +305,31 @@ Wizards are multi-step processes:
 2. Get wizard state and view definition
 3. User fills form → submit with current state
 4. Repeat until wizard completes or is cancelled
+
+### Working with Attachments
+```javascript
+import trytonService from '../services/trytonService';
+
+// Search for attachments on a record
+const resourceKey = `health.patient,${patientId}`;
+const attachmentIds = await trytonService.searchAttachments(resourceKey);
+
+// Read attachment metadata (without binary data)
+const attachments = await trytonService.readAttachments(attachmentIds);
+
+// Read attachment binary data
+const attachmentData = await trytonService.readAttachmentData([attachmentId]);
+const base64Data = attachmentData[0].data.base64;
+
+// Create new attachment
+await trytonService.createAttachment({
+  name: 'document.pdf',
+  resource: resourceKey,
+  dataBase64: base64EncodedContent,
+  description: 'Patient document',
+  type: 'data'
+});
+```
 
 ## Testing
 

@@ -4092,6 +4092,35 @@ class TrytonService {
       throw error;
     }
   }
+
+  /**
+   * Execute a button method on a model
+   * This is used for buttons defined in tree/form views that execute server-side methods
+   * @param {string} model - The model name (e.g., 'ir.lang')
+   * @param {string} methodName - The method name to execute (e.g., 'translate')
+   * @param {Array} ids - Array of record IDs to execute the method on
+   * @returns {Promise} - The result of the method execution
+   */
+  async executeModelButton(model, methodName, ids) {
+    if (!this.sessionData) {
+      throw new Error("No hay sesión activa");
+    }
+
+    try {
+      console.log(`🔘 Executing button method: ${model}.${methodName} on IDs:`, ids);
+
+      const result = await this.makeRpcCall(`model.${model}.${methodName}`, [
+        ids,
+        this.context,
+      ]);
+
+      console.log(`✅ Button method executed successfully:`, result);
+      return result;
+    } catch (error) {
+      console.error(`❌ Error executing button method ${model}.${methodName}:`, error);
+      throw error;
+    }
+  }
 }
 
 export default new TrytonService();
