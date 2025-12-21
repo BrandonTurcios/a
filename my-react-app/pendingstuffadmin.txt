@@ -8,7 +8,7 @@ NOTAS:
 
 COLUMNAS EN TABLAS (sobran/faltan)
 ----------------------------------
-// 1. Administración → Secuencias → Secuencias estrictas - columnas extras (Empresa, ID, Prefijo, Sufijo) [SOLUCIONADO]
+// 1. Administración → Secuencias → Secuencias estrictas - columnas extras (Empresa, ID, Prefijo, Sufijo)
 // 2. Administración → Programador de tareas → Acciones - columna extra: "siguiente llamada"
 // 3. Administración → Localización → Idiomas - falta columna: "cargar traducciones"
 // 4. Administración → Módulos - columna extra: "version", faltan columnas: "marca para actualizar", "marca para activar", "cancelar activación", "cancelar actualización"
@@ -19,11 +19,11 @@ COLUMNAS EN TABLAS (sobran/faltan)
 
 CAMPOS EN FORMULARIOS (sobran/faltan)
 -------------------------------------
-1. Administración → Secuencias → Tipos - campo extra: "grupo de usuarios" (no está en cliente original)
-2. Administración → Programador de tareas → Acciones - el form no coincide con el de tryton original
-3. Administración → Localización → Idiomas - campos extra, faltan botones de "cargar" y "eliminar" traducciones
-4. Administración → Módulos → Asistentes de configuración - faltan tabs: "acciones de teclado", "grupos", "general" y su contenido
-5. Administración → Usuarios - falta mostrar el footer de perfil del usuario
+// 1. Administración → Secuencias → Tipos - campo extra: "grupo de usuarios" (no está en cliente original)
+// 2. Administración → Programador de tareas → Acciones - el form no coincide con el de tryton original
+// 3. Administración → Localización → Idiomas - campos extra, faltan botones de "cargar" y "eliminar" traducciones
+// 4. Administración → Módulos → Asistentes de configuración - faltan tabs: "acciones de teclado", "grupos", "general" y su contenido
+// 5. Administración → Usuarios - falta mostrar el footer de perfil del usuario (avatar en formulario)
 
 
 COMPONENTES/FUNCIONALIDADES QUE NO FUNCIONAN

@@ -63,14 +63,19 @@ export const parseFormSections = (fieldsView, recordData = null) => {
             colspan: attributes.colspan,
             col: attributes.col,
             fields: [],
-            children: []
+            children: [],
+            buttons: []
           };
 
-          // Solo extraer campos del grupo, no procesar sub-elementos recursivamente
-          // para evitar duplicación
+          // Extraer campos del grupo
           const groupFields = extractFieldsFromElement(child, fields);
           groupSection.fields = groupFields;
-          console.log(`🔍 Group "${groupTitle}" extracted fields:`, groupFields);
+
+          // Extraer botones del grupo
+          const groupButtons = extractButtonsFromElement(child);
+          groupSection.buttons = groupButtons;
+
+          console.log(`🔍 Group "${groupTitle}" extracted fields:`, groupFields, 'buttons:', groupButtons);
 
           sections.push(groupSection);
           break;
@@ -172,6 +177,22 @@ export const parseFormSections = (fieldsView, recordData = null) => {
           // Los labels no necesitan procesamiento especial, se saltan
           break;
 
+        case 'button':
+          // Capturar botones del formulario
+          const buttonDef = {
+            type: 'button',
+            name: attributes.name,
+            string: attributes.string || attributes.name,
+            icon: attributes.icon,
+            confirm: attributes.confirm,
+            colspan: attributes.colspan,
+            states: attributes.states,
+            level: level
+          };
+          console.log(`🔘 Found button in form arch:`, buttonDef);
+          sections.push(buttonDef);
+          break;
+
         default:
           // Procesar otros elementos recursivamente
           const defaultSubSections = extractSections(child, currentPath, level + 1);
@@ -206,21 +227,51 @@ export const parseFormSections = (fieldsView, recordData = null) => {
     return fieldNames;
   };
 
+  // Extraer botones de un elemento
+  const extractButtonsFromElement = (element) => {
+    const buttons = [];
+
+    const extractButtons = (el) => {
+      Array.from(el.children).forEach(child => {
+        if (child.tagName.toLowerCase() === 'button') {
+          const buttonName = child.getAttribute('name');
+          if (buttonName) {
+            const buttonDef = {
+              type: 'button',
+              name: buttonName,
+              string: child.getAttribute('string') || buttonName,
+              icon: child.getAttribute('icon'),
+              confirm: child.getAttribute('confirm'),
+              colspan: child.getAttribute('colspan'),
+              states: child.getAttribute('states')
+            };
+            console.log(`🔘 Found button in group:`, buttonDef);
+            buttons.push(buttonDef);
+          }
+        } else {
+          extractButtons(child);
+        }
+      });
+    };
+
+    extractButtons(element);
+    return buttons;
+  };
+
   try {
     const doc = parseXML(`<root>${arch}</root>`);
     const rootElement = doc.querySelector('root');
     
     if (rootElement) {
       const sections = extractSections(rootElement);
-      
+
       // Si hay datos del registro, agregar campos que están en los datos pero no en el arch
-      // Solo si hay campos adicionales que no están en las secciones parseadas
       const hasRecordData = recordData && Object.keys(recordData).length > 0;
       if (hasRecordData) {
         const fieldsInRecordData = Object.keys(recordData).filter(
           key => !key.includes(".") && recordData.hasOwnProperty(key)
         );
-        
+
         // Obtener todos los campos que están en las secciones parseadas
         const fieldsInSections = new Set();
         const collectFieldsFromSections = (secs) => {
@@ -244,15 +295,14 @@ export const parseFormSections = (fieldsView, recordData = null) => {
           });
         };
         collectFieldsFromSections(sections);
-        
+
         // Encontrar campos que están en recordData pero no en las secciones
         const missingFields = fieldsInRecordData.filter(
           fieldName => !fieldsInSections.has(fieldName) && fields[fieldName]
         );
-        
+
         if (missingFields.length > 0) {
           console.log("🔍 Campos en recordData que no están en el arch, agregando a sección adicional:", missingFields);
-          // Agregar una sección adicional al final solo con los campos faltantes
           sections.push({
             type: 'group',
             title: '',
@@ -262,7 +312,7 @@ export const parseFormSections = (fieldsView, recordData = null) => {
           });
         }
       }
-      
+
       return {
         sections: sections,
         fields: fields,

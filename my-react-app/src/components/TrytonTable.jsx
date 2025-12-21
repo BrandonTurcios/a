@@ -203,6 +203,14 @@ const TrytonTable = ({
 
     while ((match = buttonPattern.exec(arch)) !== null) {
       const attributesStr = match[1] || match[2];
+
+      // Check tree_invisible attribute - skip button if it should be invisible in tree/table
+      const treeInvisibleMatch = attributesStr.match(/tree_invisible="([^"]+)"/);
+      if (treeInvisibleMatch && (treeInvisibleMatch[1] === "1" || treeInvisibleMatch[1].toLowerCase() === "true")) {
+        console.log("🔘 Skipping button with tree_invisible=1");
+        continue;
+      }
+
       const button = {};
 
       // Extract name attribute
@@ -230,7 +238,7 @@ const TrytonTable = ({
     return buttons;
   };
 
-  // Get prefix field name for a given field from arch XML
+  // Get prefix info for a given field from arch XML
   const getFieldPrefix = (fieldName, arch) => {
     if (!arch) return null;
 
@@ -244,9 +252,21 @@ const TrytonTable = ({
     if (!fieldMatch || !fieldMatch[1]) return null;
 
     // Look for prefix inside the field content
-    const prefixMatch = fieldMatch[1].match(/<prefix[^>]*name="([^"]+)"/);
-    if (prefixMatch) {
-      return prefixMatch[1];
+    const prefixContent = fieldMatch[1];
+    const prefixTagMatch = prefixContent.match(/<prefix([^>]*)\/?>|<prefix([^>]*)>[^<]*<\/prefix>/);
+
+    if (!prefixTagMatch) return null;
+
+    const attributes = prefixTagMatch[1] || prefixTagMatch[2] || "";
+
+    // Extract name attribute for prefix field
+    const nameMatch = attributes.match(/name="([^"]+)"/);
+
+    if (nameMatch) {
+      return {
+        type: "field",
+        name: nameMatch[1]
+      };
     }
 
     return null;
@@ -551,12 +571,12 @@ const TrytonTable = ({
                 );
               }
 
-              // Check if field has a prefix defined in arch (e.g., flag before country name)
-              const prefixFieldName = getFieldPrefix(fieldName, tableInfo.fieldsView.arch);
-              if (prefixFieldName && record[prefixFieldName]) {
+              // Check if field has a prefix defined in arch
+              const prefixInfo = getFieldPrefix(fieldName, tableInfo.fieldsView.arch);
+              if (prefixInfo && prefixInfo.type === "field" && record[prefixInfo.name]) {
                 return (
                   <span>
-                    {record[prefixFieldName]} {formatted}
+                    {record[prefixInfo.name]} {formatted}
                   </span>
                 );
               }

@@ -611,22 +611,23 @@ const Many2OneField = ({
           }}
           disabled={!currentRecordId}
           style={{
-            width: "48px",
+            minWidth: "auto",
             height: "48px",
             borderRadius: "16px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            gap: "6px",
             border: "1.5px solid var(--color-neutral-200)",
             background: !currentRecordId
-              ? "linear-gradient(180deg, #f5f5f5, #e8e8e8)" 
+              ? "linear-gradient(180deg, #f5f5f5, #e8e8e8)"
               : "linear-gradient(180deg, #fff, #fafbfc)",
             color: !currentRecordId
-              ? "var(--color-neutral-400)" 
+              ? "var(--color-neutral-400)"
               : "var(--color-primary-700)",
             fontWeight: 500,
             transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-            padding: 0,
+            padding: "0 16px",
             cursor: !currentRecordId ? "not-allowed" : "pointer",
             opacity: !currentRecordId ? 0.5 : 1,
           }}
@@ -643,7 +644,9 @@ const Many2OneField = ({
             e.currentTarget.style.boxShadow = "none";
           }}
           title={t("form.openRecord")}
-        />
+        >
+          {t("form.openRecord")}
+        </Button>
       </div>
 
       {/* Campo oculto para almacenar el ID en el formulario */}
@@ -2018,22 +2021,12 @@ const TrytonForm = forwardRef(
         ? Object.keys(recordData).filter(key => !key.includes(".") && recordData.hasOwnProperty(key))
         : [];
       
-      // Si el arch es de tipo tree, SIEMPRE incluir todos los campos del fieldsView
-      // Esto es porque cuando el arch es tree, solo contiene los campos visibles en la tabla,
-      // pero en el formulario queremos mostrar todos los campos disponibles
-      // También incluir todos si no hay campos en el arch o si hay datos del registro
       const isFormMode = viewType === "form" || !readonly;
       const hasFieldsNotInArch = hasRecordData && fieldsInRecordData.some(field => !archFields.includes(field));
-      
-      // CRÍTICO: Si hay datos del registro, SIEMPRE incluir todos los campos que están en los datos
-      // Esto asegura que campos con valor null también se muestren, incluso si no están en el arch del form
-      // También incluir todos si el arch es tree o si no hay campos en el arch
+
       const shouldIncludeAllFields = isTreeArch || !hasArchFields || hasRecordData;
 
       console.log(`🔍 shouldIncludeAllFields: ${shouldIncludeAllFields} (isTreeArch: ${isTreeArch}, isFormMode: ${isFormMode}, hasArchFields: ${hasArchFields}, hasFieldsNotInArch: ${hasFieldsNotInArch})`);
-      if (hasRecordData) {
-        console.log(`🔍 Campos en recordData que no están en arch:`, fieldsInRecordData.filter(field => !archFields.includes(field)));
-      }
 
       // Process fields that are in arch or are basic
       Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
@@ -2055,10 +2048,9 @@ const TrytonForm = forwardRef(
         // Usar hasOwnProperty para detectar campos que están explícitamente como null
         const isInRecordData = hasRecordData && recordData.hasOwnProperty(fieldName);
 
-        // PRIORIDAD: Si el campo está en los datos del registro, SIEMPRE incluirlo (incluso si es null)
-        // Esto asegura que todos los campos del read se muestren, independientemente del arch
-        // También incluir si está en arch, es básico, o si debemos incluir todos los campos
-        if (isInRecordData || isInArch || isBasicField || shouldIncludeAllFields) {
+        // FIX: Incluir campo solo si está en el arch XML, es básico, o es fallback
+        // if (isInRecordData || isInArch || isBasicField || shouldIncludeAllFields) { 
+        if (isInArch || isBasicField || shouldIncludeAllFields) {
           console.log(
             `✅ Incluyendo campo: ${fieldName} (tipo: ${fieldDef.type}, readonly: ${fieldDef.readonly}, isInArch: ${isInArch}, isInRecordData: ${isInRecordData}, shouldIncludeAll: ${shouldIncludeAllFields})`
           );
@@ -3072,13 +3064,28 @@ const TrytonForm = forwardRef(
             onValuesChange={handleFormChange}
           >
             {formSections.length > 0 &&
-            formSections.some((s) => s.fields && s.fields.length > 0) ? (
+            formSections.some((s) => s.fields && s.fields.length > 0 || s.type === 'button') ? (
               <FormSections
                 sections={formSections}
                 fields={formInfo?.fields || {}}
                 form={form}
                 fieldComponents={createFieldComponents()}
                 loading={currentLoading}
+                model={model}
+                recordId={recordId || formData?.id}
+                onButtonExecuted={async (buttonName, result) => {
+                  console.log(`🔘 Button "${buttonName}" executed, reloading form data...`);
+                  // Recargar datos del formulario después de ejecutar un botón
+                  if (recordId && formInfo) {
+                    const fields = Object.keys(formInfo.fields || {});
+                    const expandedFields = trytonService.expandFieldsForRelationsFromFieldsView(fields, formInfo);
+                    const reloadedData = await trytonService.getFormRecordData(model, recordId, expandedFields);
+                    const processedData = processMany2OneData(reloadedData, formInfo);
+                    setFormData(processedData);
+                    const formValues = extractFormValues(processedData, formInfo);
+                    form.setFieldsValue(formValues);
+                  }
+                }}
               />
             ) : (
               <Row gutter={[16, 16]}>
