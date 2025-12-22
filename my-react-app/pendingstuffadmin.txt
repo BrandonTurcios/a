@@ -37,12 +37,12 @@ COMPONENTES/FUNCIONALIDADES QUE NO FUNCIONAN
 
 WIZARDS QUE NO FUNCIONAN
 ------------------------
-1. Administración → Localización → (Definir, Exportar, Sincronizar, Limpiar) Traducciones - el wizard aparece pero sin contenido
+// 1. Administración → Localización → (Definir, Exportar, Sincronizar, Limpiar) Traducciones - el wizard aparece pero sin contenido
 
 
 DATOS QUE SE MUESTRAN INCORRECTAMENTE
 -------------------------------------
-1. Administración → Usuarios → Grupos - algunos registros tienen "padre" pero en nuestro cliente todos muestran "-"
+// 1. Administración → Usuarios → Grupos - algunos registros tienen "padre" pero en nuestro cliente todos muestran "-"
 
 
 NAVEGACIÓN/ACCESO INCORRECTO

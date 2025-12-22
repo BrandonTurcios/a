@@ -445,10 +445,10 @@ const TrytonTable = ({
       console.log("🔍 First record structure:", {
         keys: Object.keys(firstRecord),
         expandedFields: expandedFields,
+        parent: firstRecord.parent,
+        "parent.": firstRecord["parent."],
         patient: firstRecord.patient,
         "patient.": firstRecord["patient."],
-        disease_gene: firstRecord.disease_gene,
-        "disease_gene.": firstRecord["disease_gene."],
       });
     }
 
@@ -809,15 +809,23 @@ const TrytonTable = ({
     [onRowDoubleClick]
   );
 
+  // Modelos que no permiten navegación al formulario
+  const noFormNavigationModels = ['ir.translation'];
+
   // Manejar doble click en fila - abrir formulario
   const onRowDoubleClicked = useCallback(
     (event) => {
+      // Verificar si el modelo permite navegación al formulario
+      if (noFormNavigationModels.includes(model)) {
+        console.log(`⚠️ Navegación al formulario deshabilitada para ${model}`);
+        return;
+      }
       // El doble click siempre abre el formulario
       if (onRowDoubleClick && event.data?.id) {
         onRowDoubleClick(event.data);
       }
     },
-    [onRowDoubleClick]
+    [onRowDoubleClick, model]
   );
 
   // Cargar contadores de attachments y notes cuando cambia el registro seleccionado

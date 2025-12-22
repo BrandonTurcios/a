@@ -2019,6 +2019,10 @@ class TrytonService {
       return expandedFields;
     }
 
+    // Debug: Log all field types from fieldsView
+    console.log('🔍 expandFieldsForRelationsFromFieldsView - fieldsView.fields:',
+      Object.entries(fieldsView.fields).map(([name, def]) => `${name}: ${def.type}`));
+
     // Para campos many2one, necesitamos solicitar explícitamente "campo.rec_name"
     // para que Tryton devuelva el objeto expandido "campo." con el rec_name
     Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
@@ -2031,6 +2035,12 @@ class TrytonService {
         }
       }
     });
+
+    // Also add parent.rec_name if parent field exists (common hierarchical field)
+    if (expandedFields.includes('parent') && !expandedFields.includes('parent.rec_name')) {
+      expandedFields.push('parent.rec_name');
+      console.log('✅ Agregando parent.rec_name (campo jerárquico común)');
+    }
 
     // Agregar campos básicos que siempre queremos
     const basicFields = ["rec_name", "_timestamp", "_write", "_delete"];
