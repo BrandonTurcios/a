@@ -11,14 +11,65 @@ const { Option } = Select;
 const { Title, Text } = Typography;
 
 // Component for many2one fields with autocomplete
-const Many2OneField = ({ name, string, required, help, relation, disabled, form, defaultValue }) => {
+const Many2OneField = ({ name, string, required, help, relation, disabled, form, defaultValue, loadAllOnMount = false, domain = [] }) => {
   const { t } = useTranslation();
   const [options, setOptions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [inputValue, setInputValue] = useState('');
 
+  console.log(`🔧 Many2OneField rendered: ${name}, loadAllOnMount=${loadAllOnMount}, relation=${relation}`);
+
+  // Load all options on mount if loadAllOnMount is true (for widget="selection")
+  useEffect(() => {
+    console.log(`🔧 Many2OneField useEffect: ${name}, loadAllOnMount=${loadAllOnMount}, relation=${relation}`);
+    if (loadAllOnMount && relation) {
+      console.log(`🔧 Calling loadAllOptions for ${name}`);
+      loadAllOptions();
+    }
+  }, [loadAllOnMount, relation]);
+
+  // Function to load all options from the related model
+  const loadAllOptions = async () => {
+    try {
+      setLoading(true);
+      console.log(`🔍 Loading all options for ${name} (${relation})`);
+
+      // Search all records from the related model
+      const searchResult = await trytonService.searchModel(
+        relation,
+        domain,  // Use field domain if provided
+        0,
+        1000,
+        null,
+        ['rec_name']
+      );
+
+      if (searchResult && Array.isArray(searchResult)) {
+        const formattedOptions = searchResult.map(record => ({
+          value: record.id,
+          label: record.rec_name || `ID: ${record.id}`,
+          id: record.id,
+          name: record.rec_name
+        }));
+
+        setOptions(formattedOptions);
+        console.log(`✅ Loaded ${formattedOptions.length} options for ${name}`);
+      }
+    } catch (error) {
+      console.warn(`⚠️ Error loading options for ${name}:`, error.message);
+      setOptions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Function to search options based on text
   const searchOptions = async (searchText) => {
+    // If loadAllOnMount, options are already loaded - just filter locally
+    if (loadAllOnMount) {
+      return;
+    }
+
     if (!relation || !searchText || searchText.length < 2) {
       setOptions([]);
       return;
@@ -109,6 +160,38 @@ const Many2OneField = ({ name, string, required, help, relation, disabled, form,
       console.warn(`⚠️ Error loading record name for ${relation} ID ${recordId}:`, error.message);
     }
   };
+
+  // When loadAllOnMount, use Select component (dropdown)
+  // When not, use AutoComplete (search as you type)
+  if (loadAllOnMount) {
+    return (
+      <Form.Item
+        name={name}
+        label={string}
+        rules={required ? [{ required: true, message: t('validation.fieldRequired', { field: string }) }] : []}
+        help={help}
+        className="mb-6"
+      >
+        <Select
+          placeholder={t('wizard.selectOption', { field: string.toLowerCase() })}
+          disabled={disabled}
+          loading={loading}
+          showSearch
+          allowClear
+          optionFilterProp="label"
+          className="w-full"
+          size="large"
+          notFoundContent={loading ? t('wizard.loading') : t('wizard.noOptionsFound')}
+        >
+          {options.map(option => (
+            <Option key={option.value} value={option.value} label={option.label}>
+              {option.label}
+            </Option>
+          ))}
+        </Select>
+      </Form.Item>
+    );
+  }
 
   return (
     <>
@@ -504,13 +587,22 @@ const WizardModal = ({
     const fieldDefinitions = fieldsView.fields;
     const fields = [];
 
+    console.log('🔍 generateFormFields - groups from parseFormGroups:', groups);
+    console.log('🔍 generateFormFields - fieldDefinitions:', fieldDefinitions);
+
     // Procesar cada grupo
     groups.forEach(group => {
       const groupFields = [];
+      console.log(`🔍 Processing group: ${group.id}, fields:`, group.fields);
 
       if (group.fields && Array.isArray(group.fields)) {
-        group.fields.forEach(fieldName => {
+        group.fields.forEach(fieldInfo => {
+          // Handle both string field names (legacy) and { name, widget } objects
+          const fieldName = typeof fieldInfo === 'string' ? fieldInfo : fieldInfo.name;
+          const widget = typeof fieldInfo === 'object' ? fieldInfo.widget : null;
           const fieldDef = fieldDefinitions[fieldName];
+
+          console.log(`🔍 Field ${fieldName}: widget from arch=${widget}, fieldDef type=${fieldDef?.type}`);
 
           if (fieldDef) {
             groupFields.push({
@@ -523,8 +615,10 @@ const WizardModal = ({
               help: fieldDef.help || '',
               domain: fieldDef.domain || '[]',
               relation: fieldDef.relation,
-              on_change_with: fieldDef.on_change_with || []
+              on_change_with: fieldDef.on_change_with || [],
+              widget: widget  // Add widget from arch XML
             });
+            console.log(`✅ Field ${fieldName} added with widget=${widget}`);
           }
         });
       }
@@ -573,6 +667,27 @@ const WizardModal = ({
        }
     }
 
+    // Si aún no hay campos, buscar mensajes de confirmación en el arch XML
+    // Esto maneja wizards de confirmación que solo tienen labels estáticos
+    if (fields.length === 0 && fieldsView.arch) {
+      console.log('🔍 Buscando mensaje de confirmación en arch XML...');
+      const labelMatch = fieldsView.arch.match(/label[^>]*string="([^"]*)"/i);
+      if (labelMatch) {
+        console.log('✅ Encontrado mensaje de confirmación:', labelMatch[1]);
+        fields.push({
+          groupId: 'confirmation',
+          title: null,
+          colspan: 4,
+          fields: [{
+            name: '_confirmation_message',
+            type: 'static_label',
+            string: labelMatch[1],
+            readonly: true
+          }]
+        });
+      }
+    }
+
     console.log(`✅ Grupos generados para wizard: ${fields.length}`);
     return fields;
   };
@@ -610,11 +725,22 @@ const WizardModal = ({
 
       // Buscar campos que están fuera de grupos
       let fieldIndex = 0;
-      fieldRegex.lastIndex = 0; // Reset regex
-      while ((fieldMatch = fieldRegex.exec(formContent)) !== null) {
+      // Match entire field element, then extract attributes
+      const fieldElementRegex = /<field\s+[^>]*\/>/g;
+      fieldElementRegex.lastIndex = 0; // Reset regex
+      while ((fieldMatch = fieldElementRegex.exec(formContent)) !== null) {
+        const fieldElement = fieldMatch[0];
         const fieldStart = fieldMatch.index;
-        const fieldEnd = fieldMatch.index + fieldMatch[0].length;
-        const fieldName = fieldMatch[1];
+        const fieldEnd = fieldMatch.index + fieldElement.length;
+
+        // Extract name attribute (required)
+        const nameMatch = fieldElement.match(/name="([^"]*)"/);
+        if (!nameMatch) continue;
+        const fieldName = nameMatch[1];
+
+        // Extract widget attribute (optional) - can be before or after name
+        const widgetMatch = fieldElement.match(/widget="([^"]*)"/);
+        const widget = widgetMatch ? widgetMatch[1] : null;
 
         // Verificar si este campo está dentro de algún grupo
         const isInsideGroup = groupPositions.some(pos =>
@@ -622,8 +748,8 @@ const WizardModal = ({
         );
 
         if (!isInsideGroup) {
-          rootFields.push(fieldName);
-          console.log(`🔧 Campo raíz encontrado: ${fieldName}`);
+          rootFields.push({ name: fieldName, widget });
+          console.log(`🔧 Campo raíz encontrado: ${fieldName}, widget: ${widget}`);
         }
       }
 
@@ -633,7 +759,7 @@ const WizardModal = ({
           id: 'root_fields',
           title: '',
           colspan: 4,
-          fields: rootFields
+          fields: rootFields  // Array of { name, widget } objects
         });
         console.log(`✅ Grupo raíz creado con ${rootFields.length} campos:`, rootFields);
       }
@@ -650,13 +776,24 @@ const WizardModal = ({
         console.log(`📦 Procesando grupo: ${groupId}, colspan: ${colspan}`);
         console.log(`📝 Contenido del grupo:`, groupContent);
 
-        // Extraer campos del grupo
+        // Extraer campos del grupo (con widget si existe)
         const groupFields = [];
-        const groupFieldRegex = /<field name="([^"]*)"[^>]*\/>/g;
+        const groupFieldElementRegex = /<field\s+[^>]*\/>/g;
         let groupFieldMatch;
 
-        while ((groupFieldMatch = groupFieldRegex.exec(groupContent)) !== null) {
-          groupFields.push(groupFieldMatch[1]);
+        while ((groupFieldMatch = groupFieldElementRegex.exec(groupContent)) !== null) {
+          const fieldElement = groupFieldMatch[0];
+
+          // Extract name attribute (required)
+          const nameMatch = fieldElement.match(/name="([^"]*)"/);
+          if (!nameMatch) continue;
+          const fieldName = nameMatch[1];
+
+          // Extract widget attribute (optional) - can be before or after name
+          const widgetMatch = fieldElement.match(/widget="([^"]*)"/);
+          const widget = widgetMatch ? widgetMatch[1] : null;
+
+          groupFields.push({ name: fieldName, widget });
         }
 
          console.log(`🔧 Fields found in ${groupId}:`, groupFields);
@@ -783,7 +920,8 @@ const WizardModal = ({
   const renderFormField = (field) => {
     const { name, fieldDef, required, readonly, type, string } = field;
 
-    if (!fieldDef) {
+    // Permitir campos estáticos (como mensajes de confirmación) sin fieldDef
+    if (!fieldDef && type !== 'static_label') {
       return (
         <Form.Item key={name} name={name} label={string}>
           <input disabled placeholder={t('wizard.fieldNotAvailable')} />
@@ -940,6 +1078,20 @@ const WizardModal = ({
         );
 
        case 'many2one':
+         // Check if widget="selection" - if so, load all options on mount
+         const loadAllOnMount = field.widget === 'selection';
+         console.log(`🔧 Many2One field ${name}: widget=${field.widget}, loadAllOnMount=${loadAllOnMount}`);
+
+         // Parse domain safely
+         let parsedDomain = [];
+         if (fieldDef.domain) {
+           try {
+             parsedDomain = JSON.parse(fieldDef.domain.replace(/'/g, '"').replace(/None/g, 'null').replace(/True/g, 'true').replace(/False/g, 'false'));
+           } catch (e) {
+             console.warn(`⚠️ Could not parse domain for ${name}:`, fieldDef.domain);
+           }
+         }
+
          return (
            <Many2OneField
              key={name}
@@ -950,7 +1102,9 @@ const WizardModal = ({
              relation={fieldDef.relation}
              disabled={readonly || currentLoading}
              form={form}
-            defaultValue={wizardInfo?.defaults?.[name]}
+             defaultValue={wizardInfo?.defaults?.[name]}
+             loadAllOnMount={loadAllOnMount}
+             domain={parsedDomain}
           />
         );
 
@@ -1032,6 +1186,26 @@ const WizardModal = ({
               })) : []}
             />
           </Form.Item>
+        );
+
+      case 'static_label':
+        // Mensaje de confirmación estático para wizards sin campos
+        return (
+          <div
+            key={name}
+            style={{
+              padding: '24px',
+              textAlign: 'center',
+              background: 'linear-gradient(135deg, #f0fdfa 0%, #e0f2fe 100%)',
+              borderRadius: '12px',
+              border: '1px solid #99f6e4',
+              margin: '16px 0'
+            }}
+          >
+            <Text style={{ fontSize: '16px', color: '#0f766e', fontWeight: 500 }}>
+              {string}
+            </Text>
+          </div>
         );
 
       default:

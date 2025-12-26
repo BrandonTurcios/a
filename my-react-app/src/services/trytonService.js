@@ -2019,6 +2019,10 @@ class TrytonService {
       return expandedFields;
     }
 
+    // Debug: Log all field types from fieldsView
+    console.log('🔍 expandFieldsForRelationsFromFieldsView - fieldsView.fields:',
+      Object.entries(fieldsView.fields).map(([name, def]) => `${name}: ${def.type}`));
+
     // Para campos many2one, necesitamos solicitar explícitamente "campo.rec_name"
     // para que Tryton devuelva el objeto expandido "campo." con el rec_name
     Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
@@ -2031,6 +2035,12 @@ class TrytonService {
         }
       }
     });
+
+    // Also add parent.rec_name if parent field exists (common hierarchical field)
+    if (expandedFields.includes('parent') && !expandedFields.includes('parent.rec_name')) {
+      expandedFields.push('parent.rec_name');
+      console.log('✅ Agregando parent.rec_name (campo jerárquico común)');
+    }
 
     // Agregar campos básicos que siempre queremos
     const basicFields = ["rec_name", "_timestamp", "_write", "_delete"];
@@ -4089,6 +4099,35 @@ class TrytonService {
       };
     } catch (error) {
       console.error("Error handling relate action:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Execute a button method on a model
+   * This is used for buttons defined in tree/form views that execute server-side methods
+   * @param {string} model - The model name (e.g., 'ir.lang')
+   * @param {string} methodName - The method name to execute (e.g., 'translate')
+   * @param {Array} ids - Array of record IDs to execute the method on
+   * @returns {Promise} - The result of the method execution
+   */
+  async executeModelButton(model, methodName, ids) {
+    if (!this.sessionData) {
+      throw new Error("No hay sesión activa");
+    }
+
+    try {
+      console.log(`🔘 Executing button method: ${model}.${methodName} on IDs:`, ids);
+
+      const result = await this.makeRpcCall(`model.${model}.${methodName}`, [
+        ids,
+        this.context,
+      ]);
+
+      console.log(`✅ Button method executed successfully:`, result);
+      return result;
+    } catch (error) {
+      console.error(`❌ Error executing button method ${model}.${methodName}:`, error);
       throw error;
     }
   }
