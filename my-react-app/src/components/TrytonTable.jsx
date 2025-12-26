@@ -1499,6 +1499,8 @@ const TrytonTable = ({
           background: "white",
           borderRadius: "6px",
           overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
         }}
         onContextMenu={handleContainerContextMenu}
       >

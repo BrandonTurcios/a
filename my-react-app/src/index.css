@@ -76,23 +76,239 @@
 
 .ag-theme-alpine .ag-paging-panel {
   border-top: 1px solid var(--color-border);
-  padding: 12px;
+  padding: 12px 16px;
   background-color: var(--color-neutral-50);
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  min-height: 56px !important;
+  gap: 12px;
 }
 
 .ag-theme-alpine .ag-paging-button {
-  border-radius: 4px;
+  border-radius: 6px;
   transition: all 0.2s ease;
+  border: 1px solid var(--color-border);
+  background-color: white;
+  color: var(--color-text-primary);
+  padding: 6px 12px;
+  min-width: 36px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: 500;
 }
 
-.ag-theme-alpine .ag-paging-button:hover {
+.ag-theme-alpine .ag-paging-button:hover:not(.ag-disabled) {
   background-color: var(--color-primary-100);
   color: var(--color-primary-700);
+  border-color: var(--color-primary-300);
 }
 
 .ag-theme-alpine .ag-paging-button.ag-disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
+  background-color: var(--color-neutral-100);
+  color: var(--color-text-secondary);
+}
+
+.ag-theme-alpine .ag-paging-button:not(.ag-disabled):active {
+  background-color: var(--color-primary-200);
+  transform: scale(0.98);
+}
+
+/* Asegurar que los controles de paginación sean visibles */
+.ag-theme-alpine .ag-paging-row-summary-panel,
+.ag-theme-alpine .ag-paging-page-summary-panel {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px;
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.ag-theme-alpine .ag-paging-button-container {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px;
+}
+
+/* Estilos para el selector de tamaño de página */
+.ag-theme-alpine .ag-paging-page-size {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px;
+}
+
+.ag-theme-alpine .ag-paging-page-size-select {
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  padding: 4px 8px;
+  background-color: white;
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.ag-theme-alpine .ag-paging-page-size-select:hover {
+  border-color: var(--color-primary-300);
+  background-color: var(--color-primary-50);
+}
+
+/* Estilos para los iconos de navegación en los botones de paginación */
+.ag-theme-alpine .ag-paging-button .ag-icon {
+  font-size: 14px !important;
+  color: inherit !important;
+  opacity: 1 !important;
+}
+
+.ag-theme-alpine .ag-paging-button.ag-disabled .ag-icon {
+  opacity: 0.4 !important;
+}
+
+/* Asegurar que todos los elementos de paginación sean visibles */
+.ag-theme-alpine .ag-paging-panel * {
+  visibility: visible !important;
+}
+
+.ag-theme-alpine .ag-paging-panel {
+  visibility: visible !important;
+  opacity: 1 !important;
+  display: flex !important;
+}
+
+/* Forzar visibilidad de los botones de navegación */
+.ag-theme-alpine .ag-paging-button[ref="btFirst"],
+.ag-theme-alpine .ag-paging-button[ref="btPrevious"],
+.ag-theme-alpine .ag-paging-button[ref="btNext"],
+.ag-theme-alpine .ag-paging-button[ref="btLast"],
+.ag-theme-alpine button[ref="btFirst"],
+.ag-theme-alpine button[ref="btPrevious"],
+.ag-theme-alpine button[ref="btNext"],
+.ag-theme-alpine button[ref="btLast"] {
+  visibility: visible !important;
+  display: inline-flex !important;
+  opacity: 1 !important;
+  min-width: 36px !important;
+  height: 32px !important;
+  padding: 6px 12px !important;
+  margin: 0 4px !important;
+}
+
+/* Asegurar que el panel de paginación tenga espacio suficiente */
+.ag-theme-alpine .ag-root-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.ag-theme-alpine .ag-body-viewport {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Asegurar que los botones de paginación tengan texto o iconos visibles */
+.ag-theme-alpine .ag-paging-button span,
+.ag-theme-alpine .ag-paging-button .ag-icon {
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Estilos adicionales para asegurar visibilidad de todos los botones de paginación */
+.ag-theme-alpine .ag-paging-button-container button,
+.ag-theme-alpine .ag-paging-button-container .ag-paging-button {
+  visibility: visible !important;
+  display: inline-flex !important;
+  opacity: 1 !important;
+  min-width: 36px !important;
+  height: 32px !important;
+  padding: 6px 12px !important;
+  margin: 0 4px !important;
+  border: 1px solid var(--color-border) !important;
+  background-color: white !important;
+  color: var(--color-text-primary) !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  border-radius: 6px !important;
+}
+
+.ag-theme-alpine .ag-paging-button-container button:hover:not(.ag-disabled),
+.ag-theme-alpine .ag-paging-button-container .ag-paging-button:hover:not(.ag-disabled) {
+  background-color: var(--color-primary-100) !important;
+  color: var(--color-primary-700) !important;
+  border-color: var(--color-primary-300) !important;
+}
+
+.ag-theme-alpine .ag-paging-button-container button.ag-disabled,
+.ag-theme-alpine .ag-paging-button-container .ag-paging-button.ag-disabled {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+  background-color: var(--color-neutral-100) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+/* Asegurar que el panel de paginación sea visible y tenga el layout correcto */
+.ag-theme-alpine .ag-paging-panel {
+  visibility: visible !important;
+  display: flex !important;
+  opacity: 1 !important;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 56px !important;
+  padding: 12px 16px !important;
+}
+
+/* Estilos para todos los botones dentro del panel de paginación */
+.ag-theme-alpine .ag-paging-panel button,
+.ag-theme-alpine .ag-paging-panel .ag-paging-button {
+  visibility: visible !important;
+  display: inline-flex !important;
+  opacity: 1 !important;
+  min-width: 36px !important;
+  height: 32px !important;
+  padding: 6px 12px !important;
+  margin: 0 4px !important;
+  border: 1px solid var(--color-border) !important;
+  background-color: white !important;
+  color: var(--color-text-primary) !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  border-radius: 6px !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.ag-theme-alpine .ag-paging-panel button:hover:not(.ag-disabled):not(:disabled),
+.ag-theme-alpine .ag-paging-panel .ag-paging-button:hover:not(.ag-disabled):not(:disabled) {
+  background-color: var(--color-primary-100) !important;
+  color: var(--color-primary-700) !important;
+  border-color: var(--color-primary-300) !important;
+}
+
+.ag-theme-alpine .ag-paging-panel button.ag-disabled,
+.ag-theme-alpine .ag-paging-panel button:disabled,
+.ag-theme-alpine .ag-paging-panel .ag-paging-button.ag-disabled {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+  background-color: var(--color-neutral-100) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+/* Asegurar que los iconos dentro de los botones sean visibles */
+.ag-theme-alpine .ag-paging-panel button svg,
+.ag-theme-alpine .ag-paging-panel button .ag-icon,
+.ag-theme-alpine .ag-paging-panel .ag-paging-button svg,
+.ag-theme-alpine .ag-paging-panel .ag-paging-button .ag-icon {
+  visibility: visible !important;
+  display: inline-block !important;
+  opacity: 1 !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+  width: 14px !important;
+  height: 14px !important;
 }
 
 .ag-theme-alpine .ag-checkbox-input-wrapper {
