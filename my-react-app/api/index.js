@@ -8,6 +8,12 @@ export default async function handler(req, res) {
     method: req.method,
     url: req.url,
     query: req.query,
+    headers: {
+      'x-forwarded-uri': req.headers['x-forwarded-uri'],
+      'x-vercel-original-path': req.headers['x-vercel-original-path'],
+      'referer': req.headers.referer,
+      'host': req.headers.host
+    },
     timestamp: new Date().toISOString()
   });
   
@@ -37,21 +43,40 @@ export default async function handler(req, res) {
       }
     }
   } else {
-    // FALLBACK: Extraer el path desde req.url si no viene en query
-    let urlPath = req.url || '/';
-    const urlWithoutQuery = urlPath.split('?')[0];
-    trytonPath = urlWithoutQuery.replace(/^\/api\/?/, '') || '/';
+    // FALLBACK: Intentar obtener desde headers de Vercel primero
+    const forwardedUri = req.headers['x-forwarded-uri'] || 
+                         req.headers['x-vercel-original-path'] ||
+                         null;
     
-    if (!trytonPath || trytonPath === '') {
-      trytonPath = '/';
-    }
-    
-    if (!trytonPath.startsWith('/')) {
-      trytonPath = '/' + trytonPath;
-    }
-    
-    if (trytonPath !== '/' && !trytonPath.endsWith('/') && !trytonPath.includes('.')) {
-      trytonPath += '/';
+    if (forwardedUri) {
+      // Extraer el path desde el header
+      const pathFromHeader = forwardedUri.replace(/^\/api\/?/, '') || '/';
+      if (pathFromHeader && pathFromHeader !== '') {
+        trytonPath = pathFromHeader.startsWith('/') ? pathFromHeader : `/${pathFromHeader}`;
+        if (!trytonPath.endsWith('/') && !pathFromHeader.includes('.')) {
+          trytonPath += '/';
+        }
+        console.log(`[Proxy index] Found path in forwarded headers: ${forwardedUri} -> ${trytonPath}`);
+      }
+    } else {
+      // Último fallback: Extraer el path desde req.url
+      let urlPath = req.url || '/';
+      const urlWithoutQuery = urlPath.split('?')[0];
+      trytonPath = urlWithoutQuery.replace(/^\/api\/?/, '') || '/';
+      
+      if (!trytonPath || trytonPath === '') {
+        trytonPath = '/';
+      }
+      
+      if (!trytonPath.startsWith('/')) {
+        trytonPath = '/' + trytonPath;
+      }
+      
+      if (trytonPath !== '/' && !trytonPath.endsWith('/') && !trytonPath.includes('.')) {
+        trytonPath += '/';
+      }
+      
+      console.log(`[Proxy index] Extracted path from req.url: ${urlPath} -> ${trytonPath}`);
     }
   }
   
@@ -81,10 +106,25 @@ export default async function handler(req, res) {
       body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
     }
     
+    console.log(`[Proxy index] Making request to Tryton:`, {
+      url: trytonUrl,
+      method: req.method,
+      hasBody: !!body,
+      bodyLength: body ? body.length : 0,
+      headers: Object.keys(headers)
+    });
+    
     const response = await fetch(trytonUrl, {
       method: req.method,
       headers,
       body,
+    });
+    
+    console.log(`[Proxy index] Tryton response received:`, {
+      status: response.status,
+      statusText: response.statusText,
+      contentType: response.headers.get('content-type'),
+      headers: Object.fromEntries(response.headers.entries())
     });
     
     const contentType = response.headers.get('content-type') || '';
@@ -92,8 +132,12 @@ export default async function handler(req, res) {
     
     if (contentType.includes('application/json')) {
       responseData = await response.json();
+      console.log(`[Proxy index] Response data (first 500 chars):`, 
+        JSON.stringify(responseData).substring(0, 500));
     } else {
       responseData = await response.text();
+      console.log(`[Proxy index] Response data (first 500 chars):`, 
+        responseData.substring(0, 500));
     }
     
     res.setHeader('Access-Control-Allow-Origin', '*');
