@@ -1,6 +1,4 @@
-// Vercel Serverless Function para proxy de Tryton
-// Captura todas las rutas bajo /api/*
-
+// Función específica para /api/ (ruta raíz)
 const TRYTON_SERVER = 'http://9.234.137.128:8000';
 
 export default async function handler(req, res) {
@@ -12,26 +10,9 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
   
-  // Obtener el path de los parámetros de ruta
-  // req.query.path será un array para catch-all routes
-  const pathArray = req.query.path || [];
-  const pathString = Array.isArray(pathArray) ? pathArray.join('/') : pathArray;
+  const trytonUrl = `${TRYTON_SERVER}/`;
   
-  // Construir la URL del servidor Tryton
-  // Si path está vacío (request a /api/), usar '/'
-  // Si hay path, usar /path/
-  let trytonPath = '/';
-  if (pathString && pathString.trim() !== '') {
-    trytonPath = `/${pathString}`;
-    // Asegurar que termine con / si no tiene extensión
-    if (!trytonPath.endsWith('/') && !pathString.includes('.')) {
-      trytonPath += '/';
-    }
-  }
-  
-  const trytonUrl = `${TRYTON_SERVER}${trytonPath}`;
-  
-  console.log(`[Proxy] ${req.method} ${req.url} -> ${trytonUrl}`);
+  console.log(`[Proxy] ${req.method} /api/ -> ${trytonUrl}`);
   
   // Preparar headers
   const headers = {
@@ -39,31 +20,22 @@ export default async function handler(req, res) {
     'Accept': 'application/json',
   };
   
-  // Copiar headers importantes de la request original
   if (req.headers.authorization) {
     headers['Authorization'] = req.headers.authorization;
   }
-  if (req.headers['content-type']) {
-    headers['Content-Type'] = req.headers['content-type'];
-  }
   
   try {
-    // Preparar el body si existe
     let body = undefined;
-    if (req.method !== 'GET' && req.method !== 'HEAD') {
-      if (req.body) {
-        body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
-      }
+    if (req.method !== 'GET' && req.method !== 'HEAD' && req.body) {
+      body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
     }
     
-    // Hacer la request al servidor Tryton
     const response = await fetch(trytonUrl, {
       method: req.method,
       headers,
       body,
     });
     
-    // Obtener la respuesta
     const contentType = response.headers.get('content-type') || '';
     let responseData;
     
@@ -73,17 +45,14 @@ export default async function handler(req, res) {
       responseData = await response.text();
     }
     
-    // Agregar CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
     
-    // Copiar content-type de la respuesta
     if (contentType) {
       res.setHeader('Content-Type', contentType);
     }
     
-    // Enviar respuesta
     if (typeof responseData === 'object') {
       res.status(response.status).json(responseData);
     } else {
@@ -94,8 +63,7 @@ export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.status(500).json({ 
       error: 'Error al conectar con el servidor Tryton',
-      message: error.message,
-      url: trytonUrl
+      message: error.message
     });
   }
 }
