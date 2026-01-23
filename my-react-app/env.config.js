@@ -1,7 +1,11 @@
 // Configuración de Tryton
 export const trytonConfig = {
   // URL directa de Tryton
-  baseURL: 'http://9.234.137.128:8000',
+  // En desarrollo, usa el proxy de Vite para evitar CORS
+  // En producción, usa la URL completa del servidor
+  baseURL: import.meta.env.DEV 
+    ? '/api'  // Proxy de Vite en desarrollo
+    : 'http://9.234.137.128:8000',  // URL directa en producción
   
   // Configuración adicional
   timeout: 30000, // 30 segundos

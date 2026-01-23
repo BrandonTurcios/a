@@ -256,16 +256,48 @@ class TrytonService {
     return `${this.baseURL}/`;
   }
 
+  /**
+   * Parse server error (500, etc.) into a user-friendly message.
+   * Handles HTML error pages and known Tryton backend errors.
+   */
+  parseServerError(status, errorText, isLoginCall = false) {
+    const lower = (errorText || "").toLowerCase();
+
+    // Known Tryton error: invalid password_hash in DB (missing bcrypt$ prefix, etc.)
+    if ((lower.includes("res.user") || lower.includes("res_user")) && lower.includes("check_")) {
+      return "Error del servidor: formato de contraseña inválido en la base de datos. El administrador debe corregir el campo password_hash del usuario (debe usar el prefijo bcrypt$).";
+    }
+
+    // Extract <p>...</p> from HTML error pages (e.g. Flask 500)
+    const pMatch = (errorText || "").match(/<p[^>]*>([^<]+)<\/p>/i);
+    const extracted = pMatch ? pMatch[1].replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n))).trim() : null;
+
+    if (status === 500) {
+      if (extracted && extracted.length < 300) {
+        return `Error interno del servidor (500): ${extracted}`;
+      }
+      return isLoginCall
+        ? "Error interno del servidor al iniciar sesión. Contacte al administrador."
+        : "Error interno del servidor (500). Contacte al administrador.";
+    }
+
+    if (extracted && extracted.length < 300) {
+      return `Error ${status}: ${extracted}`;
+    }
+    return `Error HTTP ${status}. Contacte al administrador.`;
+  }
+
   // Método RPC principal simplificado
-  async makeRpcCall(method, params = []) {
+  async makeRpcCall(method, params = [], options = {}) {
     const url = this.buildURL(method);
+    const isLoginCall = method === 'common.db.login' || options.isLogin;
 
     // Construir parámetros
     // Agregar contexto a los parámetros
-    const rpcParams = [...params];
+    let rpcParams = [...params];
 
-    // Agregar contexto si hay sesión
-    if (this.sessionData && Object.keys(this.context).length > 0) {
+    // Agregar contexto si hay sesión (siempre agregar contexto, incluso si está vacío)
+    if (this.sessionData) {
       // Para métodos de wizard, el contexto debe agregarse al final sin interferir
       if (method.startsWith("wizard.")) {
         // Para wizards, simplemente agregar el contexto al final
@@ -278,15 +310,55 @@ class TrytonService {
         // Formato: set_preferences(values, context)
         rpcParams.push({ ...this.context });
       } else {
-        // Para otros métodos, mezclar con el último parámetro como antes
-        const lastParam = rpcParams.pop() || {};
-        // Solo mezclar si el último parámetro es un objeto
-        if (typeof lastParam === "object" && lastParam !== null) {
-          rpcParams.push({ ...this.context, ...lastParam });
+        // Detectar métodos search_read que tienen una firma especial
+        // En Tryton, search_read tiene la firma:
+        // search_read(domain, offset=0, limit=None, order=None, fields=None, context={})
+        // NOTA: El orden es domain, offset, limit, order, fields, context (no domain, fields, offset, limit, order, context)
+        if (method.endsWith('.search_read')) {
+          // Si se pasan solo 2 parámetros [domain, fields], reorganizar a [domain, 0, null, null, fields, context]
+          if (rpcParams.length === 2) {
+            const [domain, fields] = rpcParams;
+            rpcParams = [domain, 0, null, null, fields];
+          } else if (rpcParams.length === 3) {
+            // Si hay 3 parámetros, asumir [domain, fields, offset] y reorganizar
+            const [domain, fields, offset] = rpcParams;
+            rpcParams = [domain, offset || 0, null, null, fields];
+          } else if (rpcParams.length === 4) {
+            // Si hay 4 parámetros, asumir [domain, fields, offset, limit] y reorganizar
+            const [domain, fields, offset, limit] = rpcParams;
+            rpcParams = [domain, offset || 0, limit, null, fields];
+          } else if (rpcParams.length === 5) {
+            // Si hay 5 parámetros, asumir [domain, fields, offset, limit, order] y reorganizar
+            const [domain, fields, offset, limit, order] = rpcParams;
+            rpcParams = [domain, offset || 0, limit, order, fields];
+          }
+          // Agregar el contexto al final
+          const contextToAdd = Object.keys(this.context).length > 0 ? { ...this.context } : {};
+          rpcParams.push(contextToAdd);
         } else {
-          // Si el último parámetro no es un objeto, agregar el contexto al final
-          rpcParams.push(lastParam);
-          rpcParams.push({ ...this.context });
+          // Para otros métodos, verificar si el último parámetro es un objeto de contexto
+          const lastParam = rpcParams.length > 0 ? rpcParams[rpcParams.length - 1] : null;
+          
+          // Si el último parámetro es un objeto y parece ser un contexto (no tiene campos específicos del modelo)
+          // o si no hay parámetros, agregar el contexto al final
+          if (lastParam && typeof lastParam === "object" && lastParam !== null && !Array.isArray(lastParam)) {
+            // Mezclar el contexto con el último parámetro
+            rpcParams[rpcParams.length - 1] = { ...this.context, ...lastParam };
+          } else {
+            // Agregar el contexto como un parámetro separado al final
+            // Asegurar que siempre haya un contexto, incluso si está vacío
+            const contextToAdd = Object.keys(this.context).length > 0 ? { ...this.context } : {};
+            rpcParams.push(contextToAdd);
+          }
+        }
+      }
+    } else {
+      // Si no hay sesión pero es una llamada que requiere contexto, agregar contexto vacío
+      // Esto es para métodos que pueden funcionar sin autenticación pero requieren contexto
+      if (!isLoginCall && method !== "common.db.list") {
+        const lastParam = rpcParams.length > 0 ? rpcParams[rpcParams.length - 1] : null;
+        if (!lastParam || typeof lastParam !== "object" || Array.isArray(lastParam)) {
+          rpcParams.push({});
         }
       }
     }
@@ -301,11 +373,28 @@ class TrytonService {
 
     // Headers
     const headers = {
-      Authorization: this.sessionData ? `Session ${this.getAuthHeader()}` : "",
       "Content-Type": "application/json",
+      "Accept": "application/json",
     };
+    
+    // Solo agregar Authorization si hay sesión
+    if (this.sessionData) {
+      headers.Authorization = `Session ${this.getAuthHeader()}`;
+    }
 
     try {
+      // Log para debugging
+      console.log('🔍 RPC Call:', {
+        url,
+        method,
+        hasSession: !!this.sessionData,
+        context: this.context,
+        paramsCount: rpcParams.length,
+        lastParam: rpcParams.length > 0 ? rpcParams[rpcParams.length - 1] : null,
+        headers,
+        payload
+      });
+
       // Llamada fetch
       const response = await fetch(url, {
         method: "POST",
@@ -314,13 +403,53 @@ class TrytonService {
         mode: "cors",
         credentials: "omit",
       });
+      
+      console.log('📥 Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries())
+      });
 
       if (response.status === 401) {
         // Manejar error 401
-        this.clearSession();
-        throw new Error(
-          "Sesión expirada. Por favor, inicie sesión nuevamente."
-        );
+        // Durante el login, 401 significa credenciales inválidas, no sesión expirada
+        if (isLoginCall) {
+          let errorMessage = 'Credenciales inválidas. Verifica tu usuario y contraseña.';
+          try {
+            const errorText = await response.text();
+            console.error('❌ Error 401 durante login:', errorText);
+            
+            if (errorText) {
+              try {
+                const errorData = JSON.parse(errorText);
+                if (errorData.error) {
+                  // Tryton devuelve errores en formato [código, mensaje]
+                  if (Array.isArray(errorData.error) && errorData.error.length >= 2) {
+                    errorMessage = errorData.error[1];
+                  } else if (typeof errorData.error === 'string') {
+                    errorMessage = errorData.error;
+                  } else if (errorData.error.message) {
+                    errorMessage = errorData.error.message;
+                  }
+                }
+              } catch (e) {
+                // Si no es JSON, usar el texto como mensaje
+                if (errorText.length < 200) {
+                  errorMessage = errorText;
+                }
+              }
+            }
+          } catch (e) {
+            console.error('Error procesando respuesta 401:', e);
+          }
+          throw new Error(errorMessage);
+        } else {
+          // Para otras llamadas, 401 significa sesión expirada
+          this.clearSession();
+          throw new Error(
+            "Sesión expirada. Por favor, inicie sesión nuevamente."
+          );
+        }
       }
 
       if (response.status === 403) {
@@ -337,9 +466,9 @@ class TrytonService {
           errorText: errorText,
           url: url,
         });
-        throw new Error(
-          `HTTP error! status: ${response.status} - ${response.statusText}. Details: ${errorText}`
-        );
+
+        const userMessage = this.parseServerError(response.status, errorText, isLoginCall);
+        throw new Error(userMessage);
       }
 
       const data = await response.json();
@@ -413,6 +542,28 @@ class TrytonService {
     return result;
   }
 
+  // Generar o obtener device_cookie único para este dispositivo
+  getDeviceCookie() {
+    const STORAGE_KEY = 'tryton_device_cookie';
+    let deviceCookie = localStorage.getItem(STORAGE_KEY);
+    
+    if (!deviceCookie) {
+      // Generar un nuevo device_cookie único
+      // Formato: 32 caracteres hexadecimales (similar al formato que tenía)
+      deviceCookie = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+      
+      // Guardar en localStorage para persistencia
+      localStorage.setItem(STORAGE_KEY, deviceCookie);
+      console.log('🔑 Nuevo device_cookie generado:', deviceCookie);
+    } else {
+      console.log('🔑 Device_cookie existente:', deviceCookie);
+    }
+    
+    return deviceCookie;
+  }
+
   // Login
   async login(database, username, password, language = "en") {
     try {
@@ -437,18 +588,20 @@ class TrytonService {
         );
       }
 
-      // Ahora hacer login en la base de datos específica
+      // Obtener o generar device_cookie único para este dispositivo
+      const deviceCookie = this.getDeviceCookie();
 
+      // Ahora hacer login en la base de datos específica
       const loginParams = [
         username,
         {
-          device_cookie: "a8e18b090c9c40989af64040c0ec9f1f",
+          device_cookie: deviceCookie,
           password: password,
         },
         trytonLanguage, // Idioma convertido para Tryton
       ];
 
-      const result = await this.makeRpcCall("common.db.login", loginParams);
+      const result = await this.makeRpcCall("common.db.login", loginParams, { isLogin: true });
 
       if (result && result.length >= 2) {
         // Crear sesión
@@ -489,9 +642,18 @@ class TrytonService {
         const trytonLanguage = getLanguageForTryton(this.userLanguage);
         this.context.language = trytonLanguage;
       }
+      
+      console.log('✅ Contexto cargado:', this.context);
     } catch (error) {
-      console.warn("No se pudo cargar el contexto del usuario:", error.message);
+      console.warn("⚠️ No se pudo cargar el contexto del usuario:", error.message);
+      // Inicializar contexto vacío pero válido
       this.context = {};
+      
+      // Si hay idioma del usuario, agregarlo al contexto
+      if (this.userLanguage) {
+        const trytonLanguage = getLanguageForTryton(this.userLanguage);
+        this.context.language = trytonLanguage;
+      }
     }
   }
 
