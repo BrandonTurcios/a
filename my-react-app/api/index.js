@@ -1,8 +1,11 @@
-// Función para manejar TODAS las rutas bajo /api/*
-// Vercel enruta /api/* a esta función
+// Función para manejar SOLO /api/ (ruta raíz exacta)
+// Vercel enruta /api/ exactamente a esta función
 const TRYTON_SERVER = 'http://9.234.137.128:8000';
 
 export default async function handler(req, res) {
+  // Log inicial
+  console.log(`[Proxy Handler index] Function called - Method: ${req.method}, URL: ${req.url}`);
+  
   // Manejar CORS preflight
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -11,26 +14,11 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
   
-  // Extraer el path de la URL
-  // req.url será algo como "/api/" o "/api/gnuhealth_demo/"
-  const urlPath = req.url || '/';
+  // Esta función solo maneja /api/ exactamente
+  // Si hay algo después de /api/, debería ir a [path].js
+  const trytonUrl = `${TRYTON_SERVER}/`;
   
-  // Remover "/api" del inicio para obtener el path de Tryton
-  let trytonPath = urlPath.replace(/^\/api/, '') || '/';
-  
-  // Asegurar que empiece con /
-  if (!trytonPath.startsWith('/')) {
-    trytonPath = '/' + trytonPath;
-  }
-  
-  // Asegurar que termine con / si no tiene extensión (Tryton requiere esto)
-  if (!trytonPath.endsWith('/') && !trytonPath.includes('.')) {
-    trytonPath += '/';
-  }
-  
-  const trytonUrl = `${TRYTON_SERVER}${trytonPath}`;
-  
-  console.log(`[Proxy] ${req.method} ${urlPath} -> ${trytonUrl}`);
+  console.log(`[Proxy index] ${req.method} /api/ -> ${trytonUrl}`);
   
   // Preparar headers
   const headers = {

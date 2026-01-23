@@ -3,6 +3,9 @@
 const TRYTON_SERVER = 'http://9.234.137.128:8000';
 
 export default async function handler(req, res) {
+  // Log inicial
+  console.log(`[Proxy Handler [path]] Function called - Method: ${req.method}, URL: ${req.url}, Query:`, req.query);
+  
   // Manejar CORS preflight
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -12,17 +15,25 @@ export default async function handler(req, res) {
   }
   
   // Obtener el path del query parameter
+  // En Vercel, [path].js captura /api/:path y lo pone en req.query.path
   const path = req.query.path || '';
   
-  // Construir el path de Tryton
-  let trytonPath = `/${path}`;
-  if (!trytonPath.endsWith('/')) {
-    trytonPath += '/';
-  }
+  // Si el path viene con / al final, removerlo primero
+  const cleanPath = path.replace(/\/$/, '');
   
+  // Construir el path de Tryton - siempre debe terminar con /
+  const trytonPath = `/${cleanPath}/`;
   const trytonUrl = `${TRYTON_SERVER}${trytonPath}`;
   
-  console.log(`[Proxy] ${req.method} /api/${path} -> ${trytonUrl}`);
+  console.log(`[Proxy [path]] Details:`, {
+    originalPath: path,
+    cleanPath: cleanPath,
+    trytonPath: trytonPath,
+    trytonUrl: trytonUrl,
+    method: req.method,
+    url: req.url,
+    query: req.query
+  });
   
   // Preparar headers
   const headers = {
