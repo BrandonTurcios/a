@@ -9,7 +9,12 @@ export default async function handler(req, res) {
     url: req.url,
     query: req.query,
     queryPath: req.query?.path,
-    headers: Object.keys(req.headers)
+    headers: Object.keys(req.headers),
+    // Headers específicos de Vercel que pueden contener el path original
+    xForwardedUri: req.headers['x-forwarded-uri'],
+    xVercelOriginalPath: req.headers['x-vercel-original-path'],
+    referer: req.headers.referer,
+    host: req.headers.host
   });
   
   // Manejar CORS preflight
@@ -41,25 +46,39 @@ export default async function handler(req, res) {
     // Si no hay query parameter, intentar obtener del header x-forwarded-uri o x-vercel-original-path
     const forwardedUri = req.headers['x-forwarded-uri'] || 
                          req.headers['x-vercel-original-path'] ||
+                         req.headers['x-invoke-path'] ||
                          null;
     
     if (forwardedUri) {
       urlPath = forwardedUri;
       console.log(`[Proxy] Found path in forwarded headers: ${forwardedUri}`);
     } else {
-      // Si no está en headers, intentar extraer del referer
-      const referer = req.headers.referer || '';
-      if (referer) {
-        try {
-          const refererUrl = new URL(referer);
-          const refererPath = refererUrl.pathname;
-          // Si el referer tiene un path que empieza con /api/ y no es solo /api/
-          if (refererPath.startsWith('/api/') && refererPath !== '/api/') {
-            urlPath = refererPath;
-            console.log(`[Proxy] Extracted path from referer: ${refererPath}`);
+      // Intentar extraer del URL completo si está disponible
+      // En Vercel, a veces el path completo está en req.url pero puede incluir query params
+      if (req.url && req.url !== '/api' && req.url !== '/api/') {
+        // Remover query params si existen
+        const urlWithoutQuery = req.url.split('?')[0];
+        if (urlWithoutQuery.startsWith('/api/')) {
+          urlPath = urlWithoutQuery;
+          console.log(`[Proxy] Using path from req.url: ${urlPath}`);
+        }
+      }
+      
+      // Si aún no tenemos el path, intentar extraer del referer
+      if (urlPath === '/api/' || urlPath === '/api') {
+        const referer = req.headers.referer || '';
+        if (referer) {
+          try {
+            const refererUrl = new URL(referer);
+            const refererPath = refererUrl.pathname;
+            // Si el referer tiene un path que empieza con /api/
+            if (refererPath.startsWith('/api/')) {
+              urlPath = refererPath;
+              console.log(`[Proxy] Extracted path from referer: ${refererPath}`);
+            }
+          } catch (e) {
+            console.log(`[Proxy] Error parsing referer: ${e.message}`);
           }
-        } catch (e) {
-          console.log(`[Proxy] Error parsing referer: ${e.message}`);
         }
       }
     }
@@ -88,9 +107,12 @@ export default async function handler(req, res) {
   
   console.log(`[Proxy index] Details:`, {
     originalUrl: urlPath,
+    reqUrl: req.url,
     trytonPath: trytonPath,
     trytonUrl: trytonUrl,
     method: req.method,
+    hasBody: !!req.body,
+    bodyPreview: req.body ? (typeof req.body === 'string' ? req.body.substring(0, 200) : JSON.stringify(req.body).substring(0, 200)) : null,
     allHeaders: Object.keys(req.headers)
   });
   
