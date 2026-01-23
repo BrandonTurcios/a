@@ -293,6 +293,7 @@ class TrytonService {
 
     // Payload
     const payload = {
+      jsonrpc: "2.0",
       id: ++this.rpcId,
       method: method,
       params: rpcParams,
