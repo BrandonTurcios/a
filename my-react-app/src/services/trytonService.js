@@ -309,6 +309,21 @@ class TrytonService {
         // Para set_preferences, agregar el contexto como segundo parámetro separado
         // Formato: set_preferences(values, context)
         rpcParams.push({ ...this.context });
+      } else if (method.endsWith('.create') || method.endsWith('.write')) {
+        // Para create y write, el contexto ya debe estar incluido en los parámetros
+        // create(vlist, context) - vlist es [[{field: value}]]
+        // write(records, values, context) - records es [ids], values es {field: value}
+        // Si el último parámetro es un objeto (contexto), mezclarlo con this.context
+        // Si no hay contexto explícito, agregarlo
+        const lastParam = rpcParams.length > 0 ? rpcParams[rpcParams.length - 1] : null;
+        if (lastParam && typeof lastParam === "object" && lastParam !== null && !Array.isArray(lastParam)) {
+          // Mezclar el contexto con el último parámetro
+          rpcParams[rpcParams.length - 1] = { ...this.context, ...lastParam };
+        } else {
+          // Agregar el contexto como un parámetro separado al final
+          const contextToAdd = Object.keys(this.context).length > 0 ? { ...this.context } : {};
+          rpcParams.push(contextToAdd);
+        }
       } else {
         // Detectar métodos search_read que tienen una firma especial
         // En Tryton, search_read tiene la firma:
@@ -2316,39 +2331,44 @@ class TrytonService {
     }
 
     try {
-      console.log(`Obteniendo valores por defecto para modelo: ${model}`);
+      console.log(`📋 Obteniendo valores por defecto para modelo: ${model} (default_get es independiente de fields_view_get)`);
 
-      // Si no se proporciona fieldsView, obtenerlo
+      // Obtener lista de campos para default_get
+      // Si se proporciona fieldsView, usar sus campos
+      // Si no, obtener fields_view_get SOLO para extraer los nombres de campos
       let fields = [];
       if (fieldsView && fieldsView.fields) {
         fields = Object.keys(fieldsView.fields);
-        console.log("📋 Usando campos de fieldsView proporcionado:", fields);
+        console.log("📋 Usando campos de fieldsView proporcionado:", fields.length, "campos");
       } else {
-        // Obtener vista de formulario para extraer los nombres de campos
-        console.log("📋 Obteniendo vista de formulario para extraer campos...");
+        // Si no hay fieldsView, obtenerlo SOLO para extraer los nombres de campos
+        // Esto es diferente a fields_view_get usado para la vista
+        console.log("📋 Obteniendo fields_view_get SOLO para extraer nombres de campos...");
         const formView = await this.getFieldsView(model, null, "form");
         if (formView && formView.fields) {
           fields = Object.keys(formView.fields);
-          console.log("📋 Campos extraídos de vista de formulario:", fields);
+          console.log("📋 Campos extraídos de fields_view_get:", fields.length, "campos");
         } else {
           console.warn(
-            "⚠️ No se pudieron obtener campos de la vista, usando lista básica"
+            "⚠️ No se pudieron obtener campos de fields_view_get, usando lista básica"
           );
           // Lista básica de campos comunes
           fields = ["active", "name", "rec_name"];
         }
       }
 
-      // Obtener valores por defecto pasando los nombres de campos
+      // Llamar a default_get de forma independiente
+      // default_get(fields, context) - estructura: [[field1, field2, ...], {context}]
+      console.log(`📋 Llamando a model.${model}.default_get con ${fields.length} campos`);
       const defaultValues = await this.makeRpcCall(
         `model.${model}.default_get`,
-        [fields, {}]
+        [fields, this.context || {}]
       );
 
-      console.log("✅ Valores por defecto obtenidos:", defaultValues);
+      console.log("✅ Valores por defecto obtenidos de default_get:", defaultValues);
       return defaultValues;
     } catch (error) {
-      console.error("Error obteniendo valores por defecto:", error);
+      console.error("❌ Error obteniendo valores por defecto (default_get):", error);
       throw error;
     }
   }
@@ -3639,8 +3659,12 @@ class TrytonService {
     try {
       console.log(`Creando nuevo registro en modelo: ${model}`, values);
 
+      // Tryton create() expects: create(vlist, context)
+      // where vlist is a list of dictionaries (one dict per record to create)
+      // Structure: [[{field: value}], {context}]
       const result = await this.makeRpcCall(`model.${model}.create`, [
-        [values],
+        [values], // vlist: lista de diccionarios (uno por registro a crear)
+        this.context || {}, // contexto explícito
       ]);
 
       console.log("Registro creado:", result);
@@ -3664,11 +3688,13 @@ class TrytonService {
       );
 
       // Tryton write() expects: write(records, values, context)
-      // where records is a list of IDs and values is a dictionary
+      // where records is a list of IDs, values is a dictionary, and context is a dict
+      // Structure: [[ids], {field: value}, {context}]
+      // Solo enviar los campos que fueron modificados en el formulario
       const result = await this.makeRpcCall(`model.${model}.write`, [
-        [recordId], // Lista de IDs
-        values, // Diccionario de valores
-        {}, // Contexto (se agregará automáticamente en makeRpcCall)
+        [recordId], // Lista de IDs de registros a actualizar
+        values, // Diccionario con solo los campos editados
+        this.context || {}, // Contexto explícito
       ]);
 
       console.log("Registro actualizado:", result);

@@ -1691,7 +1691,15 @@ const extractFormValues = (data, fieldsView) => {
   Object.keys(fieldsView.fields).forEach((fieldName) => {
     // Omitir campos expandidos (que tienen punto en el nombre)
     if (!fieldName.includes(".")) {
-      formValues[fieldName] = data && data[fieldName] !== undefined ? data[fieldName] : null;
+      const fieldDef = fieldsView.fields[fieldName];
+      const dataValue = data && data[fieldName] !== undefined ? data[fieldName] : null;
+      
+      // Para campos booleanos, asegurar que tengan un valor por defecto (false) si son null
+      if (fieldDef && fieldDef.type === "boolean" && (dataValue === null || dataValue === undefined)) {
+        formValues[fieldName] = false;
+      } else {
+        formValues[fieldName] = dataValue;
+      }
     }
   });
 
@@ -1729,6 +1737,26 @@ const extractFormValues = (data, fieldsView) => {
     } else if (fieldDef.type === "many2one" && !formValues[fieldName]) {
       // Campo many2one sin valor, establecer null explícitamente
       formValues[fieldName] = null;
+    }
+
+    // Para campos boolean, asegurar que siempre sea un booleano válido
+    // Para la visualización en el formulario, null se convierte a false (Switch necesita booleano)
+    // Pero guardamos el valor original en formData para comparaciones
+    if (fieldDef.type === "boolean") {
+      const currentValue = formValues[fieldName];
+      if (currentValue === true || currentValue === "true" || currentValue === 1 || currentValue === "1") {
+        formValues[fieldName] = true;
+      } else if (currentValue === false || currentValue === "false" || currentValue === 0 || currentValue === "0") {
+        formValues[fieldName] = false;
+      } else if (currentValue === null || currentValue === undefined || currentValue === "") {
+        // null, undefined o string vacío se convierten a false para la visualización
+        // (Switch de Ant Design necesita un booleano, no null)
+        formValues[fieldName] = false;
+      } else {
+        // Para cualquier otro valor, intentar convertir a booleano
+        formValues[fieldName] = Boolean(currentValue);
+      }
+      console.log(`✅ Procesando booleano ${fieldName}:`, currentValue, "→", formValues[fieldName]);
     }
 
     // Para campos date/datetime, convertir a dayjs
@@ -1869,24 +1897,118 @@ const TrytonForm = forwardRef(
         // Load dynamic selection options
         loadSelectionOptions(fieldsView);
 
-        // Procesar datos para many2one antes de establecerlos
-        const processedData = processMany2OneData(recordData || {}, fieldsView);
-        setFormData(processedData);
+        // SIEMPRE llamar a default_get para obtener valores por defecto (como Tryton SAO)
+        // Esto es independiente de fields_view_get
+        const loadDefaultsAndData = async () => {
+          try {
+            console.log("📋 Llamando a default_get para obtener valores por defecto...");
+            const defaultValues = await getDefaultValues(fieldsView);
+            console.log("📋 Valores por defecto obtenidos del servidor (raw):", defaultValues);
+            
+            // Procesar valores por defecto
+            const processedDefaults = processMany2OneData(defaultValues, fieldsView);
+            console.log("📋 Valores por defecto procesados (many2one):", processedDefaults);
 
-        if (recordData) {
-          // Establecer solo los IDs en el formulario (no los objetos completos)
-          const formValues = extractFormValues(processedData, fieldsView);
-          form.setFieldsValue(formValues);
-          setInitialValues(formValues);
-          setModifiedFields({});
-        } else {
-          setInitialValues({});
-          setModifiedFields({});
-        }
+            // Si hay datos del registro, mezclarlos con los valores por defecto
+            if (recordData) {
+              // Procesar datos del registro para many2one
+              const processedData = processMany2OneData(recordData, fieldsView);
+              
+              // Mezclar valores por defecto con valores del registro
+              // Los valores del registro tienen prioridad, PERO si un campo del registro es null/undefined,
+              // usar el valor por defecto (especialmente importante para booleanos)
+              const mergedData = { ...processedDefaults };
+              Object.keys(processedData).forEach((key) => {
+                const recordValue = processedData[key];
+                const defaultValue = processedDefaults[key];
+                
+                // Si el valor del registro es null/undefined y hay un valor por defecto, usar el default
+                // Esto es especialmente importante para booleanos que pueden venir como null del servidor
+                if ((recordValue === null || recordValue === undefined) && defaultValue !== undefined && defaultValue !== null) {
+                  mergedData[key] = defaultValue;
+                  console.log(`🔄 Usando valor por defecto para ${key} (registro tiene null/undefined):`, defaultValue);
+                } else if (recordValue !== undefined && recordValue !== null) {
+                  // Si el registro tiene un valor (incluso false), usarlo
+                  mergedData[key] = recordValue;
+                }
+              });
+              
+              setFormData(mergedData);
+
+              // Establecer solo los IDs en el formulario
+              const formValues = extractFormValues(mergedData, fieldsView);
+              form.setFieldsValue(formValues);
+              setInitialValues(formValues);
+              setModifiedFields({});
+              
+              console.log("✅ Datos del registro mezclados con valores por defecto:", mergedData);
+            } else {
+              // Sin datos del registro, usar solo valores por defecto
+              setFormData(processedDefaults);
+              const formValues = extractFormValues(processedDefaults, fieldsView);
+              form.setFieldsValue(formValues);
+              setInitialValues(formValues);
+              setModifiedFields({});
+              
+              console.log("✅ Valores por defecto establecidos:", formValues);
+            }
+          } catch (error) {
+            console.error("❌ Error obteniendo valores por defecto:", error);
+            // Continuar sin valores por defecto si falla
+            const processedData = processMany2OneData(recordData || {}, fieldsView);
+            setFormData(processedData);
+            if (recordData) {
+              const formValues = extractFormValues(processedData, fieldsView);
+              form.setFieldsValue(formValues);
+              setInitialValues(formValues);
+            } else {
+              setInitialValues({});
+            }
+            setModifiedFields({});
+          }
+        };
+
+        loadDefaultsAndData();
       } else if (model && viewId) {
         loadFormData();
       }
     }, [model, viewId, viewType, recordId, fieldsView, recordData]);
+
+    // Asegurar que los valores booleanos se establezcan correctamente cuando cambien
+    useEffect(() => {
+      if (initialValues && formInfo && formInfo.fields) {
+        // Verificar si hay valores booleanos que necesitan actualizarse
+        const booleanFields = Object.entries(initialValues).filter(([fieldName, value]) => {
+          const fieldDef = formInfo.fields[fieldName];
+          return fieldDef?.type === "boolean";
+        });
+
+        if (booleanFields.length > 0) {
+          // Obtener valores actuales del formulario
+          const currentValues = form.getFieldsValue();
+          let needsUpdate = false;
+          const updates = {};
+
+          booleanFields.forEach(([fieldName, expectedValue]) => {
+            const currentValue = currentValues[fieldName];
+            // Normalizar ambos valores para comparar
+            const expectedBool = expectedValue === true || expectedValue === "true" || expectedValue === 1 || expectedValue === 1;
+            const currentBool = currentValue === true || currentValue === "true" || currentValue === 1 || currentValue === 1;
+            
+            if (expectedBool !== currentBool) {
+              updates[fieldName] = expectedBool;
+              needsUpdate = true;
+              console.log(`🔄 Actualizando booleano ${fieldName}:`, currentBool, "→", expectedBool);
+            }
+          });
+
+          if (needsUpdate) {
+            console.log(`🔄 Actualizando ${Object.keys(updates).length} campos booleanos:`, updates);
+            form.setFieldsValue(updates);
+          }
+        }
+      }
+    }, [initialValues, formInfo, form]);
 
     const loadFormData = async () => {
       try {
@@ -1919,34 +2041,116 @@ const TrytonForm = forwardRef(
         // Load dynamic selection options
         await loadSelectionOptions(formInfo.fieldsView);
 
-        // Si hay datos del registro, establecerlos
+        // SIEMPRE llamar a default_get para obtener valores por defecto (como Tryton SAO)
+        // Esto es especialmente importante para campos toggle/booleanos
+        console.log("📋 Llamando a default_get para obtener valores por defecto...");
+        const defaultValues = await getDefaultValues(formInfo.fieldsView);
+        console.log("📋 Valores por defecto obtenidos del servidor (raw):", defaultValues);
+        
+        // Procesar valores por defecto
+        const processedDefaults = processMany2OneData(defaultValues, formInfo.fieldsView);
+        console.log("📋 Valores por defecto procesados (many2one):", processedDefaults);
+
+        // Si hay datos del registro, mezclarlos con los valores por defecto
+        // Los valores del registro tienen prioridad sobre los valores por defecto
         if (formInfo.data || recordData) {
           const dataToUse = formInfo.data || recordData;
 
-          // Procesar datos para many2one
+          // Procesar datos del registro para many2one
           const processedData = processMany2OneData(
             dataToUse,
             formInfo.fieldsView
           );
-          setFormData(processedData);
+          
+          // Mezclar valores por defecto con valores del registro
+          // Los valores del registro tienen prioridad, PERO si un campo del registro es null/undefined,
+          // usar el valor por defecto (especialmente importante para booleanos)
+          const mergedData = { ...processedDefaults };
+          Object.keys(processedData).forEach((key) => {
+            const recordValue = processedData[key];
+            const defaultValue = processedDefaults[key];
+            
+            // Si el valor del registro es null/undefined y hay un valor por defecto, usar el default
+            // Esto es especialmente importante para booleanos que pueden venir como null del servidor
+            if ((recordValue === null || recordValue === undefined) && defaultValue !== undefined && defaultValue !== null) {
+              mergedData[key] = defaultValue;
+              console.log(`🔄 Usando valor por defecto para ${key} (registro tiene null/undefined):`, defaultValue);
+            } else if (recordValue !== undefined && recordValue !== null) {
+              // Si el registro tiene un valor (incluso false), usarlo
+              mergedData[key] = recordValue;
+            }
+          });
+          setFormData(mergedData);
 
           // Establecer solo los IDs en el formulario
           const formValues = extractFormValues(
-            processedData,
+            mergedData,
             formInfo.fieldsView
           );
+          
+          // Log específico para booleanos en datos mezclados
+          Object.entries(formValues).forEach(([fieldName, value]) => {
+            const fieldDef = formInfo.fieldsView?.fields?.[fieldName];
+            if (fieldDef?.type === "boolean") {
+              console.log(`🔘 Booleano ${fieldName} (mezclado):`, {
+                defaultValue: processedDefaults[fieldName],
+                recordValue: processedData[fieldName],
+                finalValue: formValues[fieldName],
+                type: typeof formValues[fieldName]
+              });
+            }
+          });
+          
           form.setFieldsValue(formValues);
           setInitialValues(formValues);
 
-          console.log("✅ Datos del registro establecidos:", processedData);
+          console.log("✅ Datos del registro mezclados con valores por defecto:", mergedData);
           console.log("✅ Valores del formulario:", formValues);
         } else {
-          // Formulario nuevo - establecer valores por defecto
-          const defaultValues = getDefaultValues(formInfo.fieldsView);
-          setFormData(defaultValues);
-          form.setFieldsValue(defaultValues);
-          setInitialValues(defaultValues);
-          console.log("✅ Valores por defecto establecidos:", defaultValues);
+          // Formulario nuevo - usar solo valores por defecto
+          // Usar valores por defecto procesados (ya procesados arriba)
+          const formValues = extractFormValues(processedDefaults, formInfo.fieldsView);
+          console.log("📋 Valores por defecto procesados (formValues):", formValues);
+          
+          // Log específico para booleanos
+          Object.entries(formValues).forEach(([fieldName, value]) => {
+            const fieldDef = formInfo.fieldsView?.fields?.[fieldName];
+            if (fieldDef?.type === "boolean") {
+              console.log(`🔘 Booleano ${fieldName}:`, {
+                raw: defaultValues[fieldName],
+                processed: processedDefaults[fieldName],
+                formValue: formValues[fieldName],
+                type: typeof formValues[fieldName]
+              });
+            }
+          });
+          
+          // Log específico para booleanos antes de establecer valores por defecto
+          Object.entries(formValues).forEach(([fieldName, value]) => {
+            const fieldDef = formInfo.fieldsView?.fields?.[fieldName];
+            if (fieldDef?.type === "boolean") {
+              console.log(`🔘 Estableciendo booleano por defecto ${fieldName} en formulario:`, value, typeof value);
+            }
+          });
+          
+          setFormData(processedDefaults);
+          form.setFieldsValue(formValues);
+          setInitialValues(formValues);
+          
+          // Verificar que los valores se establecieron correctamente
+          const verifyValues = form.getFieldsValue();
+          Object.entries(formValues).forEach(([fieldName, value]) => {
+            const fieldDef = formInfo.fieldsView?.fields?.[fieldName];
+            if (fieldDef?.type === "boolean") {
+              console.log(`🔘 Verificando booleano por defecto ${fieldName} después de setFieldsValue:`, {
+                expected: value,
+                actual: verifyValues[fieldName],
+                match: verifyValues[fieldName] === value
+              });
+            }
+          });
+          
+          console.log("✅ Valores por defecto establecidos:", formValues);
         }
       } catch (error) {
         console.error("❌ Error loading form:", error);
@@ -2094,18 +2298,25 @@ const TrytonForm = forwardRef(
       return fieldMatches.map((match) => match.replace(/name="([^"]+)"/, "$1"));
     };
 
-    const getDefaultValues = (fieldsView) => {
-      const defaults = {};
-
-      if (fieldsView.fields) {
-        Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
-          if (fieldDef.default) {
-            defaults[fieldName] = fieldDef.default;
-          }
-        });
+    const getDefaultValues = async (fieldsView) => {
+      try {
+        // Usar default_get del servidor para obtener valores por defecto reales
+        const defaults = await trytonService.getDefaultValues(model, fieldsView);
+        console.log("✅ Valores por defecto obtenidos del servidor:", defaults);
+        return defaults || {};
+      } catch (error) {
+        console.warn("⚠️ Error obteniendo valores por defecto del servidor, usando fallback:", error);
+        // Fallback: usar valores de fieldDef.default si default_get falla
+        const defaults = {};
+        if (fieldsView && fieldsView.fields) {
+          Object.entries(fieldsView.fields).forEach(([fieldName, fieldDef]) => {
+            if (fieldDef.default !== undefined) {
+              defaults[fieldName] = fieldDef.default;
+            }
+          });
+        }
+        return defaults;
       }
-
-      return defaults;
     };
 
     // Helper function para estilos comunes de inputs
@@ -2296,11 +2507,27 @@ const TrytonForm = forwardRef(
           );
 
         case "boolean": {
-          const booleanProps = {
-            ...commonProps,
-            label: null,
-          };
-          booleanProps.help = null;
+          // Obtener el valor actual del formulario (ya obtenido antes en currentFormData)
+          const currentValue = currentFormData[name];
+          // También verificar formData como fallback
+          const formDataValue = formData[name];
+          const rawValue = currentValue !== undefined ? currentValue : formDataValue;
+          
+          // Procesar el valor para asegurar que sea un booleano válido
+          const booleanValue = rawValue === true || rawValue === "true" || rawValue === 1 || rawValue === "1" 
+            ? true 
+            : (rawValue === false || rawValue === "false" || rawValue === 0 || rawValue === "0" 
+              ? false 
+              : false);
+          
+          console.log(`🔘 Booleano ${name}:`, {
+            currentValue,
+            formDataValue,
+            rawValue,
+            booleanValue,
+            type: typeof rawValue,
+            willShowAs: booleanValue ? "checked" : "unchecked"
+          });
 
           const renderLabel = () => (
             <div
@@ -2327,63 +2554,103 @@ const TrytonForm = forwardRef(
           return (
             <Form.Item
               key={name}
-              {...booleanProps}
-              valuePropName="checked"
+              label={null}
               colon={false}
               className="boolean-card-item"
               style={{ marginBottom: "12px" }}
               data-span={6}
+              shouldUpdate={(prevValues, currentValues) => {
+                // Re-renderizar cuando cambie el valor de este campo
+                return prevValues[name] !== currentValues[name];
+              }}
             >
-              <div
-                className="boolean-card"
-                style={{
-                  border: "1px solid var(--color-neutral-200)",
-                  borderRadius: "22px",
-                  padding: "10px",
-                  background: "linear-gradient(180deg, #fff, #f5fbff)",
-                  minHeight: "160px",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                  gap: "14px",
-                  minWidth: "260px",
-                  maxWidth: "360px",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    gap: "12px",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", flex: 1 }}>
-                    {labelNode}
-                    {help && (
-                      <Tooltip title={help}>
-                        <InfoCircleOutlined style={{ color: "var(--color-primary-500)", fontSize: "14px" }} />
-                      </Tooltip>
-                    )}
-                  </div>
-                  <Switch disabled={isReadonly} />
-                </div>
-                <div
-                  style={{
-                    color: "var(--color-text-secondary)",
-                    fontSize: "13px",
-                    lineHeight: 1.4,
-                    display: "-webkit-box",
-                    WebkitLineClamp: 4,
-                    WebkitBoxOrient: "vertical",
-                    overflow: "hidden",
-                    wordBreak: "normal",
-                    hyphens: "auto",
-                  }}
-                >
-                  {help || ""}
-                </div>
-              </div>
+              {({ getFieldValue, setFieldValue }) => {
+                // Obtener el valor actual del campo del formulario
+                const currentSwitchValue = getFieldValue(name);
+                const normalizedValue = currentSwitchValue === true || currentSwitchValue === "true" || currentSwitchValue === 1 || currentSwitchValue === "1";
+                
+                console.log(`🔘 Switch ${name} render (getFieldValue):`, {
+                  currentSwitchValue,
+                  normalizedValue,
+                  booleanValue,
+                  type: typeof currentSwitchValue
+                });
+                
+                return (
+                  <>
+                    <Form.Item
+                      name={name}
+                      valuePropName="checked"
+                      initialValue={booleanValue}
+                      getValueFromEvent={(checked) => {
+                        const boolValue = checked === true || checked === "true" || checked === 1;
+                        return boolValue;
+                      }}
+                      noStyle
+                    >
+                      <div style={{ display: "none" }} />
+                    </Form.Item>
+                    <div
+                      className="boolean-card"
+                      style={{
+                        border: "1px solid var(--color-neutral-200)",
+                        borderRadius: "22px",
+                        padding: "10px",
+                        background: "linear-gradient(180deg, #fff, #f5fbff)",
+                        minHeight: "160px",
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "space-between",
+                        gap: "14px",
+                        minWidth: "260px",
+                        maxWidth: "360px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          gap: "12px",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", flex: 1 }}>
+                          {labelNode}
+                          {help && (
+                            <Tooltip title={help}>
+                              <InfoCircleOutlined style={{ color: "var(--color-primary-500)", fontSize: "14px" }} />
+                            </Tooltip>
+                          )}
+                        </div>
+                        <Switch 
+                          disabled={isReadonly}
+                          checked={normalizedValue}
+                          onChange={(checked) => {
+                            const boolValue = checked === true || checked === "true" || checked === 1;
+                            console.log(`🔄 Switch ${name} onChange:`, checked, "→", boolValue);
+                            setFieldValue(name, boolValue);
+                          }}
+                        />
+                      </div>
+                      <div
+                        style={{
+                          color: "var(--color-text-secondary)",
+                          fontSize: "13px",
+                          lineHeight: 1.4,
+                          display: "-webkit-box",
+                          WebkitLineClamp: 4,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                          wordBreak: "normal",
+                          hyphens: "auto",
+                        }}
+                      >
+                        {help || ""}
+                      </div>
+                    </div>
+                  </>
+                );
+              }}
             </Form.Item>
           );
         }
@@ -2579,7 +2846,16 @@ const TrytonForm = forwardRef(
           );
 
         case "multiselection": {
-          const multiselectionOptions = fieldDef.selection || [];
+          // Asegurar que selection sea un array
+          let multiselectionOptions = [];
+          if (fieldDef.selection) {
+            if (Array.isArray(fieldDef.selection)) {
+              multiselectionOptions = fieldDef.selection;
+            } else if (typeof fieldDef.selection === "string") {
+              // Si es un string (nombre de método), usar opciones cargadas dinámicamente si están disponibles
+              multiselectionOptions = selectionOptions[fieldDef.selection] || [];
+            }
+          }
 
           return (
             <Form.Item key={name} {...commonProps}>
@@ -2587,12 +2863,22 @@ const TrytonForm = forwardRef(
                 mode="multiple"
                 placeholder={label}
                 style={{ width: "100%" }}
+                disabled={isReadonly}
               >
-                {multiselectionOptions.map(([value, label]) => (
-                  <Option key={value} value={value}>
-                    {label}
-                  </Option>
-                ))}
+                {Array.isArray(multiselectionOptions) && multiselectionOptions.length > 0 ? (
+                  multiselectionOptions.map((option) => {
+                    // Manejar tanto formato [value, label] como {value, label}
+                    const value = Array.isArray(option) ? option[0] : (option.value || option);
+                    const labelText = Array.isArray(option) ? option[1] : (option.label || option);
+                    return (
+                      <Option key={value} value={value}>
+                        {labelText}
+                      </Option>
+                    );
+                  })
+                ) : (
+                  <Option value="loading" disabled>{t("form.loadingOptions")}</Option>
+                )}
               </Select>
             </Form.Item>
           );
@@ -2730,8 +3016,21 @@ const TrytonForm = forwardRef(
         const isNewRecord = !recordId || recordId < 0;
         const writableValues = {};
 
+        console.log("💾 handleSave llamado con:", {
+          values,
+          modifiedFields,
+          isNewRecord,
+          recordId,
+          hasFormInfo: !!formInfo,
+          hasFields: !!(formInfo && formInfo.fields)
+        });
+
+        // Si values está vacío, obtener todos los valores del formulario
+        const formValues = Object.keys(values || {}).length > 0 ? values : form.getFieldsValue();
+        console.log("💾 Valores del formulario a procesar:", formValues);
+
         if (formInfo && formInfo.fields) {
-          Object.entries(values).forEach(([fieldName, fieldValue]) => {
+          Object.entries(formValues).forEach(([fieldName, fieldValue]) => {
             const fieldDef = formInfo.fields[fieldName];
 
             if (!fieldDef) {
@@ -2808,6 +3107,28 @@ const TrytonForm = forwardRef(
               return;
             }
 
+            // Procesar campos booleanos - asegurar que sean booleanos válidos
+            if (fieldDef.type === "boolean") {
+              // Asegurar que el valor sea un booleano explícito
+              if (fieldValue === true || fieldValue === "true" || fieldValue === 1 || fieldValue === "1") {
+                writableValues[fieldName] = true;
+              } else if (fieldValue === false || fieldValue === "false" || fieldValue === 0 || fieldValue === "0") {
+                writableValues[fieldName] = false;
+              } else if (fieldValue === null || fieldValue === undefined) {
+                // null/undefined se convierten a false para booleanos
+                writableValues[fieldName] = false;
+              } else {
+                writableValues[fieldName] = Boolean(fieldValue);
+              }
+              console.log(
+                `✅ Incluyendo booleano modificado: ${fieldName}`,
+                fieldValue,
+                "→",
+                writableValues[fieldName]
+              );
+              return;
+            }
+
             // Incluir campo
             writableValues[fieldName] = fieldValue;
             console.log(
@@ -2816,12 +3137,73 @@ const TrytonForm = forwardRef(
             );
           });
         } else {
-          Object.assign(writableValues, values);
+          // Si no hay formInfo, usar todos los valores del formulario
+          Object.assign(writableValues, formValues);
+        }
+
+        // Si no hay campos modificados pero es un registro existente, 
+        // comparar todos los valores con initialValues para detectar cambios
+        if (!isNewRecord && Object.keys(writableValues).length === 0 && initialValues && formInfo) {
+          const currentValues = form.getFieldsValue();
+          console.log("🔍 Comparando valores actuales con iniciales:", {
+            currentValues,
+            initialValues,
+            modifiedFields
+          });
+          
+          // Comparar valores actuales con iniciales para detectar cambios
+          Object.keys(currentValues).forEach((fieldName) => {
+            const currentVal = currentValues[fieldName];
+            const initialVal = initialValues[fieldName];
+            const fieldDef = formInfo.fields?.[fieldName];
+            
+            if (!fieldDef) return;
+            
+            // Excluir campos readonly y calculados
+            if (fieldDef.readonly && !(fieldDef.type === "one2many" || fieldDef.type === "many2many")) {
+              return;
+            }
+            
+            const computedFields = ["age", "rec_name", "_timestamp", "_write", "_delete"];
+            if (computedFields.includes(fieldName)) {
+              return;
+            }
+            
+            // Comparación especial para booleanos (normalizar a booleanos)
+            let hasChanged = false;
+            if (fieldDef.type === "boolean") {
+              const currentBool = currentVal === true || currentVal === "true" || currentVal === 1;
+              const initialBool = initialVal === true || initialVal === "true" || initialVal === 1;
+              hasChanged = currentBool !== initialBool;
+            } else {
+              // Comparación profunda para otros tipos
+              hasChanged = JSON.stringify(currentVal) !== JSON.stringify(initialVal);
+            }
+            
+            if (hasChanged) {
+              // Procesar el valor según el tipo
+              if (fieldDef.type === "boolean") {
+                writableValues[fieldName] = currentVal === true || currentVal === "true" || currentVal === 1;
+              } else if (fieldDef.type === "date" || fieldDef.type === "datetime") {
+                if (dayjs.isDayjs(currentVal)) {
+                  writableValues[fieldName] = fieldDef.type === "date" 
+                    ? currentVal.format("YYYY-MM-DD")
+                    : currentVal.toISOString();
+                } else {
+                  writableValues[fieldName] = currentVal;
+                }
+              } else {
+                writableValues[fieldName] = currentVal;
+              }
+              console.log(`✅ Detectado cambio en ${fieldName}:`, initialVal, "→", currentVal, "→", writableValues[fieldName]);
+            }
+          });
         }
 
         console.log(
           "💾 Guardando formulario (valores escribibles):",
-          writableValues
+          writableValues,
+          "Total campos:", Object.keys(writableValues).length
         );
 
         // Si se proporciona onSubmit, usarlo en lugar del flujo normal
@@ -3060,7 +3442,7 @@ const TrytonForm = forwardRef(
             form={form}
             layout="vertical"
             onFinish={handleSave}
-            initialValues={formData}
+            initialValues={initialValues || formData}
             onValuesChange={handleFormChange}
           >
             {formSections.length > 0 &&
