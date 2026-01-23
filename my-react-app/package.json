@@ -7,7 +7,11 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "docker:build": "docker build -f Dockerfile.prod -t gnuhealth-app:latest .",
+    "docker:run": "docker run -d -p 80:80 --name gnuhealth-app --restart unless-stopped gnuhealth-app:latest",
+    "docker:stop": "docker stop gnuhealth-app && docker rm gnuhealth-app",
+    "docker:logs": "docker logs -f gnuhealth-app"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.11",
