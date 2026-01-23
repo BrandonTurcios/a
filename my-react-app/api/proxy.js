@@ -1,14 +1,14 @@
-// Función para manejar TODAS las rutas bajo /api/*
-// Vercel enruta /api/* a esta función cuando no hay otras funciones más específicas
+// Función proxy que captura todas las rutas
+// Se accede mediante rewrite en vercel.json
 const TRYTON_SERVER = 'http://9.234.137.128:8000';
 
 export default async function handler(req, res) {
-  // Log inicial con toda la información disponible
-  console.log(`[Proxy Handler index] Function called`, {
+  // Log inicial
+  console.log(`[Proxy Handler proxy] Function called`, {
     method: req.method,
     url: req.url,
-    headers: req.headers,
-    query: req.query
+    query: req.query,
+    headers: Object.keys(req.headers)
   });
   
   // Manejar CORS preflight
@@ -19,60 +19,27 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
   
-  // Intentar obtener el path original de varias fuentes
-  // 1. De req.url (puede no funcionar con rewrites)
-  // 2. Del header x-vercel-original-path o x-invoke-path
-  // 3. Del query string si está disponible
-  let urlPath = req.url || '/';
+  // El path viene en req.query.path del rewrite
+  const path = req.query.path || '';
   
-  // Verificar headers de Vercel que pueden contener el path original
-  const originalPath = req.headers['x-vercel-original-path'] || 
-                       req.headers['x-invoke-path'] || 
-                       req.headers['x-forwarded-uri'] ||
-                       null;
-  
-  if (originalPath) {
-    urlPath = originalPath;
-    console.log(`[Proxy] Found original path in headers: ${originalPath}`);
-  }
-  
-  // Si req.url no tiene el path completo, intentar construirlo desde otros headers
-  if (urlPath === '/api' || urlPath === '/api/') {
-    // Verificar si hay información en otros headers
-    const host = req.headers.host || '';
-    const referer = req.headers.referer || '';
-    
-    // Intentar extraer de referer si está disponible
-    if (referer) {
-      const refererPath = new URL(referer).pathname;
-      if (refererPath.startsWith('/api/') && refererPath !== '/api/') {
-        urlPath = refererPath;
-        console.log(`[Proxy] Extracted path from referer: ${refererPath}`);
-      }
+  // Construir el path de Tryton
+  let trytonPath = '/';
+  if (path) {
+    // El path puede venir como string o array
+    const pathString = Array.isArray(path) ? path.join('/') : path;
+    trytonPath = `/${pathString}`;
+    if (!trytonPath.endsWith('/') && !pathString.includes('.')) {
+      trytonPath += '/';
     }
-  }
-  
-  // Remover "/api" del inicio para obtener el path de Tryton
-  let trytonPath = urlPath.replace(/^\/api/, '') || '/';
-  
-  // Asegurar que empiece con /
-  if (!trytonPath.startsWith('/')) {
-    trytonPath = '/' + trytonPath;
-  }
-  
-  // Asegurar que termine con / si no tiene extensión (Tryton requiere esto)
-  if (!trytonPath.endsWith('/') && !trytonPath.includes('.')) {
-    trytonPath += '/';
   }
   
   const trytonUrl = `${TRYTON_SERVER}${trytonPath}`;
   
-  console.log(`[Proxy index] Details:`, {
-    originalUrl: urlPath,
+  console.log(`[Proxy proxy] Details:`, {
+    path: path,
     trytonPath: trytonPath,
     trytonUrl: trytonUrl,
-    method: req.method,
-    allHeaders: Object.keys(req.headers)
+    method: req.method
   });
   
   // Preparar headers
@@ -124,7 +91,8 @@ export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.status(500).json({ 
       error: 'Error al conectar con el servidor Tryton',
-      message: error.message
+      message: error.message,
+      url: trytonUrl
     });
   }
 }
