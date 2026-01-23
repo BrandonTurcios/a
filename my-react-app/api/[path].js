@@ -1,5 +1,5 @@
-// Función para manejar TODAS las rutas bajo /api/*
-// Vercel enruta /api/* a esta función
+// Función para capturar /api/:path (una sola segmento)
+// Esto capturará /api/gnuhealth_demo pero no /api/gnuhealth_demo/subpath
 const TRYTON_SERVER = 'http://9.234.137.128:8000';
 
 export default async function handler(req, res) {
@@ -11,26 +11,18 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
   
-  // Extraer el path de la URL
-  // req.url será algo como "/api/" o "/api/gnuhealth_demo/"
-  const urlPath = req.url || '/';
+  // Obtener el path del query parameter
+  const path = req.query.path || '';
   
-  // Remover "/api" del inicio para obtener el path de Tryton
-  let trytonPath = urlPath.replace(/^\/api/, '') || '/';
-  
-  // Asegurar que empiece con /
-  if (!trytonPath.startsWith('/')) {
-    trytonPath = '/' + trytonPath;
-  }
-  
-  // Asegurar que termine con / si no tiene extensión (Tryton requiere esto)
-  if (!trytonPath.endsWith('/') && !trytonPath.includes('.')) {
+  // Construir el path de Tryton
+  let trytonPath = `/${path}`;
+  if (!trytonPath.endsWith('/')) {
     trytonPath += '/';
   }
   
   const trytonUrl = `${TRYTON_SERVER}${trytonPath}`;
   
-  console.log(`[Proxy] ${req.method} ${urlPath} -> ${trytonUrl}`);
+  console.log(`[Proxy] ${req.method} /api/${path} -> ${trytonUrl}`);
   
   // Preparar headers
   const headers = {
@@ -81,7 +73,8 @@ export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.status(500).json({ 
       error: 'Error al conectar con el servidor Tryton',
-      message: error.message
+      message: error.message,
+      url: trytonUrl
     });
   }
 }
