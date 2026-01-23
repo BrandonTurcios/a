@@ -472,6 +472,16 @@ class TrytonService {
       }
 
       const data = await response.json();
+      
+      // Debug logging para fields_view_get
+      if (method && method.includes('fields_view_get')) {
+        console.log('🔍 Raw JSON response for fields_view_get:', data);
+        console.log('🔍 Type of data:', typeof data);
+        console.log('🔍 Is array?', Array.isArray(data));
+        console.log('🔍 Has result?', data && 'result' in data);
+        console.log('🔍 data.result:', data?.result);
+      }
+      
       return this.processResponse(data);
     } catch (error) {
       console.error("Error en llamada RPC:", {
@@ -511,11 +521,40 @@ class TrytonService {
       }
 
       // Retornar resultado
-      result = data.result;
+      // Si data.result existe (incluso si es null), usarlo
+      // Si data.result es undefined pero data tiene otros campos, usar data directamente
+      if ('result' in data) {
+        result = data.result;
+        // Si result es null/undefined pero data tiene otras propiedades útiles,
+        // puede ser que la respuesta esté en data directamente
+        if ((result === null || result === undefined) && Object.keys(data).length > 1) {
+          // Excluir 'result' y 'id' (campos JSON-RPC estándar) para ver si hay datos reales
+          const otherKeys = Object.keys(data).filter(k => k !== 'result' && k !== 'id' && k !== 'jsonrpc');
+          if (otherKeys.length > 0) {
+            console.warn('⚠️ data.result es null/undefined pero data tiene otras propiedades:', otherKeys);
+            // Usar data directamente si tiene propiedades útiles
+            result = data;
+          }
+        }
+      } else {
+        // Si no hay campo 'result', la respuesta completa es el resultado
+        // (algunos métodos de Tryton devuelven el objeto directamente)
+        result = data;
+      }
     }
     // Fallback para otros tipos de respuesta
     else {
       result = data;
+    }
+
+    // Debug: Log para fields_view_get
+    if (result && typeof result === 'object' && 'fields' in result) {
+      console.log('🔍 processResponse - result parece ser fieldsView:', {
+        hasFields: !!result.fields,
+        hasType: !!result.type,
+        type: result.type,
+        keys: Object.keys(result).slice(0, 10)
+      });
     }
 
     // Debug: Log antes de traducir (solo para menús con iconos)
@@ -937,8 +976,9 @@ class TrytonService {
       // 1. Recargar contexto
       await this.loadUserContext();
 
-      // 2. Obtener preferencias del usuario
-      const preferences = await this.getUserPreferences();
+      // 2. Obtener preferencias del usuario (remoto puede devolver null/undefined)
+      const rawPreferences = await this.getUserPreferences();
+      const preferences = rawPreferences && typeof rawPreferences === "object" ? rawPreferences : {};
 
       // 3. Cargar acceso a modelos
       const modelAccess = await this.getModelAccess();
@@ -1424,7 +1464,7 @@ class TrytonService {
         icons,
         modelAccess,
         viewSearch: [], // Placeholder para vistas de búsqueda
-        pysonMenu: preferences.pyson_menu,
+        pysonMenu: preferences?.pyson_menu ?? null,
       };
     } catch (error) {
       console.error("Error obteniendo menú del sidebar:", error);
@@ -1918,6 +1958,27 @@ class TrytonService {
       );
 
       console.log("Vista de campos obtenida:", fieldsView);
+      console.log("Tipo de fieldsView:", typeof fieldsView);
+      console.log("fieldsView es null?", fieldsView === null);
+      console.log("fieldsView es undefined?", fieldsView === undefined);
+
+      // Si fieldsView es null o undefined, intentar obtener la vista por defecto
+      if (!fieldsView) {
+        console.warn(`⚠️ Vista ${viewId} no encontrada, intentando vista por defecto...`);
+        try {
+          const defaultView = await this.makeRpcCall(
+            `model.${model}.fields_view_get`,
+            [null, viewType, {}]
+          );
+          console.log("Vista por defecto obtenida:", defaultView);
+          if (defaultView) {
+            return defaultView;
+          }
+        } catch (defaultError) {
+          console.error("Error obteniendo vista por defecto:", defaultError);
+        }
+        throw new Error(`No se pudo obtener la vista para ${model} (viewId: ${viewId}, type: ${viewType})`);
+      }
 
       return fieldsView;
     } catch (error) {

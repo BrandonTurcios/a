@@ -154,22 +154,58 @@ export const useMenuActions = (loadMenuChildren) => {
       }
     } else {
       // Fallback: obtener vista manualmente
+      if (!menuInfo.actionInfo || !Array.isArray(menuInfo.actionInfo) || menuInfo.actionInfo.length === 0) {
+        console.error('❌ No hay actionInfo disponible en menuInfo:', menuInfo);
+        throw new Error('No se pudo obtener información de la acción del menú');
+      }
+
       const actionData = menuInfo.actionInfo[0];
+      if (!actionData) {
+        console.error('❌ actionData es undefined:', menuInfo.actionInfo);
+        throw new Error('No se pudo obtener datos de la acción');
+      }
+
       if (actionData.views && actionData.views.length > 0) {
         const treeView = actionData.views.find(view => view[1] === 'tree');
         const formView = actionData.views.find(view => view[1] === 'form');
         const selectedView = treeView || formView || actionData.views[0];
 
+        if (!selectedView || !Array.isArray(selectedView) || selectedView.length < 2) {
+          console.error('❌ Vista seleccionada inválida:', selectedView);
+          throw new Error('No se pudo determinar la vista a usar');
+        }
+
         viewId = selectedView[0];
         viewType = selectedView[1];
 
-        const fieldsView = await trytonService.getFieldsView(
-          menuInfo.resModel,
-          viewId,
-          viewType
-        );
+        if (!menuInfo.resModel) {
+          console.error('❌ No hay resModel en menuInfo:', menuInfo);
+          throw new Error('No se pudo determinar el modelo para la vista');
+        }
+
+        let fieldsView = null;
+        try {
+          fieldsView = await trytonService.getFieldsView(
+            menuInfo.resModel,
+            viewId,
+            viewType
+          );
+        } catch (err) {
+          console.error('❌ Error obteniendo fieldsView:', err);
+          throw new Error(`No se pudo obtener la vista: ${err.message}`);
+        }
+
+        if (!fieldsView || typeof fieldsView !== 'object') {
+          console.error('❌ fieldsView inválido:', fieldsView);
+          throw new Error('La vista obtenida no es válida');
+        }
 
         const realViewType = fieldsView.type;
+        if (!realViewType) {
+          console.error('❌ fieldsView no tiene tipo:', fieldsView);
+          throw new Error('La vista no tiene un tipo definido');
+        }
+
         viewType = realViewType;
 
         if (realViewType === 'tree' && viewId) {
@@ -207,6 +243,9 @@ export const useMenuActions = (loadMenuChildren) => {
             isNativeForm: true // This is a native form opened from menu
           };
         }
+      } else {
+        console.error('❌ No hay vistas disponibles en actionData:', actionData);
+        throw new Error('La acción del menú no tiene vistas definidas');
       }
     }
 
