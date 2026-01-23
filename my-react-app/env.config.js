@@ -1,11 +1,12 @@
 // Configuración de Tryton
 export const trytonConfig = {
-  // URL directa de Tryton
+  // URL de Tryton
   // En desarrollo, usa el proxy de Vite para evitar CORS
-  // En producción, usa la URL completa del servidor
+  // En producción (Vercel), usa el proxy de Vercel (/api)
+  // Si tienes HTTPS en el servidor Tryton, puedes usar la URL directa con HTTPS
   baseURL: import.meta.env.DEV 
     ? '/api'  // Proxy de Vite en desarrollo
-    : 'http://9.234.137.128:8000',  // URL directa en producción
+    : import.meta.env.VITE_TRYTON_URL || '/api',  // Proxy de Vercel o variable de entorno
   
   // Configuración adicional
   timeout: 30000, // 30 segundos

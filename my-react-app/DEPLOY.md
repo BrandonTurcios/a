@@ -58,12 +58,22 @@ cd my-react-app
 vercel
 ```
 
-#### 4. Configurar variables de entorno (si es necesario)
+#### 4. Configuración del Proxy (IMPORTANTE)
 
-En el dashboard de Vercel, ve a Settings > Environment Variables y agrega:
-- `VITE_TRYTON_URL=http://9.234.137.128:8000` (si necesitas cambiar la URL)
+El archivo `vercel.json` ya está configurado para hacer proxy de las requests a `/api/*` hacia el servidor Tryton. Esto resuelve el problema de **Mixed Content** (HTTPS -> HTTP).
 
-**Nota:** Vercel automáticamente detecta Vite y configura el build correctamente.
+**El proxy funciona automáticamente**, no necesitas configuración adicional.
+
+#### 5. Variables de entorno (opcional)
+
+Si necesitas cambiar la URL del servidor Tryton, en el dashboard de Vercel:
+- Ve a Settings > Environment Variables
+- Agrega: `VITE_TRYTON_URL=http://9.234.137.128:8000`
+
+**Nota:** 
+- Vercel automáticamente detecta Vite y configura el build correctamente
+- El proxy en `vercel.json` redirige `/api/*` a tu servidor Tryton
+- Esto evita problemas de Mixed Content (HTTPS -> HTTP)
 
 ### Opción 3: Deploy en Netlify
 
